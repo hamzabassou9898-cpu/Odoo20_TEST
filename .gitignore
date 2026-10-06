@@ -37,6 +37,6 @@ dist/
 *.swo
 
 
-# Donnees clients (renseignements personnels) : generees localement par prep_clients_volcan.py
-clients_volcan_data.json
+# Donnees clients (renseignements personnels) : generees localement par prep_contacts.py
+contacts_data.json
 *.xlsx

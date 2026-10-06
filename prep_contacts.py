@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Nettoie la liste Excel des clients Volcan et produit :
-  - clients_volcan_data.json  -> lu par contacts_volcan_monroy.py (import Odoo)
-  - clients_volcan_odoo.xlsx  -> meme contenu, a relire / corriger dans Excel
+Nettoie la liste Excel des clients et produit :
+  - contacts_data.json      -> lu par import_contacts.py (import Odoo)
+  - contacts_relecture.xlsx -> meme contenu, a relire / corriger dans Excel
 
 Seules les colonnes "profil de contact" sont gardees. Les machines, accessoires,
 contrats et ventes historiques ne vont PAS dans la fiche contact.
 
-Usage : python3 prep_clients_volcan.py "VOLCAN_LISTE_DUNE_CENTAINE_DE_CLIENTS.xlsx"
+Usage : python3 prep_contacts.py "VOLCAN_LISTE_DUNE_CENTAINE_DE_CLIENTS.xlsx"
 (necessite openpyxl : pip install openpyxl)
 """
 import json
@@ -23,7 +23,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 INDICATIF = "418"   # indicatif ajoute aux numeros a 7 chiffres
 
 # Index des colonnes de la feuille "POUR VOLCAN"
-C = dict(slush=0, soumission=17, saison=18, type=19, banniere=20, nom_legal=21,
+C = dict(saison=18, type=19, banniere=20, nom_legal=21,
          anciens=22, no_client=23, nom=24, notes=25, adresse=27, ville=28,
          cp=29, tel=30, autres_tel=31, contact=32, courriel=33, region=34,
          terme=35, route=36, livraison=59, prix=60)
@@ -252,7 +252,6 @@ def main(src):
         ext = extension(tel_txt)
         if phone and ext:
             phone += f" #{ext}"
-        mobile = next((n for n, lib in tels if "cel" in lib.lower()), None)
 
         courriels = list(OrderedDict.fromkeys(extraire_courriels(premier("courriel"))))
 
@@ -273,9 +272,6 @@ def main(src):
         if route:
             route = f"Route {route}" if route.isdigit() else route.capitalize()
 
-        livraison = one_line(premier("livraison"))
-        livraison = {"MONROY": "monroy", "FRAIS": "frais"}.get(
-            livraison.upper()) if livraison else None
 
         contacts = extraire_contacts(premier("contact"))
         # Rattacher les cellulaires "cell-Prenom" a la bonne personne
@@ -286,56 +282,63 @@ def main(src):
                     p["mobile"] = n
                     break
 
+        # Ce qui n'a pas de champ natif dans Odoo -> en tete des notes
+        entete = []
+        nom_legal = one_line(premier("nom_legal"))
+        if nom_legal and nom_legal.upper() != nom.upper():
+            entete.append(f"Nom légal : {nom_legal}")
+        if one_line(premier("anciens")):
+            entete.append(f"Anciens # client : {one_line(premier('anciens'))}")
+        # detail utile seulement s'il y a plus qu'un simple numero (postes, 2e numero...)
+        if one_line(tel_txt) and (len(extraire_tels(tel_txt)) > 1
+                                  or TEL_RE.sub("", one_line(tel_txt)).strip(" ()-")):
+            entete.append(f"Téléphone (détail) : {one_line(tel_txt)}")
+        if one_line(autres_txt):
+            entete.append(f"Autres numéros : {one_line(autres_txt)}")
+        if len(courriels) > 1:
+            entete.append("Autres courriels : " + ", ".join(courriels[1:]))
         if terme_note:
-            notes.append(f"Paiement : {terme_note}")
+            entete.append(f"Paiement : {terme_note}")
+        if (one_line(premier("livraison")) or "").upper() == "FRAIS":
+            entete.append("Frais de livraison à facturer")
         if emplacements:
-            notes.append("Emplacements : " + " ; ".join(emplacements))
+            entete.append("Emplacements : " + " ; ".join(emplacements))
+        notes = entete + notes
 
         clients.append(OrderedDict(
             ref=ref,
             nom=nom,
-            nom_legal=one_line(premier("nom_legal")),
-            anciens_no=one_line(premier("anciens")),
             parent=parent,
             statut_banniere=statut,
             street=one_line(premier("adresse")),
             city=one_line(premier("ville")),
             zip=one_line(premier("cp")),
             phone=phone,
-            mobile=mobile,
             email=courriels[0] if courriels else None,
-            telephones=" / ".join(filter(None, [one_line(tel_txt), one_line(autres_txt)])) or None,
-            courriels=", ".join(courriels) or None,
             terme=terme,
             pricelist=pricelist,
             region=nettoyer_region(premier("region")),
             route=route,
             saison=premier("saison"),
             type=premier("type"),
-            slush=any(txt(r[C["slush"]]) == "1" for r in rows),
-            soumission=one_line(premier("soumission")),
-            livraison=livraison,
             notes=notes,
             contacts=contacts,
             nb_lignes=len(rows),
         ))
 
-    with open(os.path.join(HERE, "clients_volcan_data.json"), "w", encoding="utf-8") as f:
+    with open(os.path.join(HERE, "contacts_data.json"), "w", encoding="utf-8") as f:
         json.dump(clients, f, ensure_ascii=False, indent=1)
 
     # Version Excel pour relecture
     out = openpyxl.Workbook()
     sh = out.active
     sh.title = "Clients"
-    cols = [("ref", "Référence (# client)"), ("nom", "Nom"), ("nom_legal", "Nom légal"),
+    cols = [("ref", "Référence (# client)"), ("nom", "Nom"),
             ("parent", "Société parente (bannière)"), ("statut_banniere", "Statut bannière"),
-            ("anciens_no", "Anciens # client"), ("street", "Rue"), ("city", "Ville"),
-            ("zip", "Code postal"), ("phone", "Téléphone"), ("mobile", "Mobile"),
-            ("email", "Courriel"), ("terme", "Conditions de paiement"),
+            ("street", "Rue"), ("city", "Ville"), ("zip", "Code postal"),
+            ("phone", "Téléphone"), ("email", "Courriel"), ("terme", "Conditions de paiement"),
             ("pricelist", "Liste de prix"), ("region", "Étiquette Région"),
             ("route", "Étiquette Route livraison"), ("saison", "Saison"), ("type", "Type"),
-            ("soumission", "Soumission"), ("livraison", "Livraison (Monroy/Frais)"),
-            ("telephones", "Téléphones (détail)"), ("courriels", "Courriels (tous)"),
             ("notes", "Notes"), ("contacts", "Contacts-personnes"),
             ("nb_lignes", "Nb lignes Excel (machines)")]
     sh.append([c[1] for c in cols])
@@ -354,7 +357,7 @@ def main(src):
     sh.freeze_panes = "C2"
     for col in sh.columns:
         sh.column_dimensions[col[0].column_letter].width = 22
-    out.save(os.path.join(HERE, "clients_volcan_odoo.xlsx"))
+    out.save(os.path.join(HERE, "contacts_relecture.xlsx"))
 
     print(f"{len(lignes)} lignes Excel -> {len(clients)} fiches clients, "
           f"{sum(len(c['contacts']) for c in clients)} contacts-personnes, "

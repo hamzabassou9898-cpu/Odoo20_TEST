@@ -1,34 +1,37 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Importe les clients Volcan dans Odoo (Contacts), a partir de clients_volcan_data.json
-(produit par prep_clients_volcan.py).
+Importe les clients dans Odoo 20 (Contacts) avec les champs NATIFS seulement,
+a partir de contacts_data.json (produit par prep_contacts.py).
 
-Ce que fait le script :
-  1. Champs personnalises sur le contact (onglet "Volcan / Monroy") :
-     Banniere (societe parente), Nom legal, Anciens # client, Soumission,
-     Livraison (Monroy / Frais), Telephones (detail), Courriels (tous)
-  2. Etiquettes : Region, Route livraison, Saison, Type, Banniere, Produit
-  3. Conditions de paiement : PPA, Cheque, Net 7 jours, Depot bancaire
-  4. Listes de prix : regulier, speciaux, Gaspesie, Harnois, Parkland, Jean Coutu, hiver
-  5. Langue francais (Canada)
-  6. Fiches bannieres (Harnois, Filgo, Parkland, ...)
-  7. 1 fiche par # client, liee a sa banniere, adresse QC / Canada, telephone,
-     courriel, reference, conditions de paiement, liste de prix, etiquettes, notes
-  8. Les contacts-personnes (M. X, gerant...) rattaches a chaque commerce
+  Nom du commerce            -> Nom
+  Banniere                   -> Societe parente (Harnois, Filgo, Parkland...)
+  # client                   -> Reference
+  Adresse / Ville / CP       -> Adresse + Province Quebec + Pays Canada
+  # telephone / Courriel     -> Telephone / Courriel
+  Contact (M. X, gerant)     -> Contacts-personnes rattaches au commerce
+  Terme paiement             -> Conditions de paiement
+  Prix regulier / speciaux.. -> Liste de prix
+  (taxes)                    -> Position fiscale du Quebec, si elle existe
+  Region / Route / Saison / Type / Corpo-Affilie -> Etiquettes
+  Langue                     -> Francais (Canada)
+  Nom legal, anciens #, autres numeros/courriels, consignes -> Notes
 
-Odoo 20 : un contact place SOUS un autre (champ parent) devient une simple adresse
-de celui-ci et lui transfere facturation, conditions de paiement et liste de prix.
-Chaque commerce doit rester son propre client -> la banniere est liee par le champ
-"Banniere (societe parente)" et non par le champ parent natif.
+Odoo 20 : un commerce place sous sa banniere devient une adresse de livraison de
+celle-ci. Conditions de paiement, liste de prix et position fiscale sont alors
+celles de la banniere : le script y met la valeur la plus courante de ses commerces.
+Les commerces independants gardent les leurs.
 
-Relançable sans risque : tout est retrouve par nom / reference et mis a jour.
-Usage : python3 contacts_volcan_monroy.py
+Nettoie aussi ce qu'avait ajoute la version precedente (onglet, champs x_...).
+Relançable sans risque : tout est retrouve par reference / nom et mis a jour.
+Usage : python3 import_contacts.py
 """
 import json
 import os
 import sys
 import xmlrpc.client
+from collections import Counter
+from html import escape
 
 # ===================== À REMPLIR =====================
 URL      = "http://localhost:8070"
@@ -39,7 +42,7 @@ LANGUE   = "fr_CA"
 # =====================================================
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-with open(os.path.join(HERE, "clients_volcan_data.json"), encoding="utf-8") as f:
+with open(os.path.join(HERE, "contacts_data.json"), encoding="utf-8") as f:
     CLIENTS = json.load(f)
 
 common = xmlrpc.client.ServerProxy(f"{URL}/xmlrpc/2/common", allow_none=True)
@@ -60,74 +63,46 @@ def trouver_ou_creer(model, domaine, vals):
         return ids[0], False
     return kw(model, "create", [vals]), True
 
-# ---------------------------------------------------------------- 1) Champs
-CHAMPS = [
-    ("x_banniere_id", "Bannière (société parente)", "many2one", "res.partner"),
-    ("x_nom_legal", "Nom légal", "char", None),
-    ("x_anciens_no_client", "Anciens # client", "char", None),
-    ("x_soumission", "Soumission", "char", None),
-    ("x_livraison", "Livraison", "selection", [("monroy", "Monroy"), ("frais", "Frais de livraison")]),
-    ("x_telephones", "Téléphones (détail)", "text", None),
-    ("x_courriels", "Courriels (tous)", "text", None),
-    ("x_commerce_ids", "Commerces de la bannière", "one2many", ("res.partner", "x_banniere_id")),
-]
-partner_model_id = kw("ir.model", "search", [[["model", "=", "res.partner"]]])[0]
-for name, label, ttype, extra in CHAMPS:
-    if kw("ir.model.fields", "search", [[["model", "=", "res.partner"], ["name", "=", name]]]):
-        continue
-    vals = {"name": name, "field_description": label, "ttype": ttype,
-            "model_id": partner_model_id, "state": "manual"}
-    if ttype == "selection":
-        vals["selection_ids"] = [(0, 0, {"value": v, "name": n, "sequence": i})
-                                 for i, (v, n) in enumerate(extra)]
-    elif ttype == "many2one":
-        vals.update(relation=extra, on_delete="set null")
-    elif ttype == "one2many":
-        vals.update(relation=extra[0], relation_field=extra[1])
-    kw("ir.model.fields", "create", [vals])
-    print(f"Champ cree : {label} ({name})")
+def ecrire_ou_creer(domaine, vals):
+    ids = kw("res.partner", "search", [domaine], {"limit": 1, "context": {"active_test": False}})
+    if ids:
+        kw("res.partner", "write", [ids, vals])
+        return ids[0], False
+    return kw("res.partner", "create", [vals]), True
 
-# Onglet "Volcan / Monroy" sur la fiche contact
-base_form = kw("ir.model.data", "search_read",
-               [[["module", "=", "base"], ["name", "=", "view_partner_form"]]], {"fields": ["res_id"]})[0]["res_id"]
-ARCH = """<data>
-  <xpath expr="//notebook" position="inside">
-    <page string="Volcan / Monroy" name="volcan_monroy">
-      <group>
-        <group string="Identification">
-          <field name="x_banniere_id"/>
-          <field name="x_nom_legal"/>
-          <field name="x_anciens_no_client"/>
-          <field name="x_soumission"/>
-          <field name="x_livraison"/>
-        </group>
-        <group string="Coordonnées complètes">
-          <field name="x_telephones"/>
-          <field name="x_courriels"/>
-        </group>
-      </group>
-      <field name="x_commerce_ids" invisible="not x_commerce_ids" readonly="1">
-        <list>
-          <field name="ref"/>
-          <field name="name"/>
-          <field name="city"/>
-          <field name="phone"/>
-        </list>
-      </field>
-    </page>
-  </xpath>
-</data>"""
+def plus_courant(valeurs):
+    valeurs = [v for v in valeurs if v]
+    return Counter(valeurs).most_common(1)[0][0] if valeurs else None
+
+BANNIERES = sorted({c["parent"] for c in CLIENTS if c["parent"]})
+
+# ---------------------------------------------------------------- 0) Nettoyage version precedente
 vue = kw("ir.ui.view", "search", [[["name", "=", "res.partner.form.volcan"]]])
 if vue:
-    kw("ir.ui.view", "write", [vue, {"arch_db": ARCH}])
-else:
-    kw("ir.ui.view", "create", [{"name": "res.partner.form.volcan", "model": "res.partner",
-                                 "inherit_id": base_form, "type": "form", "arch_db": ARCH}])
-    print("Onglet 'Volcan / Monroy' ajoute a la fiche contact")
+    kw("ir.ui.view", "unlink", [vue])
+    print("Ancien onglet retire de la fiche contact")
+ANCIENS_CHAMPS = ["x_commerce_ids", "x_banniere_id", "x_nom_legal", "x_anciens_no_client",
+                  "x_soumission", "x_livraison", "x_telephones", "x_courriels"]
+for name in ANCIENS_CHAMPS:   # x_commerce_ids d'abord : il depend de x_banniere_id
+    ids = kw("ir.model.fields", "search", [[["model", "=", "res.partner"], ["name", "=", name]]])
+    if ids:
+        kw("ir.model.fields", "unlink", [ids])
+        print(f"Ancien champ personnalise supprime : {name}")
+racine = kw("res.partner.category", "search", [[["name", "=", "Bannière"], ["parent_id", "=", False]]])
+a_supprimer = []
+if racine:   # la banniere est maintenant la societe parente : plus besoin d'etiquette a son nom
+    a_supprimer += kw("res.partner.category", "search",
+                      [[["parent_id", "=", racine[0]], ["name", "in", BANNIERES]]])
+produit = kw("res.partner.category", "search", [[["name", "=", "Produit"], ["parent_id", "=", False]]])
+if produit:
+    a_supprimer += kw("res.partner.category", "search", [[["parent_id", "=", produit[0]]]]) + produit
+if a_supprimer:
+    kw("res.partner.category", "unlink", [a_supprimer])
+    print(f"{len(a_supprimer)} anciennes etiquettes supprimees")
 
 PF = kw("res.partner", "fields_get", [[]], {"attributes": ["type"]})
 
-# ---------------------------------------------------------------- 2) Etiquettes
+# ---------------------------------------------------------------- 1) Etiquettes
 _tags = {}
 def etiquette(parent, nom, couleur):
     if not nom:
@@ -143,7 +118,7 @@ def etiquette(parent, nom, couleur):
         _tags[key] = tid
     return _tags[key]
 
-# ---------------------------------------------------------------- 3) Conditions de paiement
+# ---------------------------------------------------------------- 2) Conditions de paiement
 TERMES_JOURS = {"PPA": 0, "Chèque": 0, "Net 7 jours": 7, "Dépôt bancaire": 0}
 termes = {}
 if "property_payment_term_id" in PF and model_existe("account.payment.term"):
@@ -160,7 +135,7 @@ if "property_payment_term_id" in PF and model_existe("account.payment.term"):
 else:
     print("! Module Facturation absent : conditions de paiement ignorees")
 
-# ---------------------------------------------------------------- 4) Listes de prix
+# ---------------------------------------------------------------- 3) Listes de prix
 listes = {}
 # Odoo 18+ : la liste choisie a la main est stockee dans specific_property_product_pricelist
 champ_liste = ("specific_property_product_pricelist" if "specific_property_product_pricelist" in PF
@@ -168,7 +143,7 @@ champ_liste = ("specific_property_product_pricelist" if "specific_property_produ
 if "property_product_pricelist" in PF:
     company = kw("res.users", "read", [[uid], ["company_id"]])[0]["company_id"][0]
     devise = kw("res.company", "read", [[company], ["currency_id"]])[0]["currency_id"][0]
-    for nom in sorted({c["pricelist"] for c in CLIENTS if c["pricelist"]}):
+    for nom in sorted({c["pricelist"] for c in CLIENTS if c["pricelist"]} | {"Prix régulier"}):
         listes[nom], cree = trouver_ou_creer("product.pricelist", [["name", "=", nom]],
                                              {"name": nom, "currency_id": devise})
         if cree:
@@ -187,7 +162,7 @@ if "property_product_pricelist" in PF:
 else:
     print("! Module Ventes absent : listes de prix ignorees")
 
-# ---------------------------------------------------------------- 5) Langue
+# ---------------------------------------------------------------- 4) Langue
 lang = kw("res.lang", "search_read", [[["code", "=", LANGUE], ["active", "in", [True, False]]]],
           {"fields": ["active"]})
 if lang and not lang[0]["active"]:
@@ -196,39 +171,48 @@ if lang and not lang[0]["active"]:
     print(f"Langue activee : {LANGUE}")
 langue_ok = bool(lang)
 
-# ---------------------------------------------------------------- Pays / province / titres
+# ---------------------------------------------------------------- 5) Pays / province / taxes
 canada = kw("res.country", "search", [[["code", "=", "CA"]]])[0]
 quebec = kw("res.country.state", "search", [[["code", "=", "QC"], ["country_id", "=", canada]]])
 quebec = quebec[0] if quebec else False
+position = False
+if "property_account_position_id" in PF and quebec:
+    fp = kw("account.fiscal.position", "search", [[["state_ids", "in", [quebec]]]], {"limit": 1})
+    if fp:
+        position = fp[0]
+        print(f"Position fiscale utilisee : {kw('account.fiscal.position', 'read', [fp, ['name']])[0]['name']}")
+    else:
+        print("! Aucune position fiscale pour le Quebec (localisation canadienne non installee ?) : ignoree")
 titres = {}
 if "title" in PF:
     for t in ("Madame", "Monsieur"):
         ids = kw("res.partner.title", "search", [[["name", "=", t]]])
         titres[t] = ids[0] if ids else kw("res.partner.title", "create", [{"name": t}])
-a_mobile = "mobile" in PF
 
-def html(lignes):
-    from html import escape
-    return "".join(f"<p>{escape(l)}</p>" for l in lignes) or False
+def facturation(clients):
+    """Conditions de paiement / liste de prix / position fiscale (entite commerciale)."""
+    vals = {}
+    if termes:
+        vals["property_payment_term_id"] = termes.get(plus_courant(c["terme"] for c in clients), False)
+    if listes:
+        vals[champ_liste] = listes.get(plus_courant(c["pricelist"] for c in clients), False)
+    if position:
+        vals["property_account_position_id"] = position
+    return vals
 
-def ecrire_ou_creer(domaine, vals):
-    ids = kw("res.partner", "search", [domaine], {"limit": 1, "context": {"active_test": False}})
-    if ids:
-        kw("res.partner", "write", [ids, vals])
-        return ids[0], False
-    return kw("res.partner", "create", [vals]), True
-
-# ---------------------------------------------------------------- 6) Bannieres
+# ---------------------------------------------------------------- 6) Bannieres (societes parentes)
 parents = {}
-for nom in sorted({c["parent"] for c in CLIENTS if c["parent"]}):
-    tag = etiquette("Bannière", nom, 4)
-    vals = {"name": nom, "country_id": canada, "category_id": [(4, tag)]}
+for nom in BANNIERES:
+    # type "invoice" : sur un devis d'un commerce, la facturation va a la banniere
+    # (et non au 1er contact-personne du commerce), la livraison au commerce
+    vals = {"name": nom, "type": "invoice", "country_id": canada, "state_id": quebec,
+            **facturation([c for c in CLIENTS if c["parent"] == nom])}
     if langue_ok:
         vals["lang"] = LANGUE
     parents[nom], cree = ecrire_ou_creer([["name", "=", nom], ["parent_id", "=", False],
-                                          ["category_id", "in", [tag]]], vals)
+                                          ["ref", "=", False]], vals)
     if cree:
-        print(f"Banniere creee : {nom}")
+        print(f"Societe parente creee : {nom}")
 
 # ---------------------------------------------------------------- 7-8) Commerces + contacts
 nb_new = nb_maj = nb_pers = 0
@@ -238,13 +222,10 @@ for c in CLIENTS:
         etiquette("Route livraison", c["route"], 2),
         etiquette("Saison", f"Saison {c['saison']}" if c["saison"] else None, 3),
         etiquette("Type", f"Type {c['type']}" if c["type"] else None, 5),
-        etiquette("Bannière", c["parent"], 4),
         etiquette("Bannière", c["statut_banniere"], 4),
-        etiquette("Produit", "Slush" if c["slush"] else None, 1),
     ]
     vals = {
         "name": c["nom"],
-        "x_banniere_id": parents.get(c["parent"], False),
         "ref": c["ref"],
         "street": c["street"] or False,
         "city": c["city"] or False,
@@ -254,24 +235,18 @@ for c in CLIENTS:
         "phone": c["phone"] or False,
         "email": c["email"] or False,
         "category_id": [(6, 0, [t for t in tags if t])],
-        "comment": html(c["notes"]),
-        "x_nom_legal": c["nom_legal"] or False,
-        "x_anciens_no_client": c["anciens_no"] or False,
-        "x_soumission": c["soumission"] or False,
-        "x_livraison": c["livraison"] or False,
-        "x_telephones": c["telephones"] or False,
-        "x_courriels": c["courriels"] or False,
+        "comment": "".join(f"<p>{escape(l)}</p>" for l in c["notes"]) or False,
     }
-    if a_mobile:
-        vals["mobile"] = c["mobile"] or False
     if langue_ok:
         vals["lang"] = LANGUE
-    if termes:
-        vals["property_payment_term_id"] = termes.get(c["terme"], False)
-    if listes and c["pricelist"]:
-        vals[champ_liste] = listes[c["pricelist"]]
+    if c["parent"]:
+        # Adresse de livraison de la banniere : garde sa propre adresse,
+        # la facturation suit la banniere
+        vals.update(parent_id=parents[c["parent"]], type="delivery")
+    else:
+        vals.update(parent_id=False, type="contact", **facturation([c]))
 
-    pid, cree = ecrire_ou_creer([["ref", "=", c["ref"]], ["parent_id", "=", False]], vals)
+    pid, cree = ecrire_ou_creer([["ref", "=", c["ref"]]], vals)
     nb_new += cree
     nb_maj += not cree
 
@@ -279,7 +254,7 @@ for c in CLIENTS:
         pv = {"name": p["nom"], "parent_id": pid, "type": "contact",
               "function": p["fonction"] or False}
         if p.get("mobile"):
-            pv["mobile" if a_mobile else "phone"] = p["mobile"]
+            pv["phone"] = p["mobile"]
         if titres and p["titre"]:
             pv["title"] = titres[p["titre"]]
         if langue_ok:
@@ -288,4 +263,4 @@ for c in CLIENTS:
         nb_pers += 1
 
 print(f"\nTermine : {nb_new} commerces crees, {nb_maj} mis a jour, "
-      f"{len(parents)} bannieres, {nb_pers} contacts-personnes.")
+      f"{len(parents)} societes parentes, {nb_pers} contacts-personnes.")
