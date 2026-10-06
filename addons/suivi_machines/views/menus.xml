@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_machines" name="Machines" parent="stock.menu_stock_root" sequence="1"/>
+    <menuitem id="menu_machines_vue_ensemble" name="Vue d'ensemble" parent="menu_machines"
+              action="action_vue_ensemble_machines" sequence="1"/>
+    <menuitem id="menu_machines_toutes" name="Toutes les machines" parent="menu_machines"
+              action="action_machines" sequence="2"/>
+    <menuitem id="menu_machines_interventions" name="Interventions" parent="menu_machines"
+              action="action_interventions" sequence="3"/>
+    <menuitem id="menu_machines_historique" name="Historique" parent="menu_machines"
+              action="action_historique" sequence="4"/>
+</odoo>

@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_intervention_list" model="ir.ui.view">
+        <field name="name">machine.intervention.list</field>
+        <field name="model">machine.intervention</field>
+        <field name="arch" type="xml">
+            <list decoration-danger="type == 'bris'" decoration-muted="state == 'annule'">
+                <field name="name"/>
+                <field name="date"/>
+                <field name="type"/>
+                <field name="lot_id"/>
+                <field name="machine_ref" optional="show"/>
+                <field name="product_id" optional="show"/>
+                <field name="partner_id"/>
+                <field name="user_id" optional="show"/>
+                <field name="state" widget="badge" decoration-success="state == 'fait'"
+                       decoration-info="state == 'planifie'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_intervention_form" model="ir.ui.view">
+        <field name="name">machine.intervention.form</field>
+        <field name="model">machine.intervention</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_fait" type="object" string="Marquer comme faite"
+                            class="btn-primary" invisible="state != 'planifie'"/>
+                    <button name="action_planifier" type="object" string="Remettre en planifiée"
+                            invisible="state == 'planifie'"/>
+                    <button name="action_annuler" type="object" string="Annuler"
+                            invisible="state != 'planifie'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="planifie,fait"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="type"/>
+                            <field name="lot_id" options="{'no_create': True}"/>
+                            <field name="machine_ref"/>
+                            <field name="product_id"/>
+                            <field name="lot_remplacement_id" options="{'no_create': True}"
+                                   invisible="type != 'remplacement'"/>
+                        </group>
+                        <group>
+                            <field name="date"/>
+                            <field name="partner_id"/>
+                            <field name="user_id"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+                    <field name="description" placeholder="Ce qui a été fait, problème constaté, pièces changées..."/>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_intervention_calendar" model="ir.ui.view">
+        <field name="name">machine.intervention.calendar</field>
+        <field name="model">machine.intervention</field>
+        <field name="arch" type="xml">
+            <calendar date_start="date" color="type" mode="month" quick_create="0">
+                <field name="lot_id"/>
+                <field name="partner_id"/>
+                <field name="user_id"/>
+            </calendar>
+        </field>
+    </record>
+
+    <record id="view_intervention_search" model="ir.ui.view">
+        <field name="name">machine.intervention.search</field>
+        <field name="model">machine.intervention</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="lot_id"/>
+                <field name="machine_ref"/>
+                <field name="product_id"/>
+                <field name="partner_id"/>
+                <field name="user_id"/>
+                <filter name="planifie" string="Planifiées" domain="[('state', '=', 'planifie')]"/>
+                <filter name="fait" string="Faites" domain="[('state', '=', 'fait')]"/>
+                <separator/>
+                <filter name="entretien" string="Entretiens" domain="[('type', '=', 'entretien')]"/>
+                <filter name="bris" string="Bris" domain="[('type', '=', 'bris')]"/>
+                <filter name="installation" string="Installations" domain="[('type', '=', 'installation')]"/>
+                <filter name="remplacement" string="Remplacements" domain="[('type', '=', 'remplacement')]"/>
+                <separator/>
+                <filter name="date" string="Date" date="date"/>
+                <group>
+                    <filter name="grp_type" string="Type" context="{'group_by': 'type'}"/>
+                    <filter name="grp_produit" string="Produit" context="{'group_by': 'product_id'}"/>
+                    <filter name="grp_client" string="Client" context="{'group_by': 'partner_id'}"/>
+                    <filter name="grp_tech" string="Technicien" context="{'group_by': 'user_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_interventions" model="ir.actions.act_window">
+        <field name="name">Interventions</field>
+        <field name="res_model">machine.intervention</field>
+        <field name="view_mode">list,form,calendar</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aucune intervention</p>
+            <p>Installation, entretien, bris, réparation, remplacement, ramassage : tout ce qui arrive à une machine.</p>
+        </field>
+    </record>
+</odoo>
