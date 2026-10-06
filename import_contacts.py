@@ -13,9 +13,10 @@ a partir de contacts_data.json (produit par prep_contacts.py).
   Terme paiement             -> Conditions de paiement
   Prix regulier / speciaux.. -> Liste de prix
   (taxes)                    -> Position fiscale du Quebec, si elle existe
-  Region / Route / Saison / Type / Corpo-Affilie -> Etiquettes
+  Ville (secteur)            -> Etiquette, ex. "Québec (Lebourgneuf)", "Lévis (St-Nicolas)"
   Langue                     -> Francais (Canada)
-  Nom legal, anciens #, autres numeros/courriels, consignes -> Notes
+  Nom legal, anciens #, autres numeros/courriels, route livraison,
+  Corpo / Affilie, consignes -> Notes
 
 Odoo 20 : un commerce place sous sa banniere devient une adresse de livraison de
 celle-ci. Conditions de paiement, liste de prix et position fiscale sont alors
@@ -88,34 +89,28 @@ for name in ANCIENS_CHAMPS:   # x_commerce_ids d'abord : il depend de x_banniere
     if ids:
         kw("ir.model.fields", "unlink", [ids])
         print(f"Ancien champ personnalise supprime : {name}")
-racine = kw("res.partner.category", "search", [[["name", "=", "Bannière"], ["parent_id", "=", False]]])
+# Les etiquettes ne servent plus qu'a l'endroit (ville / secteur) : retirer les anciennes categories
+racines = kw("res.partner.category", "search", [[["parent_id", "=", False], ["name", "in",
+             ["Région", "Route livraison", "Saison", "Type", "Bannière", "Produit"]]]])
 a_supprimer = []
-if racine:   # la banniere est maintenant la societe parente : plus besoin d'etiquette a son nom
-    a_supprimer += kw("res.partner.category", "search",
-                      [[["parent_id", "=", racine[0]], ["name", "in", BANNIERES]]])
-produit = kw("res.partner.category", "search", [[["name", "=", "Produit"], ["parent_id", "=", False]]])
-if produit:
-    a_supprimer += kw("res.partner.category", "search", [[["parent_id", "=", produit[0]]]]) + produit
+if racines:
+    a_supprimer = kw("res.partner.category", "search", [[["parent_id", "in", racines]]]) + racines
 if a_supprimer:
     kw("res.partner.category", "unlink", [a_supprimer])
     print(f"{len(a_supprimer)} anciennes etiquettes supprimees")
 
 PF = kw("res.partner", "fields_get", [[]], {"attributes": ["type"]})
 
-# ---------------------------------------------------------------- 1) Etiquettes
+# ---------------------------------------------------------------- 1) Etiquettes = endroit
 _tags = {}
-def etiquette(parent, nom, couleur):
-    if not nom:
+def etiquette_endroit(ville):
+    """1 etiquette par ville / quartier ('St-Marc des carrières' = 'St-Marc des Carrières')."""
+    if not ville:
         return None
-    key = (parent, nom)
+    key = ville.lower()
     if key not in _tags:
-        pid, _ = trouver_ou_creer("res.partner.category",
-                                  [["name", "=", parent], ["parent_id", "=", False]],
-                                  {"name": parent, "color": couleur})
-        tid, _ = trouver_ou_creer("res.partner.category",
-                                  [["name", "=", nom], ["parent_id", "=", pid]],
-                                  {"name": nom, "parent_id": pid, "color": couleur})
-        _tags[key] = tid
+        ids = kw("res.partner.category", "search", [[["name", "=ilike", ville], ["parent_id", "=", False]]])
+        _tags[key] = ids[0] if ids else kw("res.partner.category", "create", [{"name": ville}])
     return _tags[key]
 
 # ---------------------------------------------------------------- 2) Conditions de paiement
@@ -217,13 +212,7 @@ for nom in BANNIERES:
 # ---------------------------------------------------------------- 7-8) Commerces + contacts
 nb_new = nb_maj = nb_pers = 0
 for c in CLIENTS:
-    tags = [
-        etiquette("Région", c["region"], 10),
-        etiquette("Route livraison", c["route"], 2),
-        etiquette("Saison", f"Saison {c['saison']}" if c["saison"] else None, 3),
-        etiquette("Type", f"Type {c['type']}" if c["type"] else None, 5),
-        etiquette("Bannière", c["statut_banniere"], 4),
-    ]
+    tag = etiquette_endroit(c["endroit"])
     vals = {
         "name": c["nom"],
         "ref": c["ref"],
@@ -234,7 +223,7 @@ for c in CLIENTS:
         "country_id": canada,
         "phone": c["phone"] or False,
         "email": c["email"] or False,
-        "category_id": [(6, 0, [t for t in tags if t])],
+        "category_id": [(6, 0, [tag] if tag else [])],
         "comment": "".join(f"<p>{escape(l)}</p>" for l in c["notes"]) or False,
     }
     if langue_ok:
@@ -261,6 +250,13 @@ for c in CLIENTS:
             pv["lang"] = LANGUE
         ecrire_ou_creer([["name", "=", p["nom"]], ["parent_id", "=", pid]], pv)
         nb_pers += 1
+
+# Etiquettes de ville seule devenues inutiles (ex. "Charlesbourg" -> "Québec (Charlesbourg)")
+vieilles = {c["city"] for c in CLIENTS if c["city"]} - {c["endroit"] for c in CLIENTS if c["endroit"]}
+inutiles = kw("res.partner.category", "search", [[["name", "in", sorted(vieilles)],
+                                                  ["parent_id", "=", False], ["partner_ids", "=", False]]])
+if inutiles:
+    kw("res.partner.category", "unlink", [inutiles])
 
 print(f"\nTermine : {nb_new} commerces crees, {nb_maj} mis a jour, "
       f"{len(parents)} societes parentes, {nb_pers} contacts-personnes.")

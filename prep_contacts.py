@@ -63,6 +63,32 @@ PRIX = {
     "HIVER": "Prix hiver",
 }
 
+# ---------- Etiquette "Ville (secteur)" ----------
+# Anciennes villes devenues secteurs de Quebec
+SECTEURS_QUEBEC = {"beauport", "charlesbourg", "sainte-foy", "vanier", "val-bélair",
+                   "lac st-charles"}
+# Commerces notes seulement "Québec" : secteur d'apres l'adresse
+SECTEUR_PAR_REF = {
+    "MON134": "Vieux-Québec", "MON174": "Vieux-Québec",     # rue Sous-le-Fort
+    "MON279": "Saint-Roch", "MON285": "Saint-Roch",         # St-Vallier O. / St-Joseph E.
+    "MON220": "Saint-Sauveur",                              # 600, St-Vallier Ouest
+    "MON241": "Limoilou",                                   # 3e rue
+    "MON291": "Sainte-Foy",                                 # avenue des Hôtels
+    "MON944": "Lebourgneuf",                                # boul. des Galeries
+}
+
+
+def endroit(ville, ref):
+    """'Charlesbourg' -> 'Québec (Charlesbourg)' ; 'Lévis (St-Nicolas)' inchange."""
+    if not ville:
+        return None
+    if ville.lower() in SECTEURS_QUEBEC:
+        return f"Québec ({ville})"
+    if ville == "Québec" and ref in SECTEUR_PAR_REF:
+        return f"Québec ({SECTEUR_PAR_REF[ref]})"
+    return ville
+
+
 FONCTIONS = {
     "prop": "Propriétaire", "proprio": "Propriétaire", "gér": "Gérant(e)",
     "dir": "Direction", "directeur": "Directeur", "resto": "Restaurant",
@@ -268,9 +294,6 @@ def main(src):
         if prix_brut and not pricelist:
             avert.append(f"{ref}: prix inconnu {prix_brut!r}")
 
-        route = one_line(premier("route"))
-        if route:
-            route = f"Route {route}" if route.isdigit() else route.capitalize()
 
 
         contacts = extraire_contacts(premier("contact"))
@@ -281,6 +304,10 @@ def main(src):
                 if prenom and prenom in lib.lower() and "cel" in lib.lower():
                     p["mobile"] = n
                     break
+
+        route = one_line(premier("route"))
+        if route:
+            route = f"Route {route}" if route.isdigit() else route.capitalize()
 
         # Ce qui n'a pas de champ natif dans Odoo -> en tete des notes
         entete = []
@@ -299,6 +326,10 @@ def main(src):
             entete.append("Autres courriels : " + ", ".join(courriels[1:]))
         if terme_note:
             entete.append(f"Paiement : {terme_note}")
+        if statut:
+            entete.append(f"Bannière : {statut}")
+        if route:
+            entete.append(f"Route livraison : {route}")
         if (one_line(premier("livraison")) or "").upper() == "FRAIS":
             entete.append("Frais de livraison à facturer")
         if emplacements:
@@ -312,6 +343,7 @@ def main(src):
             statut_banniere=statut,
             street=one_line(premier("adresse")),
             city=one_line(premier("ville")),
+            endroit=endroit(one_line(premier("ville")), ref),
             zip=one_line(premier("cp")),
             phone=phone,
             email=courriels[0] if courriels else None,
@@ -336,9 +368,9 @@ def main(src):
     cols = [("ref", "Référence (# client)"), ("nom", "Nom"),
             ("parent", "Société parente (bannière)"), ("statut_banniere", "Statut bannière"),
             ("street", "Rue"), ("city", "Ville"), ("zip", "Code postal"),
+            ("endroit", "Étiquette Ville (secteur)"),
             ("phone", "Téléphone"), ("email", "Courriel"), ("terme", "Conditions de paiement"),
-            ("pricelist", "Liste de prix"), ("region", "Étiquette Région"),
-            ("route", "Étiquette Route livraison"), ("saison", "Saison"), ("type", "Type"),
+            ("pricelist", "Liste de prix"),
             ("notes", "Notes"), ("contacts", "Contacts-personnes"),
             ("nb_lignes", "Nb lignes Excel (machines)")]
     sh.append([c[1] for c in cols])
