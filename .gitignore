@@ -40,3 +40,4 @@ dist/
 # Donnees clients (renseignements personnels) : generees localement par prep_contacts.py
 contacts_data.json
 *.xlsx
+machines_data.json
