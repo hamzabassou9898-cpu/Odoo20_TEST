@@ -3,7 +3,7 @@
     "name": "Suivi des machines",
     "summary": "Dossier de chaque machine (numéro de série) : interventions, "
                "historique, santé et tableau de bord",
-    "version": "20.0.1.0.0",
+    "version": "20.0.1.1.0",
     "category": "Inventory/Inventory",
     "author": "Hamza Bassou",
     "license": "LGPL-3",
@@ -15,6 +15,7 @@
         "views/machine_historique_views.xml",
         "views/stock_lot_views.xml",
         "views/product_category_views.xml",
+        "views/sale_order_views.xml",
         "views/menus.xml",
     ],
     "post_init_hook": "post_init_hook",

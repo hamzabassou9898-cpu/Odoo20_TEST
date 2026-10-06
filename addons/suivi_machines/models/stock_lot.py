@@ -109,7 +109,8 @@ class StockLot(models.Model):
 
     def _machine_lignes_vente(self):
         mls = self.env["stock.move.line"].search([("lot_id", "in", self.ids), ("state", "=", "done")])
-        return mls.move_id.sale_line_id
+        choisies = self.env["sale.order.line"].search([("machine_lot_id", "in", self.ids)])
+        return mls.move_id.sale_line_id | choisies
 
     def _compute_ventes(self):
         for lot in self:

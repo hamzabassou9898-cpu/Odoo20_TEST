@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_order_form_machine_lot" model="ir.ui.view">
+        <field name="name">sale.order.form.machine.lot</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//list[@name='sol_list']/column[@name='product_and_description']" position="after">
+                <field name="est_machine" column_invisible="1"/>
+                <field name="machine_lot_id" invisible="not est_machine"
+                       readonly="state == 'cancel'"
+                       options="{'no_create': True}" optional="show" width="130px"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
