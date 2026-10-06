@@ -50,8 +50,9 @@
                                 <span class="fs-4 fw-bold"><field name="machine_total"/></span> machines
                             </div>
                             <div class="small">
+                                En entrepôt : <field name="machine_entrepot"/> ·
                                 En location : <field name="machine_client"/> ·
-                                En entrepôt : <field name="machine_entrepot"/>
+                                Vendues : <field name="machine_vendue"/>
                             </div>
                             <div class="small mt-1">
                                 <span t-if="record.machine_retard.raw_value" class="badge text-bg-danger me-1">

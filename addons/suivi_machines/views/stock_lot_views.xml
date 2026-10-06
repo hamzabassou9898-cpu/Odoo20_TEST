@@ -32,6 +32,7 @@
             <xpath expr="//div[hasclass('oe_title')]" position="before">
                 <field name="machine_statut" widget="badge" invisible="not est_machine"
                        decoration-success="machine_statut == 'chez_client'"
+                       decoration-muted="machine_statut in ('vendue', 'livree')"
                        decoration-info="machine_statut == 'entrepot'"
                        decoration-warning="machine_statut in ('en_reparation', 'a_remplacer')"
                        decoration-danger="machine_statut == 'hors_service'"/>
@@ -104,6 +105,7 @@
                 <field name="product_id"/>
                 <field name="machine_statut" widget="badge"
                        decoration-success="machine_statut == 'chez_client'"
+                       decoration-muted="machine_statut in ('vendue', 'livree')"
                        decoration-info="machine_statut == 'entrepot'"
                        decoration-warning="machine_statut in ('en_reparation', 'a_remplacer')"
                        decoration-danger="machine_statut == 'hors_service'"/>
@@ -187,6 +189,8 @@
                 <separator/>
                 <filter name="chez_client" string="En location (chez un client)"
                         domain="[('machine_statut', '=', 'chez_client')]"/>
+                <filter name="vendue" string="Vendues"
+                        domain="[('machine_statut', '=', 'vendue')]"/>
                 <filter name="entrepot" string="En entrepôt"
                         domain="[('machine_statut', '=', 'entrepot')]"/>
                 <filter name="reparation" string="En réparation"

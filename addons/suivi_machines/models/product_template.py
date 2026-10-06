@@ -8,6 +8,7 @@ class ProductTemplate(models.Model):
     est_categorie_machine = fields.Boolean(related="categ_id.suivi_machine")
     machine_total = fields.Integer("Machines", compute="_compute_machines")
     machine_client = fields.Integer("En location", compute="_compute_machines")
+    machine_vendue = fields.Integer("Vendues", compute="_compute_machines")
     machine_entrepot = fields.Integer("En entrepôt", compute="_compute_machines")
     machine_probleme = fields.Integer("Réparation / à remplacer", compute="_compute_machines")
     machine_retard = fields.Integer("Entretien en retard", compute="_compute_machines")
@@ -26,6 +27,7 @@ class ProductTemplate(models.Model):
             # chez les clients = n° de serie livres (hors stock de l'entrepot)
             tmpl.machine_entrepot = int(tmpl.qty_available)
             tmpl.machine_client = len(lots.filtered(lambda l: l.machine_statut == "chez_client"))
+            tmpl.machine_vendue = len(lots.filtered(lambda l: l.machine_statut == "vendue"))
             tmpl.machine_total = tmpl.machine_entrepot + tmpl.machine_client
             tmpl.machine_probleme = len(lots.filtered(
                 lambda l: l.machine_statut in ("en_reparation", "a_remplacer", "hors_service")))

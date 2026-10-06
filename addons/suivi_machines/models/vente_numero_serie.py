@@ -4,6 +4,26 @@ from odoo import api, fields, models
 from odoo.exceptions import ValidationError
 
 
+class SaleOrder(models.Model):
+    _inherit = "sale.order"
+
+    type_commande = fields.Selection(
+        [("vente", "Vente"), ("location", "Location")], "Type", default="vente",
+        required=True, copy=True, tracking=True,
+        help="Vente : la machine livrée devient « Vendue ». "
+             "Location : elle devient « En location » chez le client.")
+
+    def write(self, vals):
+        res = super().write(vals)
+        if "type_commande" in vals:
+            # Recalculer le statut des machines deja livrees par cette commande
+            lots = self.order_line.move_ids.move_line_ids.lot_id.filtered("est_machine")
+            if lots:
+                self.env.add_to_compute(self.env["stock.lot"]._fields["machine_statut"], lots)
+                lots._recompute_recordset(["machine_statut"])
+        return res
+
+
 class SaleOrderLine(models.Model):
     _inherit = "sale.order.line"
 

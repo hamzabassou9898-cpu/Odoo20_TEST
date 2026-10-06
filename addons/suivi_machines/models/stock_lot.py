@@ -6,6 +6,8 @@ from odoo import api, fields, models
 STATUTS = [
     ("entrepot", "En entrepôt"),
     ("chez_client", "En location (chez un client)"),
+    ("vendue", "Vendue"),
+    ("livree", "Chez un client (sans commande)"),
     ("en_reparation", "En réparation"),
     ("a_remplacer", "À remplacer"),
     ("hors_service", "Hors service"),
@@ -64,17 +66,22 @@ class StockLot(models.Model):
             # on se rabat sur la derniere installation / ramassage saisi en intervention.
             client = self.env["res.partner"]
             installation = False
+            sortie = "livree"   # chez un client sans commande liee
             if lot.location_id.usage == "customer":
                 ml = MoveLine.search([("lot_id", "=", lot._origin.id), ("state", "=", "done"),
                                       ("location_dest_id", "=", lot.location_id.id)],
                                      order="date desc", limit=1)
                 client = ml.picking_id.partner_id or ml.move_id.partner_id
                 installation = ml.date.date() if ml else False
+                commande = ml.move_id.sale_line_id.order_id
+                if commande:
+                    sortie = "chez_client" if commande.type_commande == "location" else "vendue"
             else:
                 derniere = faites.filtered(lambda i: i.type in ("installation", "ramassage"))[-1:]
                 if derniere.type == "installation":
                     client = derniere.partner_id
                     installation = derniere.date.date()
+                    sortie = "chez_client"   # installee par intervention = location
             lot.machine_client_id = client
             lot.date_installation = installation or (installs[-1:].date.date() if installs else False)
             depart = lot.date_dernier_entretien or lot.date_installation
@@ -84,7 +91,7 @@ class StockLot(models.Model):
             if lot.machine_etat != "actif":
                 lot.machine_statut = lot.machine_etat
             elif client:
-                lot.machine_statut = "chez_client"
+                lot.machine_statut = sortie
             elif lot.location_id.usage == "internal":
                 lot.machine_statut = "entrepot"
             else:

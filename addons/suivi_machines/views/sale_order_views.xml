@@ -5,6 +5,9 @@
         <field name="model">sale.order</field>
         <field name="inherit_id" ref="sale.view_order_form"/>
         <field name="arch" type="xml">
+            <field name="partner_id" position="after">
+                <field name="type_commande" widget="radio" options="{'horizontal': true}"/>
+            </field>
             <xpath expr="//list[@name='sol_list']/column[@name='product_and_description']" position="after">
                 <field name="est_machine" column_invisible="1"/>
                 <field name="machine_lot_id" invisible="not est_machine"
