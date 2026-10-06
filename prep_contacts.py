@@ -309,19 +309,14 @@ def main(src):
         if route:
             route = f"Route {route}" if route.isdigit() else route.capitalize()
 
-        # Ce qui n'a pas de champ natif dans Odoo -> en tete des notes
+        # Le reste, sans champ dans Odoo -> en tete des notes
         entete = []
-        nom_legal = one_line(premier("nom_legal"))
-        if nom_legal and nom_legal.upper() != nom.upper():
-            entete.append(f"Nom légal : {nom_legal}")
         if one_line(premier("anciens")):
             entete.append(f"Anciens # client : {one_line(premier('anciens'))}")
         # detail utile seulement s'il y a plus qu'un simple numero (postes, 2e numero...)
         if one_line(tel_txt) and (len(extraire_tels(tel_txt)) > 1
                                   or TEL_RE.sub("", one_line(tel_txt)).strip(" ()-")):
             entete.append(f"Téléphone (détail) : {one_line(tel_txt)}")
-        if one_line(autres_txt):
-            entete.append(f"Autres numéros : {one_line(autres_txt)}")
         if len(courriels) > 1:
             entete.append("Autres courriels : " + ", ".join(courriels[1:]))
         if terme_note:
@@ -339,6 +334,8 @@ def main(src):
         clients.append(OrderedDict(
             ref=ref,
             nom=nom,
+            nom_legal=one_line(premier("nom_legal")),
+            autres_numeros="\n".join(l.strip() for l in (autres_txt or "").split("\n") if l.strip()) or None,
             parent=parent,
             statut_banniere=statut,
             street=one_line(premier("adresse")),
@@ -369,7 +366,8 @@ def main(src):
             ("parent", "Société parente (bannière)"), ("statut_banniere", "Statut bannière"),
             ("street", "Rue"), ("city", "Ville"), ("zip", "Code postal"),
             ("endroit", "Étiquette Ville (secteur)"),
-            ("phone", "Téléphone"), ("email", "Courriel"), ("terme", "Conditions de paiement"),
+            ("nom_legal", "Nom légal"), ("phone", "Téléphone"),
+            ("autres_numeros", "Autres numéros"), ("email", "Courriel"), ("terme", "Conditions de paiement"),
             ("pricelist", "Liste de prix"),
             ("notes", "Notes"), ("contacts", "Contacts-personnes"),
             ("nb_lignes", "Nb lignes Excel (machines)")]

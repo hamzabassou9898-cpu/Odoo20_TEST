@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Importe les clients dans Odoo 20 (Contacts) avec les champs NATIFS seulement,
-a partir de contacts_data.json (produit par prep_contacts.py).
+Importe les clients dans Odoo 20 (Contacts), a partir de contacts_data.json
+(produit par prep_contacts.py). Champs natifs, plus un onglet "Autres informations"
+(Nom legal, Code client = Reference, Autres numeros).
 
   Nom du commerce            -> Nom
   Banniere                   -> Societe parente (Harnois, Filgo, Parkland...)
-  # client                   -> Reference
+  # client                   -> Reference (affichee "Code client" dans l'onglet)
+  Nom legal / Autres numeros -> onglet "Autres informations"
   Adresse / Ville / CP       -> Adresse + Province Quebec + Pays Canada
   # telephone / Courriel     -> Telephone / Courriel
   Contact (M. X, gerant)     -> Contacts-personnes rattaches au commerce
@@ -15,8 +17,7 @@ a partir de contacts_data.json (produit par prep_contacts.py).
   (taxes)                    -> Position fiscale du Quebec, si elle existe
   Ville (secteur)            -> Etiquette, ex. "Québec (Lebourgneuf)", "Lévis (St-Nicolas)"
   Langue                     -> Francais (Canada)
-  Nom legal, anciens #, autres numeros/courriels, route livraison,
-  Corpo / Affilie, consignes -> Notes
+  Anciens #, autres courriels, route livraison, Corpo / Affilie, consignes -> Notes
 
 Odoo 20 : un commerce place sous sa banniere devient une adresse de livraison de
 celle-ci. Conditions de paiement, liste de prix et position fiscale sont alors
@@ -82,7 +83,7 @@ vue = kw("ir.ui.view", "search", [[["name", "=", "res.partner.form.volcan"]]])
 if vue:
     kw("ir.ui.view", "unlink", [vue])
     print("Ancien onglet retire de la fiche contact")
-ANCIENS_CHAMPS = ["x_commerce_ids", "x_banniere_id", "x_nom_legal", "x_anciens_no_client",
+ANCIENS_CHAMPS = ["x_commerce_ids", "x_banniere_id", "x_anciens_no_client",
                   "x_soumission", "x_livraison", "x_telephones", "x_courriels"]
 for name in ANCIENS_CHAMPS:   # x_commerce_ids d'abord : il depend de x_banniere_id
     ids = kw("ir.model.fields", "search", [[["model", "=", "res.partner"], ["name", "=", name]]])
@@ -98,6 +99,39 @@ if racines:
 if a_supprimer:
     kw("res.partner.category", "unlink", [a_supprimer])
     print(f"{len(a_supprimer)} anciennes etiquettes supprimees")
+
+# ---------------------------------------------------------------- Onglet "Autres informations"
+partner_model_id = kw("ir.model", "search", [[["model", "=", "res.partner"]]])[0]
+for name, label, ttype in [("x_nom_legal", "Nom légal", "char"),
+                           ("x_autres_numeros", "Autres numéros", "text")]:
+    if not kw("ir.model.fields", "search", [[["model", "=", "res.partner"], ["name", "=", name]]]):
+        kw("ir.model.fields", "create", [{"name": name, "field_description": label, "ttype": ttype,
+                                          "model_id": partner_model_id, "state": "manual"}])
+        print(f"Champ cree : {label}")
+base_form = kw("ir.model.data", "search_read",
+               [[["module", "=", "base"], ["name", "=", "view_partner_form"]]], {"fields": ["res_id"]})[0]["res_id"]
+ARCH = """<data>
+  <xpath expr="//notebook" position="inside">
+    <page string="Autres informations" name="autres_informations">
+      <group>
+        <group>
+          <field name="x_nom_legal"/>
+          <field name="ref" string="Code client"/>
+        </group>
+        <group>
+          <field name="x_autres_numeros"/>
+        </group>
+      </group>
+    </page>
+  </xpath>
+</data>"""
+vue = kw("ir.ui.view", "search", [[["name", "=", "res.partner.form.autres.informations"]]])
+if vue:
+    kw("ir.ui.view", "write", [vue, {"arch_db": ARCH}])
+else:
+    kw("ir.ui.view", "create", [{"name": "res.partner.form.autres.informations", "model": "res.partner",
+                                 "inherit_id": base_form, "type": "form", "arch_db": ARCH}])
+    print("Onglet 'Autres informations' ajoute a la fiche contact")
 
 PF = kw("res.partner", "fields_get", [[]], {"attributes": ["type"]})
 
@@ -224,6 +258,8 @@ for c in CLIENTS:
         "phone": c["phone"] or False,
         "email": c["email"] or False,
         "category_id": [(6, 0, [tag] if tag else [])],
+        "x_nom_legal": c["nom_legal"] or False,
+        "x_autres_numeros": c["autres_numeros"] or False,
         "comment": "".join(f"<p>{escape(l)}</p>" for l in c["notes"]) or False,
     }
     if langue_ok:
