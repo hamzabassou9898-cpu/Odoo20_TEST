@@ -3,11 +3,11 @@
 """
 Importe les clients dans Odoo 20 (Contacts), a partir de contacts_data.json
 (produit par prep_contacts.py). Champs natifs, plus un onglet "Autres informations"
-(Nom legal, Code client = Reference, Autres numeros).
+(Nom legal, Autres numeros) et le Code client (= Reference) en cadre en haut de la fiche.
 
   Nom du commerce            -> Nom
   Banniere                   -> Societe parente (Harnois, Filgo, Parkland...)
-  # client                   -> Reference (affichee "Code client" dans l'onglet)
+  # client                   -> Reference (affichee "Code client" en cadre, en haut)
   Nom legal / Autres numeros -> onglet "Autres informations"
   Adresse / Ville / CP       -> Adresse + Province Quebec + Pays Canada
   # telephone / Courriel     -> Telephone / Courriel
@@ -111,12 +111,20 @@ for name, label, ttype in [("x_nom_legal", "Nom légal", "char"),
 base_form = kw("ir.model.data", "search_read",
                [[["module", "=", "base"], ["name", "=", "view_partner_form"]]], {"fields": ["res_id"]})[0]["res_id"]
 ARCH = """<data>
+  <!-- Code client (= Reference) en grand, dans un cadre, en haut a droite de la fiche -->
+  <xpath expr="//field[@name='image_1920']/.." position="inside">
+    <div class="border border-2 border-dark rounded-3 px-3 py-2 text-center flex-shrink-0"
+         style="width: 210px;">
+      <div class="text-muted text-uppercase small fw-bold">Code client</div>
+      <style>.o_code_client input { font-weight: 700 !important; font-size: 1.75rem; text-align: center; }</style>
+      <field name="ref" class="o_code_client w-100" placeholder="Code"/>
+    </div>
+  </xpath>
   <xpath expr="//notebook" position="inside">
     <page string="Autres informations" name="autres_informations">
       <group>
         <group>
           <field name="x_nom_legal"/>
-          <field name="ref" string="Code client"/>
         </group>
         <group>
           <field name="x_autres_numeros"/>
