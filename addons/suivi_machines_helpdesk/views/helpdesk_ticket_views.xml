@@ -5,6 +5,17 @@
         <field name="model">helpdesk.ticket</field>
         <field name="inherit_id" ref="helpdesk.helpdesk_ticket_view_form"/>
         <field name="arch" type="xml">
+            <!-- Bouton intelligent en haut : fiche de la machine choisie -->
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_fiche_machine" type="object" class="oe_stat_button"
+                        icon="precision_manufacturing" invisible="not lot_id">
+                    <div class="o_stat_info">
+                        <span class="o_stat_value"><field name="machine_numero"/></span>
+                        <span class="o_stat_text">Fiche de machine</span>
+                    </div>
+                </button>
+            </xpath>
+
             <!-- Code client obligatoire : il remplit le client et ses machines -->
             <xpath expr="//field[@name='partner_id']" position="before">
                 <field name="code_client" required="1" placeholder="ex. MON134"
@@ -25,16 +36,12 @@
                         <field name="machines_client_ids" invisible="1"/>
                         <field name="nb_machines_client"/>
                         <field name="machine_numero" invisible="not lot_id"/>
-                        <field name="product_id" invisible="not lot_id" readonly="1"/>
+                        <field name="machine_modele_id" invisible="not lot_id"/>
                         <field name="lot_id" options="{'no_create': True}"
                                domain="[('id', 'in', machines_client_ids)]"
                                placeholder="Choisir parmi les machines du client"/>
                         <field name="machine_dernier_entretien" invisible="not lot_id"/>
                         <field name="nb_tickets_precedents" string="Historique des appels de service"/>
-                        <div colspan="2" invisible="not lot_id">
-                            <button name="action_fiche_machine" type="object" class="btn btn-secondary"
-                                    icon="precision_manufacturing" string="Fiche de machine"/>
-                        </div>
                     </group>
                 </group>
                 <!-- 3. Description du probleme : description, etiquettes et priorite sont natives -->

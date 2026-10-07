@@ -18,12 +18,11 @@ class HelpdeskTicket(models.Model):
     telephone_commerce = fields.Char("Téléphone", compute="_compute_client")
 
     # ------------------------------------------------------------ machines
-    # Memes noms que les champs d'apres-vente d'Assistance : fusionnes s'ils existent deja
-    product_id = fields.Many2one("product.product", "Modèle", tracking=True)
     lot_id = fields.Many2one("stock.lot", "Numéro de série", index="btree_not_null", tracking=True)
     machines_client_ids = fields.Many2many("stock.lot", string="Machines chez le client",
                                            compute="_compute_machines_client")
     nb_machines_client = fields.Integer("Inventaire chez le client", compute="_compute_machines_client")
+    machine_modele_id = fields.Many2one(related="lot_id.product_id", string="Modèle")
     machine_numero = fields.Char(related="lot_id.ref", string="Machine actuelle")
     machine_statut = fields.Selection(related="lot_id.machine_statut")
     machine_date_installation = fields.Date(related="lot_id.date_installation")
@@ -83,13 +82,6 @@ class HelpdeskTicket(models.Model):
             self.lot_id = False
         if not self.lot_id and len(self.machines_client_ids) == 1:
             self.lot_id = self.machines_client_ids
-        self._onchange_lot_machine()
-
-    @api.onchange("lot_id")
-    def _onchange_lot_machine(self):
-        """Machine choisie : son modele (produit)."""
-        if self.lot_id:
-            self.product_id = self.lot_id.product_id
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -170,5 +162,4 @@ class StockLot(models.Model):
                 "views": [(False, "list"), (False, "form")],
                 "domain": [("lot_id", "=", self.id)],
                 "context": {"default_lot_id": self.id,
-                            "default_product_id": self.product_id.id,
                             "default_partner_id": self.machine_client_id.id}}
