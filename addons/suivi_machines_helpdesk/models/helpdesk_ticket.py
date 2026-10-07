@@ -11,12 +11,16 @@ class HelpdeskTicket(models.Model):
 
     # ------------------------------------------------------------ client
     # Natifs utilises : partner_id, commercial_partner_id (banniere), partner_phone, partner_email,
-    # priority, tag_ids, description, product_id + lot_id (helpdesk_stock), sale_order_id (helpdesk_sale)
+    # priority, tag_ids, description
     commercial_partner_id = fields.Many2one(related="partner_id.commercial_partner_id")
     commerce_id = fields.Many2one("res.partner", "Commerce", compute="_compute_client")
     adresse_commerce = fields.Char("Adresse du commerce", related="commerce_id.contact_address")
 
     # ------------------------------------------------------------ machines
+    # Memes noms que les champs d'apres-vente d'Assistance : fusionnes s'ils existent deja
+    product_id = fields.Many2one("product.product", "Modèle", tracking=True)
+    lot_id = fields.Many2one("stock.lot", "Numéro de série", index="btree_not_null", tracking=True)
+    sale_order_id = fields.Many2one("sale.order", "Contrat", tracking=True)
     machines_client_ids = fields.Many2many("stock.lot", string="Machines chez le client",
                                            compute="_compute_machines_client")
     nb_machines_client = fields.Integer("Inventaire chez le client", compute="_compute_machines_client")

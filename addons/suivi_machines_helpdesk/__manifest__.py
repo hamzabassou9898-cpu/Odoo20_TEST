@@ -7,7 +7,7 @@
     "category": "Services/Helpdesk",
     "author": "Hamza Bassou",
     "license": "LGPL-3",
-    "depends": ["suivi_machines", "helpdesk_stock", "helpdesk_sale"],
+    "depends": ["suivi_machines", "helpdesk"],
     "data": [
         "security/ir.access.csv",
         "views/helpdesk_ticket_views.xml",
