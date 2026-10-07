@@ -108,6 +108,12 @@ for name, label, ttype in [("x_nom_legal", "Nom légal", "char"),
         kw("ir.model.fields", "create", [{"name": name, "field_description": label, "ttype": ttype,
                                           "model_id": partner_model_id, "state": "manual"}])
         print(f"Champ cree : {label}")
+# Code de l'entreprise mere, affiche sur les fiches des contacts-personnes
+if not kw("ir.model.fields", "search", [[["model", "=", "res.partner"], ["name", "=", "x_code_societe"]]]):
+    kw("ir.model.fields", "create", [{"name": "x_code_societe", "field_description": "Code client (entreprise)",
+                                      "ttype": "char", "model_id": partner_model_id, "state": "manual",
+                                      "related": "parent_id.ref", "readonly": True, "store": False}])
+    print("Champ cree : Code client (entreprise)")
 base_form = kw("ir.model.data", "search_read",
                [[["module", "=", "base"], ["name", "=", "view_partner_form"]]], {"fields": ["res_id"]})[0]["res_id"]
 ARCH = """<data>
@@ -116,7 +122,14 @@ ARCH = """<data>
     <div class="border border-2 border-dark rounded-3 px-3 py-2 text-center flex-shrink-0"
          style="width: 210px;">
       <div class="text-muted text-uppercase small fw-bold">Code client</div>
-      <h2 class="mb-0 fw-bold"><field name="ref" class="text-center fw-bold" placeholder="Code"/></h2>
+      <!-- entreprise / commerce : son propre code, modifiable -->
+      <h2 class="mb-0 fw-bold" invisible="parent_id and type == 'contact'">
+        <field name="ref" class="text-center fw-bold" placeholder="Code"/>
+      </h2>
+      <!-- personne rattachee a une entreprise : code de l'entreprise mere -->
+      <h2 class="mb-0 fw-bold" invisible="not parent_id or type != 'contact'">
+        <field name="x_code_societe" class="text-center fw-bold" readonly="1"/>
+      </h2>
     </div>
   </xpath>
   <xpath expr="//notebook" position="inside">
