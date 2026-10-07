@@ -8,12 +8,27 @@ class SaleOrder(models.Model):
     _inherit = "sale.order"
 
     type_commande = fields.Selection(
-        [("vente", "Vente"), ("location", "Location")], "Type", default="vente",
+        [("vente", "Vente"), ("location", "Location")], "Type", default=lambda s: s._default_type_commande(),
         required=True, copy=True, tracking=True,
         help="Vente : la machine livrée devient « Vendue ». "
              "Location : elle devient « En location » chez le client.")
 
+    @api.model
+    def _default_type_commande(self):
+        # Commande creee depuis l'application Location (Enterprise) : toujours une location
+        ctx = self.env.context
+        return "location" if ctx.get("in_rental_app") or ctx.get("default_is_rental_order") else "vente"
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get("is_rental_order"):
+                vals["type_commande"] = "location"
+        return super().create(vals_list)
+
     def write(self, vals):
+        if vals.get("is_rental_order"):
+            vals = dict(vals, type_commande="location")
         res = super().write(vals)
         if "type_commande" in vals:
             # Recalculer le statut des machines deja livrees par cette commande
@@ -32,6 +47,19 @@ class SaleOrderLine(models.Model):
         "stock.lot", "N° de série", copy=False, index="btree_not_null",
         domain="[('product_id', '=', product_id), ('location_id.usage', '=', 'internal')]",
         help="Machine précise à livrer : elle sera réservée sur le bon de livraison.")
+
+    def action_fiche_machine(self):
+        """Ouvre la fiche de la machine (n° de serie) dans Suivi des machines."""
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": self.machine_lot_id.display_name,
+            "res_model": "stock.lot",
+            "res_id": self.machine_lot_id.id,
+            "view_mode": "form",
+            "views": [(False, "form")],
+            "target": "current",
+        }
 
     @api.onchange("product_id")
     def _onchange_product_machine_lot(self):

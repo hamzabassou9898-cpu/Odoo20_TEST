@@ -67,7 +67,11 @@ class StockLot(models.Model):
             client = self.env["res.partner"]
             installation = False
             sortie = "livree"   # chez un client sans commande liee
-            if lot.location_id.usage == "customer":
+            # Location Enterprise : la machine remise au client est dans l'emplacement
+            # interne « Location » de la societe (rental_loc_id) -> chez le client
+            societe = lot.company_id or self.env.company
+            loc_location = societe.rental_loc_id if "rental_loc_id" in societe._fields else False
+            if lot.location_id.usage == "customer" or (loc_location and lot.location_id == loc_location):
                 ml = MoveLine.search([("lot_id", "=", lot._origin.id), ("state", "=", "done"),
                                       ("location_dest_id", "=", lot.location_id.id)],
                                      order="date desc", limit=1)
