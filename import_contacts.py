@@ -116,8 +116,7 @@ ARCH = """<data>
     <div class="border border-2 border-dark rounded-3 px-3 py-2 text-center flex-shrink-0"
          style="width: 210px;">
       <div class="text-muted text-uppercase small fw-bold">Code client</div>
-      <style>.o_code_client input { font-weight: 700 !important; font-size: 1.75rem; text-align: center; }</style>
-      <field name="ref" class="o_code_client w-100" placeholder="Code"/>
+      <h2 class="mb-0 fw-bold"><field name="ref" class="text-center fw-bold" placeholder="Code"/></h2>
     </div>
   </xpath>
   <xpath expr="//notebook" position="inside">
