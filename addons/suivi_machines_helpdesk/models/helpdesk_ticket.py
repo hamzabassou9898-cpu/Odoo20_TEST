@@ -14,23 +14,21 @@ class HelpdeskTicket(models.Model):
     # priority, tag_ids, description
     commercial_partner_id = fields.Many2one(related="partner_id.commercial_partner_id")
     commerce_id = fields.Many2one("res.partner", "Commerce", compute="_compute_client")
-    adresse_commerce = fields.Char("Adresse du commerce", related="commerce_id.contact_address")
+    adresse_commerce = fields.Char("Adresse du commerce", compute="_compute_client")
+    telephone_commerce = fields.Char("Téléphone", compute="_compute_client")
 
     # ------------------------------------------------------------ machines
     # Memes noms que les champs d'apres-vente d'Assistance : fusionnes s'ils existent deja
     product_id = fields.Many2one("product.product", "Modèle", tracking=True)
     lot_id = fields.Many2one("stock.lot", "Numéro de série", index="btree_not_null", tracking=True)
-    sale_order_id = fields.Many2one("sale.order", "Contrat", tracking=True)
     machines_client_ids = fields.Many2many("stock.lot", string="Machines chez le client",
                                            compute="_compute_machines_client")
     nb_machines_client = fields.Integer("Inventaire chez le client", compute="_compute_machines_client")
-    machine_numero = fields.Char(related="lot_id.ref", string="Numéro de machine")
+    machine_numero = fields.Char(related="lot_id.ref", string="Machine actuelle")
     machine_statut = fields.Selection(related="lot_id.machine_statut")
     machine_date_installation = fields.Date(related="lot_id.date_installation")
     machine_dernier_entretien = fields.Date(related="lot_id.date_dernier_entretien")
     machine_prochain_entretien = fields.Date(related="lot_id.date_prochain_entretien")
-    date_debut_location = fields.Datetime("Début de la location", compute="_compute_location")
-    date_fin_location = fields.Datetime("Fin de la location", compute="_compute_location")
 
     # ------------------------------------------------------------ historiques
     machine_historique_ids = fields.One2many(related="lot_id.historique_ids",
@@ -89,19 +87,9 @@ class HelpdeskTicket(models.Model):
 
     @api.onchange("lot_id")
     def _onchange_lot_machine(self):
-        """Machine choisie : modele (produit) et contrat (commande) natifs du ticket."""
-        if not self.lot_id:
-            return
-        self.product_id = self.lot_id.product_id
-        commande = self._contrat_machine(self.lot_id)
-        if commande:
-            self.sale_order_id = commande
-
-    @api.model
-    def _contrat_machine(self, lot):
-        lignes = lot.sudo()._machine_lignes_vente().filtered(lambda l: l.order_id.state == "sale")
-        commandes = lignes.order_id.sorted("date_order", reverse=True)
-        return (commandes.filtered(lambda o: o.type_commande == "location") or commandes)[:1].sudo(False)
+        """Machine choisie : son modele (produit)."""
+        if self.lot_id:
+            self.product_id = self.lot_id.product_id
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -113,12 +101,15 @@ class HelpdeskTicket(models.Model):
         return super().create(vals_list)
 
     # ------------------------------------------------------------ calculs
-    @api.depends("partner_id")
+    @api.depends("partner_id.parent_id", "partner_id.type", "partner_id.phone", "partner_id.contact_address",
+                 "partner_id.parent_id.phone", "partner_id.parent_id.contact_address")
     def _compute_client(self):
         for ticket in self:
             p = ticket.partner_id
             commerce = p.parent_id if p.parent_id and p.type == "contact" else p
             ticket.commerce_id = commerce
+            ticket.adresse_commerce = commerce._display_address(without_name=True, separator=", ") if commerce else False
+            ticket.telephone_commerce = commerce.phone
 
     @api.depends("partner_id")
     def _compute_machines_client(self):
@@ -129,20 +120,6 @@ class HelpdeskTicket(models.Model):
                               order="name") if commerce else Lot
             ticket.machines_client_ids = lots.sudo(False)
             ticket.nb_machines_client = len(lots)
-
-    @api.depends("lot_id", "sale_order_id")
-    def _compute_location(self):
-        for ticket in self:
-            commande = ticket.sale_order_id.sudo()
-            # Dates de la location (application Location Enterprise), sinon installation
-            debut = fin = False
-            if commande:
-                debut = commande["rental_start_date"] if "rental_start_date" in commande._fields else False
-                fin = commande["rental_return_date"] if "rental_return_date" in commande._fields else False
-            if not debut and ticket.lot_id.date_installation:
-                debut = fields.Datetime.to_datetime(ticket.lot_id.date_installation)
-            ticket.date_debut_location = debut
-            ticket.date_fin_location = fin
 
     @api.depends("partner_id", "lot_id")
     def _compute_tickets_precedents(self):
@@ -180,7 +157,7 @@ class StockLot(models.Model):
     _inherit = "stock.lot"
 
     ticket_ids = fields.One2many("helpdesk.ticket", "lot_id", "Appels de service")  # lot natif du ticket
-    nb_tickets = fields.Integer("Appels de service", compute="_compute_nb_tickets")
+    nb_tickets = fields.Integer("Nb appels de service", compute="_compute_nb_tickets")
 
     def _compute_nb_tickets(self):
         for lot in self:

@@ -11,47 +11,54 @@
                        class="fw-bold"/>
             </xpath>
 
-            <!-- Dossier du client et de sa machine, juste sous l'en-tete du ticket -->
+            <!-- 1. Identification du client  /  2. Parc machines du client -->
             <xpath expr="//field[@name='partner_id']/ancestor::group[last()]" position="after">
                 <group name="dossier_client_machine" invisible="not commerce_id">
-                    <group string="Client">
-                        <!-- Client, telephone, courriel : champs natifs du ticket (plus haut) -->
-                        <field name="commercial_partner_id" string="Bannière"
+                    <group string="1. Identification du client">
+                        <field name="commercial_partner_id" string="Nom de la bannière"
                                invisible="commercial_partner_id == commerce_id"/>
-                        <field name="commerce_id" invisible="1"/>
+                        <field name="commerce_id" string="Client" readonly="1"/>
                         <field name="adresse_commerce"/>
-                        <field name="nb_machines_client"/>
-                        <field name="nb_tickets_precedents" string="Appels de service"/>
+                        <field name="telephone_commerce" widget="phone"/>
                     </group>
-                    <group string="Machine">
+                    <group string="2. Parc machines du client">
                         <field name="machines_client_ids" invisible="1"/>
-                        <field name="lot_id" string="Numéro de série" options="{'no_create': True}"
+                        <field name="nb_machines_client"/>
+                        <field name="machine_numero" invisible="not lot_id"/>
+                        <field name="product_id" invisible="not lot_id" readonly="1"/>
+                        <field name="lot_id" options="{'no_create': True}"
                                domain="[('id', 'in', machines_client_ids)]"
                                placeholder="Choisir parmi les machines du client"/>
-                        <field name="product_id" string="Modèle" invisible="not lot_id"/>
-                        <field name="machine_numero" invisible="not lot_id"/>
-                        <field name="machine_statut" widget="badge" invisible="not lot_id"/>
-                        <field name="sale_order_id" string="Contrat" invisible="not sale_order_id"/>
-                        <field name="date_debut_location" invisible="not date_debut_location"/>
-                        <field name="date_fin_location" invisible="not date_fin_location"/>
                         <field name="machine_dernier_entretien" invisible="not lot_id"/>
-                        <field name="machine_prochain_entretien" invisible="not lot_id"/>
-                        <div colspan="2" class="d-flex gap-2" invisible="not lot_id">
+                        <field name="nb_tickets_precedents" string="Historique des appels de service"/>
+                        <div colspan="2" invisible="not lot_id">
                             <button name="action_fiche_machine" type="object" class="btn btn-secondary"
                                     icon="precision_manufacturing" string="Fiche de machine"/>
-                            <button name="action_nouvelle_intervention" type="object"
-                                    class="btn btn-secondary" icon="build" string="Nouvelle intervention"/>
                         </div>
                     </group>
+                </group>
+                <!-- 3. Description du probleme : description, etiquettes et priorite sont natives -->
+                <group name="description_probleme" string="3. Description du problème">
+                    <field name="diagnostic_initial" string="Notes internes - Diagnostic initial"
+                           placeholder="Diagnostic initial, pistes de solution..."/>
                 </group>
             </xpath>
 
             <!-- Onglets : diagnostic, historiques -->
             <xpath expr="//sheet" position="inside">
                 <notebook name="suivi_machine">
-                    <page string="Diagnostic initial" name="diagnostic_initial">
-                        <field name="diagnostic_initial"
-                               placeholder="Notes internes : diagnostic initial, pistes de solution..."/>
+                    <page string="Historique d'intervention" name="interventions_machine"
+                          invisible="not lot_id">
+                        <field name="machine_intervention_ids" readonly="1">
+                            <list create="false" edit="false" delete="false">
+                                <field name="name"/>
+                                <field name="date"/>
+                                <field name="type" widget="badge"/>
+                                <field name="description"/>
+                                <field name="user_id" string="Technicien"/>
+                                <field name="state" widget="badge"/>
+                            </list>
+                        </field>
                     </page>
                     <page string="Historique de la machine" name="historique_machine"
                           invisible="not lot_id">
@@ -64,19 +71,6 @@
                                 <field name="partner_id"/>
                                 <field name="user_id" optional="hide"/>
                                 <field name="state"/>
-                            </list>
-                        </field>
-                    </page>
-                    <page string="Interventions" name="interventions_machine"
-                          invisible="not lot_id">
-                        <field name="machine_intervention_ids" readonly="1">
-                            <list create="false" edit="false" delete="false">
-                                <field name="name"/>
-                                <field name="date"/>
-                                <field name="type" widget="badge"/>
-                                <field name="description"/>
-                                <field name="user_id" string="Technicien"/>
-                                <field name="state" widget="badge"/>
                             </list>
                         </field>
                     </page>
