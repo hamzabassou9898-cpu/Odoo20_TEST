@@ -17,16 +17,20 @@ class ProductTemplate(models.Model):
         today = fields.Date.context_today(self)
         Lot = self.env["stock.lot"]
         par_tmpl = {}
-        for lot in Lot.search_fetch([("product_id.product_tmpl_id", "in", self.ids)],
-                                    ["product_id", "machine_statut", "date_prochain_entretien"]):
-            par_tmpl.setdefault(lot.product_id.product_tmpl_id.id, Lot)
-            par_tmpl[lot.product_id.product_tmpl_id.id] |= lot
+        tous = Lot.search_fetch([("product_id.product_tmpl_id", "in", self.ids)],
+                                ["product_id", "machine_statut", "date_prochain_entretien", "location_id"])
+        for lot in tous:
+            par_tmpl.setdefault(lot.product_id.product_tmpl_id.id, []).append(lot.id)
         for tmpl in self:
-            lots = par_tmpl.get(tmpl.id, Lot)
+            lots = tous.browse(par_tmpl.get(tmpl.id, []))
             # En entrepot = quantite en stock de l'Inventaire (avec ou sans n° de serie) ;
             # chez les clients = n° de serie livres (hors stock de l'entrepot)
-            tmpl.machine_entrepot = int(tmpl.qty_available)
-            tmpl.machine_client = len(lots.filtered(lambda l: l.machine_statut == "chez_client"))
+            en_location = lots.filtered(lambda l: l.machine_statut == "chez_client")
+            # Location Enterprise : la machine louee reste dans l'emplacement interne « Location »
+            # (compte dans le stock) -> ne pas la compter aussi en entrepot
+            louees_internes = len(en_location.filtered(lambda l: l.location_id.usage == "internal"))
+            tmpl.machine_entrepot = int(tmpl.qty_available) - louees_internes
+            tmpl.machine_client = len(en_location)
             tmpl.machine_vendue = len(lots.filtered(lambda l: l.machine_statut == "vendue"))
             tmpl.machine_total = tmpl.machine_entrepot + tmpl.machine_client
             tmpl.machine_probleme = len(lots.filtered(

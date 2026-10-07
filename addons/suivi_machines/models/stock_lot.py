@@ -30,7 +30,7 @@ class StockLot(models.Model):
     machine_statut = fields.Selection(
         STATUTS, "Statut", compute="_compute_machine", store=True,
         group_expand="_expand_statuts")
-    machine_client_id = fields.Many2one("res.partner", "Client actuel",
+    machine_client_id = fields.Many2one("res.partner", "Client actuel", index="btree_not_null",
                                         compute="_compute_machine", store=True)
     date_installation = fields.Date("Date d'installation", compute="_compute_machine", store=True)
     date_dernier_entretien = fields.Date("Dernier entretien", compute="_compute_machine", store=True)
@@ -81,8 +81,12 @@ class StockLot(models.Model):
                 if commande:
                     sortie = "chez_client" if commande.type_commande == "location" else "vendue"
             else:
+                # Installation saisie en intervention : prise en compte seulement si elle est
+                # plus recente que le dernier mouvement d'inventaire (ex. retour en entrepot)
                 derniere = faites.filtered(lambda i: i.type in ("installation", "ramassage"))[-1:]
-                if derniere.type == "installation":
+                dernier_mvt = MoveLine.search([("lot_id", "=", lot._origin.id), ("state", "=", "done")],
+                                              order="date desc", limit=1) if derniere and lot._origin.id else MoveLine
+                if derniere.type == "installation" and (not dernier_mvt or derniere.date > dernier_mvt.date):
                     client = derniere.partner_id
                     installation = derniere.date.date()
                     sortie = "chez_client"   # installee par intervention = location
@@ -103,7 +107,8 @@ class StockLot(models.Model):
 
     @api.depends("date_mise_service", "intervention_ids.date", "intervention_ids.type")
     def _compute_age(self):
-        """Mise en service, sinon 1re installation, sinon 1re entree dans l'inventaire."""
+        """Mise en service, sinon 1re installation, sinon 1re entree dans l'inventaire,
+        sinon creation du n° de serie."""
         today = fields.Date.context_today(self)
         for lot in self:
             installs = lot.intervention_ids.filtered(lambda i: i.type == "installation")
@@ -111,7 +116,8 @@ class StockLot(models.Model):
                 [("lot_id", "=", lot._origin.id), ("state", "=", "done")], order="date", limit=1)
             debut = (lot.date_mise_service
                      or (min(installs.mapped("date")).date() if installs else False)
-                     or (premier_mvt.date.date() if premier_mvt else False))
+                     or (premier_mvt.date.date() if premier_mvt else False)
+                     or (lot.create_date.date() if lot.create_date else False))
             if not debut:
                 lot.age_machine = False
                 continue

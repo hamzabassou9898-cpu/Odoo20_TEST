@@ -45,7 +45,9 @@ class HelpdeskTicket(models.Model):
         code = (code or "").strip()
         if not code:
             return self.env["res.partner"]
-        clients = self.env["res.partner"].search([("ref", "=ilike", code)])
+        # Comparaison exacte (sans tenir compte des majuscules) : « _ » et « % » ne sont pas des jokers
+        clients = self.env["res.partner"].search([("ref", "ilike", code)]).filtered(
+            lambda p: (p.ref or "").strip().upper() == code.upper())
         # Le commerce (ou la societe) plutot qu'une personne rattachee
         return clients.filtered(lambda p: not (p.parent_id and p.type == "contact"))[:1] or clients[:1]
 
@@ -107,7 +109,7 @@ class HelpdeskTicket(models.Model):
         Lot = self.env["stock.lot"].sudo()
         for ticket in self:
             commerce = ticket.commerce_id
-            lots = Lot.search([("est_machine", "=", True), ("machine_client_id", "child_of", commerce.id)],
+            lots = Lot.search([("est_machine", "=", True), ("machine_client_id", "child_of", commerce._origin.id)],
                               order="name") if commerce else Lot
             ticket.machines_client_ids = lots.sudo(False)
             ticket.nb_machines_client = len(lots)
@@ -117,9 +119,9 @@ class HelpdeskTicket(models.Model):
         for ticket in self:
             domaine = []
             if ticket.commerce_id:
-                domaine = [("partner_id", "child_of", ticket.commerce_id.id)]
+                domaine = [("partner_id", "child_of", ticket.commerce_id._origin.id)]
             if ticket.lot_id:
-                domaine = ["|", ("lot_id", "=", ticket.lot_id.id)] + (
+                domaine = ["|", ("lot_id", "=", ticket.lot_id._origin.id)] + (
                     domaine or [("id", "=", 0)])
             autres = self.search([("id", "!=", ticket._origin.id)] + domaine,
                                  order="create_date desc") if domaine else self.browse()
