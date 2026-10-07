@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Fiche de la machine : bouton vers ses appels de service -->
+    <record id="view_lot_form_machine_tickets" model="ir.ui.view">
+        <field name="name">stock.lot.form.machine.tickets</field>
+        <field name="model">stock.lot</field>
+        <field name="inherit_id" ref="stock.view_production_lot_form"/>
+        <field name="arch" type="xml">
+            <div name="button_box" position="inside">
+                <button name="action_voir_tickets" type="object" class="oe_stat_button"
+                        icon="support_agent" invisible="not est_machine">
+                    <field name="nb_tickets" widget="statinfo" string="Appels de service"/>
+                </button>
+            </div>
+        </field>
+    </record>
+</odoo>

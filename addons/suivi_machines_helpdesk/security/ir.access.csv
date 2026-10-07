@@ -1,0 +1,4 @@
+id,name,model_id,group_id/id,operation,domain
+access_stock_lot_helpdesk,Machines : lecture (assistance),stock.lot,helpdesk.group_helpdesk_user,r,
+access_sale_order_helpdesk,Contrats : lecture (assistance),sale.order,helpdesk.group_helpdesk_user,r,
+access_machine_intervention_helpdesk,Interventions (assistance),machine.intervention,helpdesk.group_helpdesk_user,crud,

@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="helpdesk_ticket_view_form_machine" model="ir.ui.view">
+        <field name="name">helpdesk.ticket.form.suivi.machines</field>
+        <field name="model">helpdesk.ticket</field>
+        <field name="inherit_id" ref="helpdesk.helpdesk_ticket_view_form"/>
+        <field name="arch" type="xml">
+            <!-- Code client obligatoire : il remplit le client et ses machines -->
+            <xpath expr="//field[@name='partner_id']" position="before">
+                <field name="code_client" required="1" placeholder="ex. MON134"
+                       class="fw-bold"/>
+            </xpath>
+
+            <!-- Dossier du client et de sa machine, juste sous l'en-tete du ticket -->
+            <xpath expr="//field[@name='partner_id']/ancestor::group[last()]" position="after">
+                <group name="dossier_client_machine" invisible="not commerce_id">
+                    <group string="Client">
+                        <field name="banniere_id" invisible="not banniere_id"/>
+                        <field name="commerce_id"/>
+                        <field name="adresse_commerce"/>
+                        <field name="telephone_commerce" widget="phone"/>
+                        <field name="courriel_commerce" widget="email" invisible="not courriel_commerce"/>
+                        <field name="contact_id" invisible="not contact_id"/>
+                        <field name="nb_machines_client"/>
+                        <field name="nb_tickets_precedents" string="Appels de service"/>
+                    </group>
+                    <group string="Machine">
+                        <field name="machines_client_ids" invisible="1"/>
+                        <field name="machine_lot_id" options="{'no_create': True}"
+                               placeholder="Choisir parmi les machines du client"/>
+                        <field name="machine_modele_id" invisible="not machine_lot_id"/>
+                        <field name="machine_numero" invisible="not machine_lot_id"/>
+                        <field name="machine_statut" widget="badge" invisible="not machine_lot_id"/>
+                        <field name="commande_location_id" invisible="not commande_location_id"/>
+                        <field name="date_debut_location" invisible="not date_debut_location"/>
+                        <field name="date_fin_location" invisible="not date_fin_location"/>
+                        <field name="machine_dernier_entretien" invisible="not machine_lot_id"/>
+                        <field name="machine_prochain_entretien" invisible="not machine_lot_id"/>
+                        <div colspan="2" class="d-flex gap-2" invisible="not machine_lot_id">
+                            <button name="action_fiche_machine" type="object" class="btn btn-secondary"
+                                    icon="precision_manufacturing" string="Fiche de machine"/>
+                            <button name="action_nouvelle_intervention" type="object"
+                                    class="btn btn-secondary" icon="build" string="Nouvelle intervention"/>
+                        </div>
+                    </group>
+                </group>
+            </xpath>
+
+            <!-- Onglets : diagnostic, historiques -->
+            <xpath expr="//sheet" position="inside">
+                <notebook name="suivi_machine">
+                    <page string="Diagnostic initial" name="diagnostic_initial">
+                        <field name="diagnostic_initial"
+                               placeholder="Notes internes : diagnostic initial, pistes de solution..."/>
+                    </page>
+                    <page string="Historique de la machine" name="historique_machine"
+                          invisible="not machine_lot_id">
+                        <field name="machine_historique_ids" readonly="1">
+                            <list create="false" edit="false" delete="false">
+                                <field name="date"/>
+                                <field name="type" widget="badge"/>
+                                <field name="reference"/>
+                                <field name="description"/>
+                                <field name="partner_id"/>
+                                <field name="user_id" optional="hide"/>
+                                <field name="state"/>
+                            </list>
+                        </field>
+                    </page>
+                    <page string="Interventions" name="interventions_machine"
+                          invisible="not machine_lot_id">
+                        <field name="machine_intervention_ids" readonly="1">
+                            <list create="false" edit="false" delete="false">
+                                <field name="name"/>
+                                <field name="date"/>
+                                <field name="type" widget="badge"/>
+                                <field name="description"/>
+                                <field name="user_id" string="Technicien"/>
+                                <field name="state" widget="badge"/>
+                            </list>
+                        </field>
+                    </page>
+                    <page string="Appels de service" name="appels_service" invisible="not commerce_id">
+                        <field name="tickets_precedents_ids" readonly="1">
+                            <list create="false" edit="false" delete="false">
+                                <field name="create_date" string="Date"/>
+                                <field name="name"/>
+                                <field name="machine_lot_id"/>
+                                <field name="tag_ids" widget="many2many_tags"/>
+                                <field name="priority" widget="priority"/>
+                                <field name="user_id"/>
+                                <field name="stage_id"/>
+                            </list>
+                        </field>
+                    </page>
+                    <page string="Machines chez le client" name="machines_client" invisible="not commerce_id">
+                        <field name="machines_client_ids" readonly="1">
+                            <list create="false" edit="false" delete="false">
+                                <field name="name" string="Numéro de série"/>
+                                <field name="ref" string="Numéro de machine"/>
+                                <field name="product_id" string="Modèle"/>
+                                <field name="machine_statut" widget="badge"/>
+                                <field name="date_installation"/>
+                                <field name="date_dernier_entretien"/>
+                                <field name="date_prochain_entretien"/>
+                            </list>
+                        </field>
+                    </page>
+                </notebook>
+            </xpath>
+        </field>
+    </record>
+</odoo>
