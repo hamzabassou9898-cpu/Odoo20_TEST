@@ -44,16 +44,15 @@
                         <field name="nb_tickets_precedents" string="Historique des appels de service"/>
                     </group>
                 </group>
-                <!-- 3. Description du probleme : description, etiquettes et priorite sont natives -->
-                <group name="description_probleme" string="3. Description du problème">
-                    <field name="diagnostic_initial" string="Notes internes - Diagnostic initial"
-                           placeholder="Diagnostic initial, pistes de solution..."/>
-                </group>
             </xpath>
 
-            <!-- Onglets : diagnostic, historiques -->
-            <xpath expr="//sheet" position="inside">
-                <notebook name="suivi_machine">
+            <!-- Onglet natif « Description » renomme « Notes internes » -->
+            <xpath expr="//page[.//field[@name='description']]" position="attributes">
+                <attribute name="string">Notes internes</attribute>
+            </xpath>
+
+            <!-- Onglets d'historique, dans le carnet natif du ticket -->
+            <xpath expr="//page[.//field[@name='description']]" position="after">
                     <page string="Historique d'intervention" name="interventions_machine"
                           invisible="not lot_id">
                         <field name="machine_intervention_ids" readonly="1">
@@ -107,7 +106,6 @@
                             </list>
                         </field>
                     </page>
-                </notebook>
             </xpath>
         </field>
     </record>

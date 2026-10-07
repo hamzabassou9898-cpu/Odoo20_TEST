@@ -38,7 +38,6 @@ class HelpdeskTicket(models.Model):
         "helpdesk.ticket", "helpdesk_ticket_precedent_rel", "ticket_id", "precedent_id",
         string="Appels de service", compute="_compute_tickets_precedents")
     nb_tickets_precedents = fields.Integer("Nb appels de service", compute="_compute_tickets_precedents")
-    diagnostic_initial = fields.Html("Notes internes - Diagnostic initial")
 
     # ------------------------------------------------------------ code client <-> client
     @api.model
