@@ -13,6 +13,34 @@ class SaleOrder(models.Model):
         help="Vente : la machine livrée devient « Vendue ». "
              "Location : elle devient « En location » chez le client.")
 
+    machine_ids = fields.Many2many("stock.lot", string="Machines", compute="_compute_machine_ids")
+    nb_machines = fields.Integer("Fiche de machine", compute="_compute_machine_ids")
+
+    @api.depends("order_line.machine_lot_id", "order_line.move_ids.move_line_ids.lot_id")
+    def _compute_machine_ids(self):
+        for order in self:
+            lots = (order.order_line.machine_lot_id
+                    | order.order_line.move_ids.move_line_ids.lot_id.filtered("est_machine"))
+            order.machine_ids = lots
+            order.nb_machines = len(lots)
+
+    def action_fiches_machines(self):
+        """Une machine : sa fiche. Plusieurs : la liste des machines de la commande."""
+        self.ensure_one()
+        if len(self.machine_ids) == 1:
+            return {"type": "ir.actions.act_window", "name": self.machine_ids.display_name,
+                    "res_model": "stock.lot", "res_id": self.machine_ids.id,
+                    "view_mode": "form", "views": [(False, "form")], "target": "current"}
+        return {
+            "type": "ir.actions.act_window",
+            "name": self.env._("Machines de %s", self.name),
+            "res_model": "stock.lot",
+            "view_mode": "list,form",
+            "views": [(False, "list"), (False, "form")],
+            "domain": [("id", "in", self.machine_ids.ids)],
+            "target": "current",
+        }
+
     @api.model
     def _default_type_commande(self):
         # Commande creee depuis l'application Location (Enterprise) : toujours une location

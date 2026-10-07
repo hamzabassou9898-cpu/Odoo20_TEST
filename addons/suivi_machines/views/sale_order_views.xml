@@ -5,6 +5,15 @@
         <field name="model">sale.order</field>
         <field name="inherit_id" ref="sale.view_order_form"/>
         <field name="arch" type="xml">
+            <div name="button_box" position="inside">
+                <button name="action_fiches_machines" type="object" class="oe_stat_button"
+                        icon="precision_manufacturing" invisible="not nb_machines">
+                    <div class="o_stat_info">
+                        <span class="o_stat_value"><field name="nb_machines"/></span>
+                        <span class="o_stat_text">Fiche de machine</span>
+                    </div>
+                </button>
+            </div>
             <field name="partner_id" position="after">
                 <field name="type_commande" widget="radio" options="{'horizontal': true}"/>
             </field>
