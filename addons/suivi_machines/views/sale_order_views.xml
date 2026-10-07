@@ -22,9 +22,6 @@
                 <field name="machine_lot_id" invisible="not est_machine"
                        readonly="state == 'cancel'"
                        options="{'no_create': True}" optional="show" width="130px"/>
-                <button name="action_fiche_machine" type="object" string="Fiche de machine"
-                        icon="precision_manufacturing" class="btn-link text-nowrap"
-                        invisible="not machine_lot_id"/>
             </xpath>
         </field>
     </record>
