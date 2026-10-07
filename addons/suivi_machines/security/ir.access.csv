@@ -1,0 +1,4 @@
+id,name,model_id,group_id/id,operation,domain
+access_machine_intervention_user,Interventions : utilisateurs inventaire,machine.intervention,stock.group_stock_user,crud,
+access_machine_intervention_employe,Interventions : lecture,machine.intervention,base.group_user,r,
+access_machine_historique_employe,Historique machine : lecture,machine.historique,base.group_user,r,

@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Fiche du numero de serie = dossier de la machine -->
+    <record id="view_lot_form_machine" model="ir.ui.view">
+        <field name="name">stock.lot.form.machine</field>
+        <field name="model">stock.lot</field>
+        <field name="inherit_id" ref="stock.view_production_lot_form"/>
+        <field name="arch" type="xml">
+            <div name="button_box" position="inside">
+                <field name="est_machine" invisible="1"/>
+                <button name="action_voir_interventions" type="object" class="oe_stat_button"
+                        icon="build" invisible="not est_machine">
+                    <field name="nb_interventions" widget="statinfo" string="Interventions"/>
+                </button>
+                <button name="action_voir_bris" type="object" class="oe_stat_button"
+                        icon="warning" invisible="not est_machine">
+                    <field name="nb_bris" widget="statinfo" string="Bris"/>
+                </button>
+                <button name="action_voir_historique" type="object" class="oe_stat_button"
+                        icon="history" invisible="not est_machine">
+                    <div class="o_stat_info"><span class="o_stat_text">Historique</span></div>
+                </button>
+                <button name="action_voir_commandes" type="object" class="oe_stat_button"
+                        icon="description" invisible="not est_machine">
+                    <field name="commande_count" widget="statinfo" string="Commandes"/>
+                </button>
+                <button name="action_voir_factures" type="object" class="oe_stat_button"
+                        icon="receipt_long" invisible="not est_machine">
+                    <field name="facture_count" widget="statinfo" string="Factures"/>
+                </button>
+            </div>
+            <xpath expr="//div[hasclass('oe_title')]" position="before">
+                <field name="machine_statut" widget="badge" invisible="not est_machine"
+                       decoration-success="machine_statut == 'chez_client'"
+                       decoration-muted="machine_statut in ('vendue', 'livree')"
+                       decoration-info="machine_statut == 'entrepot'"
+                       decoration-warning="machine_statut in ('en_reparation', 'a_remplacer')"
+                       decoration-danger="machine_statut == 'hors_service'"/>
+            </xpath>
+            <group name="main_group" position="after">
+                <group string="Santé de la machine" invisible="not est_machine">
+                    <group>
+                        <field name="machine_client_id"/>
+                        <field name="machine_etat"/>
+                        <field name="date_mise_service"/>
+                        <field name="age_machine"/>
+                    </group>
+                    <group>
+                        <field name="date_installation"/>
+                        <field name="date_dernier_entretien"/>
+                        <field name="date_prochain_entretien"
+                               decoration-danger="date_prochain_entretien and date_prochain_entretien &lt; context_today().strftime('%Y-%m-%d')"/>
+                        <field name="intervalle_entretien"/>
+                        <field name="nb_interventions"/>
+                        <field name="nb_bris" decoration-danger="nb_bris &gt; 3"/>
+                    </group>
+                </group>
+                <notebook invisible="not est_machine">
+                    <page string="Historique" name="historique">
+                        <field name="historique_ids" readonly="1">
+                            <list decoration-danger="type == 'bris'" decoration-muted="state == 'Annulée'"
+                                  decoration-info="type == 'mouvement'">
+                                <field name="date"/>
+                                <field name="type"/>
+                                <field name="reference"/>
+                                <field name="description"/>
+                                <field name="partner_id"/>
+                                <field name="user_id"/>
+                                <field name="state"/>
+                            </list>
+                        </field>
+                    </page>
+                    <page string="Interventions" name="interventions">
+                        <button name="action_nouvelle_intervention" type="object"
+                                class="btn-primary mb-2" string="Nouvelle intervention"/>
+                        <field name="intervention_ids" context="{'default_lot_id': id}">
+                            <list decoration-danger="type == 'bris'" decoration-muted="state == 'annule'">
+                                <field name="name"/>
+                                <field name="date"/>
+                                <field name="type"/>
+                                <field name="partner_id"/>
+                                <field name="user_id"/>
+                                <field name="description"/>
+                                <field name="state" widget="badge"
+                                       decoration-success="state == 'fait'"
+                                       decoration-info="state == 'planifie'"/>
+                            </list>
+                        </field>
+                    </page>
+                </notebook>
+            </group>
+        </field>
+    </record>
+
+    <!-- Liste des machines -->
+    <record id="view_lot_list_machine" model="ir.ui.view">
+        <field name="name">stock.lot.list.machine</field>
+        <field name="model">stock.lot</field>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <list decoration-danger="machine_statut == 'hors_service'"
+                  decoration-warning="machine_statut in ('en_reparation', 'a_remplacer')">
+                <field name="name" string="N° de série"/>
+                <field name="ref" string="# machine"/>
+                <field name="product_id"/>
+                <field name="machine_statut" widget="badge"
+                       decoration-success="machine_statut == 'chez_client'"
+                       decoration-muted="machine_statut in ('vendue', 'livree')"
+                       decoration-info="machine_statut == 'entrepot'"
+                       decoration-warning="machine_statut in ('en_reparation', 'a_remplacer')"
+                       decoration-danger="machine_statut == 'hors_service'"/>
+                <field name="machine_client_id"/>
+                <field name="location_id" optional="show"/>
+                <field name="date_installation" optional="show"/>
+                <field name="date_dernier_entretien" optional="show"/>
+                <field name="date_prochain_entretien" optional="show"
+                       decoration-danger="date_prochain_entretien and date_prochain_entretien &lt; context_today().strftime('%Y-%m-%d')"/>
+                <field name="nb_interventions" optional="show" sum="Total"/>
+                <field name="nb_bris" optional="show" sum="Total" decoration-danger="nb_bris &gt; 3"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Vue kanban des machines, par statut -->
+    <record id="view_lot_kanban_machine" model="ir.ui.view">
+        <field name="name">stock.lot.kanban.machine</field>
+        <field name="model">stock.lot</field>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="machine_statut" group_create="false" group_delete="false"
+                    records_draggable="false">
+                <field name="nb_bris"/>
+                <field name="date_prochain_entretien"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="d-flex justify-content-between">
+                            <field name="name" class="fw-bold"/>
+                            <field name="ref" class="text-muted"/>
+                        </div>
+                        <field name="product_id" class="small"/>
+                        <field name="machine_client_id" class="small"/>
+                        <div class="d-flex justify-content-between small mt-1">
+                            <span t-if="record.date_prochain_entretien.raw_value">
+                                Entretien : <field name="date_prochain_entretien"/>
+                            </span>
+                            <span t-if="record.nb_bris.raw_value" class="badge text-bg-danger">
+                                <field name="nb_bris"/> bris
+                            </span>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="view_lot_pivot_machine" model="ir.ui.view">
+        <field name="name">stock.lot.pivot.machine</field>
+        <field name="model">stock.lot</field>
+        <field name="arch" type="xml">
+            <pivot string="Machines">
+                <field name="product_id" type="row"/>
+                <field name="machine_statut" type="col"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_lot_graph_machine" model="ir.ui.view">
+        <field name="name">stock.lot.graph.machine</field>
+        <field name="model">stock.lot</field>
+        <field name="arch" type="xml">
+            <graph string="Machines" type="bar" stacked="1">
+                <field name="product_id"/>
+                <field name="machine_statut"/>
+            </graph>
+        </field>
+    </record>
+
+    <!-- Recherche + filtres du tableau de bord -->
+    <record id="view_lot_search_machine" model="ir.ui.view">
+        <field name="name">stock.lot.search.machine</field>
+        <field name="model">stock.lot</field>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <search string="Machines">
+                <field name="name" string="N° de série"/>
+                <field name="ref" string="# machine"/>
+                <field name="product_id"/>
+                <field name="machine_client_id"/>
+                <separator/>
+                <filter name="chez_client" string="En location (chez un client)"
+                        domain="[('machine_statut', '=', 'chez_client')]"/>
+                <filter name="vendue" string="Vendues"
+                        domain="[('machine_statut', '=', 'vendue')]"/>
+                <filter name="entrepot" string="En entrepôt"
+                        domain="[('machine_statut', '=', 'entrepot')]"/>
+                <filter name="reparation" string="En réparation"
+                        domain="[('machine_statut', '=', 'en_reparation')]"/>
+                <filter name="a_remplacer" string="À remplacer"
+                        domain="[('machine_statut', '=', 'a_remplacer')]"/>
+                <separator/>
+                <filter name="bris_3" string="Plus de 3 bris" domain="[('nb_bris', '&gt;', 3)]"/>
+                <filter name="sans_entretien_6m" string="Sans entretien depuis 6 mois"
+                        domain="['|', ('date_dernier_entretien', '=', False),
+                                 ('date_dernier_entretien', '&lt;', (context_today() - relativedelta(months=6)).strftime('%Y-%m-%d'))]"/>
+                <filter name="entretien_retard" string="Entretien en retard"
+                        domain="[('date_prochain_entretien', '&lt;', context_today().strftime('%Y-%m-%d'))]"/>
+                <group>
+                    <filter name="grp_statut" string="Statut" context="{'group_by': 'machine_statut'}"/>
+                    <filter name="grp_produit" string="Produit" context="{'group_by': 'product_id'}"/>
+                    <filter name="grp_client" string="Client actuel" context="{'group_by': 'machine_client_id'}"/>
+                    <filter name="grp_emplacement" string="Emplacement" context="{'group_by': 'location_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_machines" model="ir.actions.act_window">
+        <field name="name">Toutes les machines</field>
+        <field name="res_model">stock.lot</field>
+        <field name="view_mode">list,kanban,pivot,graph,form</field>
+        <field name="domain">[('est_machine', '=', True)]</field>
+        <field name="search_view_id" ref="view_lot_search_machine"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('view_lot_list_machine')}),
+            (0, 0, {'view_mode': 'kanban', 'view_id': ref('view_lot_kanban_machine')}),
+            (0, 0, {'view_mode': 'pivot', 'view_id': ref('view_lot_pivot_machine')}),
+            (0, 0, {'view_mode': 'graph', 'view_id': ref('view_lot_graph_machine')})]"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aucune machine</p>
+            <p>Les numéros de série des produits de la catégorie « Machines &amp; équipements » apparaissent ici.</p>
+        </field>
+    </record>
+</odoo>

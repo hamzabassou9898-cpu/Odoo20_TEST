@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="product_category_form_machine" model="ir.ui.view">
+        <field name="name">product.category.form.machine</field>
+        <field name="model">product.category</field>
+        <field name="inherit_id" ref="product.product_category_form_view"/>
+        <field name="arch" type="xml">
+            <field name="parent_id" position="after">
+                <field name="suivi_machine"/>
+            </field>
+        </field>
+    </record>
+
+    <!-- Fiche produit (Inventaire) : bouton vers ses machines -->
+    <record id="product_template_form_machine" model="ir.ui.view">
+        <field name="name">product.template.form.machine</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_form_view"/>
+        <field name="arch" type="xml">
+            <div name="button_box" position="inside">
+                <field name="est_categorie_machine" invisible="1"/>
+                <button name="action_voir_machines" type="object" class="oe_stat_button"
+                        icon="precision_manufacturing" invisible="not est_categorie_machine">
+                    <field name="machine_total" widget="statinfo" string="Machines"/>
+                </button>
+            </div>
+        </field>
+    </record>
+
+    <!-- Vue d'ensemble : 1 carte par produit de la categorie Machines & equipements -->
+    <record id="view_template_kanban_machine" model="ir.ui.view">
+        <field name="name">product.template.kanban.machine</field>
+        <field name="model">product.template</field>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <kanban action="action_voir_machines" type="object" create="false">
+                <field name="machine_total"/>
+                <field name="machine_retard"/>
+                <field name="machine_probleme"/>
+                <templates>
+                    <t t-name="card" class="flex-row">
+                        <aside>
+                            <field name="image_128" widget="image" alt="Produit"
+                                   options="{'img_class': 'o_image_64_contain'}"/>
+                        </aside>
+                        <main class="ms-2">
+                            <field name="name" class="fw-bold fs-5"/>
+                            <field name="default_code" class="text-muted small"/>
+                            <div class="mt-2">
+                                <span class="fs-4 fw-bold"><field name="machine_total"/></span> machines
+                            </div>
+                            <div class="small">
+                                En entrepôt : <field name="machine_entrepot"/> ·
+                                En location : <field name="machine_client"/> ·
+                                Vendues : <field name="machine_vendue"/>
+                            </div>
+                            <div class="small mt-1">
+                                <span t-if="record.machine_retard.raw_value" class="badge text-bg-danger me-1">
+                                    <field name="machine_retard"/> entretien(s) en retard
+                                </span>
+                                <span t-if="record.machine_probleme.raw_value" class="badge text-bg-warning">
+                                    <field name="machine_probleme"/> réparation / à remplacer
+                                </span>
+                            </div>
+                        </main>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="action_vue_ensemble_machines" model="ir.actions.act_window">
+        <field name="name">Vue d'ensemble des machines</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">kanban</field>
+        <field name="view_id" ref="view_template_kanban_machine"/>
+        <field name="domain">[('categ_id.suivi_machine', '=', True)]</field>
+        <field name="context">{'create': False}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aucun produit machine</p>
+            <p>Cochez « Suivi des machines » sur la catégorie de produits des machines.</p>
+        </field>
+    </record>
+</odoo>

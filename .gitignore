@@ -36,3 +36,12 @@ dist/
 *.swp
 *.swo
 
+
+# Donnees clients (renseignements personnels) : generees localement par prep_contacts.py
+contacts_data.json
+*.xlsx
+machines_data.json
+
+# Fichiers generes par migration/exporter_vers_odoo_sh.py (contiennent les donnees clients)
+migration/contacts_odoo.py
+migration/inventaire_odoo.py
