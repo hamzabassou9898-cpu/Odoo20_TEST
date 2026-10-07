@@ -10,35 +10,28 @@ class HelpdeskTicket(models.Model):
                               help="Numéro de client (ex. MON134) : remplit le client et ses machines.")
 
     # ------------------------------------------------------------ client
-    commerce_id = fields.Many2one("res.partner", "Client", compute="_compute_client")
-    banniere_id = fields.Many2one("res.partner", "Bannière", compute="_compute_client")
-    contact_id = fields.Many2one("res.partner", "Contact", compute="_compute_client")
+    # Natifs utilises : partner_id, commercial_partner_id (banniere), partner_phone, partner_email,
+    # priority, tag_ids, description, product_id + lot_id (helpdesk_stock), sale_order_id (helpdesk_sale)
+    commercial_partner_id = fields.Many2one(related="partner_id.commercial_partner_id")
+    commerce_id = fields.Many2one("res.partner", "Commerce", compute="_compute_client")
     adresse_commerce = fields.Char("Adresse du commerce", related="commerce_id.contact_address")
-    telephone_commerce = fields.Char("Téléphone", related="commerce_id.phone")
-    courriel_commerce = fields.Char("Courriel", related="commerce_id.email")
 
     # ------------------------------------------------------------ machines
     machines_client_ids = fields.Many2many("stock.lot", string="Machines chez le client",
                                            compute="_compute_machines_client")
     nb_machines_client = fields.Integer("Inventaire chez le client", compute="_compute_machines_client")
-    machine_lot_id = fields.Many2one(
-        "stock.lot", "Numéro de série", index="btree_not_null", tracking=True,
-        domain="[('id', 'in', machines_client_ids)]")
-    machine_modele_id = fields.Many2one(related="machine_lot_id.product_id", string="Modèle")
-    machine_numero = fields.Char(related="machine_lot_id.ref", string="Numéro de machine")
-    machine_statut = fields.Selection(related="machine_lot_id.machine_statut")
-    machine_date_installation = fields.Date(related="machine_lot_id.date_installation")
-    machine_dernier_entretien = fields.Date(related="machine_lot_id.date_dernier_entretien")
-    machine_prochain_entretien = fields.Date(related="machine_lot_id.date_prochain_entretien")
-    commande_location_id = fields.Many2one("sale.order", "Contrat de location",
-                                           compute="_compute_location")
+    machine_numero = fields.Char(related="lot_id.ref", string="Numéro de machine")
+    machine_statut = fields.Selection(related="lot_id.machine_statut")
+    machine_date_installation = fields.Date(related="lot_id.date_installation")
+    machine_dernier_entretien = fields.Date(related="lot_id.date_dernier_entretien")
+    machine_prochain_entretien = fields.Date(related="lot_id.date_prochain_entretien")
     date_debut_location = fields.Datetime("Début de la location", compute="_compute_location")
     date_fin_location = fields.Datetime("Fin de la location", compute="_compute_location")
 
     # ------------------------------------------------------------ historiques
-    machine_historique_ids = fields.One2many(related="machine_lot_id.historique_ids",
+    machine_historique_ids = fields.One2many(related="lot_id.historique_ids",
                                              string="Historique de la machine")
-    machine_intervention_ids = fields.One2many(related="machine_lot_id.intervention_ids",
+    machine_intervention_ids = fields.One2many(related="lot_id.intervention_ids",
                                                string="Interventions")
     tickets_precedents_ids = fields.Many2many(
         "helpdesk.ticket", "helpdesk_ticket_precedent_rel", "ticket_id", "precedent_id",
@@ -84,10 +77,27 @@ class HelpdeskTicket(models.Model):
 
     def _choisir_machine(self):
         """Garde la machine si elle est chez ce client ; s'il n'en a qu'une, la choisit."""
-        if self.machine_lot_id not in self.machines_client_ids:
-            self.machine_lot_id = False
-        if not self.machine_lot_id and len(self.machines_client_ids) == 1:
-            self.machine_lot_id = self.machines_client_ids
+        if self.lot_id and self.lot_id not in self.machines_client_ids:
+            self.lot_id = False
+        if not self.lot_id and len(self.machines_client_ids) == 1:
+            self.lot_id = self.machines_client_ids
+        self._onchange_lot_machine()
+
+    @api.onchange("lot_id")
+    def _onchange_lot_machine(self):
+        """Machine choisie : modele (produit) et contrat (commande) natifs du ticket."""
+        if not self.lot_id:
+            return
+        self.product_id = self.lot_id.product_id
+        commande = self._contrat_machine(self.lot_id)
+        if commande:
+            self.sale_order_id = commande
+
+    @api.model
+    def _contrat_machine(self, lot):
+        lignes = lot.sudo()._machine_lignes_vente().filtered(lambda l: l.order_id.state == "sale")
+        commandes = lignes.order_id.sorted("date_order", reverse=True)
+        return (commandes.filtered(lambda o: o.type_commande == "location") or commandes)[:1].sudo(False)
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -105,9 +115,6 @@ class HelpdeskTicket(models.Model):
             p = ticket.partner_id
             commerce = p.parent_id if p.parent_id and p.type == "contact" else p
             ticket.commerce_id = commerce
-            ticket.banniere_id = commerce.parent_id
-            ticket.contact_id = (p if p != commerce else
-                                 commerce.child_ids.filtered(lambda c: c.type == "contact")[:1])
 
     @api.depends("partner_id")
     def _compute_machines_client(self):
@@ -119,34 +126,28 @@ class HelpdeskTicket(models.Model):
             ticket.machines_client_ids = lots.sudo(False)
             ticket.nb_machines_client = len(lots)
 
-    @api.depends("machine_lot_id")
+    @api.depends("lot_id", "sale_order_id")
     def _compute_location(self):
         for ticket in self:
-            commande = self.env["sale.order"].sudo()
-            if ticket.machine_lot_id:
-                lignes = ticket.machine_lot_id.sudo()._machine_lignes_vente().filtered(
-                    lambda l: l.order_id.state == "sale")
-                commandes = lignes.order_id.sorted("date_order", reverse=True)
-                commande = (commandes.filtered(lambda o: o.type_commande == "location") or commandes)[:1]
-            ticket.commande_location_id = commande.sudo(False)
+            commande = ticket.sale_order_id.sudo()
             # Dates de la location (application Location Enterprise), sinon installation
             debut = fin = False
             if commande:
                 debut = commande["rental_start_date"] if "rental_start_date" in commande._fields else False
                 fin = commande["rental_return_date"] if "rental_return_date" in commande._fields else False
-            if not debut and ticket.machine_lot_id.date_installation:
-                debut = fields.Datetime.to_datetime(ticket.machine_lot_id.date_installation)
+            if not debut and ticket.lot_id.date_installation:
+                debut = fields.Datetime.to_datetime(ticket.lot_id.date_installation)
             ticket.date_debut_location = debut
             ticket.date_fin_location = fin
 
-    @api.depends("partner_id", "machine_lot_id")
+    @api.depends("partner_id", "lot_id")
     def _compute_tickets_precedents(self):
         for ticket in self:
             domaine = []
             if ticket.commerce_id:
                 domaine = [("partner_id", "child_of", ticket.commerce_id.id)]
-            if ticket.machine_lot_id:
-                domaine = ["|", ("machine_lot_id", "=", ticket.machine_lot_id.id)] + (
+            if ticket.lot_id:
+                domaine = ["|", ("lot_id", "=", ticket.lot_id.id)] + (
                     domaine or [("id", "=", 0)])
             autres = self.search([("id", "!=", ticket._origin.id)] + domaine,
                                  order="create_date desc") if domaine else self.browse()
@@ -156,8 +157,8 @@ class HelpdeskTicket(models.Model):
     # ------------------------------------------------------------ boutons
     def action_fiche_machine(self):
         self.ensure_one()
-        return {"type": "ir.actions.act_window", "name": self.machine_lot_id.display_name,
-                "res_model": "stock.lot", "res_id": self.machine_lot_id.id,
+        return {"type": "ir.actions.act_window", "name": self.lot_id.display_name,
+                "res_model": "stock.lot", "res_id": self.lot_id.id,
                 "view_mode": "form", "views": [(False, "form")], "target": "current"}
 
     def action_nouvelle_intervention(self):
@@ -165,7 +166,7 @@ class HelpdeskTicket(models.Model):
         return {"type": "ir.actions.act_window", "name": self.env._("Nouvelle intervention"),
                 "res_model": "machine.intervention", "view_mode": "form",
                 "views": [(False, "form")], "target": "new",
-                "context": {"default_lot_id": self.machine_lot_id.id,
+                "context": {"default_lot_id": self.lot_id.id,
                             "default_partner_id": self.commerce_id.id,
                             "default_type": "bris",
                             "default_description": self.name}}
@@ -174,7 +175,7 @@ class HelpdeskTicket(models.Model):
 class StockLot(models.Model):
     _inherit = "stock.lot"
 
-    ticket_ids = fields.One2many("helpdesk.ticket", "machine_lot_id", "Appels de service")
+    ticket_ids = fields.One2many("helpdesk.ticket", "lot_id", "Appels de service")  # lot natif du ticket
     nb_tickets = fields.Integer("Appels de service", compute="_compute_nb_tickets")
 
     def _compute_nb_tickets(self):
@@ -186,6 +187,7 @@ class StockLot(models.Model):
         return {"type": "ir.actions.act_window", "name": self.env._("Appels de service - %s", self.name),
                 "res_model": "helpdesk.ticket", "view_mode": "list,form",
                 "views": [(False, "list"), (False, "form")],
-                "domain": [("machine_lot_id", "=", self.id)],
-                "context": {"default_machine_lot_id": self.id,
+                "domain": [("lot_id", "=", self.id)],
+                "context": {"default_lot_id": self.id,
+                            "default_product_id": self.product_id.id,
                             "default_partner_id": self.machine_client_id.id}}

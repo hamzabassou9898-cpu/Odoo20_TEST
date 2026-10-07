@@ -15,28 +15,28 @@
             <xpath expr="//field[@name='partner_id']/ancestor::group[last()]" position="after">
                 <group name="dossier_client_machine" invisible="not commerce_id">
                     <group string="Client">
-                        <field name="banniere_id" invisible="not banniere_id"/>
-                        <field name="commerce_id"/>
+                        <!-- Client, telephone, courriel : champs natifs du ticket (plus haut) -->
+                        <field name="commercial_partner_id" string="Bannière"
+                               invisible="commercial_partner_id == commerce_id"/>
+                        <field name="commerce_id" invisible="1"/>
                         <field name="adresse_commerce"/>
-                        <field name="telephone_commerce" widget="phone"/>
-                        <field name="courriel_commerce" widget="email" invisible="not courriel_commerce"/>
-                        <field name="contact_id" invisible="not contact_id"/>
                         <field name="nb_machines_client"/>
                         <field name="nb_tickets_precedents" string="Appels de service"/>
                     </group>
                     <group string="Machine">
                         <field name="machines_client_ids" invisible="1"/>
-                        <field name="machine_lot_id" options="{'no_create': True}"
+                        <field name="lot_id" string="Numéro de série" options="{'no_create': True}"
+                               domain="[('id', 'in', machines_client_ids)]"
                                placeholder="Choisir parmi les machines du client"/>
-                        <field name="machine_modele_id" invisible="not machine_lot_id"/>
-                        <field name="machine_numero" invisible="not machine_lot_id"/>
-                        <field name="machine_statut" widget="badge" invisible="not machine_lot_id"/>
-                        <field name="commande_location_id" invisible="not commande_location_id"/>
+                        <field name="product_id" string="Modèle" invisible="not lot_id"/>
+                        <field name="machine_numero" invisible="not lot_id"/>
+                        <field name="machine_statut" widget="badge" invisible="not lot_id"/>
+                        <field name="sale_order_id" string="Contrat" invisible="not sale_order_id"/>
                         <field name="date_debut_location" invisible="not date_debut_location"/>
                         <field name="date_fin_location" invisible="not date_fin_location"/>
-                        <field name="machine_dernier_entretien" invisible="not machine_lot_id"/>
-                        <field name="machine_prochain_entretien" invisible="not machine_lot_id"/>
-                        <div colspan="2" class="d-flex gap-2" invisible="not machine_lot_id">
+                        <field name="machine_dernier_entretien" invisible="not lot_id"/>
+                        <field name="machine_prochain_entretien" invisible="not lot_id"/>
+                        <div colspan="2" class="d-flex gap-2" invisible="not lot_id">
                             <button name="action_fiche_machine" type="object" class="btn btn-secondary"
                                     icon="precision_manufacturing" string="Fiche de machine"/>
                             <button name="action_nouvelle_intervention" type="object"
@@ -54,7 +54,7 @@
                                placeholder="Notes internes : diagnostic initial, pistes de solution..."/>
                     </page>
                     <page string="Historique de la machine" name="historique_machine"
-                          invisible="not machine_lot_id">
+                          invisible="not lot_id">
                         <field name="machine_historique_ids" readonly="1">
                             <list create="false" edit="false" delete="false">
                                 <field name="date"/>
@@ -68,7 +68,7 @@
                         </field>
                     </page>
                     <page string="Interventions" name="interventions_machine"
-                          invisible="not machine_lot_id">
+                          invisible="not lot_id">
                         <field name="machine_intervention_ids" readonly="1">
                             <list create="false" edit="false" delete="false">
                                 <field name="name"/>
@@ -85,7 +85,7 @@
                             <list create="false" edit="false" delete="false">
                                 <field name="create_date" string="Date"/>
                                 <field name="name"/>
-                                <field name="machine_lot_id"/>
+                                <field name="lot_id" string="Numéro de série"/>
                                 <field name="tag_ids" widget="many2many_tags"/>
                                 <field name="priority" widget="priority"/>
                                 <field name="user_id"/>
