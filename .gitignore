@@ -45,3 +45,4 @@ machines_data.json
 # Fichiers generes par migration/exporter_vers_odoo_sh.py (contiennent les donnees clients)
 migration/contacts_odoo.py
 migration/inventaire_odoo.py
+*.zip
