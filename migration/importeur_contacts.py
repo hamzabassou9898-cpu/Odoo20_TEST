@@ -149,6 +149,8 @@ for p in DATA["partenaires"]:   # parents avant enfants
     partenaires[cle], cree = ecrire_ou_creer(cle, "res.partner", vals, chercher)
     nb_new += cree
     nb_maj += not cree
+    if (nb_new + nb_maj) % 50 == 0:
+        print(f"   contacts : {nb_new + nb_maj}/{len(DATA['partenaires'])}")
 
 print(f"\nTermine : {nb_new} contacts crees, {nb_maj} mis a jour "
       f"({len(DATA['partenaires'])} dans le fichier).")

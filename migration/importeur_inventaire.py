@@ -124,21 +124,43 @@ if modele_existe("product.pricelist"):
         activer_listes_de_prix()
         print(f"{len(DATA['listes'])} listes de prix")
 
-# ---------------------------------------------------------------- 5) Numeros de serie / lots
+# ---------------------------------------------------------------- 5) Numeros de serie / lots (par paquets)
 LF = champs("stock.lot")
-lots = {}
 company = kw("res.users", "read", [[uid], ["company_id"]])[0]["company_id"][0]
+# Identifiants deja poses lors d'un passage precedent : 1 seule lecture
+lots = {d["name"]: d["res_id"] for d in kw("ir.model.data", "search_read",
+        [[["module", "=", MODULE], ["model", "=", "stock.lot"]]], {"fields": ["name", "res_id"]})}
+existants = set(kw("stock.lot", "search", [[["id", "in", list(lots.values())]]])) if lots else set()
+lots = {c: r for c, r in lots.items() if r in existants}
+# Lots deja presents sans identifiant (meme nom + meme produit) : rattaches, pas recrees
+pids = sorted({variantes[lt["variante"]] for lt in DATA["lots"] if lt["variante"] in variantes})
+par_nom = {(l["name"], l["product_id"][0]): l["id"] for l in kw(
+    "stock.lot", "search_read", [[["product_id", "in", pids]]], {"fields": ["name", "product_id"]})}
+a_creer, refs = [], []
 for lt in DATA["lots"]:
     pid = variantes.get(lt["variante"])
-    if not pid:
+    if not pid or lt["cle"] in lots:
         continue
     vals = {k: v for k, v in lt["vals"].items() if k in LF}
     vals.update(product_id=pid, company_id=company)
-    lots[lt["cle"]], _ = ecrire_ou_creer(lt["cle"], "stock.lot", vals,
-                                         [["name", "=", vals["name"]], ["product_id", "=", pid]])
-print(f"{len(lots)} numeros de serie / lots")
+    deja = par_nom.get((vals["name"], pid))
+    if deja:
+        lots[lt["cle"]] = deja
+        refs.append({"module": MODULE, "name": lt["cle"], "model": "stock.lot", "res_id": deja, "noupdate": True})
+    else:
+        a_creer.append((lt["cle"], vals))
+for i in range(0, len(a_creer), 200):
+    paquet = a_creer[i:i + 200]
+    ids = kw("stock.lot", "create", [[v for _, v in paquet]])
+    for (cle, _), rid in zip(paquet, ids):
+        lots[cle] = rid
+        refs.append({"module": MODULE, "name": cle, "model": "stock.lot", "res_id": rid, "noupdate": True})
+    print(f"   numeros de serie : {min(i + 200, len(a_creer))}/{len(a_creer)}")
+for i in range(0, len(refs), 500):
+    kw("ir.model.data", "create", [refs[i:i + 500]])
+print(f"{len(lots)} numeros de serie / lots ({len(a_creer)} crees)")
 
-# ---------------------------------------------------------------- 6) Stock
+# ---------------------------------------------------------------- 6) Stock (par paquets)
 wh = kw("stock.warehouse", "search_read", [[["company_id", "=", company]]],
         {"fields": ["lot_stock_id"], "limit": 1})
 STOCK = wh[0]["lot_stock_id"][0]
@@ -150,20 +172,28 @@ def emplacement(nom):
         emplacements[nom] = ids[0] if ids else STOCK
     return emplacements[nom]
 
-a_appliquer = []
+# Quantites deja en stock : 1 seule lecture
+quants = {(q["product_id"][0], q["lot_id"][0] if q["lot_id"] else False, q["location_id"][0]): q["id"]
+          for q in kw("stock.quant", "search_read",
+                      [[["product_id", "in", sorted(set(variantes.values()))], ["location_id.usage", "=", "internal"]]],
+                      {"fields": ["product_id", "lot_id", "location_id"]})}
+a_appliquer, a_ecrire = [], {}
 for q in DATA["stock"]:
     pid = variantes.get(q["variante"])
     lot = lots.get(q["lot"], False) if q["lot"] else False
     if not pid or (q["lot"] and not lot):
         continue
     loc = emplacement(q["emplacement"])
-    ex = kw("stock.quant", "search", [[["product_id", "=", pid], ["lot_id", "=", lot], ["location_id", "=", loc]]])
+    ex = quants.get((pid, lot, loc))
     if ex:
-        kw("stock.quant", "write", [ex[:1], {"inventory_quantity": q["quantite"]}], INV)
-        a_appliquer.append(ex[0])
+        a_ecrire.setdefault(q["quantite"], []).append(ex)
+        a_appliquer.append(ex)
     else:
         a_appliquer.append({"product_id": pid, "lot_id": lot, "location_id": loc,
                             "inventory_quantity": q["quantite"]})
+for qte, ids in a_ecrire.items():   # existants regroupes par quantite
+    for i in range(0, len(ids), 500):
+        kw("stock.quant", "write", [ids[i:i + 500], {"inventory_quantity": qte}], INV)
 for i in range(0, len(a_appliquer), 200):
     lot_q = a_appliquer[i:i + 200]
     ids = [x for x in lot_q if isinstance(x, int)]
@@ -171,6 +201,7 @@ for i in range(0, len(a_appliquer), 200):
     if nouveaux:
         ids += kw("stock.quant", "create", [nouveaux], INV)
     kw("stock.quant", "action_apply_inventory", [ids])
+    print(f"   stock : {min(i + 200, len(a_appliquer))}/{len(a_appliquer)}")
 print(f"{len(a_appliquer)} lignes de stock mises a jour")
 
 # ---------------------------------------------------------------- 7) Interventions (module Suivi des machines)
