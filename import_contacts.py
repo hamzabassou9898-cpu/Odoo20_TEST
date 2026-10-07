@@ -108,11 +108,15 @@ for name, label, ttype in [("x_nom_legal", "Nom légal", "char"),
         kw("ir.model.fields", "create", [{"name": name, "field_description": label, "ttype": ttype,
                                           "model_id": partner_model_id, "state": "manual"}])
         print(f"Champ cree : {label}")
-# Code de l'entreprise mere, affiche sur les fiches des contacts-personnes
-if not kw("ir.model.fields", "search", [[["model", "=", "res.partner"], ["name", "=", "x_code_societe"]]]):
+# Code de l'entreprise mere, affiche (et modifiable) sur les fiches des contacts-personnes :
+# le modifier ici modifie le code de l'entreprise
+champ = kw("ir.model.fields", "search", [[["model", "=", "res.partner"], ["name", "=", "x_code_societe"]]])
+if champ:
+    kw("ir.model.fields", "write", [champ, {"readonly": False}])
+else:
     kw("ir.model.fields", "create", [{"name": "x_code_societe", "field_description": "Code client (entreprise)",
                                       "ttype": "char", "model_id": partner_model_id, "state": "manual",
-                                      "related": "parent_id.ref", "readonly": True, "store": False}])
+                                      "related": "parent_id.ref", "readonly": False, "store": False}])
     print("Champ cree : Code client (entreprise)")
 base_form = kw("ir.model.data", "search_read",
                [[["module", "=", "base"], ["name", "=", "view_partner_form"]]], {"fields": ["res_id"]})[0]["res_id"]
@@ -126,9 +130,9 @@ ARCH = """<data>
       <h2 class="mb-0 fw-bold" invisible="parent_id and type == 'contact'">
         <field name="ref" class="text-center fw-bold" placeholder="Code"/>
       </h2>
-      <!-- personne rattachee a une entreprise : code de l'entreprise mere -->
+      <!-- personne rattachee a une entreprise : code de l'entreprise mere (modifiable) -->
       <h2 class="mb-0 fw-bold" invisible="not parent_id or type != 'contact'">
-        <field name="x_code_societe" class="text-center fw-bold" readonly="1"/>
+        <field name="x_code_societe" class="text-center fw-bold" placeholder="Code"/>
       </h2>
     </div>
   </xpath>
