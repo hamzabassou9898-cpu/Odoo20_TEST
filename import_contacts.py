@@ -114,7 +114,7 @@ ARCH = """<data>
   <!-- Code client (= Reference) en grand, dans un cadre, en haut a droite de la fiche -->
   <xpath expr="//field[@name='image_1920']/.." position="inside">
     <div class="border border-2 border-dark rounded-3 px-3 py-2 text-center flex-shrink-0"
-         style="width: 210px;" invisible="parent_id">
+         style="width: 210px;">
       <div class="text-muted text-uppercase small fw-bold">Code client</div>
       <h2 class="mb-0 fw-bold"><field name="ref" class="text-center fw-bold" placeholder="Code"/></h2>
     </div>
