@@ -3,6 +3,7 @@
 from datetime import timedelta
 
 from odoo import api, fields, models
+from odoo.exceptions import UserError
 
 PARAM_JOURS = "suivi_machines_helpdesk.jours_avant_reprise"
 PARAM_EQUIPE = "suivi_machines_helpdesk.equipe_reprise_id"
@@ -43,11 +44,8 @@ class SaleOrder(models.Model):
                 "domain": [("commande_reprise_id", "=", self.id)]}
 
     @api.model
-    def _cron_tickets_reprise(self):
-        """Chaque jour : un ticket « Reprise » par machine encore louee dont la location
-        se termine dans les X prochains jours (X = parametre, 3 par defaut)."""
+    def _reglages_reprise(self):
         icp = self.env["ir.config_parameter"].sudo()
-        jours = _param_int(icp, PARAM_JOURS, 3)
         equipe = _param_int(icp, PARAM_EQUIPE, 0)
         # Etape « Reprise de machine » (nom modifiable par parametre) et son equipe
         nom_etape = (icp.get_str(PARAM_ETAPE, ETAPE_DEFAUT) if hasattr(icp, "get_str")
@@ -55,17 +53,36 @@ class SaleOrder(models.Model):
         etape = self.env["helpdesk.stage"].search([("name", "=ilike", nom_etape)], limit=1)
         if etape and not equipe and "team_ids" in etape._fields:
             equipe = etape.team_ids[:1].id
-        limite = fields.Datetime.now() + timedelta(days=jours)
-        commandes = self.search([("type_commande", "=", "location"), ("state", "=", "sale"),
-                                 ("date_fin_location", "!=", False), ("date_fin_location", "<=", limite)])
         # Responsable de la planification : parametre, sinon l'administrateur
         responsable = self.env["res.users"].browse(_param_int(icp, PARAM_RESPONSABLE, 0)).exists() \
             or self.env.ref("base.user_admin", raise_if_not_found=False)
+        return {"jours": _param_int(icp, PARAM_JOURS, 3), "equipe": equipe, "etape": etape,
+                "responsable": responsable}
+
+    def _machines_a_reprendre(self):
+        """Machines de la commande encore chez un client (pas revenues en entrepot)."""
+        self.ensure_one()
+        return self.machine_ids.filtered(lambda l: l.machine_client_id)
+
+    @api.model
+    def _cron_tickets_reprise(self):
+        """Chaque jour : un ticket « Reprise » par machine encore louee dont la location
+        se termine dans les X prochains jours (X = parametre, 3 par defaut)."""
+        reglages = self._reglages_reprise()
+        limite = fields.Datetime.now() + timedelta(days=reglages["jours"])
+        commandes = self.search([("type_commande", "=", "location"), ("state", "=", "sale"),
+                                 ("date_fin_location", "!=", False), ("date_fin_location", "<=", limite)])
+        return commandes._creer_tickets_reprise(reglages)
+
+    def _creer_tickets_reprise(self, reglages=None):
+        reglages = reglages or self._reglages_reprise()
         Ticket = self.env["helpdesk.ticket"].with_context(mail_create_nolog=True)
         crees = Ticket
-        for order in commandes:
+        for order in self:
             client = order.partner_shipping_id or order.partner_id
-            for lot in order.machine_ids.filtered(lambda l: l.machine_statut == "chez_client"):
+            date_fin = (fields.Datetime.to_string(order.date_fin_location)[:10]
+                        if order.date_fin_location else "?")
+            for lot in order._machines_a_reprendre():
                 deja = Ticket.with_context(active_test=False).search_count(
                     [("commande_reprise_id", "=", order.id), ("lot_id", "=", lot.id)])
                 if deja:
@@ -80,23 +97,55 @@ class SaleOrder(models.Model):
                     "description": self.env._(
                         "<p>Fin de la location le %(date)s (contrat %(contrat)s) : "
                         "reprise de la machine %(serie)s à planifier.</p>",
-                        date=fields.Datetime.to_string(order.date_fin_location)[:10],
-                        contrat=order.name, serie=lot.name),
+                        date=date_fin, contrat=order.name, serie=lot.name),
                 }
-                if equipe:
-                    vals["team_id"] = equipe
-                if etape:
-                    vals["stage_id"] = etape.id
+                if reglages["equipe"]:
+                    vals["team_id"] = reglages["equipe"]
+                if reglages["etape"]:
+                    vals["stage_id"] = reglages["etape"].id
                 ticket = Ticket.create(vals)
-                if responsable and "activity_ids" in ticket._fields:
+                if reglages["responsable"] and "activity_ids" in ticket._fields:
                     ticket.activity_schedule(
                         "mail.mail_activity_data_todo",
-                        date_deadline=fields.Date.to_date(order.date_fin_location),
+                        date_deadline=fields.Date.to_date(order.date_fin_location) or fields.Date.context_today(self),
                         summary=self.env._("Planifier ramassage de machine"),
                         note=self.env._("Planifier le ramassage de la machine %(serie)s chez %(client)s "
                                         "(fin de location le %(date)s).", serie=lot.name,
-                                        client=client.display_name,
-                                        date=fields.Datetime.to_string(order.date_fin_location)[:10]),
-                        user_id=responsable.id)
+                                        client=client.display_name, date=date_fin),
+                        user_id=reglages["responsable"].id)
                 crees |= ticket
         return crees
+
+    def action_creer_tickets_reprise(self):
+        """Bouton du contrat : cree le ticket de reprise maintenant (sans attendre le delai),
+        sinon explique pourquoi ce n'est pas possible."""
+        self.ensure_one()
+        if self.type_commande != "location":
+            raise UserError(self.env._("Ce bon n'est pas une location (Type = Vente)."))
+        if self.state != "sale":
+            raise UserError(self.env._("Confirmez d'abord le contrat de location."))
+        tickets = self._creer_tickets_reprise()
+        if tickets:
+            return self._action_tickets(tickets)
+        if self.ticket_reprise_ids:
+            return self.action_voir_tickets_reprise()
+        lignes = [self.env._("Aucune machine de ce contrat n'est actuellement chez le client.")]
+        if not self.machine_ids:
+            lignes.append(self.env._("Aucun numéro de série sur le contrat ni sur sa livraison "
+                                     "(choisissez-le sur la ligne ou dans la livraison)."))
+        for lot in self.machine_ids:
+            lignes.append(self.env._("- %(serie)s : %(statut)s, emplacement %(empl)s",
+                                     serie=lot.name, statut=dict(lot._fields["machine_statut"].selection).get(
+                                         lot.machine_statut, lot.machine_statut),
+                                     empl=lot.location_id.display_name or "?"))
+        if not self.date_fin_location:
+            lignes.append(self.env._("Date de fin de location absente."))
+        raise UserError("\n".join(lignes))
+
+    def _action_tickets(self, tickets):
+        if len(tickets) == 1:
+            return {"type": "ir.actions.act_window", "res_model": "helpdesk.ticket", "res_id": tickets.id,
+                    "view_mode": "form", "views": [(False, "form")], "target": "current"}
+        return {"type": "ir.actions.act_window", "name": self.env._("Reprise - %s", self.name),
+                "res_model": "helpdesk.ticket", "view_mode": "list,form",
+                "views": [(False, "list"), (False, "form")], "domain": [("id", "in", tickets.ids)]}

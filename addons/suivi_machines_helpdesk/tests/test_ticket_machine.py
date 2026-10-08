@@ -219,6 +219,29 @@ class TestTicketMachine(TransactionCase):
         self.assertFalse(SO._cron_tickets_reprise(), "machine pas encore livrée / délai 0 : rien")
         self.env.ref("suivi_machines_helpdesk.cron_tickets_reprise").method_direct_trigger()
 
+    def test_bouton_creer_ticket_reprise(self):
+        from odoo.exceptions import UserError
+        stock = self.env.ref("stock.stock_location_stock")
+        lot = self.env["stock.lot"].create({"name": "REP-2", "product_id": self.produit.id})
+        self.env["stock.quant"]._update_available_quantity(self.produit, stock, 1, lot_id=lot)
+        so = self.env["sale.order"].create({
+            "partner_id": self.commerce.id, "type_commande": "location",
+            "order_line": [(0, 0, {"product_id": self.produit.id, "product_uom_qty": 1, "machine_lot_id": lot.id})]})
+        so.action_confirm()
+        with self.assertRaises(UserError) as err:
+            so.action_creer_tickets_reprise()
+        self.assertIn("REP-2", str(err.exception), "le message explique la situation de la machine")
+        pk = so.picking_ids
+        pk.action_assign()
+        pk.move_ids.picked = True
+        pk.with_context(skip_sms=True).button_validate()
+        action = so.action_creer_tickets_reprise()
+        ticket = self.env["helpdesk.ticket"].browse(action["res_id"])
+        self.assertEqual((ticket.lot_id, ticket.commande_reprise_id), (lot, so),
+                         "créé tout de suite, même sans date de fin proche")
+        self.assertEqual(so.action_creer_tickets_reprise()["domain"], [("commande_reprise_id", "=", so.id)],
+                         "2e clic : ouvre le ticket existant")
+
     def test_route_personne(self):
         interv = self.env["machine.intervention"].create({"lot_id": self.lots[0].id,
                                                           "partner_id": self.personne.id})

@@ -32,6 +32,10 @@
             <field name="type_commande" position="after">
                 <field name="ticket_assistance_id" invisible="not ticket_assistance_id" readonly="1"/>
             </field>
+            <xpath expr="//header" position="inside">
+                <button name="action_creer_tickets_reprise" type="object" string="Créer le ticket de reprise"
+                        class="btn-secondary" invisible="type_commande != 'location' or state != 'sale'"/>
+            </xpath>
             <div name="button_box" position="inside">
                 <button name="action_voir_tickets_reprise" type="object" class="oe_stat_button"
                         icon="assignment_return" invisible="not nb_tickets_reprise">
