@@ -175,6 +175,14 @@ class TestSuiviMachines(TransactionCase):
         loc = Form(self.env["sale.order"].with_context(in_rental_app=True))
         self.assertEqual(loc.type_commande, "location", "application Location : location par défaut")
 
+    def test_deux_lignes_meme_modele(self):
+        so = self.env["sale.order"].create({"partner_id": self.client.id, "order_line": [
+            (0, 0, {"product_id": self.produit.id, "product_uom_qty": 1, "machine_lot_id": self.lot_a.id}),
+            (0, 0, {"product_id": self.produit.id, "product_uom_qty": 1, "machine_lot_id": self.lot_b.id})]})
+        so.action_confirm()
+        self.assertEqual(len(so.picking_ids.move_ids), 2, "pas de fusion des deux machines")
+        self.assertEqual(so.picking_ids.move_ids.move_line_ids.lot_id, self.lot_a | self.lot_b)
+
     def test_changer_lot_apres_confirmation(self):
         so = self._commande(self.lot_a)
         so.order_line.machine_lot_id = self.lot_b

@@ -191,6 +191,10 @@ class StockMove(models.Model):
                     "Le n° de série %(lot)s n'appartient pas au produit %(prod)s.",
                     lot=move.machine_lot_id.name, prod=move.product_id.display_name))
 
+    def _prepare_merge_moves_distinct_fields(self):
+        # Deux machines differentes (n° de serie choisis) ne sont jamais fusionnees
+        return super()._prepare_merge_moves_distinct_fields() + ["machine_lot_id"]
+
     def write(self, vals):
         if "machine_lot_id" not in vals:
             return super().write(vals)

@@ -280,6 +280,56 @@ class TestTicketMachine(TransactionCase):
         interv = lot.intervention_ids.filtered(lambda i: i.type == "ramassage")
         self.assertEqual((interv.ticket_id, interv.user_id), (ticket, livreur), "intervention liée au ticket")
 
+    def test_ramassage_plusieurs_machines(self):
+        stock = self.env.ref("stock.stock_location_stock")
+        frosty = self.env["product.product"].create({
+            "name": "Frosty test", "categ_id": self.produit.categ_id.id, "is_storable": True, "tracking": "serial"})
+        lots = self.env["stock.lot"]
+        for produit, nom in ((self.produit, "MULTI-A"), (self.produit, "MULTI-B"), (frosty, "MULTI-C")):
+            lot = self.env["stock.lot"].create({"name": nom, "product_id": produit.id})
+            self.env["stock.quant"]._update_available_quantity(produit, stock, 1, lot_id=lot)
+            lots |= lot
+        # une ligne de 2 machines (sans n° sur la ligne) + une autre ligne
+        so = self.env["sale.order"].create({
+            "partner_id": self.commerce.id, "type_commande": "location",
+            "date_fin_location": fields.Datetime.now() + relativedelta(days=1),
+            "order_line": [(0, 0, {"product_id": self.produit.id, "product_uom_qty": 2}),
+                           (0, 0, {"product_id": frosty.id, "product_uom_qty": 1})]})
+        so.action_confirm()
+        pk = so.picking_ids
+        pk.action_assign()
+        pk.move_ids.picked = True
+        pk.with_context(skip_sms=True).button_validate()
+        self.assertEqual(set(lots.mapped("machine_statut")), {"chez_client"})
+        tickets = self.env["sale.order"]._cron_tickets_reprise()
+        self.assertEqual(tickets.lot_id, lots, "un ticket de reprise par machine")
+        t_b = tickets.filtered(lambda t: t.lot_id.name == "MULTI-B")
+        retour = self.env["stock.picking"].browse(t_b.action_ramassage()["res_id"])
+        self.assertEqual(retour.move_ids.move_line_ids.lot_id, lots, "un seul retour, chaque machine avec SON n°")
+        self.assertEqual(sorted(retour.move_ids.move_line_ids.mapped("quantity")), [1, 1, 1])
+        for t in tickets:
+            self.assertEqual(t.action_ramassage()["res_id"], retour.id, "même bon de retour pour le contrat")
+        retour.move_ids.picked = True
+        retour.with_context(skip_sms=True).button_validate()
+        self.assertEqual(retour.state, "done")
+        self.assertEqual(set(lots.mapped("machine_statut")), {"entrepot"})
+        for t in tickets:
+            interv = t.lot_id.intervention_ids.filtered(lambda i: i.type == "ramassage")
+            self.assertEqual(interv.ticket_id, t, "intervention liée au ticket de SA machine")
+
+    def test_actions_planifiees_declenchees(self):
+        Trigger = self.env["ir.cron.trigger"]
+        reprise = self.env.ref("suivi_machines_helpdesk.cron_tickets_reprise")
+        entretien = self.env.ref("suivi_machines_helpdesk.cron_tickets_entretien")
+        avant_r = Trigger.search_count([("cron_id", "=", reprise.id)])
+        avant_e = Trigger.search_count([("cron_id", "=", entretien.id)])
+        self.env["machine.intervention"].create({"lot_id": self.lots[0].id, "type": "entretien", "state": "fait"})
+        self.assertGreater(Trigger.search_count([("cron_id", "=", entretien.id)]), avant_e,
+                           "intervention : vérification des entretiens relancée")
+        lot, so, ticket = self._location_livree("TRIG-1")
+        self.assertGreater(Trigger.search_count([("cron_id", "=", reprise.id)]), avant_r,
+                           "livraison / date de fin : vérification des reprises relancée")
+
     def test_prolonger_location(self):
         lot, so, ticket = self._location_livree("PRO-1")
         resolu = self.env["helpdesk.stage"].search([("name", "=ilike", "résolu")], limit=1) \

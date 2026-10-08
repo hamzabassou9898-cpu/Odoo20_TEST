@@ -49,37 +49,59 @@ class HelpdeskTicket(models.Model):
             if etape and ticket.stage_id != etape:
                 ticket.stage_id = etape
 
-    def _livraison_machine(self):
-        """Livraison terminee du contrat qui a fait sortir la machine du ticket."""
+    def _tickets_du_contrat(self):
+        """Tickets de reprise du meme contrat dont la machine est encore chez le client."""
         self.ensure_one()
-        return self.commande_reprise_id.picking_ids.filtered(
-            lambda p: p.state == "done" and p.picking_type_code == "outgoing"
-            and self.lot_id in p.move_line_ids.lot_id).sorted("date_done", reverse=True)[:1]
+        tickets = self.commande_reprise_id.ticket_reprise_ids.filtered(
+            lambda t: t.lot_id and t.lot_id.machine_client_id)
+        return tickets | self
 
     def action_ramassage(self):
-        """Bon de retour de la machine (depuis la livraison du contrat), lie au ticket."""
+        """Un seul bon de retour pour toutes les machines du contrat encore chez le client,
+        une ligne par machine avec SON numero de serie ; lie aux tickets de reprise."""
         self.ensure_one()
-        self._mettre_en_reprise()
-        encours = self.livraison_ids.filtered(
-            lambda p: p.state not in ("done", "cancel") and p.location_dest_id.usage == "internal"
-            and self.lot_id in p.move_ids.machine_lot_id)[:1]
+        tickets = self._tickets_du_contrat()
+        tickets._mettre_en_reprise()
+        Picking = self.env["stock.picking"]
+        encours = Picking.search([("ticket_assistance_id", "in", tickets.ids),
+                                  ("state", "not in", ("done", "cancel")),
+                                  ("location_dest_id.usage", "=", "internal")], limit=1)
         if encours:
             return self._ouvrir_picking(encours)
-        livraison = self._livraison_machine()
-        if not livraison:
+        lots = tickets.lot_id.filtered("machine_client_id")
+        livraisons = self.commande_reprise_id.picking_ids.filtered(
+            lambda p: p.state == "done" and p.location_dest_id.usage != "internal"
+            and p.move_line_ids.lot_id & lots).sorted("date_done", reverse=True)
+        if not lots or not livraisons:
             raise UserError(self.env._(
-                "Aucune livraison terminée de la machine %s sur ce contrat : utilisez le bouton "
-                "Retour du contrat (application Location).", self.lot_id.name or "?"))
-        retour = livraison._create_return()
-        moves = retour.move_ids.filtered(lambda m: m.product_id == self.lot_id.product_id)
-        (retour.move_ids - moves[:1]).unlink()
-        moves[:1].write({"product_uom_qty": 1, "machine_lot_id": self.lot_id.id})
+                "Aucune livraison terminée des machines de ce contrat : utilisez le bouton "
+                "Retour du contrat (application Location)."))
+        retour = livraisons[0]._create_return()
+        source, destination = retour.location_id, retour.location_dest_id
+        retour.move_ids.unlink()
+        Move = self.env["stock.move"]
+        for lot in lots:
+            Move.create({"product_id": lot.product_id.id, "product_uom_qty": 1,
+                         "uom_id": lot.product_id.uom_id.id, "picking_id": retour.id,
+                         "location_id": source.id, "location_dest_id": destination.id,
+                         "machine_lot_id": lot.id, "partner_id": retour.partner_id.id})
         retour.write({"ticket_assistance_id": self.id})
         retour.action_confirm()
         retour.action_assign()
-        # Retour depuis le client (pas de reservation) : indiquer la machine qui revient
-        retour.move_ids.move_line_ids.filtered(lambda l: not l.lot_id).write({"lot_id": self.lot_id.id})
-        retour.message_post(body=self.env._("Retour créé depuis le ticket %s.", self.display_name))
+        # Retour depuis le client (pas de reservation) : chaque ligne = la machine de son mouvement
+        for move in retour.move_ids:
+            lignes = move.move_line_ids
+            if lignes:
+                lignes[:1].write({"lot_id": move.machine_lot_id.id, "quantity": 1})
+                lignes[1:].unlink()
+            else:
+                self.env["stock.move.line"].create({
+                    "move_id": move.id, "picking_id": retour.id, "product_id": move.product_id.id,
+                    "lot_id": move.machine_lot_id.id, "quantity": 1,
+                    "location_id": source.id, "location_dest_id": destination.id})
+        retour.message_post(body=self.env._(
+            "Ramassage de %(nb)s machine(s) (%(series)s), créé depuis le ticket %(ticket)s.",
+            nb=len(lots), series=", ".join(lots.mapped("name")), ticket=self.display_name))
         return self._ouvrir_picking(retour)
 
     def _ouvrir_picking(self, picking):
