@@ -30,6 +30,8 @@ class MachineIntervention(models.Model):
         [("planifie", "Planifiée"), ("fait", "Faite"), ("annule", "Annulée")],
         "Statut", default="planifie", required=True, tracking=True)
     partner_id = fields.Many2one("res.partner", "Client", tracking=True)
+    route = fields.Char("Route", compute="_compute_route", store=True,
+                        help="Adresse du commerce du client, pour planifier la tournée.")
     user_id = fields.Many2one("res.users", "Technicien", default=lambda self: self.env.user,
                               tracking=True)
     lot_remplacement_id = fields.Many2one(
@@ -44,6 +46,16 @@ class MachineIntervention(models.Model):
             if vals.get("name", "Nouveau") == "Nouveau":
                 vals["name"] = self.env["ir.sequence"].next_by_code("machine.intervention") or "Nouveau"
         return super().create(vals_list)
+
+    @api.depends("partner_id.type", "partner_id.parent_id", "partner_id.street", "partner_id.street2",
+                 "partner_id.city", "partner_id.zip", "partner_id.state_id",
+                 "partner_id.parent_id.street", "partner_id.parent_id.city", "partner_id.parent_id.zip")
+    def _compute_route(self):
+        for interv in self:
+            p = interv.partner_id
+            # Personne rattachee : adresse de son commerce
+            commerce = p.parent_id if p.parent_id and p.type == "contact" else p
+            interv.route = commerce._display_address(without_name=True, separator=", ") if commerce else False
 
     @api.onchange("lot_id")
     def _onchange_lot_id(self):

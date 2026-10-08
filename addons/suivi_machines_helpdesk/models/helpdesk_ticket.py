@@ -15,7 +15,6 @@ class HelpdeskTicket(models.Model):
     commercial_partner_id = fields.Many2one(related="partner_id.commercial_partner_id")
     commerce_id = fields.Many2one("res.partner", "Commerce", compute="_compute_client")
     adresse_commerce = fields.Char("Adresse du commerce", compute="_compute_client")
-    telephone_commerce = fields.Char("Téléphone", compute="_compute_client")
 
     # ------------------------------------------------------------ machines
     lot_id = fields.Many2one("stock.lot", "Numéro de série", index="btree_not_null", tracking=True)
@@ -38,6 +37,14 @@ class HelpdeskTicket(models.Model):
         "helpdesk.ticket", "helpdesk_ticket_precedent_rel", "ticket_id", "precedent_id",
         string="Appels de service", compute="_compute_tickets_precedents")
     nb_tickets_precedents = fields.Integer("Nb appels de service", compute="_compute_tickets_precedents")
+
+    # ------------------------------------------------------------ suites du ticket
+    intervention_ticket_ids = fields.One2many("machine.intervention", "ticket_id", "Interventions du ticket")
+    vente_ids = fields.One2many("sale.order", "ticket_assistance_id", "Bons de vente")
+    livraison_ids = fields.One2many("stock.picking", "ticket_assistance_id", "Livraisons")
+    nb_interventions_ticket = fields.Integer("Nb interventions du ticket", compute="_compute_suites")
+    nb_ventes = fields.Integer("Nb bons de vente", compute="_compute_suites")
+    nb_livraisons = fields.Integer("Nb livraisons", compute="_compute_suites")
 
     # ------------------------------------------------------------ code client <-> client
     @api.model
@@ -77,8 +84,14 @@ class HelpdeskTicket(models.Model):
                 self.code_client = code
         self._choisir_machine()
 
+    def _remplir_telephone(self):
+        """Telephone natif du ticket : celui du commerce s'il est vide."""
+        if "partner_phone" in self._fields and not self.partner_phone:
+            self.partner_phone = self.commerce_id.phone or self.partner_id.phone
+
     def _choisir_machine(self):
         """Garde la machine si elle est chez ce client ; s'il n'en a qu'une, la choisit."""
+        self._remplir_telephone()
         if self.lot_id and self.lot_id not in self.machines_client_ids:
             self.lot_id = False
         if not self.lot_id and len(self.machines_client_ids) == 1:
@@ -94,15 +107,14 @@ class HelpdeskTicket(models.Model):
         return super().create(vals_list)
 
     # ------------------------------------------------------------ calculs
-    @api.depends("partner_id.parent_id", "partner_id.type", "partner_id.phone", "partner_id.contact_address",
-                 "partner_id.parent_id.phone", "partner_id.parent_id.contact_address")
+    @api.depends("partner_id.parent_id", "partner_id.type", "partner_id.contact_address",
+                 "partner_id.parent_id.contact_address")
     def _compute_client(self):
         for ticket in self:
             p = ticket.partner_id
             commerce = p.parent_id if p.parent_id and p.type == "contact" else p
             ticket.commerce_id = commerce
             ticket.adresse_commerce = commerce._display_address(without_name=True, separator=", ") if commerce else False
-            ticket.telephone_commerce = commerce.phone
 
     @api.depends("partner_id")
     def _compute_machines_client(self):
@@ -128,6 +140,19 @@ class HelpdeskTicket(models.Model):
             ticket.tickets_precedents_ids = autres
             ticket.nb_tickets_precedents = len(autres)
 
+    @api.depends("intervention_ticket_ids", "vente_ids.picking_ids", "livraison_ids")
+    def _compute_suites(self):
+        for ticket in self:
+            # sudo : un agent sans droits Ventes/Inventaire voit quand meme les compteurs
+            t = ticket.sudo()
+            ticket.nb_interventions_ticket = len(t.intervention_ticket_ids)
+            ticket.nb_ventes = len(t.vente_ids)
+            ticket.nb_livraisons = len(t._livraisons())
+
+    def _livraisons(self):
+        """Livraisons directes du ticket + livraisons de ses bons de vente."""
+        return self.livraison_ids | self.vente_ids.picking_ids
+
     # ------------------------------------------------------------ boutons
     def action_fiche_machine(self):
         self.ensure_one()
@@ -135,15 +160,109 @@ class HelpdeskTicket(models.Model):
                 "res_model": "stock.lot", "res_id": self.lot_id.id,
                 "view_mode": "form", "views": [(False, "form")], "target": "current"}
 
+    def _action_liste(self, model, nom, records, context):
+        action = {"type": "ir.actions.act_window", "name": nom, "res_model": model,
+                  "context": context, "target": "current"}
+        if len(records) == 1:
+            action.update(res_id=records.id, view_mode="form", views=[(False, "form")])
+        else:
+            action.update(domain=[("id", "in", records.ids)], view_mode="list,form",
+                          views=[(False, "list"), (False, "form")])
+        return action
+
     def action_nouvelle_intervention(self):
+        """Intervention liee au ticket : machine, client et probleme deja remplis."""
         self.ensure_one()
         return {"type": "ir.actions.act_window", "name": self.env._("Nouvelle intervention"),
                 "res_model": "machine.intervention", "view_mode": "form",
                 "views": [(False, "form")], "target": "new",
-                "context": {"default_lot_id": self.lot_id.id,
-                            "default_partner_id": self.commerce_id.id,
-                            "default_type": "bris",
+                "context": {"default_ticket_id": self.id,
+                            "default_lot_id": self.lot_id.id,
+                            "default_partner_id": self.commerce_id.id or self.partner_id.id,
+                            "default_type": "reparation",
                             "default_description": self.name}}
+
+    def action_voir_interventions_ticket(self):
+        self.ensure_one()
+        return self._action_liste("machine.intervention", self.env._("Interventions - %s", self.name),
+                                  self.intervention_ticket_ids,
+                                  {"default_ticket_id": self.id, "default_lot_id": self.lot_id.id,
+                                   "default_partner_id": self.commerce_id.id})
+
+    def action_creer_vente(self):
+        """Bon de vente (pieces, accessoires, machine) pour le client du ticket."""
+        self.ensure_one()
+        return {"type": "ir.actions.act_window", "name": self.env._("Bon de vente"),
+                "res_model": "sale.order", "view_mode": "form", "views": [(False, "form")],
+                "target": "current",
+                "context": {"default_partner_id": self.commerce_id.id or self.partner_id.id,
+                            "default_ticket_assistance_id": self.id,
+                            "default_origin": self.name,
+                            "default_type_commande": "vente"}}
+
+    def action_voir_ventes(self):
+        self.ensure_one()
+        return self._action_liste("sale.order", self.env._("Bons de vente - %s", self.name),
+                                  self.vente_ids, {"default_ticket_assistance_id": self.id,
+                                                   "default_partner_id": self.commerce_id.id})
+
+    def action_creer_livraison(self):
+        """Livraison directe (sans bon de vente) vers le commerce du client."""
+        self.ensure_one()
+        entrepot = self.env["stock.warehouse"].search([("company_id", "=", self.env.company.id)], limit=1)
+        return {"type": "ir.actions.act_window", "name": self.env._("Livraison"),
+                "res_model": "stock.picking", "view_mode": "form", "views": [(False, "form")],
+                "target": "current",
+                "context": {"default_picking_type_id": entrepot.out_type_id.id,
+                            "default_partner_id": self.commerce_id.id or self.partner_id.id,
+                            "default_ticket_assistance_id": self.id,
+                            "default_origin": self.name}}
+
+    def action_voir_livraisons(self):
+        self.ensure_one()
+        return self._action_liste("stock.picking", self.env._("Livraisons - %s", self.name),
+                                  self._livraisons(), {"default_ticket_assistance_id": self.id})
+
+
+class MachineIntervention(models.Model):
+    _inherit = "machine.intervention"
+
+    ticket_id = fields.Many2one("helpdesk.ticket", "Ticket d'assistance", index="btree_not_null",
+                                tracking=True, copy=False)
+
+    def action_creer_bon_commande(self):
+        # Bon de commande des frais : rattache aussi au ticket d'origine
+        action = super().action_creer_bon_commande()
+        for interv in self.filtered(lambda i: i.ticket_id and i.sale_order_id
+                                    and not i.sale_order_id.ticket_assistance_id):
+            interv.sale_order_id.ticket_assistance_id = interv.ticket_id
+        return action
+
+
+class SaleOrder(models.Model):
+    _inherit = "sale.order"
+
+    ticket_assistance_id = fields.Many2one("helpdesk.ticket", "Ticket d'assistance",
+                                           index="btree_not_null", copy=False)
+
+
+class StockPicking(models.Model):
+    _inherit = "stock.picking"
+
+    ticket_assistance_id = fields.Many2one("helpdesk.ticket", "Ticket d'assistance",
+                                           index="btree_not_null", copy=False)
+
+
+class StockMove(models.Model):
+    _inherit = "stock.move"
+
+    def _get_new_picking_values(self):
+        # Livraison creee depuis un bon de vente du ticket : garde le lien vers le ticket
+        vals = super()._get_new_picking_values()
+        ticket = self.sale_line_id.order_id.ticket_assistance_id[:1]
+        if ticket:
+            vals["ticket_assistance_id"] = ticket.id
+        return vals
 
 
 class StockLot(models.Model):

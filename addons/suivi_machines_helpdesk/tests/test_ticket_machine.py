@@ -40,7 +40,7 @@ class TestTicketMachine(TransactionCase):
         self.assertEqual(f.partner_id, self.commerce)
         self.assertEqual(f.commercial_partner_id, self.banniere)
         self.assertEqual(f.adresse_commerce, "1 rue Test, Québec")
-        self.assertEqual(f.telephone_commerce, "418 555-0000")
+        self.assertEqual(f.partner_phone, "418 555-0000", "téléphone natif rempli")
         self.assertEqual(f.nb_machines_client, 2)
         self.assertFalse(f.lot_id, "2 machines : l'utilisateur choisit")
         f.lot_id = self.lots[1]
@@ -122,13 +122,74 @@ class TestTicketMachine(TransactionCase):
         t.with_user(agent).web_read(champs)
         self.env["helpdesk.ticket"].with_user(agent).get_views([(False, "form")])
 
+    def test_intervention_depuis_ticket(self):
+        t = self.env["helpdesk.ticket"].create({"name": "Fuite", "code_client": "TST100",
+                                                "lot_id": self.lots[0].id})
+        action = t.action_nouvelle_intervention()
+        f = Form(self.env["machine.intervention"].with_context(**action["context"]))
+        interv = f.save()
+        self.assertEqual(interv.ticket_id, t)
+        self.assertEqual(interv.lot_id, self.lots[0])
+        self.assertEqual(interv.partner_id, self.commerce)
+        self.assertEqual(interv.description, "Fuite")
+        self.assertEqual(interv.route, "1 rue Test, Québec", "route = adresse du commerce")
+        t.invalidate_recordset()
+        self.assertEqual(t.nb_interventions_ticket, 1)
+        self.assertEqual(t.action_voir_interventions_ticket()["res_id"], interv.id)
+        self.assertEqual(self.lots[0].nb_interventions, 3, "visible aussi dans le dossier de la machine")
+
+    def test_frais_intervention_lies_au_ticket(self):
+        t = self.env["helpdesk.ticket"].create({"name": "Retour", "code_client": "TST100",
+                                                "lot_id": self.lots[1].id})
+        interv = self.env["machine.intervention"].create({
+            "ticket_id": t.id, "lot_id": self.lots[1].id, "partner_id": self.commerce.id, "type": "ramassage",
+            "frais_ids": [(0, 0, {"product_id": self.env.ref("suivi_machines.produit_frais_livraison").id,
+                                  "prix_unitaire": 50})]})
+        interv.action_creer_bon_commande()
+        self.assertEqual(interv.sale_order_id.ticket_assistance_id, t)
+        t.invalidate_recordset()
+        self.assertEqual(t.nb_ventes, 1)
+
+    def test_route_personne(self):
+        interv = self.env["machine.intervention"].create({"lot_id": self.lots[0].id,
+                                                          "partner_id": self.personne.id})
+        self.assertEqual(interv.route, "1 rue Test, Québec", "personne : adresse de son commerce")
+        self.commerce.street = "2 rue Nouvelle"
+        self.assertEqual(interv.route, "2 rue Nouvelle, Québec")
+
+    def test_bon_de_vente_et_livraison(self):
+        t = self.env["helpdesk.ticket"].create({"name": "Pièce", "code_client": "TST100"})
+        piece = self.env["product.product"].create({"name": "Pièce test", "is_storable": True})
+        f = Form(self.env["sale.order"].with_context(**t.action_creer_vente()["context"]))
+        self.assertEqual(f.partner_id, self.commerce)
+        self.assertEqual(f.type_commande, "vente")
+        with f.order_line.new() as ligne:
+            ligne.product_id = piece
+        so = f.save()
+        self.assertEqual(so.ticket_assistance_id, t)
+        self.assertEqual(so.origin, "Pièce")
+        so.action_confirm()
+        self.assertEqual(so.picking_ids.ticket_assistance_id, t, "la livraison garde le lien du ticket")
+        f = Form(self.env["stock.picking"].with_context(**t.action_creer_livraison()["context"]))
+        with f.move_ids.new() as m:
+            m.product_id = piece
+            m.product_uom_qty = 1
+        directe = f.save()
+        self.assertEqual(directe.picking_type_id.code, "outgoing")
+        self.assertEqual(directe.partner_id, self.commerce)
+        t.invalidate_recordset()
+        self.assertEqual((t.nb_ventes, t.nb_livraisons), (1, 2))
+        self.assertEqual(t.action_voir_ventes()["res_id"], so.id)
+        self.assertEqual(set(t.action_voir_livraisons()["domain"][0][2]), set((so.picking_ids | directe).ids))
+
     def test_vues(self):
         from lxml import etree
         arch = etree.fromstring(self.env["helpdesk.ticket"].get_views([(False, "form")])["views"]["form"]["arch"])
         visibles = [f.get("name") for f in arch.iter("field") if f.get("invisible") not in ("1", "True")
                     and not [p for p in f.iterancestors() if p.tag in ("list", "kanban")]]
-        for champ in ("partner_id", "telephone_commerce", "code_client", "lot_id"):
+        for champ in ("partner_id", "partner_phone", "adresse_commerce", "code_client", "lot_id"):
             self.assertEqual(visibles.count(champ), 1, f"{champ} affiché une seule fois")
-        self.assertNotIn("partner_phone", visibles, "téléphone natif caché (doublon)")
+        self.assertEqual(visibles[visibles.index("partner_phone") + 1], "adresse_commerce",
+                         "adresse du commerce sous le téléphone natif")
         self.assertNotIn("commerce_id", visibles, "client affiché une seule fois (champ natif)")
         self.env["stock.lot"].get_views([(False, "form")])

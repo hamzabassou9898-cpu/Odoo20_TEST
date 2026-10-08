@@ -197,3 +197,34 @@ class TestSuiviMachines(TransactionCase):
                             ("machine.historique", ["list", "search"]),
                             ("sale.order", ["form"]), ("product.template", ["form", "kanban"])):
             self.env[model].get_views([(False, v) for v in vues])
+
+    # ------------------------------------------------------------ frais -> bon de commande -> Sage
+    def test_frais_et_bon_de_commande(self):
+        interv = self.env["machine.intervention"].create({
+            "lot_id": self.lot_a.id, "type": "ramassage", "partner_id": self.client.id})
+        self.assertEqual(interv.etat_facturation, "aucun")
+        with self.assertRaises(Exception):
+            interv.action_creer_bon_commande()
+        depl = self.env.ref("suivi_machines.produit_frais_deplacement")
+        f = Form(interv)
+        with f.frais_ids.new() as ligne:
+            ligne.product_id = depl
+            self.assertEqual(ligne.name, depl.display_name)
+            ligne.prix_unitaire = 75
+        with f.frais_ids.new() as ligne:
+            ligne.product_id = self.env.ref("suivi_machines.produit_frais_reparation")
+            ligne.quantite = 2
+            ligne.prix_unitaire = 60
+        f.save()
+        self.assertEqual(interv.montant_frais, 195)
+        self.assertEqual(interv.etat_facturation, "a_facturer")
+        action = interv.action_creer_bon_commande()
+        so = interv.sale_order_id
+        self.assertEqual(action["res_id"], so.id)
+        self.assertEqual((so.partner_id, so.origin, so.type_commande), (self.client, interv.name, "vente"))
+        self.assertEqual(so.amount_untaxed, 195)
+        self.assertEqual(interv.etat_facturation, "bon_cree")
+        interv.action_creer_bon_commande()
+        self.assertEqual(interv.sale_order_id, so, "pas de deuxième bon de commande")
+        interv.action_facture_sage()
+        self.assertEqual(interv.etat_facturation, "facture")

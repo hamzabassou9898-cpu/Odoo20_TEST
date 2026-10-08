@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Intervention : ticket d'origine -->
+    <record id="view_intervention_form_ticket" model="ir.ui.view">
+        <field name="name">machine.intervention.form.ticket</field>
+        <field name="model">machine.intervention</field>
+        <field name="inherit_id" ref="suivi_machines.view_intervention_form"/>
+        <field name="arch" type="xml">
+            <field name="partner_id" position="before">
+                <field name="ticket_id" invisible="not ticket_id" readonly="1"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="view_intervention_list_ticket" model="ir.ui.view">
+        <field name="name">machine.intervention.list.ticket</field>
+        <field name="model">machine.intervention</field>
+        <field name="inherit_id" ref="suivi_machines.view_intervention_list"/>
+        <field name="arch" type="xml">
+            <field name="partner_id" position="after">
+                <field name="ticket_id" optional="hide"/>
+            </field>
+        </field>
+    </record>
+
+    <!-- Bon de vente : ticket d'origine -->
+    <record id="view_order_form_ticket" model="ir.ui.view">
+        <field name="name">sale.order.form.ticket.assistance</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="suivi_machines.view_order_form_machine_lot"/>
+        <field name="arch" type="xml">
+            <field name="type_commande" position="after">
+                <field name="ticket_assistance_id" invisible="not ticket_assistance_id" readonly="1"/>
+            </field>
+        </field>
+    </record>
+
+    <!-- Livraison : ticket d'origine (aussi recopie depuis le bon de vente) -->
+    <record id="view_picking_form_ticket" model="ir.ui.view">
+        <field name="name">stock.picking.form.ticket.assistance</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+            <field name="origin" position="after">
+                <field name="ticket_assistance_id" invisible="not ticket_assistance_id" readonly="1"/>
+            </field>
+        </field>
+    </record>
+</odoo>

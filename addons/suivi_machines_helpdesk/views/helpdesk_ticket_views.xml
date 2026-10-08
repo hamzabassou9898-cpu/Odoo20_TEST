@@ -14,11 +14,34 @@
                         <span class="o_stat_text">Fiche de machine</span>
                     </div>
                 </button>
+                <button name="action_voir_interventions_ticket" type="object" class="oe_stat_button"
+                        icon="build" invisible="not nb_interventions_ticket">
+                    <field name="nb_interventions_ticket" widget="statinfo" string="Interventions"/>
+                </button>
+                <button name="action_voir_ventes" type="object" class="oe_stat_button"
+                        icon="receipt_long" invisible="not nb_ventes" groups="sales_team.group_sale_salesman">
+                    <field name="nb_ventes" widget="statinfo" string="Bons de vente"/>
+                </button>
+                <button name="action_voir_livraisons" type="object" class="oe_stat_button"
+                        icon="local_shipping" invisible="not nb_livraisons" groups="stock.group_stock_user">
+                    <field name="nb_livraisons" widget="statinfo" string="Livraisons"/>
+                </button>
             </xpath>
 
-            <!-- Telephone natif cache : celui du commerce est affiche dans « 1. Identification » -->
-            <xpath expr="//field[@name='partner_phone']" position="attributes">
-                <attribute name="invisible">1</attribute>
+            <!-- Boutons d'action en haut du ticket, a cote des etapes -->
+            <xpath expr="//header" position="inside">
+                <button name="action_nouvelle_intervention" type="object" string="Nouvelle intervention"
+                        class="btn-secondary" invisible="not partner_id"/>
+                <button name="action_creer_vente" type="object" string="Bon de vente"
+                        class="btn-secondary" invisible="not partner_id"
+                        groups="sales_team.group_sale_salesman"/>
+                <button name="action_creer_livraison" type="object" string="Livraison"
+                        class="btn-secondary" invisible="not partner_id" groups="stock.group_stock_user"/>
+            </xpath>
+
+            <!-- Adresse du commerce sous le telephone natif -->
+            <xpath expr="//field[@name='partner_phone']" position="after">
+                <field name="adresse_commerce" invisible="not adresse_commerce"/>
             </xpath>
 
             <!-- Code client obligatoire : il remplit le client et ses machines -->
@@ -30,13 +53,10 @@
             <!-- 1. Identification du client  /  2. Parc machines du client -->
             <xpath expr="//field[@name='partner_id']/ancestor::group[last()]" position="after">
                 <group name="dossier_client_machine" invisible="not commerce_id">
-                    <group string="1. Identification du client">
-                        <field name="commercial_partner_id" string="Nom de la bannière"
-                               invisible="commercial_partner_id == commerce_id"/>
-                        <!-- Client : champ natif en haut (pas de doublon) -->
+                    <!-- Client, telephone (natifs) et adresse : en haut, sans doublon -->
+                    <group string="1. Identification du client" invisible="commercial_partner_id == commerce_id">
                         <field name="commerce_id" invisible="1"/>
-                        <field name="adresse_commerce"/>
-                        <field name="telephone_commerce" widget="phone"/>
+                        <field name="commercial_partner_id" string="Nom de la bannière"/>
                     </group>
                     <group string="2. Parc machines du client">
                         <field name="machines_client_ids" invisible="1"/>

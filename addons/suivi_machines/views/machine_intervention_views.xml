@@ -12,7 +12,14 @@
                 <field name="machine_ref" optional="show"/>
                 <field name="product_id" optional="show"/>
                 <field name="partner_id"/>
+                <field name="route" optional="show"/>
                 <field name="user_id" optional="show"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="montant_frais" optional="show" sum="Total"/>
+                <field name="etat_facturation" optional="show" widget="badge"
+                       decoration-warning="etat_facturation == 'a_facturer'"
+                       decoration-info="etat_facturation == 'bon_cree'"
+                       decoration-success="etat_facturation == 'facture'"/>
                 <field name="state" widget="badge" decoration-success="state == 'fait'"
                        decoration-info="state == 'planifie'"/>
             </list>
@@ -31,9 +38,26 @@
                             invisible="state == 'planifie'"/>
                     <button name="action_annuler" type="object" string="Annuler"
                             invisible="state != 'planifie'"/>
+                    <button name="action_creer_bon_commande" type="object" string="Créer le bon de commande"
+                            class="btn-secondary" invisible="etat_facturation != 'a_facturer'"
+                            groups="sales_team.group_sale_salesman"/>
+                    <button name="action_facture_sage" type="object" string="Facturé dans Sage"
+                            invisible="etat_facturation != 'bon_cree'"
+                            groups="sales_team.group_sale_salesman"/>
                     <field name="state" widget="statusbar" statusbar_visible="planifie,fait"/>
                 </header>
                 <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_voir_bon_commande" type="object" class="oe_stat_button"
+                                icon="receipt_long" invisible="not sale_order_id"
+                                groups="sales_team.group_sale_salesman">
+                            <div class="o_stat_info">
+                                <span class="o_stat_value"><field name="sale_order_id" readonly="1"
+                                    options="{'no_open': True}"/></span>
+                                <span class="o_stat_text">Bon de commande</span>
+                            </div>
+                        </button>
+                    </div>
                     <div class="oe_title">
                         <h1><field name="name" readonly="1"/></h1>
                     </div>
@@ -49,11 +73,37 @@
                         <group>
                             <field name="date"/>
                             <field name="partner_id"/>
+                            <field name="route" invisible="not route"/>
                             <field name="user_id"/>
                             <field name="company_id" groups="base.group_multi_company"/>
                         </group>
                     </group>
                     <field name="description" placeholder="Ce qui a été fait, problème constaté, pièces changées..."/>
+                    <separator string="Frais (déplacement, réparation, livraison, pièces...)"/>
+                    <field name="frais_ids" readonly="etat_facturation in ('bon_cree', 'facture')">
+                        <list editable="bottom">
+                            <field name="sequence" widget="handle"/>
+                            <field name="product_id" options="{'no_create': True}"/>
+                            <field name="name"/>
+                            <field name="quantite"/>
+                            <field name="prix_unitaire"/>
+                            <field name="currency_id" column_invisible="1"/>
+                            <field name="sous_total" sum="Total"/>
+                        </list>
+                    </field>
+                    <group>
+                        <group>
+                            <field name="montant_frais"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                        <group>
+                            <field name="etat_facturation" widget="badge"
+                                   decoration-warning="etat_facturation == 'a_facturer'"
+                                   decoration-info="etat_facturation == 'bon_cree'"
+                                   decoration-success="etat_facturation == 'facture'"/>
+                            <field name="facture_sage" groups="sales_team.group_sale_salesman"/>
+                        </group>
+                    </group>
                 </sheet>
                 <chatter/>
             </form>
@@ -81,6 +131,7 @@
                 <field name="machine_ref"/>
                 <field name="product_id"/>
                 <field name="partner_id"/>
+                <field name="route"/>
                 <field name="user_id"/>
                 <filter name="planifie" string="Planifiées" domain="[('state', '=', 'planifie')]"/>
                 <filter name="fait" string="Faites" domain="[('state', '=', 'fait')]"/>
@@ -90,12 +141,18 @@
                 <filter name="installation" string="Installations" domain="[('type', '=', 'installation')]"/>
                 <filter name="remplacement" string="Remplacements" domain="[('type', '=', 'remplacement')]"/>
                 <separator/>
+                <filter name="a_facturer" string="À facturer" domain="[('etat_facturation', '=', 'a_facturer')]"/>
+                <filter name="bon_cree" string="Bon de commande créé (à facturer dans Sage)"
+                        domain="[('etat_facturation', '=', 'bon_cree')]"/>
+                <separator/>
                 <filter name="date" string="Date" date="date"/>
                 <group>
                     <filter name="grp_type" string="Type" context="{'group_by': 'type'}"/>
                     <filter name="grp_produit" string="Produit" context="{'group_by': 'product_id'}"/>
                     <filter name="grp_client" string="Client" context="{'group_by': 'partner_id'}"/>
                     <filter name="grp_tech" string="Technicien" context="{'group_by': 'user_id'}"/>
+                    <filter name="grp_route" string="Route" context="{'group_by': 'route'}"/>
+                    <filter name="grp_facturation" string="Facturation" context="{'group_by': 'etat_facturation'}"/>
                 </group>
             </search>
         </field>
