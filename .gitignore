@@ -46,3 +46,4 @@ machines_data.json
 migration/contacts_odoo.py
 migration/inventaire_odoo.py
 *.zip
+apercus/
