@@ -10,6 +10,6 @@
     </record>
     <record id="param_jours_avant_reprise" model="ir.config_parameter">
         <field name="key">suivi_machines_helpdesk.jours_avant_reprise</field>
-        <field name="value">3</field>
+        <field name="value">30</field>
     </record>
 </odoo>

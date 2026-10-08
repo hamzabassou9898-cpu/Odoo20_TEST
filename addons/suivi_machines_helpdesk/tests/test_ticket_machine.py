@@ -194,8 +194,11 @@ class TestTicketMachine(TransactionCase):
         pk.with_context(skip_sms=True).button_validate()
         self.assertEqual(lot.machine_statut, "chez_client")
         SO = self.env["sale.order"]
-        so.date_fin_location = fields.Datetime.now() + relativedelta(days=10)
-        self.assertFalse(SO._cron_tickets_reprise(), "fin dans 10 jours : rien encore")
+        so.date_fin_location = fields.Datetime.now() + relativedelta(days=40)
+        self.assertFalse(SO._cron_tickets_reprise(), "fin dans 40 jours : rien encore")
+        so.date_fin_location = fields.Datetime.now() + relativedelta(days=29)
+        self.assertEqual(len(SO._cron_tickets_reprise()), 1, "fin dans 29 jours : ticket (délai 30 jours)")
+        so.ticket_reprise_ids.unlink()
         so.date_fin_location = fields.Datetime.now() + relativedelta(days=2)
         etape = self.env["helpdesk.stage"].search([("name", "=ilike", "reprise de machine")], limit=1) \
             or self.env["helpdesk.stage"].create({"name": "Reprise de machine"})

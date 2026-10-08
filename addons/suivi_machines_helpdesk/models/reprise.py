@@ -145,7 +145,7 @@ class SaleOrder(models.Model):
         # Responsable de la planification : parametre, sinon l'administrateur
         responsable = self.env["res.users"].browse(_param_int(icp, PARAM_RESPONSABLE, 0)).exists() \
             or self.env.ref("base.user_admin", raise_if_not_found=False)
-        return {"jours": _param_int(icp, PARAM_JOURS, 3), "equipe": equipe, "etape": etape,
+        return {"jours": _param_int(icp, PARAM_JOURS, 30), "equipe": equipe, "etape": etape,
                 "responsable": responsable}
 
     def _machines_a_reprendre(self):
@@ -156,7 +156,7 @@ class SaleOrder(models.Model):
     @api.model
     def _cron_tickets_reprise(self):
         """Chaque jour : un ticket « Reprise » par machine encore louee dont la location
-        se termine dans les X prochains jours (X = parametre, 3 par defaut)."""
+        se termine dans les X prochains jours (X = parametre, 30 par defaut)."""
         reglages = self._reglages_reprise()
         limite = fields.Datetime.now() + timedelta(days=reglages["jours"])
         commandes = self.search([("type_commande", "=", "location"), ("state", "=", "sale"),
