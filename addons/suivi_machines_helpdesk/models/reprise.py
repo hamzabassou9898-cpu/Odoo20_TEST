@@ -6,6 +6,8 @@ from odoo import api, fields, models
 
 PARAM_JOURS = "suivi_machines_helpdesk.jours_avant_reprise"
 PARAM_EQUIPE = "suivi_machines_helpdesk.equipe_reprise_id"
+PARAM_ETAPE = "suivi_machines_helpdesk.etape_reprise"
+ETAPE_DEFAUT = "Reprise de machine"
 
 
 def _param_int(icp, cle, defaut):
@@ -46,6 +48,12 @@ class SaleOrder(models.Model):
         icp = self.env["ir.config_parameter"].sudo()
         jours = _param_int(icp, PARAM_JOURS, 3)
         equipe = _param_int(icp, PARAM_EQUIPE, 0)
+        # Etape « Reprise de machine » (nom modifiable par parametre) et son equipe
+        nom_etape = (icp.get_str(PARAM_ETAPE, ETAPE_DEFAUT) if hasattr(icp, "get_str")
+                     else icp.get_param(PARAM_ETAPE, ETAPE_DEFAUT)) or ETAPE_DEFAUT
+        etape = self.env["helpdesk.stage"].search([("name", "=ilike", nom_etape)], limit=1)
+        if etape and not equipe and "team_ids" in etape._fields:
+            equipe = etape.team_ids[:1].id
         limite = fields.Datetime.now() + timedelta(days=jours)
         commandes = self.search([("type_commande", "=", "location"), ("state", "=", "sale"),
                                  ("date_fin_location", "!=", False), ("date_fin_location", "<=", limite)])
@@ -73,5 +81,7 @@ class SaleOrder(models.Model):
                 }
                 if equipe:
                     vals["team_id"] = equipe
+                if etape:
+                    vals["stage_id"] = etape.id
                 crees |= Ticket.create(vals)
         return crees

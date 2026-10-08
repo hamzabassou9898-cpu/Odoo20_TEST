@@ -197,7 +197,10 @@ class TestTicketMachine(TransactionCase):
         so.date_fin_location = fields.Datetime.now() + relativedelta(days=10)
         self.assertFalse(SO._cron_tickets_reprise(), "fin dans 10 jours : rien encore")
         so.date_fin_location = fields.Datetime.now() + relativedelta(days=2)
+        etape = self.env["helpdesk.stage"].search([("name", "=ilike", "reprise de machine")], limit=1) \
+            or self.env["helpdesk.stage"].create({"name": "Reprise de machine"})
         tickets = SO._cron_tickets_reprise()
+        self.assertEqual(tickets.stage_id, etape, "ticket placé dans l'étape Reprise de machine")
         self.assertEqual(len(tickets), 1)
         self.assertEqual((tickets.lot_id, tickets.partner_id, tickets.code_client, tickets.commande_reprise_id),
                          (lot, self.commerce, "TST100", so))
