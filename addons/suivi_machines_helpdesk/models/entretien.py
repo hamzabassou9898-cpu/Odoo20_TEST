@@ -93,6 +93,28 @@ class HelpdeskTicket(models.Model):
             crees |= ticket
         return crees
 
+    @api.model
+    def _action_verifier_entretiens(self):
+        """Menu « Verifier les entretiens » : lance la verification et affiche un resume."""
+        crees = self._cron_tickets_entretien()
+        Lot = self.env["stock.lot"]
+        chez_client = Lot.search([("est_machine", "=", True), ("machine_client_id", "!=", False)])
+        sans_date = chez_client.filtered(lambda l: not l.date_prochain_entretien)
+        avec_date = (chez_client - sans_date).sorted("date_prochain_entretien")
+        lignes = [self.env._("%s ticket(s) d'entretien créé(s).", len(crees)),
+                  self.env._("%s machine(s) chez un client.", len(chez_client))]
+        if sans_date:
+            lignes.append(self.env._("%(nb)s sans date d'entretien (aucun entretien ni installation connus) : %(liste)s",
+                                     nb=len(sans_date), liste=", ".join(sans_date[:10].mapped("name"))))
+        if avec_date:
+            prochain = avec_date[0]
+            lignes.append(self.env._("Prochaine échéance : %(serie)s chez %(client)s le %(date)s.",
+                                     serie=prochain.name, client=prochain.machine_client_id.display_name,
+                                     date=fields.Date.to_string(prochain.date_prochain_entretien)))
+        return {"type": "ir.actions.client", "tag": "display_notification",
+                "params": {"title": self.env._("Vérification des entretiens"), "message": "\n".join(lignes),
+                           "sticky": True, "type": "success" if crees else "info"}}
+
     def action_nouvelle_intervention(self):
         action = super().action_nouvelle_intervention()
         if self.est_entretien:

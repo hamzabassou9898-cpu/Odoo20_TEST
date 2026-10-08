@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_verifier_entretiens" model="ir.actions.server">
+        <field name="name">Vérifier les entretiens</field>
+        <field name="model_id" ref="helpdesk.model_helpdesk_ticket"/>
+        <field name="state">code</field>
+        <field name="code">action = model._action_verifier_entretiens()</field>
+    </record>
+    <menuitem id="menu_verifier_entretiens" name="Vérifier les entretiens"
+              parent="suivi_machines.menu_machines" action="action_verifier_entretiens" sequence="5"/>
+</odoo>

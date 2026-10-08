@@ -317,7 +317,9 @@ class TestTicketMachine(TransactionCase):
         # lots[2] : entretien fait il y a 2 mois -> rien
         Interv.create({"lot_id": self.lots[2].id, "type": "entretien", "state": "fait",
                        "date": fields.Datetime.now() - relativedelta(months=2)})
-        tickets = T._cron_tickets_entretien()
+        action = T._action_verifier_entretiens()
+        self.assertIn("2 ticket(s)", action["params"]["message"])
+        tickets = T.search([("est_entretien", "=", True)])
         self.assertEqual(set(tickets.lot_id.ids), {self.lots[0].id, self.lots[1].id})
         t0 = tickets.filtered(lambda t: t.lot_id == self.lots[0])
         t1 = tickets.filtered(lambda t: t.lot_id == self.lots[1])
