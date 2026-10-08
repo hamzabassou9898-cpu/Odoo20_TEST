@@ -45,6 +45,9 @@ class HelpdeskTicket(models.Model):
     nb_interventions_ticket = fields.Integer("Nb interventions du ticket", compute="_compute_suites")
     nb_ventes = fields.Integer("Nb bons de vente", compute="_compute_suites")
     nb_livraisons = fields.Integer("Nb livraisons", compute="_compute_suites")
+    technicien_id = fields.Many2one(
+        "res.users", "Technicien", compute="_compute_technicien", store=True, index="btree_not_null",
+        help="Technicien de la dernière intervention du ticket (choisi dans « Nouvelle intervention »).")
 
     # ------------------------------------------------------------ code client <-> client
     @api.model
@@ -139,6 +142,13 @@ class HelpdeskTicket(models.Model):
                                  order="create_date desc") if domaine else self.browse()
             ticket.tickets_precedents_ids = autres
             ticket.nb_tickets_precedents = len(autres)
+
+    @api.depends("intervention_ticket_ids.user_id", "intervention_ticket_ids.state",
+                 "intervention_ticket_ids.date")
+    def _compute_technicien(self):
+        for ticket in self:
+            actives = ticket.sudo().intervention_ticket_ids.filtered(lambda i: i.state != "annule")
+            ticket.technicien_id = actives.sorted(lambda i: (i.date, i.id))[-1:].user_id
 
     @api.depends("intervention_ticket_ids", "vente_ids.picking_ids", "livraison_ids")
     def _compute_suites(self):

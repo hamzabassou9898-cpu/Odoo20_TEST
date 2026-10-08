@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from dateutil.relativedelta import relativedelta
+
 from odoo.tests import Form, TransactionCase, tagged
 
 
@@ -149,6 +151,27 @@ class TestTicketMachine(TransactionCase):
         self.assertEqual(interv.sale_order_id.ticket_assistance_id, t)
         t.invalidate_recordset()
         self.assertEqual(t.nb_ventes, 1)
+
+    def test_technicien_du_ticket(self):
+        tech_a = self.env["res.users"].create({"name": "Technicien A", "login": "tech_a_test"})
+        tech_b = self.env["res.users"].create({"name": "Technicien B", "login": "tech_b_test"})
+        t = self.env["helpdesk.ticket"].create({"name": "Bris", "code_client": "TST100",
+                                                "lot_id": self.lots[0].id})
+        self.assertFalse(t.technicien_id)
+        f = Form(self.env["machine.intervention"].with_context(**t.action_nouvelle_intervention()["context"]))
+        f.user_id = tech_a
+        i1 = f.save()
+        self.assertEqual(t.technicien_id, tech_a, "le technicien choisi apparaît sur le ticket")
+        i2 = self.env["machine.intervention"].create({
+            "ticket_id": t.id, "lot_id": self.lots[0].id, "user_id": tech_b.id,
+            "date": i1.date + relativedelta(days=1)})
+        self.assertEqual(t.technicien_id, tech_b, "dernière intervention")
+        i2.action_annuler()
+        self.assertEqual(t.technicien_id, tech_a, "intervention annulée ignorée")
+        i1.user_id = tech_b
+        self.assertEqual(t.technicien_id, tech_b, "modifié depuis l'intervention")
+        arch = self.env["helpdesk.ticket"].get_views([(False, "kanban")])["views"]["kanban"]["arch"]
+        self.assertIn("technicien_id", arch)
 
     def test_route_personne(self):
         interv = self.env["machine.intervention"].create({"lot_id": self.lots[0].id,

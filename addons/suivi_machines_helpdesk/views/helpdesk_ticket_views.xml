@@ -39,6 +39,11 @@
                         class="btn-secondary" invisible="not partner_id" groups="stock.group_stock_user"/>
             </xpath>
 
+            <!-- Technicien de la derniere intervention, sous « Assigné à » -->
+            <xpath expr="//field[@name='user_id']" position="after">
+                <field name="technicien_id" invisible="not technicien_id" widget="many2one_avatar_user"/>
+            </xpath>
+
             <!-- Adresse du commerce sous le telephone natif -->
             <xpath expr="//field[@name='partner_phone']" position="after">
                 <field name="adresse_commerce" invisible="not adresse_commerce"/>
@@ -132,6 +137,22 @@
                             </list>
                         </field>
                     </page>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Kanban : petit badge « Technicien » sur chaque carte, a cote de l'avatar -->
+    <record id="helpdesk_ticket_view_kanban_technicien" model="ir.ui.view">
+        <field name="name">helpdesk.ticket.kanban.technicien</field>
+        <field name="model">helpdesk.ticket</field>
+        <field name="inherit_id" ref="helpdesk.helpdesk_ticket_view_kanban"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='user_id']" position="before">
+                <span t-if="record.technicien_id.raw_value"
+                      class="badge rounded-pill text-bg-info me-1 text-truncate" style="max-width: 160px;"
+                      title="Technicien de la dernière intervention">
+                    Tech : <field name="technicien_id"/>
+                </span>
             </xpath>
         </field>
     </record>
