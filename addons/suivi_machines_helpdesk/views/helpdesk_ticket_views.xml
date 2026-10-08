@@ -38,12 +38,7 @@
                         class="btn-secondary" invisible="not est_reprise"/>
                 <button name="action_nouvelle_intervention" type="object" string="Nouvelle intervention"
                         class="btn-secondary" invisible="not partner_id or est_reprise"/>
-                <button name="action_creer_vente" type="object" string="Bon de vente"
-                        class="btn-secondary" invisible="not partner_id or est_reprise"
-                        groups="sales_team.group_sale_salesman"/>
-                <button name="action_creer_livraison" type="object" string="Livraison"
-                        class="btn-secondary" invisible="not partner_id or est_reprise"
-                        groups="stock.group_stock_user"/>
+
             </xpath>
 
             <!-- Technicien de la derniere intervention, sous « Assigné à » -->

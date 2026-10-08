@@ -346,4 +346,8 @@ class TestTicketMachine(TransactionCase):
         self.assertEqual(groupe.xpath("./field")[-1].get("name"), "adresse_commerce",
                          "adresse commerciale : sa propre ligne, dans le groupe du téléphone")
         self.assertNotIn("commerce_id", visibles, "client affiché une seule fois (champ natif)")
+        boutons = [b.get("name") for b in arch.iter("button") if b.getparent().tag == "header"]
+        self.assertIn("action_nouvelle_intervention", boutons)
+        self.assertNotIn("action_creer_vente", boutons, "bouton Bon de vente retiré")
+        self.assertNotIn("action_creer_livraison", boutons, "bouton Livraison retiré")
         self.env["stock.lot"].get_views([(False, "form")])
