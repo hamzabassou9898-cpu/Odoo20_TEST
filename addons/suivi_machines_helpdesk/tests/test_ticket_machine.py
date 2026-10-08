@@ -261,7 +261,12 @@ class TestTicketMachine(TransactionCase):
     def test_ramassage_depuis_ticket(self):
         lot, so, ticket = self._location_livree("RAM-1")
         self.assertTrue(ticket.est_reprise)
+        etape = self.env["helpdesk.stage"].search([("name", "ilike", "reprise")], limit=1) \
+            or self.env["helpdesk.stage"].create({"name": "Reprise de machine"})
+        nouveau = self.env["helpdesk.stage"].create({"name": "Nouveau test"})
+        ticket.stage_id = nouveau
         action = ticket.action_ramassage()
+        self.assertEqual(ticket.stage_id, etape, "Ramassage : le ticket glisse vers Reprise de machine")
         retour = self.env["stock.picking"].browse(action["res_id"])
         self.assertEqual(retour.ticket_assistance_id, ticket)
         self.assertEqual(retour.move_ids.move_line_ids.lot_id, lot, "la machine du ticket est indiquée")

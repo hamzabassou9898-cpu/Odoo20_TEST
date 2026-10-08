@@ -33,6 +33,22 @@ class HelpdeskTicket(models.Model):
         for ticket in self:
             ticket.est_reprise = bool(ticket.commande_reprise_id)
 
+    @api.model
+    def _etape_reprise(self, nom=ETAPE_DEFAUT, equipe=None):
+        """Etape « Reprise de machine » : nom exact, sinon une etape contenant « reprise »,
+        de preference dans l'equipe du ticket."""
+        Etape = self.env["helpdesk.stage"]
+        etapes = Etape.search([("name", "=ilike", nom)]) or Etape.search([("name", "ilike", "reprise")])
+        if equipe and "team_ids" in Etape._fields:
+            etapes = etapes.filtered(lambda e: equipe in e.team_ids) or etapes
+        return etapes[:1]
+
+    def _mettre_en_reprise(self):
+        for ticket in self:
+            etape = self._etape_reprise(equipe=ticket.team_id if "team_id" in ticket._fields else None)
+            if etape and ticket.stage_id != etape:
+                ticket.stage_id = etape
+
     def _livraison_machine(self):
         """Livraison terminee du contrat qui a fait sortir la machine du ticket."""
         self.ensure_one()
@@ -43,6 +59,7 @@ class HelpdeskTicket(models.Model):
     def action_ramassage(self):
         """Bon de retour de la machine (depuis la livraison du contrat), lie au ticket."""
         self.ensure_one()
+        self._mettre_en_reprise()
         encours = self.livraison_ids.filtered(
             lambda p: p.state not in ("done", "cancel") and p.location_dest_id.usage == "internal"
             and self.lot_id in p.move_ids.machine_lot_id)[:1]
@@ -100,7 +117,7 @@ class SaleOrder(models.Model):
         # Etape « Reprise de machine » (nom modifiable par parametre) et son equipe
         nom_etape = (icp.get_str(PARAM_ETAPE, ETAPE_DEFAUT) if hasattr(icp, "get_str")
                      else icp.get_param(PARAM_ETAPE, ETAPE_DEFAUT)) or ETAPE_DEFAUT
-        etape = self.env["helpdesk.stage"].search([("name", "=ilike", nom_etape)], limit=1)
+        etape = self.env["helpdesk.ticket"]._etape_reprise(nom_etape)
         if etape and not equipe and "team_ids" in etape._fields:
             equipe = etape.team_ids[:1].id
         # Responsable de la planification : parametre, sinon l'administrateur
