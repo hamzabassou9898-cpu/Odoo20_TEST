@@ -123,5 +123,12 @@ class TestTicketMachine(TransactionCase):
         self.env["helpdesk.ticket"].with_user(agent).get_views([(False, "form")])
 
     def test_vues(self):
-        self.env["helpdesk.ticket"].get_views([(False, "form")])
+        from lxml import etree
+        arch = etree.fromstring(self.env["helpdesk.ticket"].get_views([(False, "form")])["views"]["form"]["arch"])
+        visibles = [f.get("name") for f in arch.iter("field") if f.get("invisible") not in ("1", "True")
+                    and not [p for p in f.iterancestors() if p.tag in ("list", "kanban")]]
+        for champ in ("partner_id", "telephone_commerce", "code_client", "lot_id"):
+            self.assertEqual(visibles.count(champ), 1, f"{champ} affiché une seule fois")
+        self.assertNotIn("partner_phone", visibles, "téléphone natif caché (doublon)")
+        self.assertNotIn("commerce_id", visibles, "client affiché une seule fois (champ natif)")
         self.env["stock.lot"].get_views([(False, "form")])
