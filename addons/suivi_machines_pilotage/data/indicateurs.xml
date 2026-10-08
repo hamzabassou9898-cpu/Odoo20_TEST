@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="indicateur_entretien_retard" model="pilotage.indicateur">
+        <field name="code">entretien_retard</field>
+        <field name="name">Entretiens en retard</field>
+        <field name="section">entretiens</field>
+        <field name="sequence">1</field>
+        <field name="couleur">danger</field>
+        <field name="description">Machines dont l'entretien est dépassé</field>
+    </record>
+    <record id="indicateur_entretien_semaine" model="pilotage.indicateur">
+        <field name="code">entretien_semaine</field>
+        <field name="name">Entretiens cette semaine</field>
+        <field name="section">entretiens</field>
+        <field name="sequence">2</field>
+        <field name="couleur">warning</field>
+        <field name="description">Dans les 7 prochains jours</field>
+    </record>
+    <record id="indicateur_entretien_mois" model="pilotage.indicateur">
+        <field name="code">entretien_mois</field>
+        <field name="name">Entretiens dans 30 jours</field>
+        <field name="section">entretiens</field>
+        <field name="sequence">3</field>
+        <field name="couleur">info</field>
+        <field name="description">À planifier ce mois-ci</field>
+    </record>
+    <record id="indicateur_entretiens_faits" model="pilotage.indicateur">
+        <field name="code">entretiens_faits</field>
+        <field name="name">Entretiens faits ce mois</field>
+        <field name="section">entretiens</field>
+        <field name="sequence">4</field>
+        <field name="couleur">success</field>
+        <field name="description">Interventions d'entretien terminées</field>
+    </record>
+    <record id="indicateur_locations_actives" model="pilotage.indicateur">
+        <field name="code">locations_actives</field>
+        <field name="name">Locations en cours</field>
+        <field name="section">locations</field>
+        <field name="sequence">1</field>
+        <field name="couleur">primary</field>
+        <field name="description">Contrats de location actifs</field>
+    </record>
+    <record id="indicateur_reprises_30j" model="pilotage.indicateur">
+        <field name="code">reprises_30j</field>
+        <field name="name">Reprises dans 30 jours</field>
+        <field name="section">locations</field>
+        <field name="sequence">2</field>
+        <field name="couleur">warning</field>
+        <field name="description">Fin de location à venir</field>
+    </record>
+    <record id="indicateur_locations_depassees" model="pilotage.indicateur">
+        <field name="code">locations_depassees</field>
+        <field name="name">Locations dépassées</field>
+        <field name="section">locations</field>
+        <field name="sequence">3</field>
+        <field name="couleur">danger</field>
+        <field name="description">Date de fin passée, machine à reprendre</field>
+    </record>
+    <record id="indicateur_bris_mois" model="pilotage.indicateur">
+        <field name="code">bris_mois</field>
+        <field name="name">Bris ce mois</field>
+        <field name="section">qualite</field>
+        <field name="sequence">1</field>
+        <field name="couleur">danger</field>
+        <field name="description">Bris déclarés depuis le 1er du mois</field>
+    </record>
+    <record id="indicateur_machines_probleme" model="pilotage.indicateur">
+        <field name="code">machines_probleme</field>
+        <field name="name">Machines à problème</field>
+        <field name="section">qualite</field>
+        <field name="sequence">2</field>
+        <field name="couleur">warning</field>
+        <field name="description">En réparation, à remplacer ou hors service</field>
+    </record>
+    <record id="indicateur_a_facturer" model="pilotage.indicateur">
+        <field name="code">a_facturer</field>
+        <field name="name">Interventions à facturer</field>
+        <field name="section">facturation</field>
+        <field name="sequence">1</field>
+        <field name="couleur">warning</field>
+        <field name="description">Frais sans bon de commande</field>
+    </record>
+    <record id="indicateur_facturer_sage" model="pilotage.indicateur">
+        <field name="code">facturer_sage</field>
+        <field name="name">À facturer dans Sage</field>
+        <field name="section">facturation</field>
+        <field name="sequence">2</field>
+        <field name="couleur">info</field>
+        <field name="description">Bon de commande créé, pas encore facturé</field>
+    </record>
+    <record id="indicateur_livraisons_a_faire" model="pilotage.indicateur">
+        <field name="code">livraisons_a_faire</field>
+        <field name="name">Livraisons de machines à faire</field>
+        <field name="section">livraisons</field>
+        <field name="sequence">1</field>
+        <field name="couleur">primary</field>
+        <field name="description">Machines à livrer chez les clients</field>
+    </record>
+    <record id="indicateur_ramassages_a_faire" model="pilotage.indicateur">
+        <field name="code">ramassages_a_faire</field>
+        <field name="name">Ramassages à faire</field>
+        <field name="section">livraisons</field>
+        <field name="sequence">2</field>
+        <field name="couleur">warning</field>
+        <field name="description">Machines à récupérer chez les clients</field>
+    </record>
+    <record id="indicateur_sans_livreur" model="pilotage.indicateur">
+        <field name="code">sans_livreur</field>
+        <field name="name">Sans livreur</field>
+        <field name="section">livraisons</field>
+        <field name="sequence">3</field>
+        <field name="couleur">danger</field>
+        <field name="description">Livraisons ou ramassages sans livreur choisi</field>
+    </record>
+    <record id="indicateur_livraisons_faites" model="pilotage.indicateur">
+        <field name="code">livraisons_faites</field>
+        <field name="name">Livraisons faites ce mois</field>
+        <field name="section">livraisons</field>
+        <field name="sequence">4</field>
+        <field name="couleur">success</field>
+        <field name="description">Machines livrées depuis le 1er du mois</field>
+    </record>
+    <record id="indicateur_appels_ouverts" model="pilotage.indicateur">
+        <field name="code">appels_ouverts</field>
+        <field name="name">Appels de service ouverts</field>
+        <field name="section">appels</field>
+        <field name="sequence">1</field>
+        <field name="couleur">primary</field>
+        <field name="description">Tickets en cours (hors entretiens et reprises)</field>
+    </record>
+    <record id="indicateur_appels_mois" model="pilotage.indicateur">
+        <field name="code">appels_mois</field>
+        <field name="name">Appels ce mois</field>
+        <field name="section">appels</field>
+        <field name="sequence">2</field>
+        <field name="couleur">info</field>
+        <field name="description">Appels reçus depuis le 1er du mois</field>
+    </record>
+    <record id="indicateur_appels_sans_machine" model="pilotage.indicateur">
+        <field name="code">appels_sans_machine</field>
+        <field name="name">Appels sans machine</field>
+        <field name="section">appels</field>
+        <field name="sequence">3</field>
+        <field name="couleur">warning</field>
+        <field name="description">Numéro de série à préciser</field>
+    </record>
+</odoo>

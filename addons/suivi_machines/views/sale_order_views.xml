@@ -17,6 +17,7 @@
             <field name="partner_id" position="after">
                 <field name="type_commande" widget="radio" options="{'horizontal': true}"/>
                 <field name="date_fin_auto" invisible="1"/>
+                <field name="date_debut_location" invisible="type_commande != 'location' or date_fin_auto"/>
                 <field name="date_fin_location" invisible="type_commande != 'location' or date_fin_auto"/>
             </field>
             <xpath expr="//list[@name='sol_list']/column[@name='product_and_description']" position="after">

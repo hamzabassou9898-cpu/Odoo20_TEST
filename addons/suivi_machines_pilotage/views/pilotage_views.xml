@@ -1,0 +1,500 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ================================================================ ENTRETIENS (machines) -->
+    <record id="view_pilotage_lot_list" model="ir.ui.view">
+        <field name="name">pilotage.stock.lot.entretiens.list</field>
+        <field name="model">stock.lot</field>
+        <field name="priority">100</field>
+        <field name="arch" type="xml">
+            <list create="false" default_order="date_prochain_entretien asc"
+                  decoration-danger="date_prochain_entretien and date_prochain_entretien &lt; context_today().strftime('%Y-%m-%d')"
+                  decoration-warning="date_prochain_entretien and date_prochain_entretien &gt;= context_today().strftime('%Y-%m-%d') and date_prochain_entretien &lt;= (context_today() + relativedelta(days=7)).strftime('%Y-%m-%d')">
+                <field name="date_prochain_entretien" string="Entretien prévu"/>
+                <field name="name" string="N° de série"/>
+                <field name="ref" string="# machine"/>
+                <field name="product_id" string="Modèle"/>
+                <field name="machine_client_id" string="Client"/>
+                <field name="location_id" string="Emplacement" optional="show"/>
+                <field name="date_dernier_entretien" string="Dernier entretien" optional="show"/>
+                <field name="intervalle_entretien" string="Tous les (mois)" optional="show"/>
+                <field name="machine_statut" widget="badge" optional="show"
+                       decoration-success="machine_statut == 'chez_client'"
+                       decoration-info="machine_statut == 'entrepot'"
+                       decoration-warning="machine_statut in ('en_reparation', 'a_remplacer')"/>
+                <field name="nb_bris" optional="hide" sum="Total"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_pilotage_lot_calendar" model="ir.ui.view">
+        <field name="name">pilotage.stock.lot.entretiens.calendar</field>
+        <field name="model">stock.lot</field>
+        <field name="arch" type="xml">
+            <calendar string="Entretiens" date_start="date_prochain_entretien" mode="month"
+                      color="product_id" quick_create="0" create="0" event_open_popup="1">
+                <field name="ref"/>
+                <field name="machine_client_id"/>
+                <field name="location_id"/>
+            </calendar>
+        </field>
+    </record>
+
+    <record id="view_pilotage_lot_pivot" model="ir.ui.view">
+        <field name="name">pilotage.stock.lot.entretiens.pivot</field>
+        <field name="model">stock.lot</field>
+        <field name="arch" type="xml">
+            <pivot string="Entretiens à venir">
+                <field name="product_id" type="row"/>
+                <field name="date_prochain_entretien" interval="month" type="col"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_pilotage_lot_graph" model="ir.ui.view">
+        <field name="name">pilotage.stock.lot.entretiens.graph</field>
+        <field name="model">stock.lot</field>
+        <field name="arch" type="xml">
+            <graph string="Entretiens par mois" type="bar" stacked="1">
+                <field name="date_prochain_entretien" interval="month"/>
+                <field name="product_id"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="view_pilotage_lot_search" model="ir.ui.view">
+        <field name="name">pilotage.stock.lot.entretiens.search</field>
+        <field name="model">stock.lot</field>
+        <field name="priority">100</field>
+        <field name="arch" type="xml">
+            <search string="Entretiens">
+                <field name="name" string="N° de série"/>
+                <field name="ref" string="# machine"/>
+                <field name="product_id"/>
+                <field name="machine_client_id"/>
+                <filter name="retard" string="En retard"
+                        domain="[('date_prochain_entretien', '&lt;', context_today().strftime('%Y-%m-%d'))]"/>
+                <filter name="semaine" string="Cette semaine"
+                        domain="[('date_prochain_entretien', '&gt;=', context_today().strftime('%Y-%m-%d')),
+                                 ('date_prochain_entretien', '&lt;=', (context_today() + relativedelta(days=7)).strftime('%Y-%m-%d'))]"/>
+                <filter name="mois" string="30 prochains jours"
+                        domain="[('date_prochain_entretien', '&gt;=', context_today().strftime('%Y-%m-%d')),
+                                 ('date_prochain_entretien', '&lt;=', (context_today() + relativedelta(days=30)).strftime('%Y-%m-%d'))]"/>
+                <filter name="prochains_90j" string="90 prochains jours (et retards)"
+                        domain="[('date_prochain_entretien', '&lt;=', (context_today() + relativedelta(days=90)).strftime('%Y-%m-%d'))]"/>
+                <separator/>
+                <filter name="chez_client" string="Chez un client" domain="[('machine_client_id', '!=', False)]"/>
+                <filter name="en_entrepot" string="En entrepôt" domain="[('machine_client_id', '=', False)]"/>
+                <group>
+                    <filter name="grp_mois" string="Mois de l'entretien" context="{'group_by': 'date_prochain_entretien:month'}"/>
+                    <filter name="grp_semaine" string="Semaine de l'entretien" context="{'group_by': 'date_prochain_entretien:week'}"/>
+                    <filter name="grp_client" string="Client" context="{'group_by': 'machine_client_id'}"/>
+                    <filter name="grp_produit" string="Modèle" context="{'group_by': 'product_id'}"/>
+                    <filter name="grp_statut" string="Statut" context="{'group_by': 'machine_statut'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_pilotage_entretiens" model="ir.actions.act_window">
+        <field name="name">Entretiens à venir</field>
+        <field name="res_model">stock.lot</field>
+        <field name="view_mode">list,calendar,pivot,graph,form</field>
+        <field name="domain">[('est_machine', '=', True), ('machine_statut', '!=', 'hors_service'), ('date_prochain_entretien', '!=', False)]</field>
+        <field name="context">{'search_default_prochains_90j': 1}</field>
+        <field name="search_view_id" ref="view_pilotage_lot_search"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('view_pilotage_lot_list')}),
+            (0, 0, {'view_mode': 'calendar', 'view_id': ref('view_pilotage_lot_calendar')}),
+            (0, 0, {'view_mode': 'pivot', 'view_id': ref('view_pilotage_lot_pivot')}),
+            (0, 0, {'view_mode': 'graph', 'view_id': ref('view_pilotage_lot_graph')})]"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aucun entretien à venir</p>
+            <p>Les dates viennent du dernier entretien ou de l'installation de chaque machine.</p>
+        </field>
+    </record>
+
+    <record id="action_pilotage_entretiens_retard" model="ir.actions.act_window">
+        <field name="name">Entretiens en retard</field>
+        <field name="res_model">stock.lot</field>
+        <field name="view_mode">list,calendar,pivot,graph,form</field>
+        <field name="domain">[('est_machine', '=', True), ('machine_statut', '!=', 'hors_service'), ('date_prochain_entretien', '!=', False)]</field>
+        <field name="context">{'search_default_retard': 1}</field>
+        <field name="search_view_id" ref="view_pilotage_lot_search"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('view_pilotage_lot_list')}),
+            (0, 0, {'view_mode': 'calendar', 'view_id': ref('view_pilotage_lot_calendar')})]"/>
+    </record>
+
+    <!-- ================================================================ INTERVENTIONS (entretiens faits, bris, facturation) -->
+    <record id="view_pilotage_intervention_search" model="ir.ui.view">
+        <field name="name">pilotage.machine.intervention.search</field>
+        <field name="model">machine.intervention</field>
+        <field name="priority">100</field>
+        <field name="arch" type="xml">
+            <search string="Interventions">
+                <field name="lot_id"/>
+                <field name="product_id"/>
+                <field name="partner_id"/>
+                <field name="user_id"/>
+                <field name="route"/>
+                <filter name="ce_mois" string="Ce mois"
+                        domain="[('date', '&gt;=', context_today().strftime('%Y-%m-01'))]"/>
+                <filter name="trois_mois" string="3 derniers mois"
+                        domain="[('date', '&gt;=', (context_today() - relativedelta(months=3)).strftime('%Y-%m-%d'))]"/>
+                <filter name="annee" string="Cette année"
+                        domain="[('date', '&gt;=', context_today().strftime('%Y-01-01'))]"/>
+                <separator/>
+                <filter name="a_facturer" string="À facturer" domain="[('etat_facturation', '=', 'a_facturer')]"/>
+                <filter name="bon_cree" string="À facturer dans Sage" domain="[('etat_facturation', '=', 'bon_cree')]"/>
+                <separator/>
+                <filter name="date" string="Date" date="date"/>
+                <group>
+                    <filter name="grp_mois" string="Mois" context="{'group_by': 'date:month'}"/>
+                    <filter name="grp_type" string="Type" context="{'group_by': 'type'}"/>
+                    <filter name="grp_tech" string="Technicien" context="{'group_by': 'user_id'}"/>
+                    <filter name="grp_client" string="Client" context="{'group_by': 'partner_id'}"/>
+                    <filter name="grp_produit" string="Modèle" context="{'group_by': 'product_id'}"/>
+                    <filter name="grp_route" string="Route" context="{'group_by': 'route'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_pilotage_intervention_graph" model="ir.ui.view">
+        <field name="name">pilotage.machine.intervention.graph</field>
+        <field name="model">machine.intervention</field>
+        <field name="arch" type="xml">
+            <graph string="Interventions par mois" type="bar" stacked="1">
+                <field name="date" interval="month"/>
+                <field name="type"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="view_pilotage_intervention_pivot" model="ir.ui.view">
+        <field name="name">pilotage.machine.intervention.pivot</field>
+        <field name="model">machine.intervention</field>
+        <field name="arch" type="xml">
+            <pivot string="Interventions">
+                <field name="product_id" type="row"/>
+                <field name="type" type="col"/>
+                <field name="montant_frais" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="action_pilotage_entretiens_faits" model="ir.actions.act_window">
+        <field name="name">Entretiens faits</field>
+        <field name="res_model">machine.intervention</field>
+        <field name="view_mode">list,calendar,graph,pivot,form</field>
+        <field name="domain">[('type', '=', 'entretien'), ('state', '=', 'fait')]</field>
+        <field name="context">{'search_default_trois_mois': 1, 'default_type': 'entretien'}</field>
+        <field name="search_view_id" ref="view_pilotage_intervention_search"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('suivi_machines.view_intervention_list')}),
+            (0, 0, {'view_mode': 'calendar', 'view_id': ref('suivi_machines.view_intervention_calendar')}),
+            (0, 0, {'view_mode': 'graph', 'view_id': ref('view_pilotage_intervention_graph')}),
+            (0, 0, {'view_mode': 'pivot', 'view_id': ref('view_pilotage_intervention_pivot')})]"/>
+    </record>
+
+    <record id="action_pilotage_bris" model="ir.actions.act_window">
+        <field name="name">Bris et réparations</field>
+        <field name="res_model">machine.intervention</field>
+        <field name="view_mode">list,graph,pivot,calendar,form</field>
+        <field name="domain">[('type', 'in', ('bris', 'reparation', 'remplacement')), ('state', '!=', 'annule')]</field>
+        <field name="context">{'search_default_annee': 1}</field>
+        <field name="search_view_id" ref="view_pilotage_intervention_search"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('suivi_machines.view_intervention_list')}),
+            (0, 0, {'view_mode': 'graph', 'view_id': ref('view_pilotage_intervention_graph')}),
+            (0, 0, {'view_mode': 'pivot', 'view_id': ref('view_pilotage_intervention_pivot')}),
+            (0, 0, {'view_mode': 'calendar', 'view_id': ref('suivi_machines.view_intervention_calendar')})]"/>
+    </record>
+
+    <record id="action_pilotage_facturation" model="ir.actions.act_window">
+        <field name="name">Facturation des interventions</field>
+        <field name="res_model">machine.intervention</field>
+        <field name="view_mode">list,pivot,form</field>
+        <field name="domain">[('etat_facturation', 'in', ('a_facturer', 'bon_cree'))]</field>
+        <field name="search_view_id" ref="view_pilotage_intervention_search"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('suivi_machines.view_intervention_list')}),
+            (0, 0, {'view_mode': 'pivot', 'view_id': ref('view_pilotage_intervention_pivot')})]"/>
+    </record>
+
+    <!-- ================================================================ MACHINES A PROBLEME -->
+    <record id="action_pilotage_machines_probleme" model="ir.actions.act_window">
+        <field name="name">Machines à problème</field>
+        <field name="res_model">stock.lot</field>
+        <field name="view_mode">list,kanban,form</field>
+        <field name="domain">[('est_machine', '=', True), ('machine_statut', 'in', ('en_reparation', 'a_remplacer', 'hors_service'))]</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('suivi_machines.view_lot_list_machine')}),
+            (0, 0, {'view_mode': 'kanban', 'view_id': ref('suivi_machines.view_lot_kanban_machine')})]"/>
+    </record>
+
+    <!-- ================================================================ CONTRATS DE LOCATION -->
+    <record id="view_pilotage_location_list" model="ir.ui.view">
+        <field name="name">pilotage.sale.order.location.list</field>
+        <field name="model">sale.order</field>
+        <field name="priority">100</field>
+        <field name="arch" type="xml">
+            <list create="false" default_order="date_fin_location asc"
+                  decoration-danger="date_fin_location and date_fin_location &lt; now"
+                  decoration-warning="date_fin_location and date_fin_location &gt;= now and date_fin_location &lt;= (context_today() + relativedelta(days=30)).strftime('%Y-%m-%d')">
+                <field name="name" string="Contrat"/>
+                <field name="partner_id" string="Client"/>
+                <field name="machine_ids" widget="many2many_tags" string="Machines"/>
+                <field name="date_debut_location" string="Début"/>
+                <field name="date_fin_location" string="Fin"/>
+                <field name="date_fin_location" string="Reprise" widget="remaining_days"/>
+                <field name="amount_total" sum="Total" optional="show"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="user_id" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_pilotage_location_calendar" model="ir.ui.view">
+        <field name="name">pilotage.sale.order.location.calendar</field>
+        <field name="model">sale.order</field>
+        <field name="arch" type="xml">
+            <calendar string="Contrats de location" date_start="date_debut_location" date_stop="date_fin_location"
+                      mode="month" color="partner_id" quick_create="0" create="0" event_open_popup="1">
+                <field name="partner_id"/>
+                <field name="machine_ids" widget="many2many_tags"/>
+            </calendar>
+        </field>
+    </record>
+
+    <record id="view_pilotage_location_graph" model="ir.ui.view">
+        <field name="name">pilotage.sale.order.location.graph</field>
+        <field name="model">sale.order</field>
+        <field name="arch" type="xml">
+            <graph string="Fins de location par mois" type="bar">
+                <field name="date_fin_location" interval="month"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="view_pilotage_location_search" model="ir.ui.view">
+        <field name="name">pilotage.sale.order.location.search</field>
+        <field name="model">sale.order</field>
+        <field name="priority">100</field>
+        <field name="arch" type="xml">
+            <search string="Contrats de location">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <filter name="en_cours" string="En cours"
+                        domain="['|', ('date_fin_location', '=', False), ('date_fin_location', '&gt;=', context_today().strftime('%Y-%m-%d'))]"/>
+                <filter name="fin_30j" string="Se terminent dans 30 jours"
+                        domain="[('date_fin_location', '&gt;=', context_today().strftime('%Y-%m-%d')),
+                                 ('date_fin_location', '&lt;=', (context_today() + relativedelta(days=30)).strftime('%Y-%m-%d'))]"/>
+                <filter name="depassees" string="Date de fin dépassée"
+                        domain="[('date_fin_location', '&lt;', context_today().strftime('%Y-%m-%d'))]"/>
+                <group>
+                    <filter name="grp_client" string="Client" context="{'group_by': 'partner_id'}"/>
+                    <filter name="grp_fin" string="Mois de fin" context="{'group_by': 'date_fin_location:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_pilotage_locations" model="ir.actions.act_window">
+        <field name="name">Contrats de location</field>
+        <field name="res_model">sale.order</field>
+        <field name="view_mode">list,calendar,graph,form</field>
+        <field name="domain">[('type_commande', '=', 'location'), ('state', '=', 'sale')]</field>
+        <field name="context">{'search_default_en_cours': 1}</field>
+        <field name="search_view_id" ref="view_pilotage_location_search"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('view_pilotage_location_list')}),
+            (0, 0, {'view_mode': 'calendar', 'view_id': ref('view_pilotage_location_calendar')}),
+            (0, 0, {'view_mode': 'graph', 'view_id': ref('view_pilotage_location_graph')})]"/>
+    </record>
+
+    <!-- ================================================================ TICKETS DE REPRISE / D'ENTRETIEN -->
+    <record id="action_pilotage_tickets_reprise" model="ir.actions.act_window">
+        <field name="name">Tickets de reprise</field>
+        <field name="res_model">helpdesk.ticket</field>
+        <field name="view_mode">list,kanban,form</field>
+        <field name="domain">[('commande_reprise_id', '!=', False)]</field>
+    </record>
+    <record id="action_pilotage_tickets_entretien" model="ir.actions.act_window">
+        <field name="name">Tickets d'entretien</field>
+        <field name="res_model">helpdesk.ticket</field>
+        <field name="view_mode">list,kanban,form</field>
+        <field name="domain">[('est_entretien', '=', True)]</field>
+    </record>
+
+    <!-- ================================================================ LIVRAISONS ET RAMASSAGES DE MACHINES -->
+    <record id="view_pilotage_transfert_list" model="ir.ui.view">
+        <field name="name">pilotage.stock.picking.list</field>
+        <field name="model">stock.picking</field>
+        <field name="priority">100</field>
+        <field name="arch" type="xml">
+            <list create="false" default_order="scheduled_date asc"
+                  decoration-danger="state not in ('done', 'cancel') and scheduled_date &lt; now"
+                  decoration-muted="state in ('done', 'cancel')">
+                <field name="scheduled_date" string="Prévu le"/>
+                <field name="name" string="Référence"/>
+                <field name="picking_type_id" string="Type" optional="show"/>
+                <field name="partner_id" string="Client"/>
+                <field name="route" string="Route"/>
+                <field name="livreur_id" widget="many2one_avatar_user"/>
+                <field name="origin" string="Document" optional="show"/>
+                <field name="ticket_assistance_id" optional="hide"/>
+                <field name="date_done" string="Fait le" optional="hide"/>
+                <field name="state" widget="badge" decoration-success="state == 'done'"
+                       decoration-info="state == 'assigned'" decoration-warning="state in ('confirmed', 'waiting')"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_pilotage_transfert_calendar" model="ir.ui.view">
+        <field name="name">pilotage.stock.picking.calendar</field>
+        <field name="model">stock.picking</field>
+        <field name="arch" type="xml">
+            <calendar string="Livraisons et ramassages" date_start="scheduled_date" mode="week"
+                      color="livreur_id" quick_create="0" create="0" event_open_popup="1">
+                <field name="partner_id"/>
+                <field name="route"/>
+                <field name="livreur_id" filters="1"/>
+                <field name="picking_type_id"/>
+            </calendar>
+        </field>
+    </record>
+
+    <record id="view_pilotage_transfert_search" model="ir.ui.view">
+        <field name="name">pilotage.stock.picking.search</field>
+        <field name="model">stock.picking</field>
+        <field name="priority">100</field>
+        <field name="arch" type="xml">
+            <search string="Livraisons et ramassages">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="livreur_id"/>
+                <field name="route"/>
+                <field name="origin"/>
+                <filter name="livraisons_a_faire" string="Livraisons à faire"
+                        domain="[('state', 'not in', ('draft', 'done', 'cancel')), ('location_id.usage', '=', 'internal'), ('location_dest_id.usage', '=', 'customer')]"/>
+                <filter name="ramassages_a_faire" string="Ramassages à faire"
+                        domain="[('state', 'not in', ('draft', 'done', 'cancel')), ('location_id.usage', '=', 'customer'), ('location_dest_id.usage', '=', 'internal')]"/>
+                <filter name="sans_livreur" string="Sans livreur"
+                        domain="[('state', 'not in', ('draft', 'done', 'cancel')), ('livreur_id', '=', False)]"/>
+                <separator/>
+                <filter name="aujourdhui" string="Aujourd'hui"
+                        domain="[('scheduled_date', '&lt;', (context_today() + relativedelta(days=1)).strftime('%Y-%m-%d')), ('state', 'not in', ('done', 'cancel'))]"/>
+                <filter name="cette_semaine" string="7 prochains jours"
+                        domain="[('scheduled_date', '&lt;', (context_today() + relativedelta(days=8)).strftime('%Y-%m-%d')), ('state', 'not in', ('done', 'cancel'))]"/>
+                <separator/>
+                <filter name="livrees_mois" string="Livrées ce mois"
+                        domain="[('state', '=', 'done'), ('location_dest_id.usage', '=', 'customer'), ('date_done', '&gt;=', context_today().strftime('%Y-%m-01'))]"/>
+                <group>
+                    <filter name="grp_livreur" string="Livreur" context="{'group_by': 'livreur_id'}"/>
+                    <filter name="grp_jour" string="Jour" context="{'group_by': 'scheduled_date:day'}"/>
+                    <filter name="grp_route" string="Route" context="{'group_by': 'route'}"/>
+                    <filter name="grp_type" string="Type" context="{'group_by': 'picking_type_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_pilotage_transferts" model="ir.actions.act_window">
+        <field name="name">Livraisons et ramassages</field>
+        <field name="res_model">stock.picking</field>
+        <field name="view_mode">list,calendar,form</field>
+        <field name="domain">[('move_ids.product_id.categ_id.suivi_machine', '=', True)]</field>
+        <field name="context">{'search_default_cette_semaine': 1}</field>
+        <field name="search_view_id" ref="view_pilotage_transfert_search"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('view_pilotage_transfert_list')}),
+            (0, 0, {'view_mode': 'calendar', 'view_id': ref('view_pilotage_transfert_calendar')})]"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aucune livraison ni ramassage de machine</p>
+        </field>
+    </record>
+    <!-- ================================================================ APPELS DE SERVICE -->
+    <record id="view_pilotage_appels_list" model="ir.ui.view">
+        <field name="name">pilotage.helpdesk.ticket.list</field>
+        <field name="model">helpdesk.ticket</field>
+        <field name="priority">100</field>
+        <field name="arch" type="xml">
+            <list create="false" default_order="create_date desc">
+                <field name="create_date" string="Reçu le"/>
+                <field name="name" string="Appel"/>
+                <field name="code_client" optional="show"/>
+                <field name="partner_id" string="Client"/>
+                <field name="lot_id" string="Machine"/>
+                <field name="tag_ids" widget="many2many_tags" options="{'color_field': 'color'}" string="Type de problème"/>
+                <field name="priority" widget="priority" optional="show"/>
+                <field name="technicien_id" widget="many2one_avatar_user" optional="show"/>
+                <field name="user_id" widget="many2one_avatar_user" optional="hide"/>
+                <field name="stage_id" string="Statut"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_pilotage_appels_graph" model="ir.ui.view">
+        <field name="name">pilotage.helpdesk.ticket.graph</field>
+        <field name="model">helpdesk.ticket</field>
+        <field name="arch" type="xml">
+            <graph string="Appels par type de problème" type="bar">
+                <field name="tag_ids"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="view_pilotage_appels_pivot" model="ir.ui.view">
+        <field name="name">pilotage.helpdesk.ticket.pivot</field>
+        <field name="model">helpdesk.ticket</field>
+        <field name="arch" type="xml">
+            <pivot string="Appels de service">
+                <field name="tag_ids" type="row"/>
+                <field name="create_date" interval="month" type="col"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_pilotage_appels_search" model="ir.ui.view">
+        <field name="name">pilotage.helpdesk.ticket.search</field>
+        <field name="model">helpdesk.ticket</field>
+        <field name="priority">100</field>
+        <field name="arch" type="xml">
+            <search string="Appels de service">
+                <field name="name"/>
+                <field name="code_client"/>
+                <field name="partner_id"/>
+                <field name="lot_id"/>
+                <field name="tag_ids"/>
+                <filter name="ouverts" string="Ouverts"
+                        domain="['!', '|', '|', ('stage_id.name', 'ilike', 'résolu'), ('stage_id.name', 'ilike', 'annul'), ('stage_id.name', 'ilike', 'clôtur')]"/>
+                <filter name="sans_machine" string="Sans machine" domain="[('lot_id', '=', False)]"/>
+                <separator/>
+                <filter name="ce_mois" string="Ce mois" domain="[('create_date', '&gt;=', context_today().strftime('%Y-%m-01'))]"/>
+                <filter name="trois_mois" string="3 derniers mois"
+                        domain="[('create_date', '&gt;=', (context_today() - relativedelta(months=3)).strftime('%Y-%m-%d'))]"/>
+                <group>
+                    <filter name="grp_type" string="Type de problème" context="{'group_by': 'tag_ids'}"/>
+                    <filter name="grp_statut" string="Statut" context="{'group_by': 'stage_id'}"/>
+                    <filter name="grp_client" string="Client" context="{'group_by': 'partner_id'}"/>
+                    <filter name="grp_tech" string="Technicien" context="{'group_by': 'technicien_id'}"/>
+                    <filter name="grp_mois" string="Mois" context="{'group_by': 'create_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_pilotage_appels" model="ir.actions.act_window">
+        <field name="name">Appels de service</field>
+        <field name="res_model">helpdesk.ticket</field>
+        <field name="view_mode">list,graph,pivot,form</field>
+        <field name="domain">[('est_entretien', '=', False), ('commande_reprise_id', '=', False)]</field>
+        <field name="context">{'search_default_ouverts': 1}</field>
+        <field name="search_view_id" ref="view_pilotage_appels_search"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('view_pilotage_appels_list')}),
+            (0, 0, {'view_mode': 'graph', 'view_id': ref('view_pilotage_appels_graph')}),
+            (0, 0, {'view_mode': 'pivot', 'view_id': ref('view_pilotage_appels_pivot')})]"/>
+    </record>
+</odoo>

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Types de probleme frequents (etiquettes des appels de service) -->
+<odoo noupdate="1">
+    <record id="tag_probleme_ne_tourne_pas" model="helpdesk.tag">
+        <field name="name">Ne tourne pas</field>
+        <field name="color">1</field>
+    </record>
+    <record id="tag_probleme_ne_gele_pas" model="helpdesk.tag">
+        <field name="name">Ne gèle pas</field>
+        <field name="color">2</field>
+    </record>
+    <record id="tag_probleme_fait_du_bruit" model="helpdesk.tag">
+        <field name="name">Fait du bruit</field>
+        <field name="color">3</field>
+    </record>
+    <record id="tag_probleme_ne_fonctionne_pas" model="helpdesk.tag">
+        <field name="name">Ne fonctionne pas</field>
+        <field name="color">4</field>
+    </record>
+    <record id="tag_probleme_gele_trop" model="helpdesk.tag">
+        <field name="name">Gèle trop</field>
+        <field name="color">5</field>
+    </record>
+    <record id="tag_probleme_gele_trop_et_deborde" model="helpdesk.tag">
+        <field name="name">Gèle trop et déborde</field>
+        <field name="color">6</field>
+    </record>
+    <record id="tag_probleme_clignote_1" model="helpdesk.tag">
+        <field name="name">Clignote 1</field>
+        <field name="color">7</field>
+    </record>
+    <record id="tag_probleme_clignote_8" model="helpdesk.tag">
+        <field name="name">Clignote 8</field>
+        <field name="color">8</field>
+    </record>
+    <record id="tag_probleme_coule" model="helpdesk.tag">
+        <field name="name">Coule</field>
+        <field name="color">9</field>
+    </record>
+    <record id="tag_probleme_alarme_moteur" model="helpdesk.tag">
+        <field name="name">Alarme moteur</field>
+        <field name="color">10</field>
+    </record>
+    <record id="tag_probleme_minuterie" model="helpdesk.tag">
+        <field name="name">Minuterie</field>
+        <field name="color">11</field>
+    </record>
+    <record id="tag_probleme_bloc_de_glace" model="helpdesk.tag">
+        <field name="name">Bloc de glace</field>
+        <field name="color">1</field>
+    </record>
+    <record id="tag_probleme_sent_le_brule" model="helpdesk.tag">
+        <field name="name">Sent le brûlé</field>
+        <field name="color">2</field>
+    </record>
+    <record id="tag_probleme_autre" model="helpdesk.tag">
+        <field name="name">Autre</field>
+        <field name="color">3</field>
+    </record>
+</odoo>

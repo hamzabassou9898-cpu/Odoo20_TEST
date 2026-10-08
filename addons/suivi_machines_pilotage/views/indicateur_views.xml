@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Tableau de bord : une carte par indicateur, regroupees par section -->
+    <record id="view_pilotage_indicateur_kanban" model="ir.ui.view">
+        <field name="name">pilotage.indicateur.kanban</field>
+        <field name="model">pilotage.indicateur</field>
+        <field name="arch" type="xml">
+            <kanban create="false" edit="false" delete="false" default_group_by="section"
+                    group_create="false" group_delete="false" group_edit="false"
+                    records_draggable="false" quick_create="false"
+                    action="action_ouvrir" type="object">
+                <field name="couleur"/>
+                <field name="valeur"/>
+                <templates>
+                    <t t-name="card">
+                        <div t-attf-class="border-start border-4 border-{{record.couleur.raw_value}} ps-3 py-1">
+                            <div class="text-uppercase small fw-bold text-muted">
+                                <field name="name"/>
+                            </div>
+                            <div t-attf-class="fw-bold text-{{record.couleur.raw_value}}" style="font-size: 2.6rem; line-height: 1.1;">
+                                <field name="valeur"/>
+                            </div>
+                            <div class="small text-muted">
+                                <field name="sous_titre"/>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="action_pilotage_tableau_bord" model="ir.actions.act_window">
+        <field name="name">Tableau de bord</field>
+        <field name="res_model">pilotage.indicateur</field>
+        <field name="view_mode">kanban</field>
+        <field name="view_id" ref="view_pilotage_indicateur_kanban"/>
+    </record>
+</odoo>

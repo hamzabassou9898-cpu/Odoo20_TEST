@@ -1,0 +1,137 @@
+# -*- coding: utf-8 -*-
+"""Indicateurs du tableau de bord « Pilotage » : un compteur par carte, un clic ouvre la liste."""
+from datetime import timedelta
+
+from dateutil.relativedelta import relativedelta
+
+from odoo import api, fields, models
+
+SECTIONS = [("appels", "Appels de service"), ("entretiens", "Entretiens"), ("livraisons", "Livraisons & ramassages"), ("locations", "Locations"),
+            ("qualite", "Bris & réparations"), ("facturation", "Facturation")]
+COULEURS = [("danger", "Rouge"), ("warning", "Orange"), ("success", "Vert"),
+            ("info", "Bleu clair"), ("primary", "Violet")]
+
+
+class PilotageIndicateur(models.Model):
+    _name = "pilotage.indicateur"
+    _description = "Indicateur de pilotage"
+    _order = "section, sequence, id"
+
+    name = fields.Char("Indicateur", required=True, translate=True)
+    code = fields.Char("Code", required=True)
+    section = fields.Selection(SECTIONS, "Section", required=True, group_expand="_expand_sections")
+    sequence = fields.Integer(default=10)
+    couleur = fields.Selection(COULEURS, "Couleur", default="primary", required=True)
+    description = fields.Char("Description", translate=True)
+    valeur = fields.Integer("Valeur", compute="_compute_valeur")
+    sous_titre = fields.Char("Détail", compute="_compute_valeur")
+
+    _code_unique = models.Constraint("UNIQUE(code)", "Un seul indicateur par code.")
+
+    def _expand_sections(self, sections, domain):
+        return [k for k, _ in SECTIONS]
+
+    # ------------------------------------------------------------ domaines (partages avec les menus)
+    @api.model
+    def _bornes(self):
+        aujourdhui = fields.Date.context_today(self)
+        maintenant = fields.Datetime.now()
+        return {"aujourdhui": aujourdhui, "maintenant": maintenant,
+                "debut_mois": aujourdhui.replace(day=1),
+                "semaine": aujourdhui + timedelta(days=7), "mois": aujourdhui + timedelta(days=30),
+                "dans_30j": maintenant + timedelta(days=30)}
+
+    @api.model
+    def _domaines(self):
+        b = self._bornes()
+        machines = [("est_machine", "=", True), ("machine_statut", "!=", "hors_service"),
+                    ("date_prochain_entretien", "!=", False)]
+        location = [("type_commande", "=", "location"), ("state", "=", "sale")]
+        appels = [("est_entretien", "=", False), ("commande_reprise_id", "=", False)]
+        # Ouvert = pas dans une etape Resolu / Annule / Cloture (un ticket sans etape compte)
+        ouverts = ["!", "|", "|", ("stage_id.name", "ilike", "résolu"), ("stage_id.name", "ilike", "annul"),
+                   ("stage_id.name", "ilike", "clôtur")]
+        transfert = [("move_ids.product_id.categ_id.suivi_machine", "=", True)]
+        a_faire = [("state", "not in", ("draft", "done", "cancel"))]
+        livraison = [("location_id.usage", "=", "internal"), ("location_dest_id.usage", "=", "customer")]
+        ramassage = [("location_id.usage", "=", "customer"), ("location_dest_id.usage", "=", "internal")]
+        return {
+            "entretien_retard": ("stock.lot", machines + [("date_prochain_entretien", "<", b["aujourdhui"])]),
+            "entretien_semaine": ("stock.lot", machines + [("date_prochain_entretien", ">=", b["aujourdhui"]),
+                                                          ("date_prochain_entretien", "<=", b["semaine"])]),
+            "entretien_mois": ("stock.lot", machines + [("date_prochain_entretien", ">=", b["aujourdhui"]),
+                                                       ("date_prochain_entretien", "<=", b["mois"])]),
+            "entretiens_faits": ("machine.intervention", [("type", "=", "entretien"), ("state", "=", "fait"),
+                                                          ("date", ">=", fields.Datetime.to_datetime(b["debut_mois"]))]),
+            "locations_actives": ("sale.order", location + ["|", ("date_fin_location", "=", False),
+                                                            ("date_fin_location", ">=", b["maintenant"])]),
+            "reprises_30j": ("sale.order", location + [("date_fin_location", ">=", b["maintenant"]),
+                                                       ("date_fin_location", "<=", b["dans_30j"])]),
+            "locations_depassees": ("sale.order", location + [("date_fin_location", "<", b["maintenant"])]),
+            "appels_ouverts": ("helpdesk.ticket", appels + ouverts),
+            "appels_mois": ("helpdesk.ticket", appels + [
+                ("create_date", ">=", fields.Datetime.to_datetime(b["debut_mois"]))]),
+            "appels_sans_machine": ("helpdesk.ticket", appels + ouverts + [("lot_id", "=", False)]),
+            "livraisons_a_faire": ("stock.picking", transfert + a_faire + livraison),
+            "ramassages_a_faire": ("stock.picking", transfert + a_faire + ramassage),
+            "sans_livreur": ("stock.picking", transfert + a_faire + [("livreur_id", "=", False)]),
+            "livraisons_faites": ("stock.picking", transfert + livraison + [
+                ("state", "=", "done"), ("date_done", ">=", fields.Datetime.to_datetime(b["debut_mois"]))]),
+            "bris_mois": ("machine.intervention", [("type", "=", "bris"), ("state", "!=", "annule"),
+                                                   ("date", ">=", fields.Datetime.to_datetime(b["debut_mois"]))]),
+            "machines_probleme": ("stock.lot", [("est_machine", "=", True),
+                                                ("machine_statut", "in", ("en_reparation", "a_remplacer",
+                                                                           "hors_service"))]),
+            "a_facturer": ("machine.intervention", [("etat_facturation", "=", "a_facturer")]),
+            "facturer_sage": ("machine.intervention", [("etat_facturation", "=", "bon_cree")]),
+        }
+
+    def _compute_valeur(self):
+        domaines = self._domaines()
+        for ind in self:
+            model, domaine = domaines.get(ind.code, (None, None))
+            if not model:
+                ind.valeur, ind.sous_titre = 0, False
+                continue
+            Model = self.env[model]
+            ind.valeur = Model.search_count(domaine)
+            ind.sous_titre = ind.description
+            if model == "machine.intervention" and ind.code in ("a_facturer", "facturer_sage"):
+                total = sum(Model.search(domaine).mapped("montant_frais"))
+                devise = self.env.company.currency_id
+                ind.sous_titre = self.env._("Total : %s", devise.format(total))
+
+    # ------------------------------------------------------------ clic sur la carte
+    _ACTIONS = {
+        "entretien_retard": ("suivi_machines_pilotage.action_pilotage_entretiens", "retard"),
+        "entretien_semaine": ("suivi_machines_pilotage.action_pilotage_entretiens", "semaine"),
+        "entretien_mois": ("suivi_machines_pilotage.action_pilotage_entretiens", "mois"),
+        "entretiens_faits": ("suivi_machines_pilotage.action_pilotage_entretiens_faits", "ce_mois"),
+        "locations_actives": ("suivi_machines_pilotage.action_pilotage_locations", "en_cours"),
+        "reprises_30j": ("suivi_machines_pilotage.action_pilotage_locations", "fin_30j"),
+        "locations_depassees": ("suivi_machines_pilotage.action_pilotage_locations", "depassees"),
+        "appels_ouverts": ("suivi_machines_pilotage.action_pilotage_appels", "ouverts"),
+        "appels_mois": ("suivi_machines_pilotage.action_pilotage_appels", "ce_mois"),
+        "appels_sans_machine": ("suivi_machines_pilotage.action_pilotage_appels", "sans_machine"),
+        "livraisons_a_faire": ("suivi_machines_pilotage.action_pilotage_transferts", "livraisons_a_faire"),
+        "ramassages_a_faire": ("suivi_machines_pilotage.action_pilotage_transferts", "ramassages_a_faire"),
+        "sans_livreur": ("suivi_machines_pilotage.action_pilotage_transferts", "sans_livreur"),
+        "livraisons_faites": ("suivi_machines_pilotage.action_pilotage_transferts", "livrees_mois"),
+        "bris_mois": ("suivi_machines_pilotage.action_pilotage_bris", "ce_mois"),
+        "machines_probleme": ("suivi_machines_pilotage.action_pilotage_machines_probleme", None),
+        "a_facturer": ("suivi_machines_pilotage.action_pilotage_facturation", "a_facturer"),
+        "facturer_sage": ("suivi_machines_pilotage.action_pilotage_facturation", "bon_cree"),
+    }
+
+    def action_ouvrir(self):
+        self.ensure_one()
+        xmlid, filtre = self._ACTIONS.get(self.code, (None, None))
+        if not xmlid:
+            return False
+        action = self.env["ir.actions.act_window"]._for_xml_id(xmlid)
+        contexte = {}
+        if filtre:
+            contexte["search_default_" + filtre] = 1
+        action["context"] = contexte
+        action["display_name"] = action["name"] = self.name
+        return action
