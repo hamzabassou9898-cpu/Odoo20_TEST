@@ -304,21 +304,25 @@ class TestTicketMachine(TransactionCase):
         pk.move_ids.picked = True
         pk.with_context(skip_sms=True).button_validate()
         self.assertEqual(set(lots.mapped("machine_statut")), {"chez_client"})
-        tickets = self.env["sale.order"]._cron_tickets_reprise()
-        self.assertEqual(tickets.lot_id, lots, "un ticket de reprise par machine")
-        t_b = tickets.filtered(lambda t: t.lot_id.name == "MULTI-B")
-        retour = self.env["stock.picking"].browse(t_b.action_ramassage()["res_id"])
+        ticket = self.env["sale.order"]._cron_tickets_reprise()
+        self.assertEqual(len(ticket), 1, "un seul ticket pour le contrat")
+        self.assertEqual(ticket.machines_reprise_ids, lots, "toutes les machines regroupées")
+        self.assertIn("MULTI-A", ticket.description)
+        self.assertFalse(self.env["sale.order"]._cron_tickets_reprise(), "pas de doublon")
+        etape = self.env["helpdesk.stage"].search([("name", "ilike", "reprise")], limit=1) \
+            or self.env["helpdesk.stage"].create({"name": "Reprise de machine"})
+        retour = self.env["stock.picking"].browse(ticket.action_ramassage()["res_id"])
+        self.assertEqual(ticket.stage_id, etape)
         self.assertEqual(retour.move_ids.move_line_ids.lot_id, lots, "un seul retour, chaque machine avec SON n°")
         self.assertEqual(sorted(retour.move_ids.move_line_ids.mapped("quantity")), [1, 1, 1])
-        for t in tickets:
-            self.assertEqual(t.action_ramassage()["res_id"], retour.id, "même bon de retour pour le contrat")
+        self.assertEqual(ticket.action_ramassage()["res_id"], retour.id, "même bon de retour")
         retour.move_ids.picked = True
         retour.with_context(skip_sms=True).button_validate()
         self.assertEqual(retour.state, "done")
         self.assertEqual(set(lots.mapped("machine_statut")), {"entrepot"})
-        for t in tickets:
-            interv = t.lot_id.intervention_ids.filtered(lambda i: i.type == "ramassage")
-            self.assertEqual(interv.ticket_id, t, "intervention liée au ticket de SA machine")
+        for lot in lots:
+            interv = lot.intervention_ids.filtered(lambda i: i.type == "ramassage")
+            self.assertEqual(interv.ticket_id, ticket, "intervention liée au ticket du contrat")
 
     def test_actions_planifiees_declenchees(self):
         Trigger = self.env["ir.cron.trigger"]

@@ -3,7 +3,7 @@
     "name": "Suivi des machines - Assistance",
     "summary": "Ticket d'assistance relié au code client et au dossier de la machine "
                "(série, location, entretien, historique, interventions)",
-    "version": "20.0.1.26.0",
+    "version": "20.0.1.27.0",
     "category": "Services/Helpdesk",
     "author": "Hamza Bassou",
     "license": "LGPL-3",

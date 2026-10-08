@@ -27,6 +27,8 @@ class HelpdeskTicket(models.Model):
     commande_reprise_id = fields.Many2one("sale.order", "Contrat de location (reprise)",
                                           index="btree_not_null", copy=False, readonly=True)
     date_fin_reprise = fields.Datetime("Fin de location (reprise)", readonly=True, copy=False)
+    machines_reprise_ids = fields.Many2many("stock.lot", "helpdesk_ticket_reprise_lot_rel", "ticket_id", "lot_id",
+                                            string="Machines à reprendre", copy=False)
     est_reprise = fields.Boolean(compute="_compute_est_reprise")
 
     def _compute_est_reprise(self):
@@ -44,16 +46,36 @@ class HelpdeskTicket(models.Model):
         return etapes[:1]
 
     def _mettre_en_reprise(self):
+        icp = self.env["ir.config_parameter"].sudo()
+        nom = (icp.get_str(PARAM_ETAPE, ETAPE_DEFAUT) if hasattr(icp, "get_str")
+               else icp.get_param(PARAM_ETAPE, ETAPE_DEFAUT)) or ETAPE_DEFAUT
         for ticket in self:
-            etape = self._etape_reprise(equipe=ticket.team_id if "team_id" in ticket._fields else None)
+            etape = self._etape_reprise(nom, equipe=ticket.team_id if "team_id" in ticket._fields else None)
             if etape and ticket.stage_id != etape:
                 ticket.stage_id = etape
+
+    def _est_ferme(self):
+        nom = (self.stage_id.name or "").lower()
+        return any(mot in nom for mot in ("résolu", "resolu", "annul", "clôtur", "clotur"))
+
+    def _nommer_reprise(self):
+        for ticket in self:
+            lots = ticket.machines_reprise_ids or ticket.lot_id
+            refs = [l.ref or l.name for l in lots]
+            machines = ", ".join(refs[:4]) + (self.env._(" +%s", len(refs) - 4) if len(refs) > 4 else "")
+            client = ticket.partner_id.name or ""
+            ticket.name = self.env._("Reprise - %(machines)s - %(client)s", machines=machines, client=client)
+            fin = (fields.Datetime.to_string(ticket.date_fin_reprise)[:10] if ticket.date_fin_reprise else "?")
+            ticket.description = self.env._(
+                "<p>Fin de la location le %(date)s (contrat %(contrat)s) : reprise à planifier de "
+                "%(nb)s machine(s) : %(series)s.</p>", date=fin, contrat=ticket.commande_reprise_id.name,
+                nb=len(lots), series=", ".join(lots.mapped("name")))
 
     def _tickets_du_contrat(self):
         """Tickets de reprise du meme contrat dont la machine est encore chez le client."""
         self.ensure_one()
         tickets = self.commande_reprise_id.ticket_reprise_ids.filtered(
-            lambda t: t.lot_id and t.lot_id.machine_client_id)
+            lambda t: (t.machines_reprise_ids | t.lot_id).filtered("machine_client_id"))
         return tickets | self
 
     def action_ramassage(self):
@@ -68,7 +90,7 @@ class HelpdeskTicket(models.Model):
                                   ("location_dest_id.usage", "=", "internal")], limit=1)
         if encours:
             return self._ouvrir_picking(encours)
-        lots = tickets.lot_id.filtered("machine_client_id")
+        lots = (tickets.machines_reprise_ids | tickets.lot_id).filtered("machine_client_id")
         livraisons = self.commande_reprise_id.picking_ids.filtered(
             lambda p: p.state == "done" and p.location_dest_id.usage != "internal"
             and p.move_line_ids.lot_id & lots).sorted("date_done", reverse=True)
@@ -164,51 +186,48 @@ class SaleOrder(models.Model):
         return commandes._creer_tickets_reprise(reglages)
 
     def _creer_tickets_reprise(self, reglages=None):
+        """Un seul ticket de reprise par contrat (et par date de fin) regroupant toutes ses
+        machines encore chez le client ; une machine ajoutee plus tard rejoint le ticket ouvert."""
         reglages = reglages or self._reglages_reprise()
         Ticket = self.env["helpdesk.ticket"].with_context(mail_create_nolog=True)
         crees = Ticket
         for order in self:
             client = order.partner_shipping_id or order.partner_id
-            date_fin = (fields.Datetime.to_string(order.date_fin_location)[:10]
-                        if order.date_fin_location else "?")
-            for lot in order._machines_a_reprendre():
-                # Un ticket par machine et par date de fin (une prolongation en cree un nouveau)
-                deja = Ticket.with_context(active_test=False).search_count(
-                    [("commande_reprise_id", "=", order.id), ("lot_id", "=", lot.id),
-                     ("date_fin_reprise", "=", order.date_fin_location)])
-                if deja:
-                    continue
-                vals = {
-                    "name": self.env._("Reprise - %(machine)s - %(client)s",
-                                       machine=lot.ref or lot.name, client=client.display_name),
-                    "partner_id": client.id,
-                    "code_client": Ticket._code_du_client(client),
-                    "lot_id": lot.id,
-                    "commande_reprise_id": order.id,
-                    "date_fin_reprise": order.date_fin_location,
-                    "description": self.env._(
-                        "<p>Fin de la location le %(date)s (contrat %(contrat)s) : "
-                        "reprise de la machine %(serie)s à planifier.</p>",
-                        date=date_fin, contrat=order.name, serie=lot.name),
-                }
-                if reglages["equipe"]:
-                    vals["team_id"] = reglages["equipe"]
-                if reglages["etape"]:
-                    vals["stage_id"] = reglages["etape"].id
-                ticket = Ticket.create(vals)
-                # Certaines equipes remettent l'etape par defaut a la creation : on la force
-                if reglages["etape"] and ticket.stage_id != reglages["etape"]:
-                    ticket.stage_id = reglages["etape"]
-                if reglages["responsable"] and "activity_ids" in ticket._fields:
-                    ticket.activity_schedule(
-                        "mail.mail_activity_data_todo",
-                        date_deadline=fields.Date.to_date(order.date_fin_location) or fields.Date.context_today(self),
-                        summary=self.env._("Planifier ramassage de machine"),
-                        note=self.env._("Planifier le ramassage de la machine %(serie)s chez %(client)s "
-                                        "(fin de location le %(date)s).", serie=lot.name,
-                                        client=client.display_name, date=date_fin),
-                        user_id=reglages["responsable"].id)
-                crees |= ticket
+            existants = Ticket.with_context(active_test=False).search(
+                [("commande_reprise_id", "=", order.id), ("date_fin_reprise", "=", order.date_fin_location)])
+            deja = existants.machines_reprise_ids | existants.lot_id
+            lots = order._machines_a_reprendre() - deja
+            if not lots:
+                continue
+            ouvert = existants.filtered(lambda t: not t._est_ferme())[:1]
+            if ouvert:
+                ouvert.machines_reprise_ids = [(4, lot.id) for lot in lots]
+                ouvert._nommer_reprise()
+                continue
+            vals = {
+                "partner_id": client.id,
+                "code_client": Ticket._code_du_client(client),
+                "lot_id": lots[:1].id,
+                "machines_reprise_ids": [(6, 0, lots.ids)],
+                "commande_reprise_id": order.id,
+                "date_fin_reprise": order.date_fin_location,
+                "name": self.env._("Reprise"),
+            }
+            if reglages["equipe"]:
+                vals["team_id"] = reglages["equipe"]
+            ticket = Ticket.create(vals)
+            ticket._nommer_reprise()
+            ticket._mettre_en_reprise()
+            if reglages["responsable"] and "activity_ids" in ticket._fields:
+                ticket.activity_schedule(
+                    "mail.mail_activity_data_todo",
+                    date_deadline=fields.Date.to_date(order.date_fin_location) or fields.Date.context_today(self),
+                    summary=self.env._("Planifier ramassage de machine"),
+                    note=self.env._("Planifier le ramassage de %(nb)s machine(s) (%(series)s) chez %(client)s.",
+                                    nb=len(lots), series=", ".join(lots.mapped("name")),
+                                    client=client.display_name),
+                    user_id=reglages["responsable"].id)
+            crees |= ticket
         return crees
 
     def action_creer_tickets_reprise(self):

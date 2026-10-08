@@ -283,10 +283,12 @@ class StockMove(models.Model):
     def _vals_intervention_retour(self, ml, picking):
         vals = super()._vals_intervention_retour(ml, picking)
         ticket = picking.ticket_assistance_id
-        if ticket and ticket.lot_id and ticket.lot_id != ml.lot_id:
+        if ticket and ticket.lot_id and ticket.lot_id != ml.lot_id \
+                and ml.lot_id not in ticket.machines_reprise_ids:
             # Retour de plusieurs machines : le ticket de reprise de cette machine-ci
             autre = self.env["helpdesk.ticket"].search(
-                [("lot_id", "=", ml.lot_id.id), ("commande_reprise_id", "!=", False),
+                ["|", ("lot_id", "=", ml.lot_id.id), ("machines_reprise_ids", "in", ml.lot_id.ids),
+                 ("commande_reprise_id", "!=", False),
                  ("commande_reprise_id", "=", ticket.commande_reprise_id.id)], order="id desc", limit=1)
             ticket = autre or ticket
         if ticket:
