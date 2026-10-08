@@ -170,6 +170,12 @@ class TestTicketMachine(TransactionCase):
         self.assertEqual(t.technicien_id, tech_a, "intervention annulée ignorée")
         i1.user_id = tech_b
         self.assertEqual(t.technicien_id, tech_b, "modifié depuis l'intervention")
+        picking = self.env["stock.picking"].create({
+            "picking_type_id": self.env.ref("stock.picking_type_out").id, "partner_id": self.personne.id,
+            "ticket_assistance_id": t.id})
+        self.assertEqual(picking.technicien_id, tech_b, "technicien sur la livraison")
+        self.assertEqual(picking.route, "1 rue Test, Québec", "route = adresse du commerce")
+        self.env["stock.picking"].get_views([(False, "form"), (False, "list")])
         arch = self.env["helpdesk.ticket"].get_views([(False, "kanban")])["views"]["kanban"]["arch"]
         self.assertIn("technicien_id", arch)
 

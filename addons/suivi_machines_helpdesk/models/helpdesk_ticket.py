@@ -261,6 +261,19 @@ class StockPicking(models.Model):
 
     ticket_assistance_id = fields.Many2one("helpdesk.ticket", "Ticket d'assistance",
                                            index="btree_not_null", copy=False)
+    technicien_id = fields.Many2one(related="ticket_assistance_id.technicien_id", store=True,
+                                    string="Technicien")
+    route = fields.Char("Route", compute="_compute_route", store=True,
+                        help="Adresse de livraison du client, pour planifier la tournée.")
+
+    @api.depends("partner_id.type", "partner_id.parent_id", "partner_id.street", "partner_id.street2",
+                 "partner_id.city", "partner_id.zip", "partner_id.state_id",
+                 "partner_id.parent_id.street", "partner_id.parent_id.city", "partner_id.parent_id.zip")
+    def _compute_route(self):
+        for picking in self:
+            p = picking.partner_id
+            commerce = p.parent_id if p.parent_id and p.type == "contact" else p
+            picking.route = commerce._display_address(without_name=True, separator=", ") if commerce else False
 
 
 class StockMove(models.Model):

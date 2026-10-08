@@ -43,6 +43,20 @@
         <field name="arch" type="xml">
             <field name="origin" position="after">
                 <field name="ticket_assistance_id" invisible="not ticket_assistance_id" readonly="1"/>
+                <field name="technicien_id" invisible="not technicien_id" widget="many2one_avatar_user"/>
+                <field name="route" invisible="not route"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="view_picking_list_ticket" model="ir.ui.view">
+        <field name="name">stock.picking.list.ticket.assistance</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.vpicktree"/>
+        <field name="arch" type="xml">
+            <field name="partner_id" position="after">
+                <field name="route" optional="hide"/>
+                <field name="technicien_id" optional="hide" widget="many2one_avatar_user"/>
             </field>
         </field>
     </record>
