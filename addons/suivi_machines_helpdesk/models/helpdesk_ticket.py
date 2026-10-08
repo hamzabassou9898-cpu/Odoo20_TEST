@@ -279,6 +279,12 @@ class StockPicking(models.Model):
 class StockMove(models.Model):
     _inherit = "stock.move"
 
+    def _vals_intervention_retour(self, ml, picking):
+        vals = super()._vals_intervention_retour(ml, picking)
+        if picking.ticket_assistance_id:
+            vals["ticket_id"] = picking.ticket_assistance_id.id
+        return vals
+
     def _get_new_picking_values(self):
         # Livraison creee depuis un bon de vente du ticket : garde le lien vers le ticket
         vals = super()._get_new_picking_values()

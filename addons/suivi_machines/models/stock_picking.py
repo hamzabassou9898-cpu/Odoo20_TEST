@@ -43,4 +43,9 @@ class StockMove(models.Model):
             if frais and frais.lst_price:
                 vals["frais_ids"] = [(0, 0, {"product_id": frais.id, "name": frais.display_name,
                                              "prix_unitaire": frais.lst_price})]
+            vals.update(self._vals_intervention_retour(ml, picking))
             Interv.sudo().create(vals)
+
+    def _vals_intervention_retour(self, ml, picking):
+        """Point d'extension : valeurs supplementaires de l'intervention de retour."""
+        return {}

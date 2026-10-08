@@ -242,6 +242,61 @@ class TestTicketMachine(TransactionCase):
         self.assertEqual(so.action_creer_tickets_reprise()["domain"], [("commande_reprise_id", "=", so.id)],
                          "2e clic : ouvre le ticket existant")
 
+    def _location_livree(self, nom):
+        stock = self.env.ref("stock.stock_location_stock")
+        lot = self.env["stock.lot"].create({"name": nom, "product_id": self.produit.id})
+        self.env["stock.quant"]._update_available_quantity(self.produit, stock, 1, lot_id=lot)
+        so = self.env["sale.order"].create({
+            "partner_id": self.commerce.id, "type_commande": "location",
+            "date_fin_location": fields.Datetime.now() + relativedelta(days=1),
+            "order_line": [(0, 0, {"product_id": self.produit.id, "product_uom_qty": 1, "machine_lot_id": lot.id})]})
+        so.action_confirm()
+        pk = so.picking_ids
+        pk.action_assign()
+        pk.move_ids.picked = True
+        pk.with_context(skip_sms=True).button_validate()
+        ticket = self.env["helpdesk.ticket"].browse(so.action_creer_tickets_reprise()["res_id"])
+        return lot, so, ticket
+
+    def test_ramassage_depuis_ticket(self):
+        lot, so, ticket = self._location_livree("RAM-1")
+        self.assertTrue(ticket.est_reprise)
+        action = ticket.action_ramassage()
+        retour = self.env["stock.picking"].browse(action["res_id"])
+        self.assertEqual(retour.ticket_assistance_id, ticket)
+        self.assertEqual(retour.move_ids.move_line_ids.lot_id, lot, "la machine du ticket est indiquée")
+        self.assertEqual(ticket.action_ramassage()["res_id"], retour.id, "2e clic : même bon de retour")
+        livreur = self.env["res.users"].create({"name": "Livreur R", "login": "livreur_r"})
+        retour.livreur_id = livreur
+        retour.move_ids.picked = True
+        retour.with_context(skip_sms=True).button_validate()
+        self.assertEqual(retour.state, "done")
+        self.assertEqual(lot.machine_statut, "entrepot")
+        interv = lot.intervention_ids.filtered(lambda i: i.type == "ramassage")
+        self.assertEqual((interv.ticket_id, interv.user_id), (ticket, livreur), "intervention liée au ticket")
+
+    def test_prolonger_location(self):
+        lot, so, ticket = self._location_livree("PRO-1")
+        resolu = self.env["helpdesk.stage"].search([("name", "=ilike", "résolu")], limit=1) \
+            or self.env["helpdesk.stage"].create({"name": "Résolu"})
+        ancienne = so.date_fin_location
+        f = Form(self.env["suivi.machines.prolonger.location"].with_context(**ticket.action_prolonger_location()["context"]))
+        self.assertEqual(f.nouvelle_date_fin, ancienne + relativedelta(months=1), "proposé : +1 mois")
+        f.nouvelle_date_fin = ancienne + relativedelta(days=30)
+        f.save().action_prolonger()
+        self.assertEqual(so.date_fin_location, ancienne + relativedelta(days=30))
+        self.assertEqual(ticket.stage_id, resolu)
+        self.assertFalse(ticket.activity_ids, "activité Planifier ramassage terminée")
+        # a l'approche de la nouvelle date : nouveau ticket de reprise
+        so.date_fin_location = fields.Datetime.now() + relativedelta(days=2)
+        nouveau = self.env["sale.order"]._cron_tickets_reprise().filtered(lambda t: t.commande_reprise_id == so)
+        self.assertEqual(len(nouveau), 1)
+        self.assertNotEqual(nouveau, ticket)
+        with self.assertRaises(Exception):
+            f2 = Form(self.env["suivi.machines.prolonger.location"].with_context(default_ticket_id=nouveau.id))
+            f2.nouvelle_date_fin = so.date_fin_location - relativedelta(days=5)
+            f2.save().action_prolonger()
+
     def test_route_personne(self):
         interv = self.env["machine.intervention"].create({"lot_id": self.lots[0].id,
                                                           "partner_id": self.personne.id})

@@ -30,13 +30,20 @@
 
             <!-- Boutons d'action en haut du ticket, a cote des etapes -->
             <xpath expr="//header" position="inside">
+                <field name="est_reprise" invisible="1"/>
+                <!-- Ticket de reprise : seulement Ramassage et Prolonger -->
+                <button name="action_ramassage" type="object" string="Ramassage"
+                        class="btn-primary" invisible="not est_reprise" groups="stock.group_stock_user"/>
+                <button name="action_prolonger_location" type="object" string="Prolonger la location"
+                        class="btn-secondary" invisible="not est_reprise"/>
                 <button name="action_nouvelle_intervention" type="object" string="Nouvelle intervention"
-                        class="btn-secondary" invisible="not partner_id"/>
+                        class="btn-secondary" invisible="not partner_id or est_reprise"/>
                 <button name="action_creer_vente" type="object" string="Bon de vente"
-                        class="btn-secondary" invisible="not partner_id"
+                        class="btn-secondary" invisible="not partner_id or est_reprise"
                         groups="sales_team.group_sale_salesman"/>
                 <button name="action_creer_livraison" type="object" string="Livraison"
-                        class="btn-secondary" invisible="not partner_id" groups="stock.group_stock_user"/>
+                        class="btn-secondary" invisible="not partner_id or est_reprise"
+                        groups="stock.group_stock_user"/>
             </xpath>
 
             <!-- Technicien de la derniere intervention, sous « Assigné à » -->

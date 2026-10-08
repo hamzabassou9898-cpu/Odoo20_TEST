@@ -2,6 +2,8 @@
 """Tickets « Reprise » crees automatiquement avant la fin d'une location."""
 from datetime import timedelta
 
+from dateutil.relativedelta import relativedelta
+
 from odoo import api, fields, models
 from odoo.exceptions import UserError
 
@@ -24,6 +26,54 @@ class HelpdeskTicket(models.Model):
 
     commande_reprise_id = fields.Many2one("sale.order", "Contrat de location (reprise)",
                                           index="btree_not_null", copy=False, readonly=True)
+    date_fin_reprise = fields.Datetime("Fin de location (reprise)", readonly=True, copy=False)
+    est_reprise = fields.Boolean(compute="_compute_est_reprise")
+
+    def _compute_est_reprise(self):
+        for ticket in self:
+            ticket.est_reprise = bool(ticket.commande_reprise_id)
+
+    def _livraison_machine(self):
+        """Livraison terminee du contrat qui a fait sortir la machine du ticket."""
+        self.ensure_one()
+        return self.commande_reprise_id.picking_ids.filtered(
+            lambda p: p.state == "done" and p.picking_type_code == "outgoing"
+            and self.lot_id in p.move_line_ids.lot_id).sorted("date_done", reverse=True)[:1]
+
+    def action_ramassage(self):
+        """Bon de retour de la machine (depuis la livraison du contrat), lie au ticket."""
+        self.ensure_one()
+        encours = self.livraison_ids.filtered(
+            lambda p: p.state not in ("done", "cancel") and p.location_dest_id.usage == "internal"
+            and self.lot_id in p.move_ids.machine_lot_id)[:1]
+        if encours:
+            return self._ouvrir_picking(encours)
+        livraison = self._livraison_machine()
+        if not livraison:
+            raise UserError(self.env._(
+                "Aucune livraison terminée de la machine %s sur ce contrat : utilisez le bouton "
+                "Retour du contrat (application Location).", self.lot_id.name or "?"))
+        retour = livraison._create_return()
+        moves = retour.move_ids.filtered(lambda m: m.product_id == self.lot_id.product_id)
+        (retour.move_ids - moves[:1]).unlink()
+        moves[:1].write({"product_uom_qty": 1, "machine_lot_id": self.lot_id.id})
+        retour.write({"ticket_assistance_id": self.id})
+        retour.action_confirm()
+        retour.action_assign()
+        # Retour depuis le client (pas de reservation) : indiquer la machine qui revient
+        retour.move_ids.move_line_ids.filtered(lambda l: not l.lot_id).write({"lot_id": self.lot_id.id})
+        retour.message_post(body=self.env._("Retour créé depuis le ticket %s.", self.display_name))
+        return self._ouvrir_picking(retour)
+
+    def _ouvrir_picking(self, picking):
+        return {"type": "ir.actions.act_window", "res_model": "stock.picking", "res_id": picking.id,
+                "view_mode": "form", "views": [(False, "form")], "target": "current"}
+
+    def action_prolonger_location(self):
+        self.ensure_one()
+        return {"type": "ir.actions.act_window", "name": self.env._("Prolonger la location"),
+                "res_model": "suivi.machines.prolonger.location", "view_mode": "form",
+                "views": [(False, "form")], "target": "new", "context": {"default_ticket_id": self.id}}
 
 
 class SaleOrder(models.Model):
@@ -83,8 +133,10 @@ class SaleOrder(models.Model):
             date_fin = (fields.Datetime.to_string(order.date_fin_location)[:10]
                         if order.date_fin_location else "?")
             for lot in order._machines_a_reprendre():
+                # Un ticket par machine et par date de fin (une prolongation en cree un nouveau)
                 deja = Ticket.with_context(active_test=False).search_count(
-                    [("commande_reprise_id", "=", order.id), ("lot_id", "=", lot.id)])
+                    [("commande_reprise_id", "=", order.id), ("lot_id", "=", lot.id),
+                     ("date_fin_reprise", "=", order.date_fin_location)])
                 if deja:
                     continue
                 vals = {
@@ -94,6 +146,7 @@ class SaleOrder(models.Model):
                     "code_client": Ticket._code_du_client(client),
                     "lot_id": lot.id,
                     "commande_reprise_id": order.id,
+                    "date_fin_reprise": order.date_fin_location,
                     "description": self.env._(
                         "<p>Fin de la location le %(date)s (contrat %(contrat)s) : "
                         "reprise de la machine %(serie)s à planifier.</p>",
@@ -104,6 +157,9 @@ class SaleOrder(models.Model):
                 if reglages["etape"]:
                     vals["stage_id"] = reglages["etape"].id
                 ticket = Ticket.create(vals)
+                # Certaines equipes remettent l'etape par defaut a la creation : on la force
+                if reglages["etape"] and ticket.stage_id != reglages["etape"]:
+                    ticket.stage_id = reglages["etape"]
                 if reglages["responsable"] and "activity_ids" in ticket._fields:
                     ticket.activity_schedule(
                         "mail.mail_activity_data_todo",
@@ -149,3 +205,47 @@ class SaleOrder(models.Model):
         return {"type": "ir.actions.act_window", "name": self.env._("Reprise - %s", self.name),
                 "res_model": "helpdesk.ticket", "view_mode": "list,form",
                 "views": [(False, "list"), (False, "form")], "domain": [("id", "in", tickets.ids)]}
+
+
+class ProlongerLocation(models.TransientModel):
+    _name = "suivi.machines.prolonger.location"
+    _description = "Prolonger une location"
+
+    ticket_id = fields.Many2one("helpdesk.ticket", "Ticket de reprise", required=True)
+    commande_id = fields.Many2one(related="ticket_id.commande_reprise_id", string="Contrat")
+    date_fin_actuelle = fields.Datetime(related="ticket_id.commande_reprise_id.date_fin_location",
+                                        string="Fin actuelle")
+    nouvelle_date_fin = fields.Datetime("Nouvelle fin de location", required=True,
+                                        default=lambda s: s._default_nouvelle_date())
+    note = fields.Text("Note")
+
+    def _default_nouvelle_date(self):
+        ticket = self.env["helpdesk.ticket"].browse(self.env.context.get("default_ticket_id"))
+        fin = ticket.commande_reprise_id.date_fin_location or fields.Datetime.now()
+        return fin + relativedelta(months=1)
+
+    def action_prolonger(self):
+        self.ensure_one()
+        commande = self.ticket_id.commande_reprise_id
+        if self.date_fin_actuelle and self.nouvelle_date_fin <= self.date_fin_actuelle:
+            raise UserError(self.env._("La nouvelle date doit être après la fin actuelle."))
+        # Application Location : sa date de retour ; sinon notre date de fin
+        champ = "rental_return_date" if "rental_return_date" in commande._fields else "date_fin_location"
+        commande.write({champ: self.nouvelle_date_fin})
+        if champ != "date_fin_location":
+            commande.date_fin_location = self.nouvelle_date_fin
+        date_txt = fields.Datetime.to_string(self.nouvelle_date_fin)[:10]
+        message = self.env._("Location prolongée jusqu'au %s.", date_txt)
+        if self.note:
+            message += " " + self.note
+        commande.message_post(body=message)
+        ticket = self.ticket_id
+        ticket.message_post(body=message)
+        ticket.activity_ids.filtered(
+            lambda a: a.activity_type_id == self.env.ref("mail.mail_activity_data_todo")
+        ).action_feedback(feedback=message)
+        # Ticket resolu (etape « Resolu » si elle existe)
+        resolu = self.env["helpdesk.stage"].search([("name", "=ilike", "résolu")], limit=1)
+        if resolu:
+            ticket.stage_id = resolu
+        return {"type": "ir.actions.act_window_close"}

@@ -70,4 +70,24 @@
             </field>
         </field>
     </record>
+
+    <record id="view_prolonger_location_form" model="ir.ui.view">
+        <field name="name">suivi.machines.prolonger.location.form</field>
+        <field name="model">suivi.machines.prolonger.location</field>
+        <field name="arch" type="xml">
+            <form>
+                <group>
+                    <field name="ticket_id" invisible="1"/>
+                    <field name="commande_id" readonly="1"/>
+                    <field name="date_fin_actuelle" readonly="1"/>
+                    <field name="nouvelle_date_fin"/>
+                    <field name="note" placeholder="ex. renouvellement pour la saison d'été"/>
+                </group>
+                <footer>
+                    <button name="action_prolonger" type="object" string="Prolonger" class="btn-primary"/>
+                    <button string="Annuler" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
 </odoo>
