@@ -13,8 +13,25 @@ class SaleOrder(models.Model):
         help="Vente : la machine livrée devient « Vendue ». "
              "Location : elle devient « En location » chez le client.")
 
+    date_fin_location = fields.Datetime(
+        "Fin de la location", compute="_compute_date_fin_location", store=True, readonly=False,
+        help="Date de reprise prévue : reprise de l'application Location si elle est installée, "
+             "sinon à saisir. Sert à créer le ticket de reprise.")
+    date_fin_auto = fields.Boolean(compute="_compute_date_fin_auto")
     machine_ids = fields.Many2many("stock.lot", string="Machines", compute="_compute_machine_ids")
     nb_machines = fields.Integer("Fiche de machine", compute="_compute_machine_ids")
+
+    @api.depends(lambda self: ["rental_return_date"] if "rental_return_date" in self._fields else [])
+    def _compute_date_fin_location(self):
+        # Application Location (Enterprise) : sa date de retour fait foi
+        auto = "rental_return_date" in self._fields
+        for order in self:
+            # sinon : date saisie a la main, conservee
+            order.date_fin_location = order.rental_return_date if auto else order.date_fin_location
+
+    def _compute_date_fin_auto(self):
+        for order in self:
+            order.date_fin_auto = "rental_return_date" in self._fields
 
     @api.depends("order_line.machine_lot_id", "order_line.move_ids.move_line_ids.lot_id")
     def _compute_machine_ids(self):

@@ -258,3 +258,30 @@ class TestSuiviMachines(TransactionCase):
         so = self._commande(self.lot_a)
         with self.assertRaises(ValidationError):
             so.picking_ids.move_ids.machine_lot_id = lot_autre
+
+    # ------------------------------------------------------------ retour de location
+    def test_retour_cree_intervention_ramassage(self):
+        frais = self.env.ref("suivi_machines.produit_frais_livraison")
+        frais.lst_price = 40
+        livreur = self.env["res.users"].create({"name": "Livreur retour", "login": "livreur_retour"})
+        so = self._commande(self.lot_a, "location")
+        self._valider(so.picking_ids)
+        self.assertEqual(self.lot_a.machine_statut, "chez_client")
+        self.assertFalse(self.lot_a.intervention_ids, "la livraison ne crée pas d'intervention")
+        retour = so.picking_ids._create_return()
+        retour.livreur_id = livreur
+        retour.action_confirm()
+        self._valider(retour, self.lot_a)
+        self.assertEqual(self.lot_a.machine_statut, "entrepot")
+        interv = self.lot_a.intervention_ids
+        self.assertEqual(len(interv), 1)
+        self.assertEqual((interv.type, interv.state, interv.user_id, interv.partner_id),
+                         ("ramassage", "fait", livreur, self.client))
+        self.assertEqual(interv.montant_frais, 40, "frais de reprise ajoutés")
+        self.assertEqual(interv.etat_facturation, "a_facturer")
+
+    def test_date_fin_location_saisie(self):
+        so = self._commande(self.lot_b, "location")
+        fin = fields.Datetime.now() + relativedelta(days=10)
+        so.date_fin_location = fin
+        self.assertEqual(so.date_fin_location, fin.replace(microsecond=0))

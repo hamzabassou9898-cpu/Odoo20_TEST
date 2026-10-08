@@ -72,6 +72,7 @@
                                domain="[('id', 'in', machines_client_ids)]"
                                placeholder="Choisir parmi les machines du client"/>
                         <field name="machine_dernier_entretien" invisible="not lot_id"/>
+                        <field name="commande_reprise_id" invisible="not commande_reprise_id"/>
                         <field name="nb_tickets_precedents" string="Historique des appels de service"/>
                     </group>
                 </group>

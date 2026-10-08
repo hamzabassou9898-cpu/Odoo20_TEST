@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="cron_tickets_reprise" model="ir.cron">
+        <field name="name">Suivi des machines : tickets de reprise (fin de location)</field>
+        <field name="model_id" ref="sale.model_sale_order"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_tickets_reprise()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+    </record>
+    <record id="param_jours_avant_reprise" model="ir.config_parameter">
+        <field name="key">suivi_machines_helpdesk.jours_avant_reprise</field>
+        <field name="value">3</field>
+    </record>
+</odoo>

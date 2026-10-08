@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from dateutil.relativedelta import relativedelta
 
+from odoo import fields
 from odoo.tests import Form, TransactionCase, tagged
 
 
@@ -178,6 +179,36 @@ class TestTicketMachine(TransactionCase):
         self.env["stock.picking"].get_views([(False, "form"), (False, "list")])
         arch = self.env["helpdesk.ticket"].get_views([(False, "kanban")])["views"]["kanban"]["arch"]
         self.assertIn("technicien_id", arch)
+
+    def test_tickets_de_reprise(self):
+        stock = self.env.ref("stock.stock_location_stock")
+        lot = self.env["stock.lot"].create({"name": "REP-1", "product_id": self.produit.id, "ref": "R1"})
+        self.env["stock.quant"]._update_available_quantity(self.produit, stock, 1, lot_id=lot)
+        so = self.env["sale.order"].create({
+            "partner_id": self.commerce.id, "type_commande": "location",
+            "order_line": [(0, 0, {"product_id": self.produit.id, "product_uom_qty": 1, "machine_lot_id": lot.id})]})
+        so.action_confirm()
+        pk = so.picking_ids
+        pk.action_assign()
+        pk.move_ids.picked = True
+        pk.with_context(skip_sms=True).button_validate()
+        self.assertEqual(lot.machine_statut, "chez_client")
+        SO = self.env["sale.order"]
+        so.date_fin_location = fields.Datetime.now() + relativedelta(days=10)
+        self.assertFalse(SO._cron_tickets_reprise(), "fin dans 10 jours : rien encore")
+        so.date_fin_location = fields.Datetime.now() + relativedelta(days=2)
+        tickets = SO._cron_tickets_reprise()
+        self.assertEqual(len(tickets), 1)
+        self.assertEqual((tickets.lot_id, tickets.partner_id, tickets.code_client, tickets.commande_reprise_id),
+                         (lot, self.commerce, "TST100", so))
+        self.assertIn("Reprise", tickets.name)
+        self.assertFalse(SO._cron_tickets_reprise(), "pas de doublon")
+        self.assertEqual(so.nb_tickets_reprise, 1)
+        icp = self.env["ir.config_parameter"]
+        (icp.set_int if hasattr(icp, "set_int") else icp.set_param)("suivi_machines_helpdesk.jours_avant_reprise", 0)
+        so2 = so.copy({"date_fin_location": fields.Datetime.now() + relativedelta(days=2)})
+        self.assertFalse(SO._cron_tickets_reprise(), "machine pas encore livrée / délai 0 : rien")
+        self.env.ref("suivi_machines_helpdesk.cron_tickets_reprise").method_direct_trigger()
 
     def test_route_personne(self):
         interv = self.env["machine.intervention"].create({"lot_id": self.lots[0].id,

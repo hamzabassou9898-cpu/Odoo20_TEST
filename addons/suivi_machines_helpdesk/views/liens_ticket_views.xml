@@ -32,6 +32,12 @@
             <field name="type_commande" position="after">
                 <field name="ticket_assistance_id" invisible="not ticket_assistance_id" readonly="1"/>
             </field>
+            <div name="button_box" position="inside">
+                <button name="action_voir_tickets_reprise" type="object" class="oe_stat_button"
+                        icon="assignment_return" invisible="not nb_tickets_reprise">
+                    <field name="nb_tickets_reprise" widget="statinfo" string="Reprise"/>
+                </button>
+            </div>
         </field>
     </record>
 
