@@ -341,6 +341,24 @@ class TestTicketMachine(TransactionCase):
         self.assertFalse(t0.tag_ids & (retard | semaine), "entretien fait : plus d'étiquette")
         self.assertGreater(self.lots[0].date_prochain_entretien, aujourdhui + relativedelta(months=11))
 
+    def test_entretien_machine_en_entrepot(self):
+        lot = self.env["stock.lot"].create({"name": "ENT-STOCK", "product_id": self.produit.id, "ref": "S1"})
+        self.env["machine.intervention"].create({
+            "lot_id": lot.id, "type": "entretien", "state": "fait",
+            "date": fields.Datetime.now() - relativedelta(months=13)})
+        self.assertFalse(lot.machine_client_id)
+        tickets = self.env["helpdesk.ticket"]._cron_tickets_entretien().filtered(lambda t: t.lot_id == lot)
+        self.assertEqual(len(tickets), 1, "machine en entrepôt en retard : ticket aussi")
+        self.assertIn("En entrepôt", tickets.name)
+        self.assertEqual(tickets.tag_ids, self.env.ref("suivi_machines_helpdesk.tag_entretien_retard"))
+        hs = self.env["stock.lot"].create({"name": "ENT-HS", "product_id": self.produit.id,
+                                           "machine_etat": "hors_service"})
+        self.env["machine.intervention"].create({
+            "lot_id": hs.id, "type": "entretien", "state": "fait",
+            "date": fields.Datetime.now() - relativedelta(months=13)})
+        self.assertFalse(self.env["helpdesk.ticket"]._cron_tickets_entretien().filtered(lambda t: t.lot_id == hs),
+                         "hors service : pas de ticket")
+
     def test_route_personne(self):
         interv = self.env["machine.intervention"].create({"lot_id": self.lots[0].id,
                                                           "partner_id": self.personne.id})

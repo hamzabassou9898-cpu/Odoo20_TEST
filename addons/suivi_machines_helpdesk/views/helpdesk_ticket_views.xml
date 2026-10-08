@@ -53,7 +53,7 @@
 
             <!-- Code client obligatoire : il remplit le client et ses machines -->
             <xpath expr="//field[@name='partner_id']" position="before">
-                <field name="code_client" required="1" placeholder="ex. MON134"
+                <field name="code_client" required="not est_entretien" placeholder="ex. MON134"
                        class="fw-bold"/>
             </xpath>
 
