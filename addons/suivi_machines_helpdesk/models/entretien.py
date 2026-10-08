@@ -3,6 +3,7 @@
 from datetime import timedelta
 
 from odoo import api, fields, models
+from odoo.exceptions import UserError
 
 from .reprise import _param_int
 
@@ -126,8 +127,76 @@ class HelpdeskTicket(models.Model):
                 "params": {"title": self.env._("Vérification des entretiens"), "message": "\n".join(lignes),
                            "sticky": True, "type": "success" if crees else "info"}}
 
+    def action_valider_entretien(self):
+        self.ensure_one()
+        return {"type": "ir.actions.act_window", "name": self.env._("Valider l'entretien"),
+                "res_model": "suivi.machines.valider.entretien", "view_mode": "form",
+                "views": [(False, "form")], "target": "new", "context": {"default_ticket_id": self.id}}
+
     def action_nouvelle_intervention(self):
         action = super().action_nouvelle_intervention()
         if self.est_entretien:
             action["context"]["default_type"] = "entretien"
         return action
+
+
+FREQUENCES = [("3", "Tous les 3 mois"), ("6", "Tous les 6 mois"), ("12", "Tous les 12 mois"),
+              ("24", "Tous les 24 mois")]
+
+
+class ValiderEntretien(models.TransientModel):
+    _name = "suivi.machines.valider.entretien"
+    _description = "Valider un entretien"
+
+    ticket_id = fields.Many2one("helpdesk.ticket", "Ticket d'entretien", required=True)
+    lot_id = fields.Many2one(related="ticket_id.lot_id", string="Machine")
+    date_entretien = fields.Date("Date de l'entretien", required=True, default=fields.Date.context_today)
+    frequence = fields.Selection(FREQUENCES, "Fréquence des entretiens", required=True,
+                                 default=lambda s: s._default_frequence())
+    technicien_id = fields.Many2one("res.users", "Technicien", required=True,
+                                    default=lambda s: s._default_technicien(),
+                                    domain="[('share', '=', False)]")
+    note = fields.Text("Ce qui a été fait")
+
+    def _ticket_contexte(self):
+        return self.env["helpdesk.ticket"].browse(self.env.context.get("default_ticket_id"))
+
+    def _default_frequence(self):
+        mois = str(self._ticket_contexte().lot_id.intervalle_entretien or 12)
+        return mois if mois in dict(FREQUENCES) else "12"
+
+    def _default_technicien(self):
+        return self._ticket_contexte().technicien_id or self.env.user
+
+    def action_valider(self):
+        self.ensure_one()
+        ticket, lot = self.ticket_id, self.ticket_id.lot_id
+        if not lot:
+            raise UserError(self.env._("Indiquez d'abord la machine (numéro de série) du ticket."))
+        if self.date_entretien > fields.Date.context_today(self):
+            raise UserError(self.env._("La date de l'entretien ne peut pas être dans le futur."))
+        lot.intervalle_entretien = int(self.frequence)
+        self.env["machine.intervention"].create({
+            "lot_id": lot.id,
+            "type": "entretien",
+            "state": "fait",
+            "date": fields.Datetime.to_datetime(self.date_entretien).replace(hour=12),
+            "user_id": self.technicien_id.id,
+            "partner_id": lot.machine_client_id.id or ticket.partner_id.id,
+            "ticket_id": ticket.id,
+            "description": self.note or ticket.name,
+        })
+        retard, semaine = ticket._etiquettes_entretien()
+        ticket.tag_ids = [(3, retard.id), (3, semaine.id)]
+        message = self.env._("Entretien validé le %(date)s par %(tech)s. Prochain entretien : %(prochain)s "
+                             "(%(freq)s).", date=fields.Date.to_string(self.date_entretien),
+                             tech=self.technicien_id.name,
+                             prochain=fields.Date.to_string(lot.date_prochain_entretien),
+                             freq=dict(FREQUENCES)[self.frequence].lower())
+        ticket.message_post(body=message)
+        todo = self.env.ref("mail.mail_activity_data_todo")
+        ticket.activity_ids.filtered(lambda a: a.activity_type_id == todo).action_feedback(feedback=message)
+        resolu = ticket._etape_contenant("résolu", ticket.team_id if "team_id" in ticket._fields else None)
+        if resolu:
+            ticket.stage_id = resolu
+        return {"type": "ir.actions.act_window_close"}

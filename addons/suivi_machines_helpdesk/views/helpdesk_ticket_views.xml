@@ -31,6 +31,9 @@
             <!-- Boutons d'action en haut du ticket, a cote des etapes -->
             <xpath expr="//header" position="inside">
                 <field name="est_reprise" invisible="1"/>
+                <field name="est_entretien" invisible="1"/>
+                <button name="action_valider_entretien" type="object" string="Valider l'entretien"
+                        class="btn-primary" invisible="not est_entretien"/>
                 <!-- Ticket de reprise : seulement Ramassage et Prolonger -->
                 <button name="action_ramassage" type="object" string="Ramassage"
                         class="btn-primary" invisible="not est_reprise" groups="stock.group_stock_user"/>

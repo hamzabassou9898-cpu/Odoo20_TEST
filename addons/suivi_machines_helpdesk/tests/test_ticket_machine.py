@@ -342,6 +342,39 @@ class TestTicketMachine(TransactionCase):
         self.assertFalse(t0.tag_ids & (retard | semaine), "entretien fait : plus d'étiquette")
         self.assertGreater(self.lots[0].date_prochain_entretien, aujourdhui + relativedelta(months=11))
 
+    def test_valider_entretien(self):
+        T = self.env["helpdesk.ticket"]
+        Interv = self.env["machine.intervention"]
+        Interv.search([("lot_id", "=", self.lots[0].id), ("type", "=", "entretien")]).date = \
+            fields.Datetime.now() - relativedelta(months=13)
+        ticket = T._cron_tickets_entretien().filtered(lambda t: t.lot_id == self.lots[0])
+        resolu = self.env["helpdesk.stage"].search([("name", "ilike", "résolu")], limit=1) \
+            or self.env["helpdesk.stage"].create({"name": "Résolu"})
+        tech = self.env["res.users"].create({"name": "Tech E", "login": "tech_e"})
+        f = Form(self.env["suivi.machines.valider.entretien"].with_context(**ticket.action_valider_entretien()["context"]))
+        self.assertEqual(f.frequence, "12", "fréquence actuelle de la machine")
+        hier = fields.Date.context_today(T) - relativedelta(days=1)
+        f.date_entretien = hier
+        f.frequence = "6"
+        f.technicien_id = tech
+        f.note = "Nettoyage complet"
+        f.save().action_valider()
+        lot = self.lots[0]
+        self.assertEqual(lot.intervalle_entretien, 6)
+        self.assertEqual(lot.date_dernier_entretien, hier)
+        self.assertEqual(lot.date_prochain_entretien, hier + relativedelta(months=6), "prochain dans 6 mois")
+        interv = lot.intervention_ids.filtered(lambda i: i.ticket_id == ticket)
+        self.assertEqual((interv.type, interv.state, interv.user_id), ("entretien", "fait", tech))
+        self.assertFalse(ticket.tag_ids)
+        self.assertEqual(ticket.stage_id, resolu)
+        self.assertFalse(ticket.activity_ids)
+        self.assertEqual(ticket.technicien_id, tech)
+        self.assertFalse(T._cron_tickets_entretien().filtered(lambda t: t.lot_id == lot), "rien avant 6 mois")
+        with self.assertRaises(Exception):
+            f2 = Form(self.env["suivi.machines.valider.entretien"].with_context(default_ticket_id=ticket.id))
+            f2.date_entretien = fields.Date.context_today(T) + relativedelta(days=3)
+            f2.save().action_valider()
+
     def test_entretien_machine_en_entrepot(self):
         lot = self.env["stock.lot"].create({"name": "ENT-STOCK", "product_id": self.produit.id, "ref": "S1"})
         stock = self.env.ref("stock.stock_location_stock")

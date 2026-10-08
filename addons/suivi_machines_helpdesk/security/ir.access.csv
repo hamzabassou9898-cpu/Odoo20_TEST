@@ -4,3 +4,4 @@ access_sale_order_helpdesk,Contrats : lecture (assistance),sale.order,helpdesk.g
 access_machine_intervention_helpdesk,Interventions (assistance),machine.intervention,helpdesk.group_helpdesk_user,crud,
 access_machine_intervention_frais_helpdesk,Frais d'intervention (assistance),machine.intervention.frais,helpdesk.group_helpdesk_user,crud,
 access_prolonger_location_user,Prolonger une location,suivi.machines.prolonger.location,base.group_user,crud,
+access_valider_entretien_user,Valider un entretien,suivi.machines.valider.entretien,base.group_user,crud,
