@@ -7,6 +7,7 @@ from odoo import api, fields, models
 PARAM_JOURS = "suivi_machines_helpdesk.jours_avant_reprise"
 PARAM_EQUIPE = "suivi_machines_helpdesk.equipe_reprise_id"
 PARAM_ETAPE = "suivi_machines_helpdesk.etape_reprise"
+PARAM_RESPONSABLE = "suivi_machines_helpdesk.responsable_reprise_id"
 ETAPE_DEFAUT = "Reprise de machine"
 
 
@@ -57,6 +58,9 @@ class SaleOrder(models.Model):
         limite = fields.Datetime.now() + timedelta(days=jours)
         commandes = self.search([("type_commande", "=", "location"), ("state", "=", "sale"),
                                  ("date_fin_location", "!=", False), ("date_fin_location", "<=", limite)])
+        # Responsable de la planification : parametre, sinon l'administrateur
+        responsable = self.env["res.users"].browse(_param_int(icp, PARAM_RESPONSABLE, 0)).exists() \
+            or self.env.ref("base.user_admin", raise_if_not_found=False)
         Ticket = self.env["helpdesk.ticket"].with_context(mail_create_nolog=True)
         crees = Ticket
         for order in commandes:
@@ -83,5 +87,16 @@ class SaleOrder(models.Model):
                     vals["team_id"] = equipe
                 if etape:
                     vals["stage_id"] = etape.id
-                crees |= Ticket.create(vals)
+                ticket = Ticket.create(vals)
+                if responsable and "activity_ids" in ticket._fields:
+                    ticket.activity_schedule(
+                        "mail.mail_activity_data_todo",
+                        date_deadline=fields.Date.to_date(order.date_fin_location),
+                        summary=self.env._("Planifier ramassage de machine"),
+                        note=self.env._("Planifier le ramassage de la machine %(serie)s chez %(client)s "
+                                        "(fin de location le %(date)s).", serie=lot.name,
+                                        client=client.display_name,
+                                        date=fields.Datetime.to_string(order.date_fin_location)[:10]),
+                        user_id=responsable.id)
+                crees |= ticket
         return crees

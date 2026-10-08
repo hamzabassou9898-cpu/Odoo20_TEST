@@ -201,6 +201,12 @@ class TestTicketMachine(TransactionCase):
             or self.env["helpdesk.stage"].create({"name": "Reprise de machine"})
         tickets = SO._cron_tickets_reprise()
         self.assertEqual(tickets.stage_id, etape, "ticket placé dans l'étape Reprise de machine")
+        activite = tickets.activity_ids
+        self.assertEqual(len(activite), 1)
+        self.assertEqual((activite.summary, activite.user_id, activite.activity_type_id),
+                         ("Planifier ramassage de machine", self.env.ref("base.user_admin"),
+                          self.env.ref("mail.mail_activity_data_todo")))
+        self.assertEqual(activite.date_deadline, so.date_fin_location.date())
         self.assertEqual(len(tickets), 1)
         self.assertEqual((tickets.lot_id, tickets.partner_id, tickets.code_client, tickets.commande_reprise_id),
                          (lot, self.commerce, "TST100", so))
