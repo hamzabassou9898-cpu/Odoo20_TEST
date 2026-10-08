@@ -195,7 +195,8 @@ class TestSuiviMachines(TransactionCase):
         for model, vues in (("stock.lot", ["form", "list", "kanban", "pivot", "graph", "search"]),
                             ("machine.intervention", ["form", "list", "calendar", "search"]),
                             ("machine.historique", ["list", "search"]),
-                            ("sale.order", ["form"]), ("product.template", ["form", "kanban"])):
+                            ("sale.order", ["form"]), ("product.template", ["form", "kanban"]),
+                            ("stock.picking", ["form", "list", "search"])):
             self.env[model].get_views([(False, v) for v in vues])
 
     # ------------------------------------------------------------ frais -> bon de commande -> Sage
@@ -228,3 +229,32 @@ class TestSuiviMachines(TransactionCase):
         self.assertEqual(interv.sale_order_id, so, "pas de deuxième bon de commande")
         interv.action_facture_sage()
         self.assertEqual(interv.etat_facturation, "facture")
+
+    # ------------------------------------------------------------ livraison : n° de serie + livreur
+    def test_numero_serie_choisi_a_la_livraison(self):
+        so = self.env["sale.order"].create({
+            "partner_id": self.client.id, "order_line": [(0, 0, {"product_id": self.produit.id,
+                                                                 "product_uom_qty": 1})]})
+        so.action_confirm()
+        picking = so.picking_ids
+        livreur = self.env["res.users"].create({"name": "Livreur test", "login": "livreur_test"})
+        f = Form(picking)
+        f.livreur_id = livreur
+        with f.move_ids.edit(0) as ligne:
+            ligne.machine_lot_id = self.lot_b
+        f.save()
+        self.assertEqual(picking.move_ids.move_line_ids.lot_id, self.lot_b, "la machine choisie est réservée")
+        # changement d'avis : l'autre machine
+        picking.move_ids.machine_lot_id = self.lot_a
+        self.assertEqual(picking.move_ids.move_line_ids.lot_id, self.lot_a)
+        self._valider(picking)
+        self.assertEqual(picking.livreur_id, livreur)
+        self.assertEqual(self.lot_a.machine_statut, "vendue")
+        self.assertEqual(self.lot_b.machine_statut, "entrepot")
+
+    def test_numero_serie_mauvais_produit_livraison(self):
+        autre = self.env["product.product"].create({"name": "Autre", "is_storable": True, "tracking": "serial"})
+        lot_autre = self.env["stock.lot"].create({"name": "AUTRE-1", "product_id": autre.id})
+        so = self._commande(self.lot_a)
+        with self.assertRaises(ValidationError):
+            so.picking_ids.move_ids.machine_lot_id = lot_autre

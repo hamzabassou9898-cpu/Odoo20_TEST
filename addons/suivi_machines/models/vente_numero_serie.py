@@ -130,11 +130,8 @@ class SaleOrderLine(models.Model):
             # Soumission deja confirmee : mettre a jour la livraison pas encore faite
             moves = self.move_ids.filtered(lambda m: m.state not in ("done", "cancel"))
             for line in self:
-                line_moves = moves.filtered(lambda m: m.sale_line_id == line)
-                if line_moves:
-                    line_moves._do_unreserve()
-                    line_moves.machine_lot_id = line.machine_lot_id
-                    line_moves._action_assign()
+                # la re-reservation est faite par StockMove.write
+                moves.filtered(lambda m: m.sale_line_id == line).machine_lot_id = line.machine_lot_id
         return res
 
 
@@ -153,7 +150,31 @@ class StockRule(models.Model):
 class StockMove(models.Model):
     _inherit = "stock.move"
 
-    machine_lot_id = fields.Many2one("stock.lot", "N° de série demandé", copy=False)
+    machine_lot_id = fields.Many2one(
+        "stock.lot", "N° de série", copy=False,
+        domain="[('product_id', '=', product_id), ('location_id.usage', '=', 'internal')]",
+        help="Machine précise à livrer (choisie sur le bon de vente ou au moment de la livraison) : "
+             "elle est réservée à la place de celle choisie automatiquement.")
+    est_machine = fields.Boolean(related="product_id.categ_id.suivi_machine")
+
+    @api.constrains("machine_lot_id", "product_id")
+    def _check_machine_lot_move(self):
+        for move in self.filtered("machine_lot_id"):
+            if move.machine_lot_id.product_id != move.product_id:
+                raise ValidationError(self.env._(
+                    "Le n° de série %(lot)s n'appartient pas au produit %(prod)s.",
+                    lot=move.machine_lot_id.name, prod=move.product_id.display_name))
+
+    def write(self, vals):
+        if "machine_lot_id" not in vals:
+            return super().write(vals)
+        # Nouveau n° de serie sur une livraison en cours : liberer l'ancien, reserver le nouveau
+        a_reserver = self.filtered(lambda m: m.state in ("confirmed", "partially_available", "assigned", "waiting")
+                                   and m.machine_lot_id.id != vals["machine_lot_id"])
+        a_reserver._do_unreserve()
+        res = super().write(vals)
+        a_reserver._action_assign()
+        return res
 
     def _update_reserved_quantity_vals(self, need, location_id, lot_id=None, package_id=None,
                                        owner_id=None, strict=True):
