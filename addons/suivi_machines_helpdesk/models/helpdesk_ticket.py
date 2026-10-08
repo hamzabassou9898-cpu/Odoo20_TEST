@@ -14,7 +14,7 @@ class HelpdeskTicket(models.Model):
     # priority, tag_ids, description
     commercial_partner_id = fields.Many2one(related="partner_id.commercial_partner_id")
     commerce_id = fields.Many2one("res.partner", "Commerce", compute="_compute_client")
-    adresse_commerce = fields.Char("Adresse du commerce", compute="_compute_client")
+    adresse_commerce = fields.Text("Adresse commerciale", compute="_compute_client")
 
     # ------------------------------------------------------------ machines
     lot_id = fields.Many2one("stock.lot", "Numéro de série", index="btree_not_null", tracking=True)
@@ -117,7 +117,7 @@ class HelpdeskTicket(models.Model):
             p = ticket.partner_id
             commerce = p.parent_id if p.parent_id and p.type == "contact" else p
             ticket.commerce_id = commerce
-            ticket.adresse_commerce = commerce._display_address(without_name=True, separator=", ") if commerce else False
+            ticket.adresse_commerce = commerce._display_address(without_name=True) if commerce else False
 
     @api.depends("partner_id")
     def _compute_machines_client(self):

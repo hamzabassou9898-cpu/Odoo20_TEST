@@ -44,9 +44,9 @@
                 <field name="technicien_id" invisible="not technicien_id" widget="many2one_avatar_user"/>
             </xpath>
 
-            <!-- Adresse du commerce sous le telephone natif -->
-            <xpath expr="//field[@name='partner_phone']" position="after">
-                <field name="adresse_commerce" invisible="not adresse_commerce"/>
+            <!-- Adresse commerciale : sa propre ligne, dans le groupe du telephone natif -->
+            <xpath expr="//field[@name='partner_phone']/ancestor::group[1]" position="inside">
+                <field name="adresse_commerce" string="Adresse commerciale" invisible="not adresse_commerce"/>
             </xpath>
 
             <!-- Code client obligatoire : il remplit le client et ses machines -->

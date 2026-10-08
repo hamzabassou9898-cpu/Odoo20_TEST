@@ -41,7 +41,7 @@ class TestTicketMachine(TransactionCase):
         self.assertEqual(f.code_client, "TST100")
         self.assertEqual(f.partner_id, self.commerce)
         self.assertEqual(f.commercial_partner_id, self.banniere)
-        self.assertEqual(f.adresse_commerce, "1 rue Test, Québec")
+        self.assertEqual(f.adresse_commerce, "1 rue Test\nQuébec", "adresse sur plusieurs lignes")
         self.assertEqual(f.partner_phone, "418 555-0000", "téléphone natif rempli")
         self.assertEqual(f.nb_machines_client, 2)
         self.assertFalse(f.lot_id, "2 machines : l'utilisateur choisit")
@@ -218,7 +218,9 @@ class TestTicketMachine(TransactionCase):
                     and not [p for p in f.iterancestors() if p.tag in ("list", "kanban")]]
         for champ in ("partner_id", "partner_phone", "adresse_commerce", "code_client", "lot_id"):
             self.assertEqual(visibles.count(champ), 1, f"{champ} affiché une seule fois")
-        self.assertEqual(visibles[visibles.index("partner_phone") + 1], "adresse_commerce",
-                         "adresse du commerce sous le téléphone natif")
+        champ_tel = arch.xpath("//field[@name='partner_phone']")[0]
+        groupe = next(champ_tel.iterancestors("group"))
+        self.assertEqual(groupe.xpath("./field")[-1].get("name"), "adresse_commerce",
+                         "adresse commerciale : sa propre ligne, dans le groupe du téléphone")
         self.assertNotIn("commerce_id", visibles, "client affiché une seule fois (champ natif)")
         self.env["stock.lot"].get_views([(False, "form")])
