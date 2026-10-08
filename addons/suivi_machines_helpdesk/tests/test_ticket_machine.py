@@ -2,7 +2,7 @@
 from dateutil.relativedelta import relativedelta
 
 from odoo import fields
-from odoo.tests import Form, TransactionCase, tagged
+from odoo.tests import Form, TransactionCase, freeze_time, tagged
 
 
 @tagged("post_install", "-at_install")
@@ -301,6 +301,43 @@ class TestTicketMachine(TransactionCase):
             f2 = Form(self.env["suivi.machines.prolonger.location"].with_context(default_ticket_id=nouveau.id))
             f2.nouvelle_date_fin = so.date_fin_location - relativedelta(days=5)
             f2.save().action_prolonger()
+
+    def test_tickets_entretien(self):
+        T = self.env["helpdesk.ticket"]
+        retard = self.env.ref("suivi_machines_helpdesk.tag_entretien_retard")
+        semaine = self.env.ref("suivi_machines_helpdesk.tag_entretien_semaine")
+        aujourdhui = fields.Date.context_today(T)
+        Interv = self.env["machine.intervention"]
+        # lots[0] : dernier entretien il y a 12 mois + 3 jours -> en retard
+        Interv.search([("lot_id", "=", self.lots[0].id), ("type", "=", "entretien")]).date = \
+            fields.Datetime.now() - relativedelta(months=12, days=3)
+        # lots[1] : dernier entretien il y a 12 mois - 4 jours -> du dans 4 jours (cette semaine)
+        Interv.create({"lot_id": self.lots[1].id, "type": "entretien", "state": "fait",
+                       "date": fields.Datetime.now() - relativedelta(months=12, days=-4)})
+        # lots[2] : entretien fait il y a 2 mois -> rien
+        Interv.create({"lot_id": self.lots[2].id, "type": "entretien", "state": "fait",
+                       "date": fields.Datetime.now() - relativedelta(months=2)})
+        tickets = T._cron_tickets_entretien()
+        self.assertEqual(set(tickets.lot_id.ids), {self.lots[0].id, self.lots[1].id})
+        t0 = tickets.filtered(lambda t: t.lot_id == self.lots[0])
+        t1 = tickets.filtered(lambda t: t.lot_id == self.lots[1])
+        self.assertEqual(t0.tag_ids, retard)
+        self.assertEqual(t1.tag_ids, semaine)
+        self.assertEqual((t0.partner_id, t0.code_client), (self.commerce, "TST100"))
+        self.assertTrue(t0.est_entretien and "Entretien" in t0.name)
+        self.assertEqual(t0.activity_ids.summary, "Planifier entretien")
+        self.assertFalse(T._cron_tickets_entretien(), "pas de doublon")
+        # le temps passe (6 jours) : « cette semaine » devient « en retard »
+        with freeze_time(fields.Datetime.now() + relativedelta(days=6)):
+            T._cron_tickets_entretien()
+        self.assertEqual(t1.tag_ids, retard, "dépassé : étiquette en retard")
+        # entretien fait depuis le ticket : etiquettes retirees, nouvelle echeance dans 12 mois
+        f = Form(Interv.with_context(**t0.action_nouvelle_intervention()["context"]))
+        self.assertEqual(f.type, "entretien")
+        f.save().action_fait()
+        T._cron_tickets_entretien()
+        self.assertFalse(t0.tag_ids & (retard | semaine), "entretien fait : plus d'étiquette")
+        self.assertGreater(self.lots[0].date_prochain_entretien, aujourdhui + relativedelta(months=11))
 
     def test_route_personne(self):
         interv = self.env["machine.intervention"].create({"lot_id": self.lots[0].id,
