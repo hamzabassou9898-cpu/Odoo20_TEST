@@ -147,12 +147,14 @@
         <field name="model">helpdesk.ticket</field>
         <field name="inherit_id" ref="helpdesk.helpdesk_ticket_view_kanban"/>
         <field name="arch" type="xml">
-            <xpath expr="//field[@name='user_id']" position="before">
-                <span t-if="record.technicien_id.raw_value"
-                      class="badge rounded-pill text-bg-info me-1 text-truncate" style="max-width: 160px;"
-                      title="Technicien de la dernière intervention">
-                    Tech : <field name="technicien_id"/>
-                </span>
+            <!-- Champ declare en tete : toujours charge, quelle que soit la structure de la carte -->
+            <xpath expr="//kanban" position="inside">
+                <field name="technicien_id"/>
+            </xpath>
+            <!-- Dans la carte (templates), pas dans les declarations de champs en tete -->
+            <xpath expr="(//templates//field[@name='user_id'])[1]" position="before">
+                <field name="technicien_id" invisible="not technicien_id"
+                       class="badge rounded-pill text-bg-info me-1 text-truncate" style="max-width: 160px;"/>
             </xpath>
         </field>
     </record>
