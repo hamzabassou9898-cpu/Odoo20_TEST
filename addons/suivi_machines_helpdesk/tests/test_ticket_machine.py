@@ -326,7 +326,8 @@ class TestTicketMachine(TransactionCase):
         self.assertEqual(t0.tag_ids, retard)
         self.assertEqual(t1.tag_ids, semaine)
         self.assertEqual((t0.partner_id, t0.code_client), (self.commerce, "TST100"))
-        self.assertTrue(t0.est_entretien and "Entretien" in t0.name)
+        self.assertTrue(t0.est_entretien)
+        self.assertEqual(t0.name, "Entretien - M0 - Commerce Test", "chez le client : nom du client")
         self.assertEqual(t0.activity_ids.summary, "Planifier entretien")
         self.assertFalse(T._cron_tickets_entretien(), "pas de doublon")
         # le temps passe (6 jours) : « cette semaine » devient « en retard »
@@ -343,13 +344,16 @@ class TestTicketMachine(TransactionCase):
 
     def test_entretien_machine_en_entrepot(self):
         lot = self.env["stock.lot"].create({"name": "ENT-STOCK", "product_id": self.produit.id, "ref": "S1"})
+        stock = self.env.ref("stock.stock_location_stock")
+        self.env["stock.quant"]._update_available_quantity(self.produit, stock, 1, lot_id=lot)
         self.env["machine.intervention"].create({
             "lot_id": lot.id, "type": "entretien", "state": "fait",
             "date": fields.Datetime.now() - relativedelta(months=13)})
         self.assertFalse(lot.machine_client_id)
         tickets = self.env["helpdesk.ticket"]._cron_tickets_entretien().filtered(lambda t: t.lot_id == lot)
         self.assertEqual(len(tickets), 1, "machine en entrepôt en retard : ticket aussi")
-        self.assertIn("En entrepôt", tickets.name)
+        self.assertEqual(tickets.name, "Entretien - S1 - En entrepôt (%s)" % stock.display_name)
+        self.assertEqual(tickets.machine_emplacement_id, stock)
         self.assertEqual(tickets.tag_ids, self.env.ref("suivi_machines_helpdesk.tag_entretien_retard"))
         hs = self.env["stock.lot"].create({"name": "ENT-HS", "product_id": self.produit.id,
                                            "machine_etat": "hors_service"})

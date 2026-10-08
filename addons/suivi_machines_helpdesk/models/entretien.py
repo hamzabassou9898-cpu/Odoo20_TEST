@@ -29,6 +29,15 @@ class HelpdeskTicket(models.Model):
         return etapes[:1]
 
     @api.model
+    def _ou_est_machine(self, lot):
+        """Libelle selon l'Inventaire : client actuel, sinon emplacement (entrepot)."""
+        if lot.machine_client_id:
+            return lot.machine_client_id.name
+        if lot.location_id:
+            return self.env._("En entrepôt (%s)", lot.location_id.display_name)
+        return self.env._("Sans emplacement")
+
+    @api.model
     def _cron_tickets_entretien(self):
         """Chaque jour : ticket « Entretien » pour chaque machine chez un client dont l'entretien
         est du dans les X jours (7 par defaut) ou en retard ; etiquettes mises a jour."""
@@ -65,9 +74,8 @@ class HelpdeskTicket(models.Model):
             client = lot.machine_client_id
             en_retard = lot.date_prochain_entretien < aujourdhui
             vals = {
-                "name": self.env._("Entretien - %(machine)s - %(client)s",
-                                   machine=lot.ref or lot.name,
-                                   client=client.display_name or self.env._("En entrepôt")),
+                "name": self.env._("Entretien - %(machine)s - %(ou)s",
+                                   machine=lot.ref or lot.name, ou=self._ou_est_machine(lot)),
                 "partner_id": client.id,
                 "code_client": Ticket._code_du_client(client) if client else False,
                 "lot_id": lot.id,
@@ -89,8 +97,8 @@ class HelpdeskTicket(models.Model):
                     "mail.mail_activity_data_todo",
                     date_deadline=max(lot.date_prochain_entretien, aujourdhui),
                     summary=self.env._("Planifier entretien"),
-                    note=self.env._("Planifier l'entretien de la machine %(serie)s (%(client)s).",
-                                    serie=lot.name, client=client.display_name or self.env._("en entrepôt")),
+                    note=self.env._("Planifier l'entretien de la machine %(serie)s (%(ou)s).",
+                                    serie=lot.name, ou=self._ou_est_machine(lot)),
                     user_id=reglages["responsable"].id)
             crees |= ticket
         return crees
@@ -112,7 +120,7 @@ class HelpdeskTicket(models.Model):
             prochain = avec_date[0]
             lignes.append(self.env._("Prochaine échéance : %(serie)s (%(client)s) le %(date)s.",
                                      serie=prochain.name,
-                                     client=prochain.machine_client_id.display_name or self.env._("en entrepôt"),
+                                     client=self._ou_est_machine(prochain),
                                      date=fields.Date.to_string(prochain.date_prochain_entretien)))
         return {"type": "ir.actions.client", "tag": "display_notification",
                 "params": {"title": self.env._("Vérification des entretiens"), "message": "\n".join(lignes),

@@ -22,6 +22,7 @@ class HelpdeskTicket(models.Model):
                                            compute="_compute_machines_client")
     nb_machines_client = fields.Integer("Inventaire chez le client", compute="_compute_machines_client")
     machine_modele_id = fields.Many2one(related="lot_id.product_id", string="Modèle")
+    machine_emplacement_id = fields.Many2one(related="lot_id.location_id", string="Emplacement")
     machine_numero = fields.Char(related="lot_id.ref", string="Machine actuelle")
     machine_statut = fields.Selection(related="lot_id.machine_statut")
     machine_date_installation = fields.Date(related="lot_id.date_installation")
