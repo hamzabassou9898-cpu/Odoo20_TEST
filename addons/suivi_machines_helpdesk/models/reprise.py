@@ -107,23 +107,42 @@ class HelpdeskTicket(models.Model):
                          "uom_id": lot.product_id.uom_id.id, "picking_id": retour.id,
                          "location_id": source.id, "location_dest_id": destination.id,
                          "machine_lot_id": lot.id, "partner_id": retour.partner_id.id})
+        # Accessoires loues avec le contrat (pompes, etc.) : quantite livree pas encore revenue
+        accessoires = []
+        for ligne in self.commande_reprise_id.order_line:
+            produit = ligne.product_id
+            if (not produit or not produit.is_storable or produit.categ_id.suivi_machine
+                    or ligne.qty_delivered <= 0):
+                continue
+            Move.create({"product_id": produit.id, "product_uom_qty": ligne.qty_delivered,
+                         "uom_id": ligne.product_uom_id.id, "picking_id": retour.id,
+                         "location_id": source.id, "location_dest_id": destination.id,
+                         "partner_id": retour.partner_id.id})
+            accessoires.append("%s x %s" % (ligne.qty_delivered, produit.display_name))
         retour.write({"ticket_assistance_id": self.id})
         retour.action_confirm()
         retour.action_assign()
         # Retour depuis le client (pas de reservation) : chaque ligne = la machine de son mouvement
         for move in retour.move_ids:
             lignes = move.move_line_ids
+            if move.machine_lot_id:
+                vals = {"lot_id": move.machine_lot_id.id, "quantity": 1}
+            elif move.has_tracking in ("lot", "serial"):
+                continue   # accessoire suivi par lot : numero a indiquer dans « Details »
+            else:
+                vals = {"quantity": move.product_uom_qty}
             if lignes:
-                lignes[:1].write({"lot_id": move.machine_lot_id.id, "quantity": 1})
+                lignes[:1].write(vals)
                 lignes[1:].unlink()
             else:
-                self.env["stock.move.line"].create({
+                self.env["stock.move.line"].create(dict(vals, **{
                     "move_id": move.id, "picking_id": retour.id, "product_id": move.product_id.id,
-                    "lot_id": move.machine_lot_id.id, "quantity": 1,
-                    "location_id": source.id, "location_dest_id": destination.id})
+                    "location_id": source.id, "location_dest_id": destination.id}))
         retour.message_post(body=self.env._(
-            "Ramassage de %(nb)s machine(s) (%(series)s), créé depuis le ticket %(ticket)s.",
-            nb=len(lots), series=", ".join(lots.mapped("name")), ticket=self.display_name))
+            "Ramassage de %(nb)s machine(s) (%(series)s)%(acc)s, créé depuis le ticket %(ticket)s.",
+            nb=len(lots), series=", ".join(lots.mapped("name")),
+            acc=(self.env._(" et des accessoires : %s", ", ".join(accessoires)) if accessoires else ""),
+            ticket=self.display_name))
         return self._ouvrir_picking(retour)
 
     def _ouvrir_picking(self, picking):

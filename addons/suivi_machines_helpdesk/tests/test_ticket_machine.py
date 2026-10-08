@@ -292,12 +292,15 @@ class TestTicketMachine(TransactionCase):
             lot = self.env["stock.lot"].create({"name": nom, "product_id": produit.id})
             self.env["stock.quant"]._update_available_quantity(produit, stock, 1, lot_id=lot)
             lots |= lot
-        # une ligne de 2 machines (sans n° sur la ligne) + une autre ligne
+        pompe = self.env["product.product"].create({"name": "Pompe test", "is_storable": True})
+        self.env["stock.quant"]._update_available_quantity(pompe, stock, 10)
+        # une ligne de 2 machines (sans n° sur la ligne) + une autre ligne + 3 pompes (accessoire)
         so = self.env["sale.order"].create({
             "partner_id": self.commerce.id, "type_commande": "location",
             "date_fin_location": fields.Datetime.now() + relativedelta(days=1),
             "order_line": [(0, 0, {"product_id": self.produit.id, "product_uom_qty": 2}),
-                           (0, 0, {"product_id": frosty.id, "product_uom_qty": 1})]})
+                           (0, 0, {"product_id": frosty.id, "product_uom_qty": 1}),
+                           (0, 0, {"product_id": pompe.id, "product_uom_qty": 3})]})
         so.action_confirm()
         pk = so.picking_ids
         pk.action_assign()
@@ -314,7 +317,10 @@ class TestTicketMachine(TransactionCase):
         retour = self.env["stock.picking"].browse(ticket.action_ramassage()["res_id"])
         self.assertEqual(ticket.stage_id, etape)
         self.assertEqual(retour.move_ids.move_line_ids.lot_id, lots, "un seul retour, chaque machine avec SON n°")
-        self.assertEqual(sorted(retour.move_ids.move_line_ids.mapped("quantity")), [1, 1, 1])
+        machines = retour.move_ids.filtered("machine_lot_id")
+        self.assertEqual(sorted(machines.move_line_ids.mapped("quantity")), [1, 1, 1])
+        mv_pompe = retour.move_ids.filtered(lambda m: m.product_id == pompe)
+        self.assertEqual((mv_pompe.product_uom_qty, mv_pompe.quantity), (3, 3), "les 3 pompes sont reprises")
         self.assertEqual(ticket.action_ramassage()["res_id"], retour.id, "même bon de retour")
         retour.move_ids.picked = True
         retour.with_context(skip_sms=True).button_validate()
