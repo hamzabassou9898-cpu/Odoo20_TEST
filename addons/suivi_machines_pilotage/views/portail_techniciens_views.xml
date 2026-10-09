@@ -32,6 +32,7 @@
                             <div class="fw-bold mt-1 text-uppercase"><field name="partner_id"/></div>
                             <div class="text-muted small" t-if="record.route.raw_value"><field name="route"/></div>
                             <div class="small mt-1 text-truncate"><field name="titre"/></div>
+                            <field name="tag_ids" widget="many2many_tags" options="{'color_field': 'color'}"/>
                             <div class="small" t-if="record.machines.raw_value">
                                 <span class="fw-bold">Machines : </span><field name="machines"/>
                             </div>
@@ -203,6 +204,7 @@
                             <div class="fw-bold mt-1 text-uppercase"><field name="partner_id"/></div>
                             <div class="text-muted" t-if="record.route.raw_value"><field name="route"/></div>
                             <div class="mt-1"><field name="titre"/></div>
+                            <field name="tag_ids" widget="many2many_tags" options="{'color_field': 'color'}"/>
                             <div t-if="record.machines.raw_value">
                                 <span class="fw-bold">Machines : </span><field name="machines"/>
                             </div>

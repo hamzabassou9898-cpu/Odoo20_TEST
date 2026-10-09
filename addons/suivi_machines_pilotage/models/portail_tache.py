@@ -63,6 +63,8 @@ class PortailTache(models.Model):
     machines = fields.Char("Machines", compute="_compute_affichage")
     accessoires = fields.Char("Accessoires", compute="_compute_affichage")
     statut = fields.Char("Statut", compute="_compute_affichage")
+    tag_ids = fields.Many2many("helpdesk.tag", string="Étiquettes", compute="_compute_affichage",
+                               help="Étiquettes du ticket (entretien en retard, problème signalé...).")
 
     def init(self):
         tools.drop_view_if_exists(self.env.cr, self._table)
@@ -119,7 +121,8 @@ class PortailTache(models.Model):
         for tache in self:
             src = tache.sudo()
             date = format_datetime(self.env, src.date, dt_format="EEE d MMM '·' HH 'h' mm") if src.date else ""
-            vals = {"date_affichage": date[:1].upper() + date[1:], "accessoires": False}
+            vals = {"date_affichage": date[:1].upper() + date[1:], "accessoires": False,
+                    "tag_ids": [(6, 0, src.ticket_id.tag_ids.ids)]}
             lot = src.lot_id
             vals["machines"] = ("%s (%s)" % (lot.ref, lot.name) if lot.ref else lot.name) if lot else False
             if src.picking_id:

@@ -107,6 +107,10 @@ class TestPortailLivreurs(TransactionCase):
         self.assertEqual(len(taches), 3)
         tache_ticket = taches.filtered(lambda t: t.ticket_id == ticket)
         self.assertIn("1 rue", tache_ticket.route)
+        etiquette = env["helpdesk.tag"].create({"name": "Ne refroidit pas", "color": 1})
+        ticket.tag_ids = etiquette
+        Tache.invalidate_model()
+        self.assertEqual(tache_ticket.tag_ids, etiquette)
         self.assertEqual(tache_ticket.action_ouvrir()["res_model"], "helpdesk.ticket")
         # Glisser vers un autre technicien : le document d'origine change
         tech_b = env["res.users"].create({"name": "Tech B", "login": "tech_b_test"})
