@@ -30,6 +30,8 @@
               action="action_pilotage_locations" sequence="1"/>
     <menuitem id="menu_pilotage_reprises" name="Tickets de reprise" parent="menu_pilotage_locations"
               action="action_pilotage_tickets_reprise" sequence="2"/>
+    <menuitem id="menu_pilotage_ajuster_contrat" name="Ajuster un contrat" parent="menu_pilotage_locations"
+              action="action_ajuster_contrat" sequence="2"/>
     <menuitem id="menu_pilotage_planifier_ramassage" name="Planifier un ramassage" parent="menu_pilotage_locations"
               action="action_pilotage_planifier_ramassage" sequence="3"/>
 

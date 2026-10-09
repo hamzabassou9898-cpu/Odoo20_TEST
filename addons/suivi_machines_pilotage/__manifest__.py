@@ -2,7 +2,7 @@
 {
     "name": "Pilotage",
     "summary": "Tableau de bord du suivi des machines : entretiens, locations, reprises, bris, facturation",
-    "version": "20.0.1.18.0",
+    "version": "20.0.1.19.0",
     "category": "Productivity",
     "author": "Hamza Bassou",
     "license": "LGPL-3",
@@ -16,6 +16,7 @@
         "views/portail_techniciens_views.xml",
         "views/indicateur_views.xml",
         "views/donnees_test_views.xml",
+        "views/ajuster_contrat_views.xml",
         "views/menus.xml",
     ],
     "assets": {

@@ -195,6 +195,21 @@ class SaleOrder(models.Model):
         return {"jours": _param_int(icp, PARAM_JOURS, 30), "equipe": equipe, "etape": etape,
                 "responsable": responsable}
 
+    def _prolonger_location(self, nouvelle_date_fin, note=None):
+        """Renouvellement : meme contrat, nouvelle date de fin (application Location si installee)."""
+        self.ensure_one()
+        if self.date_fin_location and nouvelle_date_fin <= self.date_fin_location:
+            raise UserError(self.env._("La nouvelle date doit être après la fin actuelle."))
+        champ = "rental_return_date" if "rental_return_date" in self._fields else "date_fin_location"
+        self.write({champ: nouvelle_date_fin})
+        if champ != "date_fin_location":
+            self.date_fin_location = nouvelle_date_fin
+        message = self.env._("Location prolongée jusqu'au %s.", fields.Datetime.to_string(nouvelle_date_fin)[:10])
+        if note:
+            message += " " + note
+        self.message_post(body=message)
+        return message
+
     def _machines_a_reprendre(self):
         """Machines de la commande encore chez un client (pas revenues en entrepot)."""
         self.ensure_one()
@@ -311,19 +326,7 @@ class ProlongerLocation(models.TransientModel):
 
     def action_prolonger(self):
         self.ensure_one()
-        commande = self.ticket_id.commande_reprise_id
-        if self.date_fin_actuelle and self.nouvelle_date_fin <= self.date_fin_actuelle:
-            raise UserError(self.env._("La nouvelle date doit être après la fin actuelle."))
-        # Application Location : sa date de retour ; sinon notre date de fin
-        champ = "rental_return_date" if "rental_return_date" in commande._fields else "date_fin_location"
-        commande.write({champ: self.nouvelle_date_fin})
-        if champ != "date_fin_location":
-            commande.date_fin_location = self.nouvelle_date_fin
-        date_txt = fields.Datetime.to_string(self.nouvelle_date_fin)[:10]
-        message = self.env._("Location prolongée jusqu'au %s.", date_txt)
-        if self.note:
-            message += " " + self.note
-        commande.message_post(body=message)
+        message = self.ticket_id.commande_reprise_id._prolonger_location(self.nouvelle_date_fin, self.note)
         ticket = self.ticket_id
         ticket.message_post(body=message)
         ticket.activity_ids.filtered(
