@@ -17,14 +17,14 @@
                 </group>
                 <field name="arret_ids" readonly="1" nolabel="1">
                     <list create="false" delete="false">
-                        <field name="date_tournee" string="Heure"/>
-                        <field name="type_tournee" string="Type" widget="badge"
-                               decoration-success="type_tournee == 'livraison'"
-                               decoration-warning="type_tournee == 'ramassage'"/>
-                        <field name="partner_id" string="Client"/>
+                        <field name="date_affichage" string="Heure"/>
+                        <field name="type_tache" widget="badge"
+                               decoration-success="type_tache == 'livraison'" decoration-warning="type_tache == 'ramassage'"
+                               decoration-info="type_tache == 'entretien'" decoration-danger="type_tache == 'reparation'"/>
+                        <field name="partner_id"/>
                         <field name="route"/>
-                        <field name="machines_tournee"/>
-                        <field name="name" optional="hide"/>
+                        <field name="machines"/>
+                        <field name="titre" optional="hide"/>
                     </list>
                 </field>
                 <div class="text-muted small mt-2">

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Itineraire Google Maps d'un livreur pour une journee."""
+"""Itineraire Google Maps d'un technicien pour une journee (toutes ses taches)."""
 from datetime import datetime, time, timedelta
 
 import pytz
@@ -10,19 +10,19 @@ from odoo.exceptions import UserError
 
 class SuiviCarteItineraire(models.TransientModel):
     _name = "suivi.carte.itineraire"
-    _description = "Itinéraire Google Maps d'un livreur"
+    _description = "Itinéraire Google Maps d'un technicien"
 
-    livreur_id = fields.Many2one("res.users", "Livreur", required=True, default=lambda self: self._default_livreur())
+    livreur_id = fields.Many2one("res.users", "Technicien", required=True, default=lambda self: self._default_livreur())
     date = fields.Date("Journée", required=True, default=fields.Date.context_today)
     inclure_faits = fields.Boolean("Inclure les arrêts déjà faits")
-    arret_ids = fields.Many2many("stock.picking", string="Arrêts", compute="_compute_arret_ids")
+    arret_ids = fields.Many2many("portail.tache", string="Arrêts", compute="_compute_arret_ids")
     nb_arrets = fields.Integer("Nombre d'arrêts", compute="_compute_arret_ids")
 
     @api.model
     def _default_livreur(self):
-        """L'utilisateur lui-meme s'il fait des tournees (livreur sur son telephone)."""
+        """L'utilisateur lui-meme s'il a des taches (technicien sur son telephone)."""
         user = self.env.user
-        return user if self.env["stock.picking"].search_count([("livreur_id", "=", user.id)], limit=1) else False
+        return user if self.env["portail.tache"].search_count([("technicien_id", "=", user.id)], limit=1) else False
 
     def _bornes_journee(self):
         """Debut et fin de la journee choisie, dans le fuseau de l'utilisateur, en UTC."""
@@ -38,13 +38,10 @@ class SuiviCarteItineraire(models.TransientModel):
                 wiz.nb_arrets = 0
                 continue
             debut, fin = wiz._bornes_journee()
-            etats = ("cancel",) if wiz.inclure_faits else ("done", "cancel")
-            arrets = self.env["stock.picking"].search([
-                ("livreur_id", "=", wiz.livreur_id.id),
-                ("type_tournee", "in", ("livraison", "ramassage")),
-                ("state", "not in", etats),
-                ("scheduled_date", ">=", debut), ("scheduled_date", "<", fin),
-            ], order="scheduled_date, id")
+            domaine = [("technicien_id", "=", wiz.livreur_id.id), ("date", ">=", debut), ("date", "<", fin)]
+            if not wiz.inclure_faits:
+                domaine.append(("a_faire", "=", True))
+            arrets = self.env["portail.tache"].search(domaine, order="date, id")
             wiz.arret_ids = arrets
             wiz.nb_arrets = len(arrets)
 

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Tickets « Entretien » automatiques + etiquettes « en retard » / « a faire cette semaine »."""
-from datetime import timedelta
+from datetime import datetime, time, timedelta
 
 from odoo import api, fields, models
 from odoo.exceptions import UserError
@@ -15,6 +15,16 @@ class HelpdeskTicket(models.Model):
 
     est_entretien = fields.Boolean("Ticket d'entretien", readonly=True, copy=False, index=True)
     date_entretien_prevu = fields.Date("Entretien prévu le", readonly=True, copy=False)
+    date_planifiee = fields.Datetime(
+        "Date prévue", compute="_compute_date_planifiee", store=True, readonly=False, copy=False,
+        tracking=True, help="Rendez-vous du technicien chez le client (Portail techniciens).")
+
+    @api.depends("date_entretien_prevu")
+    def _compute_date_planifiee(self):
+        for ticket in self:
+            if ticket.date_entretien_prevu and not ticket.date_planifiee:
+                # 13 h UTC = 9 h du matin a Quebec
+                ticket.date_planifiee = datetime.combine(ticket.date_entretien_prevu, time(13, 0))
 
     @api.model
     def _etiquettes_entretien(self):
@@ -58,7 +68,7 @@ class HelpdeskTicket(models.Model):
             lot = ticket.lot_id
             if lot.date_prochain_entretien != ticket.date_entretien_prevu:
                 ticket.tag_ids = [(3, retard.id), (3, semaine.id)]   # entretien fait
-            elif ticket.date_entretien_prevu < aujourdhui:
+            elif ticket.date_entretien_prevu and ticket.date_entretien_prevu < aujourdhui:
                 ticket.tag_ids = [(3, semaine.id), (4, retard.id)]
 
         # 2) Nouveaux tickets

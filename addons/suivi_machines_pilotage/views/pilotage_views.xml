@@ -391,7 +391,7 @@
                 <filter name="livrees_mois" string="Livrées ce mois"
                         domain="[('state', '=', 'done'), ('location_dest_id.usage', '=', 'customer'), ('date_done', '&gt;=', context_today().strftime('%Y-%m-01'))]"/>
                 <group>
-                    <filter name="grp_livreur" string="Livreur" context="{'group_by': 'livreur_id'}"/>
+                    <filter name="grp_livreur" string="Technicien" context="{'group_by': 'livreur_id'}"/>
                     <filter name="grp_jour" string="Jour" context="{'group_by': 'scheduled_date:day'}"/>
                     <filter name="grp_route" string="Route" context="{'group_by': 'route'}"/>
                     <filter name="grp_type" string="Type" context="{'group_by': 'picking_type_id'}"/>

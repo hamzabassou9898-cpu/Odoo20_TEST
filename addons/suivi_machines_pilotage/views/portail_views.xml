@@ -73,7 +73,7 @@
                 <filter name="ramassages" string="Ramassages" domain="[('type_tournee', '=', 'ramassage')]"/>
                 <filter name="sans_livreur" string="Sans livreur" domain="[('livreur_id', '=', False)]"/>
                 <group>
-                    <filter name="grp_livreur" string="Livreur" context="{'group_by': 'livreur_id'}"/>
+                    <filter name="grp_livreur" string="Technicien" context="{'group_by': 'livreur_id'}"/>
                     <filter name="grp_jour" string="Jour" context="{'group_by': 'scheduled_date:day'}"/>
                     <filter name="grp_type" string="Livraison / ramassage" context="{'group_by': 'type_tournee'}"/>
                 </group>

@@ -91,3 +91,28 @@ class TestPortailLivreurs(TransactionCase):
         env["stock.picking"].get_views([(False, "kanban"), (False, "search")] if False else
                                        [(env.ref("suivi_machines_pilotage.view_portail_livreurs_kanban").id, "kanban"),
                                         (env.ref("suivi_machines_pilotage.view_portail_livreurs_search").id, "search")])
+
+        # Portail techniciens : livraison + ticket + intervention planifiee, dans une seule vue
+        Tache = env["portail.tache"]
+        tache_pk = Tache.search([("picking_id", "=", pk.id)])
+        self.assertEqual((tache_pk.type_tache, tache_pk.technicien_id), ("livraison", livreur_a))
+        self.assertIn("F900 (P-1)", tache_pk.machines)
+        ticket = env["helpdesk.ticket"].create({"name": "Ne refroidit pas", "partner_id": client.id,
+                                                "lot_id": lot.id, "user_id": livreur_a.id})
+        interv = env["machine.intervention"].create({"lot_id": lot.id, "type": "reparation",
+                                                     "partner_id": client.id, "user_id": livreur_a.id})
+        taches = Tache.search([("technicien_id", "=", livreur_a.id)])
+        self.assertEqual(set(taches.mapped("type_tache")), {"livraison", "reparation"})
+        self.assertEqual(len(taches), 3)
+        tache_ticket = taches.filtered(lambda t: t.ticket_id == ticket)
+        self.assertIn("1 rue", tache_ticket.route)
+        self.assertEqual(tache_ticket.action_ouvrir()["res_model"], "helpdesk.ticket")
+        # Glisser vers un autre technicien : le document d'origine change
+        tech_b = env["res.users"].create({"name": "Tech B", "login": "tech_b_test"})
+        taches.write({"technicien_id": tech_b.id})
+        self.assertEqual((pk.livreur_id, ticket.user_id, interv.user_id), (tech_b, tech_b, tech_b))
+        self.assertEqual(len(Tache.search([("technicien_id", "=", tech_b.id)])), 3)
+        # Intervention faite / ticket rattache : plus de doublon dans le portail
+        interv.ticket_id = ticket
+        self.assertFalse(Tache.search([("intervention_id", "=", interv.id)]))
+        Tache.get_views([(False, "kanban"), (False, "list"), (False, "calendar"), (False, "form"), (False, "search")])

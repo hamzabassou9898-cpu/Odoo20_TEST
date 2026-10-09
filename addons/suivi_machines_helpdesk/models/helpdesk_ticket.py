@@ -263,7 +263,7 @@ class StockPicking(models.Model):
     ticket_assistance_id = fields.Many2one("helpdesk.ticket", "Ticket d'assistance",
                                            index="btree_not_null", copy=False)
     technicien_id = fields.Many2one(related="ticket_assistance_id.technicien_id", store=True,
-                                    string="Technicien")
+                                    string="Technicien du ticket")
     route = fields.Char("Route", compute="_compute_route", store=True,
                         help="Adresse de livraison du client, pour planifier la tournée.")
 

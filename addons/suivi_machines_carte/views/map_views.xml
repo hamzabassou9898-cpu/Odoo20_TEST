@@ -8,7 +8,7 @@
             <map res_partner="partner_id" default_order="scheduled_date" routing="1">
                 <field name="date_tournee" string="Quand"/>
                 <field name="type_tournee" string="Type"/>
-                <field name="livreur_id" string="Livreur"/>
+                <field name="livreur_id" string="Technicien"/>
                 <field name="machines_tournee" string="Machines"/>
             </map>
         </field>
@@ -38,15 +38,28 @@
         </field>
     </record>
 
+    <record id="view_tache_map_techniciens" model="ir.ui.view">
+        <field name="name">portail.tache.map</field>
+        <field name="model">portail.tache</field>
+        <field name="arch" type="xml">
+            <map res_partner="partner_id" default_order="date" routing="1">
+                <field name="date_affichage" string="Quand"/>
+                <field name="type_tache" string="Type"/>
+                <field name="technicien_id" string="Technicien"/>
+                <field name="titre" string="Tâche"/>
+            </map>
+        </field>
+    </record>
+
     <!-- Ajout de la carte aux ecrans existants -->
-    <record id="suivi_machines_pilotage.action_portail_livreurs" model="ir.actions.act_window">
+    <record id="suivi_machines_pilotage.action_portail_techniciens" model="ir.actions.act_window">
         <field name="view_mode">kanban,map,list,calendar,form</field>
     </record>
-    <record id="action_portail_livreurs_vue_carte" model="ir.actions.act_window.view">
+    <record id="action_portail_techniciens_vue_carte" model="ir.actions.act_window.view">
         <field name="sequence">2</field>
         <field name="view_mode">map</field>
-        <field name="view_id" ref="view_picking_map_tournees"/>
-        <field name="act_window_id" ref="suivi_machines_pilotage.action_portail_livreurs"/>
+        <field name="view_id" ref="view_tache_map_techniciens"/>
+        <field name="act_window_id" ref="suivi_machines_pilotage.action_portail_techniciens"/>
     </record>
     <record id="suivi_machines_pilotage.action_pilotage_appels" model="ir.actions.act_window">
         <field name="view_mode">list,map,graph,pivot,form</field>
@@ -68,19 +81,17 @@
             (0, 0, {'view_mode': 'map', 'view_id': ref('view_lot_map_parc')})]"/>
     </record>
     <record id="action_carte_tournees" model="ir.actions.act_window">
-        <field name="name">Carte des tournées</field>
-        <field name="res_model">stock.picking</field>
+        <field name="name">Carte des techniciens</field>
+        <field name="res_model">portail.tache</field>
         <field name="view_mode">map,kanban,list,form</field>
-        <field name="domain">[('type_tournee', 'in', ('livraison', 'ramassage')),
-                              '|', ('livreur_id', '!=', False), ('move_ids.product_id.categ_id.suivi_machine', '=', True)]</field>
-        <field name="context">{'search_default_a_faire': 1, 'search_default_aujourdhui': 1, 'search_default_grp_livreur': 1}</field>
-        <field name="search_view_id" ref="suivi_machines_pilotage.view_portail_livreurs_search"/>
+        <field name="context">{'search_default_a_faire': 1, 'search_default_aujourdhui': 1, 'search_default_grp_technicien': 1}</field>
+        <field name="search_view_id" ref="suivi_machines_pilotage.view_portail_techniciens_search"/>
         <field name="view_ids" eval="[(5, 0, 0),
-            (0, 0, {'view_mode': 'map', 'view_id': ref('view_picking_map_tournees')}),
-            (0, 0, {'view_mode': 'kanban', 'view_id': ref('suivi_machines_pilotage.view_portail_livreurs_kanban')})]"/>
+            (0, 0, {'view_mode': 'map', 'view_id': ref('view_tache_map_techniciens')}),
+            (0, 0, {'view_mode': 'kanban', 'view_id': ref('suivi_machines_pilotage.view_portail_techniciens_kanban')})]"/>
     </record>
 
-    <menuitem id="menu_carte_tournees" name="Carte des tournées" parent="suivi_machines_pilotage.menu_pilotage_transferts"
+    <menuitem id="menu_carte_tournees" name="Carte des techniciens" parent="suivi_machines_pilotage.menu_pilotage_transferts"
               action="action_carte_tournees" sequence="3"/>
     <menuitem id="menu_carte_itineraire" name="Itinéraire du jour (Google Maps)"
               parent="suivi_machines_pilotage.menu_pilotage_transferts" action="action_carte_itineraire" sequence="4"/>

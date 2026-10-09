@@ -47,6 +47,7 @@
             <!-- Technicien de la derniere intervention, sous « Assigné à » -->
             <xpath expr="//field[@name='user_id']" position="after">
                 <field name="technicien_id" invisible="not technicien_id" widget="many2one_avatar_user"/>
+                <field name="date_planifiee" invisible="est_reprise"/>
             </xpath>
 
             <!-- Adresse commerciale : sa propre ligne, dans le groupe du telephone natif -->

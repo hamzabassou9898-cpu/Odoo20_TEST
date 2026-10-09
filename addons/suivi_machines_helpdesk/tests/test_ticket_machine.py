@@ -500,7 +500,8 @@ class TestTicketMachine(TransactionCase):
             self.assertEqual(visibles.count(champ), 1, f"{champ} affiché une seule fois")
         champ_tel = arch.xpath("//field[@name='partner_phone']")[0]
         groupe = next(champ_tel.iterancestors("group"))
-        self.assertEqual(groupe.xpath("./field")[-1].get("name"), "adresse_commerce",
+        self.assertEqual([f.get("name") for f in groupe.xpath("./field") if f.get("invisible") not in ("1", "True")][-1],
+                         "adresse_commerce",
                          "adresse commerciale : sa propre ligne, dans le groupe du téléphone")
         self.assertNotIn("commerce_id", visibles, "client affiché une seule fois (champ natif)")
         boutons = [b.get("name") for b in arch.iter("button") if b.getparent().tag == "header"]

@@ -55,6 +55,8 @@ def apercu_carte(adresse):
 class SuiviCarteMixin(models.AbstractModel):
     _name = "suivi.carte.mixin"
     _description = "Adresse liée à Google Maps"
+    # Champ date qui ordonne les arrets d'un itineraire
+    _champ_date_carte = None
 
     adresse_carte = fields.Char("Adresse (carte)", compute="_compute_carte")
     lien_google_maps = fields.Char("Google Maps", compute="_compute_carte")
@@ -86,28 +88,30 @@ class SuiviCarteMixin(models.AbstractModel):
         self.ensure_one()
         return self._ouvrir_url(self.lien_itineraire)
 
+    def action_itineraire_tournee(self):
+        """Un seul itineraire Google Maps pour les arrets choisis, dans l'ordre des dates."""
+        champ = self._champ_date_carte
+        arrets = []
+        for record in self.sorted(lambda r: (r[champ] or fields.Datetime.now(), r.id) if champ else r.id):
+            adresse = record.adresse_carte
+            if adresse and (not arrets or arrets[-1] != adresse):
+                arrets.append(adresse)
+        if not arrets:
+            raise UserError(self.env._("Aucune adresse dans les tâches choisies."))
+        if len(arrets) > MAX_ARRETS:
+            raise UserError(self.env._(
+                "Google Maps accepte au plus %(max)s arrêts par itinéraire (%(nb)s ici) : "
+                "choisissez moins de tâches.", max=MAX_ARRETS, nb=len(arrets)))
+        return self._ouvrir_url(url_itineraire(arrets))
+
 
 class StockPicking(models.Model):
     _name = "stock.picking"
     _inherit = ["stock.picking", "suivi.carte.mixin"]
+    _champ_date_carte = "scheduled_date"
 
     def _adresse_pour_carte(self):
         return adresse_propre(self.route) or adresse_partenaire(self.partner_id)
-
-    def action_itineraire_tournee(self):
-        """Un seul itineraire Google Maps pour les arrets choisis, dans l'ordre des dates."""
-        arrets = []
-        for picking in self.sorted(lambda p: (p.scheduled_date or fields.Datetime.now(), p.id)):
-            adresse = picking.adresse_carte
-            if adresse and (not arrets or arrets[-1] != adresse):
-                arrets.append(adresse)
-        if not arrets:
-            raise UserError(self.env._("Aucune adresse dans les transferts choisis."))
-        if len(arrets) > MAX_ARRETS:
-            raise UserError(self.env._(
-                "Google Maps accepte au plus %(max)s arrêts par itinéraire (%(nb)s ici) : "
-                "choisissez moins de transferts.", max=MAX_ARRETS, nb=len(arrets)))
-        return self._ouvrir_url(url_itineraire(arrets))
 
 
 class MachineIntervention(models.Model):
@@ -132,3 +136,12 @@ class StockLot(models.Model):
 
     def _adresse_pour_carte(self):
         return adresse_partenaire(self.machine_client_id)
+
+
+class PortailTache(models.Model):
+    _name = "portail.tache"
+    _inherit = ["portail.tache", "suivi.carte.mixin"]
+    _champ_date_carte = "date"
+
+    def _adresse_pour_carte(self):
+        return adresse_propre(self.route) or adresse_partenaire(self.partner_id)

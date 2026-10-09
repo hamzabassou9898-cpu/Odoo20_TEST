@@ -18,9 +18,9 @@
     <menuitem id="menu_pilotage_tickets_entretien" name="Tickets d'entretien" parent="menu_pilotage_entretiens"
               action="action_pilotage_tickets_entretien" sequence="4"/>
 
-    <menuitem id="menu_pilotage_transferts" name="Livraisons &amp; ramassages" parent="menu_pilotage_root" sequence="15"/>
-    <menuitem id="menu_portail_livreurs" name="Portail livreurs" parent="menu_pilotage_transferts"
-              action="action_portail_livreurs" sequence="1"/>
+    <menuitem id="menu_pilotage_transferts" name="Techniciens &amp; tournées" parent="menu_pilotage_root" sequence="15"/>
+    <menuitem id="menu_portail_livreurs" name="Portail techniciens" parent="menu_pilotage_transferts"
+              action="action_portail_techniciens" sequence="1"/>
     <menuitem id="menu_pilotage_transferts_semaine" name="Liste de la semaine" parent="menu_pilotage_transferts"
               action="action_pilotage_transferts" sequence="2"/>
     <menuitem id="menu_pilotage_locations" name="Locations" parent="menu_pilotage_root" sequence="20"/>
