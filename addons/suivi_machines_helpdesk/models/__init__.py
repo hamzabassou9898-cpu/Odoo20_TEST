@@ -3,3 +3,4 @@ from . import helpdesk_ticket
 from . import reprise
 from . import entretien
 from . import declencheurs
+from . import synchro

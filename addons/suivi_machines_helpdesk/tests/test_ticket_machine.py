@@ -77,6 +77,67 @@ class TestTicketMachine(TransactionCase):
         f.partner_id = self.commerce
         self.assertEqual(f.code_client, "TST100")
 
+    # ------------------------------------------------------------ synchronisation ticket <-> intervention
+    def _tech(self, login):
+        return self.env["res.users"].create({"name": login, "login": login,
+                                             "group_ids": [(6, 0, [self.env.ref("base.group_user").id])]})
+
+    def test_nouvelle_intervention_reprend_date_et_technicien(self):
+        from datetime import datetime
+        tech = self._tech("tech_synchro_1")
+        ticket = self.env["helpdesk.ticket"].create({
+            "name": "Ne refroidit pas", "partner_id": self.commerce.id, "lot_id": self.lots[0].id,
+            "user_id": tech.id, "date_planifiee": datetime(2030, 10, 10, 14, 0)})
+        action = ticket.action_nouvelle_intervention()
+        f = Form(self.env["machine.intervention"].with_context(**action["context"]))
+        interv = f.save()
+        self.assertEqual(interv.date, datetime(2030, 10, 10, 14, 0), "date prévue du ticket, pas « maintenant »")
+        self.assertEqual(interv.user_id, tech, "technicien du ticket, pas l'utilisateur connecté")
+        self.assertEqual(interv.ticket_id, ticket)
+
+    def test_synchro_intervention_vers_ticket_et_retour(self):
+        from datetime import datetime
+        tech1, tech2 = self._tech("tech_synchro_a"), self._tech("tech_synchro_b")
+        ticket = self.env["helpdesk.ticket"].create({"name": "Fuite", "partner_id": self.commerce.id,
+                                                     "lot_id": self.lots[0].id})
+        interv = self.env["machine.intervention"].create({
+            "ticket_id": ticket.id, "lot_id": self.lots[0].id, "type": "reparation", "state": "planifie",
+            "user_id": tech1.id, "date": datetime(2030, 11, 3, 9, 0)})
+        # Intervention planifiee -> ticket (date prevue + technicien) : le ticket va dans sa journee
+        self.assertEqual(ticket.date_planifiee, datetime(2030, 11, 3, 9, 0))
+        self.assertEqual(ticket._technicien_ticket(), tech1)
+        interv.write({"user_id": tech2.id, "date": datetime(2030, 11, 4, 13, 0)})
+        self.assertEqual((ticket._technicien_ticket(), ticket.date_planifiee), (tech2, datetime(2030, 11, 4, 13, 0)))
+        # Ticket -> intervention planifiee
+        ticket.write({"date_planifiee": datetime(2030, 11, 5, 8, 0), "user_id": tech1.id})
+        self.assertEqual((interv.date, interv.user_id), (datetime(2030, 11, 5, 8, 0), tech1))
+        # Intervention faite : plus de synchronisation (l'historique ne bouge pas)
+        interv.state = "fait"
+        ticket.write({"date_planifiee": datetime(2030, 12, 1, 8, 0)})
+        self.assertEqual(interv.date, datetime(2030, 11, 5, 8, 0))
+
+    def test_valider_entretien_met_a_jour_l_intervention_planifiee(self):
+        from datetime import datetime
+        tech = self._tech("tech_synchro_e")
+        resolu = self.env["helpdesk.stage"].create({"name": "Résolu"})
+        ticket = self.env["helpdesk.ticket"].create({
+            "name": "ENTRETIEN - M0", "partner_id": self.commerce.id, "lot_id": self.lots[0].id,
+            "est_entretien": True, "user_id": tech.id, "date_planifiee": datetime(2020, 5, 4, 13, 0)})
+        planifiee = self.env["machine.intervention"].create({
+            "ticket_id": ticket.id, "lot_id": self.lots[0].id, "type": "entretien", "state": "planifie",
+            "user_id": tech.id, "date": datetime(2020, 5, 4, 13, 0)})
+        avant = len(ticket.intervention_ticket_ids)
+        wiz_action = ticket.action_valider_entretien()
+        wiz = Form(self.env["suivi.machines.valider.entretien"].with_context(**wiz_action["context"]))
+        self.assertEqual(wiz.technicien_id, tech, "technicien du ticket par défaut")
+        self.assertEqual(str(wiz.date_entretien), "2020-05-04", "date prévue (passée) par défaut")
+        wiz.note = "Nettoyage complet"
+        wiz.save().action_valider()
+        self.assertEqual(len(ticket.intervention_ticket_ids), avant, "pas de doublon")
+        self.assertEqual(planifiee.state, "fait")
+        self.assertEqual(planifiee.description, "Nettoyage complet")
+        self.assertEqual(ticket.stage_id, resolu, "le ticket ne reste pas ouvert")
+
     def test_une_seule_machine_choisie_automatiquement(self):
         f = self._form()
         f.code_client = "TST200"

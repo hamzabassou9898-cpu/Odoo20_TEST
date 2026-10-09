@@ -160,12 +160,12 @@ class ValiderEntretien(models.TransientModel):
 
     ticket_id = fields.Many2one("helpdesk.ticket", "Ticket d'entretien", required=True)
     lot_id = fields.Many2one(related="ticket_id.lot_id", string="Machine")
-    date_entretien = fields.Date("Date de l'entretien", required=True, default=fields.Date.context_today)
+    date_entretien = fields.Date("Date de l'entretien", required=True, default=lambda s: s._default_date())
     frequence = fields.Selection(FREQUENCES, "Fréquence des entretiens", required=True,
                                  default=lambda s: s._default_frequence())
+    # Interne ou technicien portail
     technicien_id = fields.Many2one("res.users", "Technicien", required=True,
-                                    default=lambda s: s._default_technicien(),
-                                    domain="[('share', '=', False)]")
+                                    default=lambda s: s._default_technicien())
     note = fields.Text("Ce qui a été fait")
 
     def _ticket_contexte(self):
@@ -176,7 +176,15 @@ class ValiderEntretien(models.TransientModel):
         return mois if mois in dict(FREQUENCES) else "12"
 
     def _default_technicien(self):
-        return self._ticket_contexte().technicien_id or self.env.user
+        return self._ticket_contexte()._technicien_ticket() or self.env.user
+
+    def _default_date(self):
+        """Date prevue du ticket (si elle est passee ou aujourd'hui), sinon aujourd'hui."""
+        aujourdhui = fields.Date.context_today(self)
+        prevue = self._ticket_contexte().date_planifiee
+        if prevue:
+            prevue = fields.Datetime.context_timestamp(self, prevue).date()
+        return prevue if prevue and prevue <= aujourdhui else aujourdhui
 
     def action_valider(self):
         self.ensure_one()
@@ -186,16 +194,22 @@ class ValiderEntretien(models.TransientModel):
         if self.date_entretien > fields.Date.context_today(self):
             raise UserError(self.env._("La date de l'entretien ne peut pas être dans le futur."))
         lot.intervalle_entretien = int(self.frequence)
-        self.env["machine.intervention"].create({
-            "lot_id": lot.id,
+        valeurs = {
             "type": "entretien",
             "state": "fait",
             "date": fields.Datetime.to_datetime(self.date_entretien).replace(hour=12),
             "user_id": self.technicien_id.id,
-            "partner_id": lot.machine_client_id.id or ticket.partner_id.id,
-            "ticket_id": ticket.id,
             "description": self.note or ticket.name,
-        })
+        }
+        # Intervention d'entretien deja planifiee sur ce ticket : on la marque faite (pas de doublon)
+        planifiee = ticket.intervention_ticket_ids.filtered(
+            lambda i: i.state == "planifie" and i.type == "entretien" and i.lot_id == lot)[:1]
+        if planifiee:
+            planifiee.write(valeurs)
+        else:
+            self.env["machine.intervention"].create(dict(
+                valeurs, lot_id=lot.id, ticket_id=ticket.id,
+                partner_id=lot.machine_client_id.id or ticket.partner_id.id))
         retard, semaine = ticket._etiquettes_entretien()
         ticket.tag_ids = [(3, retard.id), (3, semaine.id)]
         message = self.env._("Entretien validé le %(date)s par %(tech)s. Prochain entretien : %(prochain)s "

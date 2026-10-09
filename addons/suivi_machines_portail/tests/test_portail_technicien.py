@@ -273,3 +273,41 @@ class TestPortailTechnicien(HttpCase):
         note = self._envoyer_note("Pour Josef")
         self.assertEqual(note.activity_id.user_id, interne)
         self.assertEqual(note.responsable_id, interne)
+
+
+    # ------------------------------------------------------------ parcours entretien complet (synchronisation)
+    def test_entretien_planifie_journee_et_pilotage(self):
+        resolu = self.env["helpdesk.stage"].create({"name": "Résolu"})
+        categ = self.env["product.category"].create({"name": "Mach entretien", "suivi_machine": True})
+        prod = self.env["product.product"].create({"name": "F ent", "categ_id": categ.id, "is_storable": True,
+                                                   "tracking": "serial"})
+        lot = self.env["stock.lot"].create({"name": "ENT-1", "ref": "F777", "product_id": prod.id})
+        ticket = self.env["helpdesk.ticket"].create({"name": "ENTRETIEN - F777", "partner_id": self.client.id,
+                                                     "lot_id": lot.id, "est_entretien": True})
+        ind = self.env.ref("suivi_machines_pilotage.indicateur_entretiens_ouverts")
+        self.assertEqual(ind.section, "entretiens", "carte dans la section Entretiens")
+        # Le bureau planifie l'entretien pour le technicien portail (Nouvelle intervention)
+        quand = fields.Datetime.now()
+        interv = self.env["machine.intervention"].create({
+            "ticket_id": ticket.id, "lot_id": lot.id, "type": "entretien", "state": "planifie",
+            "user_id": self.tech_a.id, "date": quand})
+        self.assertEqual(ticket.technicien_terrain_id, self.tech_a, "technicien portail = technicien terrain")
+        self.assertEqual(ticket.date_planifiee, quand)
+        self.env.invalidate_all()
+        tache = self.env["portail.tache"].search([("ticket_id", "=", ticket.id)])
+        self.assertEqual((tache.technicien_id, tache.type_tache), (self.tech_a, "entretien"))
+        model, domaine = self.env["pilotage.indicateur"]._domaines()["entretiens_ouverts"]
+        self.assertIn(ticket, self.env[model].search(domaine))
+        # Visible dans la journee du technicien
+        self.authenticate("tech_portail_a", "tech_portail_a_mdp_123")
+        self.assertIn("ENTRETIEN - F777", self.url_open("/my/journee").text)
+        # Validation de l'entretien : l'intervention planifiee devient faite, le ticket est resolu
+        wiz = self.env["suivi.machines.valider.entretien"].with_context(default_ticket_id=ticket.id).create({})
+        self.assertEqual(wiz.technicien_id, self.tech_a)
+        wiz.action_valider()
+        self.assertEqual(interv.state, "fait")
+        self.assertEqual(len(ticket.intervention_ticket_ids), 1)
+        self.assertEqual(ticket.stage_id, resolu)
+        self.assertNotIn(ticket, self.env[model].search(domaine), "plus dans les entretiens à faire")
+        self.env.invalidate_all()
+        self.assertEqual(self.env["portail.tache"].search([("ticket_id", "=", ticket.id)]).etat_suivi, "fait")

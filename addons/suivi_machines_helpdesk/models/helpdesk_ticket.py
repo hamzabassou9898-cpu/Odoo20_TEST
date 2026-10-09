@@ -194,16 +194,20 @@ class HelpdeskTicket(models.Model):
         return action
 
     def action_nouvelle_intervention(self):
-        """Intervention liee au ticket : machine, client et probleme deja remplis."""
+        """Intervention liee au ticket : machine, client, probleme, date prevue et technicien deja remplis."""
         self.ensure_one()
+        contexte = {"default_ticket_id": self.id,
+                    "default_lot_id": self.lot_id.id,
+                    "default_partner_id": self.commerce_id.id or self.partner_id.id,
+                    "default_type": "reparation",
+                    "default_description": self.name}
+        if self.date_planifiee:
+            contexte["default_date"] = self.date_planifiee
+        if self._technicien_ticket():
+            contexte["default_user_id"] = self._technicien_ticket().id
         return {"type": "ir.actions.act_window", "name": self.env._("Nouvelle intervention"),
                 "res_model": "machine.intervention", "view_mode": "form",
-                "views": [(False, "form")], "target": "new",
-                "context": {"default_ticket_id": self.id,
-                            "default_lot_id": self.lot_id.id,
-                            "default_partner_id": self.commerce_id.id or self.partner_id.id,
-                            "default_type": "reparation",
-                            "default_description": self.name}}
+                "views": [(False, "form")], "target": "new", "context": contexte}
 
     def action_voir_interventions_ticket(self):
         self.ensure_one()

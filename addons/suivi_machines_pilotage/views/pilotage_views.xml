@@ -425,6 +425,7 @@
                 <field name="type_ticket" widget="badge" decoration-primary="type_ticket == 'appel'"
                        decoration-info="type_ticket == 'entretien'" decoration-warning="type_ticket == 'reprise'"/>
                 <field name="name" string="Ticket"/>
+                <field name="date_planifiee" optional="show"/>
                 <field name="code_client" optional="show"/>
                 <field name="partner_id" string="Client"/>
                 <field name="lot_id" string="Machine"/>

@@ -130,11 +130,11 @@
     </record>
     <record id="indicateur_entretiens_ouverts" model="pilotage.indicateur">
         <field name="code">entretiens_ouverts</field>
-        <field name="name">Tickets d'entretien ouverts</field>
-        <field name="section">appels</field>
-        <field name="sequence">2</field>
+        <field name="name">Entretiens planifiés à faire</field>
+        <field name="section">entretiens</field>
+        <field name="sequence">0</field>
         <field name="couleur">info</field>
-        <field name="description">Entretiens planifiés pas encore faits</field>
+        <field name="description">Tickets d'entretien pas encore validés</field>
     </record>
     <record id="indicateur_reprises_ouvertes" model="pilotage.indicateur">
         <field name="code">reprises_ouvertes</field>
