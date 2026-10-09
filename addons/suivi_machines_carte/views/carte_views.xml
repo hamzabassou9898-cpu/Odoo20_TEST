@@ -83,31 +83,6 @@
         </field>
     </record>
 
-    <!-- Ma journee (technicien) : memes liens, plus gros pour le telephone -->
-    <record id="view_ma_journee_kanban_carte" model="ir.ui.view">
-        <field name="name">portail.tache.kanban.ma.journee.carte</field>
-        <field name="model">portail.tache</field>
-        <field name="inherit_id" ref="suivi_machines_pilotage.view_ma_journee_kanban"/>
-        <field name="arch" type="xml">
-            <xpath expr="//kanban/field[@name='route']" position="after">
-                <field name="lien_google_maps"/>
-                <field name="lien_itineraire"/>
-            </xpath>
-            <xpath expr="//div[field[@name='route']]" position="after">
-                <div class="d-flex gap-4 mt-1" t-if="record.lien_google_maps.raw_value">
-                    <a t-att-href="record.lien_google_maps.raw_value" target="_blank" rel="noopener"
-                       title="Voir l'adresse sur Google Maps">
-                        <i class="oi me-1" data-icon="location_on"/>Google Maps
-                    </a>
-                    <a t-att-href="record.lien_itineraire.raw_value" target="_blank" rel="noopener"
-                       title="Itinéraire depuis ma position">
-                        <i class="oi me-1" data-icon="directions_car"/>Itinéraire
-                    </a>
-                </div>
-            </xpath>
-        </field>
-    </record>
-
     <!-- Fiche de la tache : boutons Google Maps et apercu de la carte -->
     <record id="view_portail_techniciens_form_carte" model="ir.ui.view">
         <field name="name">portail.tache.form.carte</field>

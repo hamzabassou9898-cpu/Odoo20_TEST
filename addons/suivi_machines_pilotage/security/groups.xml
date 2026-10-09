@@ -4,10 +4,4 @@
         <field name="name">Pilotage (tableau de bord des machines)</field>
         <field name="user_ids" eval="[(4, ref('base.user_root')), (4, ref('base.user_admin'))]"/>
     </record>
-
-    <!-- Techniciens : application « Ma journée » (lecture seule de leurs taches) -->
-    <record id="group_technicien" model="res.groups">
-        <field name="name">Technicien (Ma journée)</field>
-        <field name="user_ids" eval="[(4, ref('base.user_admin'))]"/>
-    </record>
 </odoo>

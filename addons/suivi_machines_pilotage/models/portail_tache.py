@@ -93,7 +93,7 @@ class PortailTache(models.Model):
                          WHERE m.picking_id = p.id AND c.suivi_machine))
                 UNION ALL
                 SELECT t.id * 10 + 2, CASE WHEN t.est_entretien THEN 'entretien' ELSE 'reparation' END,
-                       COALESCE(t.date_planifiee, t.create_date), COALESCE(t.user_id, t.technicien_id),
+                       COALESCE(t.date_planifiee, t.create_date), %(technicien_ticket)s,
                        t.partner_id, t.name, '#' || t.id, COALESCE(s.name::text, '') !~* %(ferme)s,
                        t.lot_id, %(societe_ticket)s, NULL, t.id, NULL
                   FROM helpdesk_ticket t
@@ -110,7 +110,8 @@ class PortailTache(models.Model):
                  WHERE i.state IN ('planifie', 'fait') AND i.ticket_id IS NULL AND i.type != 'ramassage'
                 ) u
             )""", table=SQL.identifier(self._table), ferme=ferme,
-            societe_ticket=societe_ticket, fuseau=FUSEAU))
+            societe_ticket=societe_ticket, fuseau=FUSEAU,
+            technicien_ticket=self._sql_technicien_ticket()))
 
     def _source(self):
         self.ensure_one()
@@ -146,20 +147,25 @@ class PortailTache(models.Model):
         autres = set(vals) - {"technicien_id", "date"}
         if autres:
             raise UserError(self.env._("Modifiez la tâche depuis son document (transfert, ticket ou intervention)."))
+        for tache in self:
+            tache._source().write(tache._valeurs_source(vals))
+        self.env.flush_all()
+        self.invalidate_model()
+        return True
+
+    def _valeurs_source(self, vals):
+        """Valeurs a ecrire sur le document d'origine pour un changement de technicien ou de date."""
+        self.ensure_one()
         champs = {
             "picking_id": {"technicien_id": "livreur_id", "date": "scheduled_date"},
             "ticket_id": {"technicien_id": "user_id", "date": "date_planifiee"},
             "intervention_id": {"technicien_id": "user_id", "date": "date"},
-        }
-        for tache in self:
-            correspondance = champs[SOURCES[tache.id % 10]]
-            valeurs = {correspondance[cle]: valeur for cle, valeur in vals.items()}
-            if "date" in vals and not vals["date"]:
-                valeurs.pop(correspondance["date"])
-            tache._source().write(valeurs)
-        self.env.flush_all()
-        self.invalidate_model()
-        return True
+        }[SOURCES[self.id % 10]]
+        return {champs[cle]: valeur for cle, valeur in vals.items() if cle != "date" or valeur}
+
+    def _sql_technicien_ticket(self):
+        """Technicien d'un ticket dans le portail : la personne assignee, sinon celui de la derniere intervention."""
+        return SQL("COALESCE(t.user_id, t.technicien_id)")
 
     def action_ouvrir(self):
         self.ensure_one()

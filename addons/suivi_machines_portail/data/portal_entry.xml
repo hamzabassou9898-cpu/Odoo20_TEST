@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Carte « Ma journée » sur l'accueil du portail (visible pour les techniciens seulement) -->
+    <record id="portal_entry_ma_journee" model="portal.entry">
+        <field name="name">Ma journée</field>
+        <field name="description">Mes livraisons, ramassages, entretiens et réparations du jour</field>
+        <field name="url">/my/journee</field>
+        <field name="image" type="bytes" file="suivi_machines_portail/static/src/img/ma_journee.png"/>
+        <field name="category">common_category</field>
+        <field name="sequence" eval="1"/>
+    </record>
+</odoo>

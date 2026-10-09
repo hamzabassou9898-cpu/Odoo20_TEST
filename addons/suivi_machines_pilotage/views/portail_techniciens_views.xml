@@ -16,6 +16,7 @@
                 <field name="machines"/>
                 <field name="accessoires"/>
                 <field name="route"/>
+                <field name="statut"/>
                 <templates>
                     <t t-name="card">
                         <t t-set="couleur" t-value="{'livraison': 'success', 'ramassage': 'warning', 'entretien': 'info',
@@ -41,12 +42,8 @@
                             </div>
                             <div class="d-flex justify-content-between align-items-center mt-2 small">
                                 <span class="text-muted text-truncate"><field name="reference"/></span>
-                                <span class="d-flex gap-1 flex-shrink-0">
-                                    <span t-if="record.etat_suivi.raw_value == 'en_retard'" class="badge rounded-pill text-bg-danger">En retard</span>
-                                    <span t-attf-class="badge rounded-pill {{ record.a_faire.raw_value ? 'text-bg-light border' : 'text-bg-success' }}">
-                                        <field name="statut"/>
-                                    </span>
-                                </span>
+                                <span t-if="record.etat_suivi.raw_value == 'en_retard'" class="badge rounded-pill text-bg-danger flex-shrink-0">En retard</span>
+                                <span t-elif="record.etat_suivi.raw_value == 'fait'" class="badge rounded-pill text-bg-success flex-shrink-0">Fait</span>
                             </div>
                         </div>
                     </t>
@@ -176,89 +173,6 @@
             <p>Suivi des techniciens : livraisons, ramassages, entretiens et réparations, une colonne par
                technicien (vert : fait, rouge : en retard). Glissez une carte dans la colonne d'un technicien
                pour la lui assigner.</p>
-        </field>
-    </record>
-
-    <!-- ================================================================ Ma journee (technicien) -->
-    <record id="view_ma_journee_kanban" model="ir.ui.view">
-        <field name="name">portail.tache.kanban.ma.journee</field>
-        <field name="model">portail.tache</field>
-        <field name="priority">20</field>
-        <field name="arch" type="xml">
-            <kanban default_order="date asc" create="false" edit="false" delete="false"
-                    records_draggable="false" group_create="false" quick_create="false">
-                <field name="type_tache"/>
-                <field name="etat_suivi"/>
-                <field name="machines"/>
-                <field name="accessoires"/>
-                <field name="route"/>
-                <templates>
-                    <t t-name="card">
-                        <t t-set="couleur" t-value="{'livraison': 'success', 'ramassage': 'warning', 'entretien': 'info',
-                                                    'reparation': 'danger', 'installation': 'primary'}[record.type_tache.raw_value] or 'secondary'"/>
-                        <div t-attf-class="border-start border-4 ps-2 border-{{ couleur }} {{ record.etat_suivi.raw_value == 'fait' ? 'opacity-50' : '' }}">
-                            <div class="d-flex justify-content-between align-items-center gap-2">
-                                <div class="fw-bold text-nowrap" style="font-size: 1.15rem;"><field name="date_affichage"/></div>
-                                <span t-attf-class="badge flex-shrink-0 text-bg-{{ couleur }}"><field name="type_tache"/></span>
-                            </div>
-                            <div class="fw-bold mt-1 text-uppercase"><field name="partner_id"/></div>
-                            <div class="text-muted" t-if="record.route.raw_value"><field name="route"/></div>
-                            <div class="mt-1"><field name="titre"/></div>
-                            <field name="tag_ids" widget="many2many_tags" options="{'color_field': 'color'}"/>
-                            <div t-if="record.machines.raw_value">
-                                <span class="fw-bold">Machines : </span><field name="machines"/>
-                            </div>
-                            <div t-if="record.accessoires.raw_value">
-                                <span class="fw-bold">Accessoires : </span><field name="accessoires"/>
-                            </div>
-                            <div class="d-flex justify-content-end mt-1 small">
-                                <span t-if="record.etat_suivi.raw_value == 'fait'" class="badge rounded-pill text-bg-success">Fait</span>
-                                <span t-elif="record.etat_suivi.raw_value == 'en_retard'" class="badge rounded-pill text-bg-danger">En retard</span>
-                            </div>
-                        </div>
-                    </t>
-                </templates>
-            </kanban>
-        </field>
-    </record>
-
-    <record id="view_ma_journee_search" model="ir.ui.view">
-        <field name="name">portail.tache.search.ma.journee</field>
-        <field name="model">portail.tache</field>
-        <field name="priority">20</field>
-        <field name="arch" type="xml">
-            <search string="Ma journée">
-                <field name="partner_id"/>
-                <filter name="aujourdhui" string="Aujourd'hui"
-                        domain="['|', '&amp;', ('date', '&gt;=', context_today().strftime('%Y-%m-%d')),
-                                               ('date', '&lt;', (context_today() + relativedelta(days=1)).strftime('%Y-%m-%d')),
-                                      ('etat_suivi', '=', 'en_retard')]"/>
-                <filter name="demain" string="Demain"
-                        domain="[('date', '&gt;=', (context_today() + relativedelta(days=1)).strftime('%Y-%m-%d')),
-                                 ('date', '&lt;', (context_today() + relativedelta(days=2)).strftime('%Y-%m-%d'))]"/>
-                <filter name="semaine" string="7 prochains jours"
-                        domain="[('date', '&gt;=', context_today().strftime('%Y-%m-%d')),
-                                 ('date', '&lt;', (context_today() + relativedelta(days=8)).strftime('%Y-%m-%d'))]"/>
-                <group>
-                    <filter name="grp_jour" string="Jour" context="{'group_by': 'date:day'}"/>
-                </group>
-            </search>
-        </field>
-    </record>
-
-    <record id="action_ma_journee" model="ir.actions.act_window">
-        <field name="name">Ma journée</field>
-        <field name="res_model">portail.tache</field>
-        <field name="view_mode">kanban,form</field>
-        <field name="domain">[('technicien_id', '=', uid)]</field>
-        <field name="context">{'search_default_aujourdhui': 1}</field>
-        <field name="search_view_id" ref="view_ma_journee_search"/>
-        <field name="view_ids" eval="[(5, 0, 0),
-            (0, 0, {'view_mode': 'kanban', 'view_id': ref('view_ma_journee_kanban')}),
-            (0, 0, {'view_mode': 'form', 'view_id': ref('view_portail_techniciens_form')})]"/>
-        <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">Rien de prévu</p>
-            <p>Vos livraisons, ramassages, entretiens et réparations du jour apparaissent ici, dans l'ordre des heures.</p>
         </field>
     </record>
 </odoo>

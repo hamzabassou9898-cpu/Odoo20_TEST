@@ -106,11 +106,11 @@
     </record>
     <record id="indicateur_sans_livreur" model="pilotage.indicateur">
         <field name="code">sans_livreur</field>
-        <field name="name">Sans livreur</field>
+        <field name="name">Sans technicien</field>
         <field name="section">livraisons</field>
         <field name="sequence">3</field>
         <field name="couleur">danger</field>
-        <field name="description">Livraisons ou ramassages sans livreur choisi</field>
+        <field name="description">Livraisons ou ramassages sans technicien assigné</field>
     </record>
     <record id="indicateur_livraisons_faites" model="pilotage.indicateur">
         <field name="code">livraisons_faites</field>

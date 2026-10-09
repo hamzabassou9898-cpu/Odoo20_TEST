@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Etiquette des tickets de test : permet de tous les supprimer d'un clic -->
+    <record id="tag_donnees_test" model="helpdesk.tag">
+        <field name="name">TEST</field>
+        <field name="color">8</field>
+    </record>
+
+    <record id="view_donnees_test_form" model="ir.ui.view">
+        <field name="name">pilotage.donnees.test.form</field>
+        <field name="model">pilotage.donnees.test</field>
+        <field name="arch" type="xml">
+            <form string="Tickets de test">
+                <div class="alert alert-info mb-3" role="alert">
+                    Crée des tickets d'entretien et de réparation sur vos vraies machines, chez vos vrais clients,
+                    répartis entre vos techniciens. Ils portent l'étiquette <b>TEST</b> et se suppriment d'un clic.
+                </div>
+                <group>
+                    <group>
+                        <field name="nb_entretiens"/>
+                        <field name="nb_reparations"/>
+                    </group>
+                    <group>
+                        <field name="jours"/>
+                        <field name="nb_existants"/>
+                    </group>
+                </group>
+                <footer>
+                    <button name="action_generer" type="object" string="Générer les tickets de test" class="btn-primary"/>
+                    <button name="action_supprimer" type="object" string="Supprimer les tickets de test"
+                            class="btn-danger" invisible="not nb_existants"
+                            confirm="Supprimer tous les tickets portant l'étiquette TEST ?"/>
+                    <button string="Fermer" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_donnees_test" model="ir.actions.act_window">
+        <field name="name">Tickets de test</field>
+        <field name="res_model">pilotage.donnees.test</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

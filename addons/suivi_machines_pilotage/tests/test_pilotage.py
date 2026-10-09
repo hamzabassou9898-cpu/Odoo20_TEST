@@ -135,12 +135,34 @@ class TestPortailLivreurs(TransactionCase):
         self.assertEqual((tache_ticket.etat_suivi, tache_ticket.a_faire), ("fait", False),
                          "ticket résolu : reste visible pour le suivi, en vert")
 
-        # Ma journee : le technicien voit ses taches, sans pouvoir les reassigner
-        tech_b.group_ids = [(4, env.ref("suivi_machines_pilotage.group_technicien").id)]
+        # Un technicien voit ses taches, sans pouvoir les reassigner
         taches_b = Tache.with_user(tech_b).search([("technicien_id", "=", tech_b.id)])
         self.assertEqual(len(taches_b), 2, "transfert + ticket (l'intervention est rattachée au ticket)")
         self.assertTrue(taches_b.mapped("route"), "adresse lue même sans droits sur les documents")
         with self.assertRaises(UserError):
             taches_b.write({"technicien_id": livreur_a.id})
-        action = env["ir.actions.act_window"]._for_xml_id("suivi_machines_pilotage.action_ma_journee")
-        self.assertIn("uid", action["domain"])
+
+
+
+@tagged("post_install", "-at_install")
+class TestDonneesTest(TransactionCase):
+
+    def test_generer_et_supprimer(self):
+        env = self.env(context=dict(self.env.context, tracking_disable=True))
+        client = env["res.partner"].create({"name": "Client test", "street": "1 rue", "city": "Québec"})
+        categ = env["product.category"].create({"name": "Mach test", "suivi_machine": True})
+        prod = env["product.product"].create({"name": "F test", "categ_id": categ.id, "is_storable": True,
+                                              "tracking": "serial"})
+        env["sale.order"].create({"partner_id": client.id})
+        env["stock.lot"].create({"name": "TST-1", "product_id": prod.id})
+        wiz = env["pilotage.donnees.test"].create({"nb_entretiens": 3, "nb_reparations": 4})
+        wiz.action_generer()
+        test = env.ref("suivi_machines_pilotage.tag_donnees_test")
+        tickets = env["helpdesk.ticket"].search([("tag_ids", "in", test.ids)])
+        self.assertEqual(len(tickets), 7)
+        self.assertEqual(len(tickets.filtered("est_entretien")), 3)
+        self.assertTrue(all(tickets.mapped("date_planifiee")))
+        self.assertTrue(all(env["portail.tache"].search([("ticket_id", "in", tickets.ids)]).mapped("technicien_id")))
+        self.assertEqual(len(env["portail.tache"].search([("ticket_id", "in", tickets.ids)])), 7)
+        env["pilotage.donnees.test"].create({}).action_supprimer()
+        self.assertFalse(env["helpdesk.ticket"].search([("tag_ids", "in", test.ids)]))

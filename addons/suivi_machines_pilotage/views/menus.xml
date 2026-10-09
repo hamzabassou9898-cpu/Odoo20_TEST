@@ -49,10 +49,7 @@
     <menuitem id="menu_pilotage_toutes" name="Toutes les machines" parent="menu_pilotage_parc"
               action="suivi_machines.action_machines" sequence="2"/>
 
-    <!-- Application des techniciens : leur journee, en lecture seule -->
-    <menuitem id="menu_ma_journee_root" name="Ma journée" sequence="3"
-              web_icon="suivi_machines_pilotage,static/description/icon_journee.png"
-              groups="suivi_machines_pilotage.group_technicien"/>
-    <menuitem id="menu_ma_journee" name="Mes tâches" parent="menu_ma_journee_root"
-              action="action_ma_journee" sequence="1"/>
+    <menuitem id="menu_pilotage_outils" name="Outils" parent="menu_pilotage_root" sequence="90"/>
+    <menuitem id="menu_pilotage_donnees_test" name="Tickets de test" parent="menu_pilotage_outils"
+              action="action_donnees_test" sequence="1"/>
 </odoo>

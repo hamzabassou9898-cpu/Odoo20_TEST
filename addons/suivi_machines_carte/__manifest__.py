@@ -3,7 +3,7 @@
     "name": "Cartes & Google Maps",
     "summary": "Adresses liées à Google Maps, aperçu de carte, itinéraire des livreurs, cartes des tournées, "
                "des appels et du parc machines",
-    "version": "20.0.1.2.0",
+    "version": "20.0.1.3.0",
     "category": "Productivity",
     "author": "Hamza Bassou",
     "license": "LGPL-3",
