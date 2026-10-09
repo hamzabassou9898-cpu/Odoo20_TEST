@@ -95,6 +95,8 @@
               action="action_carte_tournees" sequence="3"/>
     <menuitem id="menu_carte_itineraire" name="Itinéraire du jour (Google Maps)"
               parent="suivi_machines_pilotage.menu_pilotage_transferts" action="action_carte_itineraire" sequence="4"/>
+    <menuitem id="menu_ma_journee_itineraire" name="Mon itinéraire (Google Maps)"
+              parent="suivi_machines_pilotage.menu_ma_journee_root" action="action_carte_itineraire" sequence="2"/>
     <menuitem id="menu_carte_parc" name="Carte du parc" parent="suivi_machines_pilotage.menu_pilotage_parc"
               action="action_carte_parc" sequence="3"/>
 </odoo>

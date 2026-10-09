@@ -20,6 +20,8 @@ TYPES_TACHE = [
 ]
 # Decalage des identifiants : un seul id par tache, quelle que soit sa source
 SOURCES = {1: "picking_id", 2: "ticket_id", 3: "intervention_id"}
+# Fuseau de Quebec : une tache est « en retard » quand sa journee est passee
+FUSEAU = "America/Toronto"
 
 
 class PortailTache(models.Model):
@@ -47,6 +49,9 @@ class PortailTache(models.Model):
     titre = fields.Char("Tâche", readonly=True)
     reference = fields.Char("Référence", readonly=True)
     a_faire = fields.Boolean("À faire", readonly=True)
+    etat_suivi = fields.Selection(
+        [("fait", "Faite"), ("en_retard", "En retard"), ("a_faire", "À faire")], "Suivi", readonly=True,
+        help="En retard : la journée prévue est passée et la tâche n'est pas faite.")
     lot_id = fields.Many2one("stock.lot", "Machine", readonly=True)
     company_id = fields.Many2one("res.company", "Société", readonly=True)
     picking_id = fields.Many2one("stock.picking", "Transfert", readonly=True)
@@ -66,6 +71,12 @@ class PortailTache(models.Model):
             else SQL("NULL::integer")
         self.env.cr.execute(SQL("""
             CREATE OR REPLACE VIEW %(table)s AS (
+              SELECT u.*,
+                     CASE WHEN NOT u.a_faire THEN 'fait'
+                          WHEN (u.date AT TIME ZONE 'UTC' AT TIME ZONE %(fuseau)s)::date
+                               < (now() AT TIME ZONE %(fuseau)s)::date THEN 'en_retard'
+                          ELSE 'a_faire' END AS etat_suivi
+                FROM (
                 SELECT p.id * 10 + 1 AS id, p.type_tournee AS type_tache, p.scheduled_date AS date,
                        p.livreur_id AS technicien_id, p.partner_id, p.name AS titre, p.origin AS reference,
                        p.state NOT IN ('done', 'cancel') AS a_faire, NULL::integer AS lot_id, p.company_id,
@@ -81,51 +92,54 @@ class PortailTache(models.Model):
                 UNION ALL
                 SELECT t.id * 10 + 2, CASE WHEN t.est_entretien THEN 'entretien' ELSE 'reparation' END,
                        COALESCE(t.date_planifiee, t.create_date), COALESCE(t.user_id, t.technicien_id),
-                       t.partner_id, t.name, '#' || t.id, TRUE, t.lot_id, %(societe_ticket)s,
-                       NULL, t.id, NULL
+                       t.partner_id, t.name, '#' || t.id, COALESCE(s.name::text, '') !~* %(ferme)s,
+                       t.lot_id, %(societe_ticket)s, NULL, t.id, NULL
                   FROM helpdesk_ticket t
              LEFT JOIN helpdesk_stage s ON s.id = t.stage_id
                  WHERE t.commande_reprise_id IS NULL
-                   AND COALESCE(s.name::text, '') !~* %(ferme)s
+                   AND COALESCE(s.name::text, '') !~* 'annul'
                 UNION ALL
                 SELECT i.id * 10 + 3, CASE WHEN i.type IN ('entretien', 'installation') THEN i.type
                                            WHEN i.type IN ('bris', 'reparation', 'remplacement') THEN 'reparation'
                                            ELSE 'autre' END,
-                       i.date, i.user_id, i.partner_id, i.name, NULL, TRUE, i.lot_id, i.company_id,
+                       i.date, i.user_id, i.partner_id, i.name, NULL, i.state = 'planifie', i.lot_id, i.company_id,
                        NULL, NULL, i.id
                   FROM machine_intervention i
-                 WHERE i.state = 'planifie' AND i.ticket_id IS NULL AND i.type != 'ramassage'
+                 WHERE i.state IN ('planifie', 'fait') AND i.ticket_id IS NULL AND i.type != 'ramassage'
+                ) u
             )""", table=SQL.identifier(self._table), ferme=ferme,
-            societe_ticket=societe_ticket))
+            societe_ticket=societe_ticket, fuseau=FUSEAU))
 
     def _source(self):
         self.ensure_one()
         return self[SOURCES[self.id % 10]]
 
     def _compute_affichage(self):
+        # Lecture des documents en sudo : un technicien voit ses taches meme sans droits sur les stocks
         for tache in self:
-            date = format_datetime(self.env, tache.date, dt_format="EEE d MMM '·' HH 'h' mm") if tache.date else ""
-            tache.date_affichage = date[:1].upper() + date[1:]
-            lot = tache.lot_id
-            tache.machines = ("%s (%s)" % (lot.ref, lot.name) if lot.ref else lot.name) if lot else False
-            tache.accessoires = False
-            if tache.picking_id:
-                p = tache.picking_id
-                tache.route = p.route
-                tache.machines = p.machines_tournee
-                tache.accessoires = p.accessoires_tournee
-                tache.statut = dict(p._fields["state"]._description_selection(self.env)).get(p.state)
-            elif tache.ticket_id:
-                t = tache.ticket_id
-                tache.route = ", ".join(l.strip() for l in (t.adresse_commerce or "").splitlines() if l.strip()) or False
-                tache.statut = t.stage_id.name or self.env._("À faire")
+            src = tache.sudo()
+            date = format_datetime(self.env, src.date, dt_format="EEE d MMM '·' HH 'h' mm") if src.date else ""
+            vals = {"date_affichage": date[:1].upper() + date[1:], "accessoires": False}
+            lot = src.lot_id
+            vals["machines"] = ("%s (%s)" % (lot.ref, lot.name) if lot.ref else lot.name) if lot else False
+            if src.picking_id:
+                p = src.picking_id
+                vals.update(route=p.route, machines=p.machines_tournee, accessoires=p.accessoires_tournee,
+                            statut=dict(p._fields["state"]._description_selection(self.env)).get(p.state))
+            elif src.ticket_id:
+                t = src.ticket_id
+                vals.update(route=", ".join(l.strip() for l in (t.adresse_commerce or "").splitlines() if l.strip()) or False,
+                            statut=t.stage_id.name or self.env._("À faire"))
             else:
-                i = tache.intervention_id
-                tache.route = i.route
-                tache.statut = dict(i._fields["state"]._description_selection(self.env)).get(i.state)
+                i = src.intervention_id
+                vals.update(route=i.route,
+                            statut=dict(i._fields["state"]._description_selection(self.env)).get(i.state))
+            tache.update(vals)
 
     def write(self, vals):
         """Glisser-deposer (technicien, date) : on modifie le document d'origine."""
+        if not self.env.user.has_group("suivi_machines_pilotage.group_pilotage"):
+            raise UserError(self.env._("Seul le pilotage peut réassigner ou déplacer une tâche."))
         autres = set(vals) - {"technicien_id", "date"}
         if autres:
             raise UserError(self.env._("Modifiez la tâche depuis son document (transfert, ticket ou intervention)."))

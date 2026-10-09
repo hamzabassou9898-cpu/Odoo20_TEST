@@ -2,6 +2,7 @@
 from dateutil.relativedelta import relativedelta
 
 from odoo import fields
+from odoo.exceptions import UserError
 from odoo.tests import TransactionCase, tagged
 
 
@@ -116,3 +117,26 @@ class TestPortailLivreurs(TransactionCase):
         interv.ticket_id = ticket
         self.assertFalse(Tache.search([("intervention_id", "=", interv.id)]))
         Tache.get_views([(False, "kanban"), (False, "list"), (False, "calendar"), (False, "form"), (False, "search")])
+
+        # Suivi de Josef : en retard / fait
+        tache_ticket = Tache.search([("ticket_id", "=", ticket.id)])
+        self.assertEqual(tache_ticket.etat_suivi, "a_faire")
+        ticket.date_planifiee = fields.Datetime.now() - relativedelta(days=2)
+        Tache.invalidate_model()
+        self.assertEqual(Tache.search([("ticket_id", "=", ticket.id)]).etat_suivi, "en_retard")
+        etape = env["helpdesk.stage"].create({"name": "Résolu"})
+        ticket.stage_id = etape
+        Tache.invalidate_model()
+        tache_ticket = Tache.search([("ticket_id", "=", ticket.id)])
+        self.assertEqual((tache_ticket.etat_suivi, tache_ticket.a_faire), ("fait", False),
+                         "ticket résolu : reste visible pour le suivi, en vert")
+
+        # Ma journee : le technicien voit ses taches, sans pouvoir les reassigner
+        tech_b.group_ids = [(4, env.ref("suivi_machines_pilotage.group_technicien").id)]
+        taches_b = Tache.with_user(tech_b).search([("technicien_id", "=", tech_b.id)])
+        self.assertEqual(len(taches_b), 2, "transfert + ticket (l'intervention est rattachée au ticket)")
+        self.assertTrue(taches_b.mapped("route"), "adresse lue même sans droits sur les documents")
+        with self.assertRaises(UserError):
+            taches_b.write({"technicien_id": livreur_a.id})
+        action = env["ir.actions.act_window"]._for_xml_id("suivi_machines_pilotage.action_ma_journee")
+        self.assertIn("uid", action["domain"])
