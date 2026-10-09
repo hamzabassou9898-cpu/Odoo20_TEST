@@ -1,0 +1,3 @@
+id,name,model_id,group_id/id,operation,domain
+access_remplacer_techniciens,Remplacer des techniciens,suivi.remplacer.techniciens,suivi_machines_pilotage.group_pilotage,crud,
+access_remplacer_techniciens_ligne,Remplacer des techniciens (ligne),suivi.remplacer.techniciens.ligne,suivi_machines_pilotage.group_pilotage,crud,

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_remplacer_techniciens_form" model="ir.ui.view">
+        <field name="name">suivi.remplacer.techniciens.form</field>
+        <field name="model">suivi.remplacer.techniciens</field>
+        <field name="arch" type="xml">
+            <form string="Remplacer des techniciens">
+                <div class="alert alert-info mb-3" role="alert">
+                    Les tâches <b>à faire</b> de chaque ancien compte passent au technicien portail choisi :
+                    livraisons et ramassages pas encore faits, tickets ouverts, interventions planifiées.
+                    L'historique (déjà fait) ne change pas. Laissez « Technicien portail » vide pour ne rien changer.
+                </div>
+                <field name="ligne_ids" nolabel="1">
+                    <list editable="bottom" create="true" delete="true">
+                        <field name="ancien_id" widget="many2one_avatar_user" options="{'no_create': True}"/>
+                        <field name="nb_taches"/>
+                        <field name="nouveau_id" widget="many2one_avatar_user" options="{'no_create': True}"/>
+                    </list>
+                </field>
+                <footer>
+                    <button name="action_remplacer" type="object" string="Transférer les tâches" class="btn-primary"
+                            confirm="Transférer les tâches à faire vers les techniciens portail choisis ?"/>
+                    <button string="Annuler" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_remplacer_techniciens" model="ir.actions.act_window">
+        <field name="name">Remplacer des techniciens</field>
+        <field name="res_model">suivi.remplacer.techniciens</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_remplacer_techniciens" name="Remplacer des techniciens"
+              parent="suivi_machines_pilotage.menu_pilotage_outils" action="action_remplacer_techniciens" sequence="2"/>
+</odoo>

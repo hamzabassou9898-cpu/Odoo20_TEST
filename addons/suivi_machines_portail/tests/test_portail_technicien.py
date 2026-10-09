@@ -83,3 +83,34 @@ class TestPortailTechnicien(HttpCase):
         portail = tickets.filtered(lambda t: t.technicien_terrain_id)
         self.assertTrue(portail, "les techniciens portail reçoivent des tickets")
         self.assertFalse(portail.user_id.filtered("share"), "jamais un utilisateur portail en « Assigné à »")
+
+
+    def test_remplacer_techniciens(self):
+        Users = self.env["res.users"]
+        interne = Users.create({"name": "Technicien Z", "login": "tech_z_interne",
+                                "group_ids": [(6, 0, [self.env.ref("base.group_user").id])]})
+        ouvert = self.env["helpdesk.ticket"].create({"name": "Ouvert", "partner_id": self.client.id,
+                                                     "user_id": interne.id})
+        ferme = self.env["helpdesk.ticket"].create({"name": "Fermé", "partner_id": self.client.id,
+                                                    "user_id": interne.id,
+                                                    "stage_id": self.env["helpdesk.stage"].create({"name": "Résolu"}).id})
+        categ = self.env["product.category"].create({"name": "Mach remp", "suivi_machine": True})
+        prod = self.env["product.product"].create({"name": "F remp", "categ_id": categ.id, "is_storable": True,
+                                                   "tracking": "serial"})
+        lot = self.env["stock.lot"].create({"name": "REMP-1", "product_id": prod.id})
+        planifiee = self.env["machine.intervention"].create({"type": "reparation", "partner_id": self.client.id,
+                                                             "user_id": interne.id, "lot_id": lot.id})
+        faite = self.env["machine.intervention"].create({"type": "reparation", "partner_id": self.client.id,
+                                                         "user_id": interne.id, "state": "fait", "lot_id": lot.id})
+        wiz = self.env["suivi.remplacer.techniciens"].create({})
+        ligne = wiz.ligne_ids.filtered(lambda l: l.ancien_id == interne)
+        self.assertTrue(ligne, "l'ancien compte avec des tâches est proposé")
+        self.assertEqual(ligne.nb_taches, 2)
+        self.assertEqual(ligne.nouveau_id, self.tech_a, "proposé dans l'ordre des techniciens portail")
+        ligne.nouveau_id = self.tech_b
+        wiz.action_remplacer()
+        self.assertEqual((ouvert.technicien_terrain_id, ouvert.user_id), (self.tech_b, Users))
+        self.assertEqual(ferme.user_id, interne, "l'historique ne bouge pas")
+        self.assertEqual((planifiee.user_id, faite.user_id), (self.tech_b, interne))
+        self.env["portail.tache"].invalidate_model()
+        self.assertEqual(self._tache(ouvert).technicien_id, self.tech_b)
