@@ -17,16 +17,6 @@
         <span t-if="tache.etat_suivi == 'fait'" class="badge rounded-pill text-bg-success">Fait</span>
         <span t-elif="tache.etat_suivi == 'en_retard'" class="badge rounded-pill text-bg-danger">En retard</span>
     </template>
-    <template id="portal_tache_liens_carte">
-        <div t-if="tache.lien_google_maps" class="d-flex flex-wrap gap-2 mt-2">
-            <a t-att-href="tache.lien_google_maps" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary">
-                <i class="oi me-1" data-icon="location_on"/>Google Maps
-            </a>
-            <a t-att-href="tache.lien_itineraire" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary">
-                <i class="oi me-1" data-icon="directions_car"/>Itinéraire
-            </a>
-        </div>
-    </template>
 
     <!-- ============================================================ Ma journee -->
     <template id="portal_ma_journee" name="Ma journée">
@@ -61,11 +51,6 @@
                     </span>
                 </div>
 
-                <a t-if="lien_itineraire" t-att-href="lien_itineraire" target="_blank" rel="noopener"
-                   class="btn btn-primary btn-lg w-100 mb-1">
-                    <i class="oi me-2" data-icon="map"/>Itinéraire de la journée (Google Maps)
-                </a>
-                <div t-if="trop_arrets" class="small text-muted mb-2">Google Maps : 10 premiers arrêts seulement.</div>
 
                 <div t-if="not taches" class="alert alert-light border text-center my-4">
                     <i class="oi oi-2x d-block mb-2 text-muted" data-icon="coffee"/>Rien de prévu ce jour-là.
@@ -81,7 +66,6 @@
                                 </div>
                                 <div class="fw-bold text-uppercase mt-1" t-out="tache.partner_id.display_name"/>
                                 <div t-if="tache.route" class="text-muted" t-out="tache.route"/>
-                                <t t-call="suivi_machines_portail.portal_tache_liens_carte"/>
                                 <div class="mt-2" t-out="tache.titre"/>
                                 <div t-if="tache.tag_ids" class="d-flex flex-wrap gap-1 mt-1">
                                     <span t-foreach="tache.tag_ids" t-as="tag" class="badge rounded-pill border o_badge_neutre" t-out="tag.name"/>
@@ -121,7 +105,6 @@
                         <a t-if="telephone" t-attf-href="tel:#{telephone}" class="btn btn-sm btn-success mt-2">
                             <i class="oi me-1" data-icon="phone"/>Appeler <t t-out="telephone"/>
                         </a>
-                        <t t-call="suivi_machines_portail.portal_tache_liens_carte"/>
 
                         <t t-if="tache.machines or tache.accessoires">
                             <h6 class="text-uppercase text-muted mt-3 mb-1">Matériel</h6>
@@ -144,7 +127,6 @@
                         </t>
                     </div>
                 </div>
-                <div t-if="tache.carte_google" class="mt-3" t-out="tache.carte_google"/>
             </div>
         </t>
     </template>

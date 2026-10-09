@@ -50,7 +50,6 @@ class TestPortailTechnicien(HttpCase):
         self.assertEqual(page.status_code, 200)
         self.assertIn("Machine ne refroidit pas", page.text)
         self.assertIn("12 rue du Lac", page.text)
-        self.assertIn("google.com/maps", page.text)
         self.assertNotIn("Ticket d'un autre technicien", page.text)
         # Detail de sa tache : oui ; celle d'un autre : retour a sa journee
         detail = self.url_open("/my/journee/tache/%s" % self._tache(self.ticket).id)

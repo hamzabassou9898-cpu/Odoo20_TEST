@@ -7,7 +7,6 @@ import pytz
 from odoo import fields, http
 from odoo.addons.portal.controllers.portal import CustomerPortal
 from odoo.addons.portal.controllers.web import Home
-from odoo.addons.suivi_machines_carte.models.carte import MAX_ARRETS, url_itineraire
 from odoo.http import request
 from odoo.tools.misc import format_date
 
@@ -49,10 +48,6 @@ class PortailTechnicien(CustomerPortal):
         jour = self._jour(jour) or aujourdhui
         taches = self._taches_du_jour(jour)
         a_faire = taches.filtered("a_faire")
-        arrets = []
-        for adresse in a_faire.mapped("adresse_carte"):
-            if adresse and (not arrets or arrets[-1] != adresse):
-                arrets.append(adresse)
         values = self._prepare_portal_layout_values()
         values.update({
             "page_name": "ma_journee",
@@ -64,8 +59,6 @@ class PortailTechnicien(CustomerPortal):
             "lendemain": (jour + timedelta(days=1)).isoformat(),
             "nb_faites": len(taches) - len(a_faire),
             "nb_retard": len(taches.filtered(lambda t: t.etat_suivi == "en_retard")),
-            "lien_itineraire": url_itineraire(arrets[:MAX_ARRETS]) if arrets else False,
-            "trop_arrets": len(arrets) > MAX_ARRETS,
             "couleurs": COULEURS,
         })
         return request.render("suivi_machines_portail.portal_ma_journee", values)
