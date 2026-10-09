@@ -52,7 +52,7 @@ class PilotageIndicateur(models.Model):
         ouverts = ["!", "|", "|", ("stage_id.name", "ilike", "résolu"), ("stage_id.name", "ilike", "annul"),
                    ("stage_id.name", "ilike", "clôtur")]
         transfert = [("move_ids.product_id.categ_id.suivi_machine", "=", True)]
-        a_faire = [("state", "not in", ("draft", "done", "cancel"))]
+        a_faire = [("state", "not in", ("done", "cancel"))]
         livraison = [("location_id.usage", "=", "internal"), ("location_dest_id.usage", "=", "customer")]
         ramassage = [("location_id.usage", "=", "customer"), ("location_dest_id.usage", "=", "internal")]
         return {

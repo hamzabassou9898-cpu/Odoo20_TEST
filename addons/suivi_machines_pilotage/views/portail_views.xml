@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Portail livreurs : une colonne par livreur, une carte par arret, triees par date -->
+    <record id="view_portail_livreurs_kanban" model="ir.ui.view">
+        <field name="name">stock.picking.portail.livreurs.kanban</field>
+        <field name="model">stock.picking</field>
+        <field name="priority">100</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="livreur_id" default_order="scheduled_date asc" create="false"
+                    group_create="false" group_delete="false" group_edit="false" quick_create="false"
+                    records_draggable="true" sample="1">
+                <field name="type_tournee"/>
+                <field name="state"/>
+                <field name="scheduled_date"/>
+                <field name="livreur_id"/>
+                <templates>
+                    <t t-name="card">
+                        <div t-attf-class="border-start border-4 ps-2 {{ record.type_tournee.raw_value == 'ramassage' ? 'border-warning' : 'border-success' }}">
+                            <div class="d-flex justify-content-between align-items-center gap-2">
+                                <div class="fw-bold text-nowrap text-truncate" style="font-size: 1.05rem;">
+                                    <field name="date_tournee"/>
+                                </div>
+                                <span t-if="record.type_tournee.raw_value == 'livraison'" class="badge text-bg-success flex-shrink-0">Livraison</span>
+                                <span t-elif="record.type_tournee.raw_value == 'ramassage'" class="badge text-bg-warning flex-shrink-0">Ramassage</span>
+                            </div>
+                            <div class="fw-bold mt-1 text-uppercase"><field name="partner_id"/></div>
+                            <div class="text-muted small"><field name="route"/></div>
+                            <div class="small mt-1" t-if="record.machines_tournee.raw_value">
+                                <span class="fw-bold">Machines : </span><field name="machines_tournee"/>
+                            </div>
+                            <div class="small" t-if="record.accessoires_tournee.raw_value">
+                                <span class="fw-bold">Accessoires : </span><field name="accessoires_tournee"/>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mt-2 small">
+                                <span class="text-muted"><field name="name"/> · <field name="origin"/></span>
+                                <field name="state" widget="badge"
+                                       decoration-success="state == 'done'" decoration-info="state == 'assigned'"
+                                       decoration-warning="state in ('confirmed', 'waiting')"/>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="view_portail_livreurs_search" model="ir.ui.view">
+        <field name="name">stock.picking.portail.livreurs.search</field>
+        <field name="model">stock.picking</field>
+        <field name="priority">100</field>
+        <field name="arch" type="xml">
+            <search string="Tournées">
+                <field name="livreur_id"/>
+                <field name="partner_id"/>
+                <field name="route"/>
+                <field name="name"/>
+                <field name="origin"/>
+                <filter name="mes_tournees" string="Mes tournées" domain="[('livreur_id', '=', uid)]"/>
+                <separator/>
+                <filter name="a_faire" string="À faire" domain="[('state', 'not in', ('done', 'cancel'))]"/>
+                <filter name="faites" string="Faites" domain="[('state', '=', 'done')]"/>
+                <separator/>
+                <filter name="aujourdhui" string="Aujourd'hui"
+                        domain="[('scheduled_date', '&gt;=', context_today().strftime('%Y-%m-%d')),
+                                 ('scheduled_date', '&lt;', (context_today() + relativedelta(days=1)).strftime('%Y-%m-%d'))]"/>
+                <filter name="demain" string="Demain"
+                        domain="[('scheduled_date', '&gt;=', (context_today() + relativedelta(days=1)).strftime('%Y-%m-%d')),
+                                 ('scheduled_date', '&lt;', (context_today() + relativedelta(days=2)).strftime('%Y-%m-%d'))]"/>
+                <filter name="semaine" string="7 prochains jours (et retards)"
+                        domain="[('scheduled_date', '&lt;', (context_today() + relativedelta(days=8)).strftime('%Y-%m-%d'))]"/>
+                <separator/>
+                <filter name="livraisons" string="Livraisons" domain="[('type_tournee', '=', 'livraison')]"/>
+                <filter name="ramassages" string="Ramassages" domain="[('type_tournee', '=', 'ramassage')]"/>
+                <filter name="sans_livreur" string="Sans livreur" domain="[('livreur_id', '=', False)]"/>
+                <group>
+                    <filter name="grp_livreur" string="Livreur" context="{'group_by': 'livreur_id'}"/>
+                    <filter name="grp_jour" string="Jour" context="{'group_by': 'scheduled_date:day'}"/>
+                    <filter name="grp_type" string="Livraison / ramassage" context="{'group_by': 'type_tournee'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_portail_livreurs" model="ir.actions.act_window">
+        <field name="name">Portail livreurs</field>
+        <field name="res_model">stock.picking</field>
+        <field name="view_mode">kanban,list,calendar,form</field>
+        <field name="domain">[('type_tournee', 'in', ('livraison', 'ramassage')),
+                              '|', ('livreur_id', '!=', False), ('move_ids.product_id.categ_id.suivi_machine', '=', True)]</field>
+        <field name="context">{'search_default_a_faire': 1, 'search_default_semaine': 1}</field>
+        <field name="search_view_id" ref="view_portail_livreurs_search"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'kanban', 'view_id': ref('view_portail_livreurs_kanban')}),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('view_pilotage_transfert_list')}),
+            (0, 0, {'view_mode': 'calendar', 'view_id': ref('view_pilotage_transfert_calendar')})]"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aucune tournée</p>
+            <p>Les livraisons et ramassages de machines apparaissent ici, une colonne par livreur.
+               Glissez une carte dans la colonne d'un livreur pour la lui assigner.</p>
+        </field>
+    </record>
+</odoo>

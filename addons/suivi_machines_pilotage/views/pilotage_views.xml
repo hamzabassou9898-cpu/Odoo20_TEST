@@ -377,11 +377,11 @@
                 <field name="route"/>
                 <field name="origin"/>
                 <filter name="livraisons_a_faire" string="Livraisons à faire"
-                        domain="[('state', 'not in', ('draft', 'done', 'cancel')), ('location_id.usage', '=', 'internal'), ('location_dest_id.usage', '=', 'customer')]"/>
+                        domain="[('state', 'not in', ('done', 'cancel')), ('location_id.usage', '=', 'internal'), ('location_dest_id.usage', '=', 'customer')]"/>
                 <filter name="ramassages_a_faire" string="Ramassages à faire"
-                        domain="[('state', 'not in', ('draft', 'done', 'cancel')), ('location_id.usage', '=', 'customer'), ('location_dest_id.usage', '=', 'internal')]"/>
+                        domain="[('state', 'not in', ('done', 'cancel')), ('location_id.usage', '=', 'customer'), ('location_dest_id.usage', '=', 'internal')]"/>
                 <filter name="sans_livreur" string="Sans livreur"
-                        domain="[('state', 'not in', ('draft', 'done', 'cancel')), ('livreur_id', '=', False)]"/>
+                        domain="[('state', 'not in', ('done', 'cancel')), ('livreur_id', '=', False)]"/>
                 <separator/>
                 <filter name="aujourdhui" string="Aujourd'hui"
                         domain="[('scheduled_date', '&lt;', (context_today() + relativedelta(days=1)).strftime('%Y-%m-%d')), ('state', 'not in', ('done', 'cancel'))]"/>

@@ -58,3 +58,36 @@ class TestPilotage(TransactionCase):
         groupe = self.env.ref("suivi_machines_pilotage.group_pilotage")
         self.assertIn(groupe, menu.group_ids)
         self.assertIn(self.env.ref("base.user_admin"), groupe.user_ids)
+
+
+@tagged("post_install", "-at_install")
+class TestPortailLivreurs(TransactionCase):
+
+    def test_portail(self):
+        env = self.env(context=dict(self.env.context, tracking_disable=True, skip_sms=True))
+        client = env["res.partner"].create({"name": "Camping test", "street": "1 rue", "city": "Québec"})
+        categ = env["product.category"].create({"name": "Mach portail", "suivi_machine": True})
+        prod = env["product.product"].create({"name": "F100 p", "categ_id": categ.id, "is_storable": True,
+                                              "tracking": "serial"})
+        pompe = env["product.product"].create({"name": "Pompe p", "is_storable": True})
+        stock = env.ref("stock.stock_location_stock")
+        lot = env["stock.lot"].create({"name": "P-1", "ref": "F900", "product_id": prod.id})
+        env["stock.quant"]._update_available_quantity(prod, stock, 1, lot_id=lot)
+        env["stock.quant"]._update_available_quantity(pompe, stock, 5)
+        livreur_a = env["res.users"].create({"name": "Livreur A", "login": "livreur_a_test"})
+        so = env["sale.order"].create({"partner_id": client.id, "type_commande": "location", "order_line": [
+            (0, 0, {"product_id": prod.id, "product_uom_qty": 1, "machine_lot_id": lot.id}),
+            (0, 0, {"product_id": pompe.id, "product_uom_qty": 2})]})
+        so.action_confirm()
+        pk = so.picking_ids
+        pk.livreur_id = livreur_a
+        self.assertEqual(pk.type_tournee, "livraison")
+        self.assertIn("F900 (P-1)", pk.machines_tournee)
+        self.assertIn("2 × Pompe p", pk.accessoires_tournee)
+        self.assertTrue(pk.date_tournee)
+        action = env["ir.actions.act_window"]._for_xml_id("suivi_machines_pilotage.action_portail_livreurs")
+        domaine = eval(action["domain"])
+        self.assertIn(pk, env["stock.picking"].search(domaine))
+        env["stock.picking"].get_views([(False, "kanban"), (False, "search")] if False else
+                                       [(env.ref("suivi_machines_pilotage.view_portail_livreurs_kanban").id, "kanban"),
+                                        (env.ref("suivi_machines_pilotage.view_portail_livreurs_search").id, "search")])
