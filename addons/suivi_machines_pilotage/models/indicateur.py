@@ -83,6 +83,10 @@ class PilotageIndicateur(models.Model):
                                                 ("machine_statut", "in", ("en_reparation", "a_remplacer",
                                                                            "hors_service"))]),
             "a_facturer": ("machine.intervention", [("etat_facturation", "=", "a_facturer")]),
+            "sage_clients": ("account.move", [("move_type", "in", ("out_invoice", "out_refund")),
+                                              ("statut_sage", "=", "a_transferer")]),
+            "sage_fournisseurs": ("account.move", [("move_type", "in", ("in_invoice", "in_refund")),
+                                                   ("statut_sage", "=", "a_transferer")]),
             "facturer_sage": ("machine.intervention", [("etat_facturation", "=", "bon_cree")]),
         }
 
@@ -96,10 +100,13 @@ class PilotageIndicateur(models.Model):
             Model = self.env[model]
             ind.valeur = Model.search_count(domaine)
             ind.sous_titre = ind.description
+            devise = self.env.company.currency_id
             if model == "machine.intervention" and ind.code in ("a_facturer", "facturer_sage"):
                 total = sum(Model.search(domaine).mapped("montant_frais"))
-                devise = self.env.company.currency_id
                 ind.sous_titre = self.env._("Total : %s", devise.format(total))
+            elif model == "account.move":
+                total = sum(Model.search(domaine).mapped("amount_total_signed"))
+                ind.sous_titre = self.env._("Total : %s", devise.format(abs(total)))
 
     # ------------------------------------------------------------ clic sur la carte
     _ACTIONS = {
@@ -121,6 +128,8 @@ class PilotageIndicateur(models.Model):
         "machines_probleme": ("suivi_machines_pilotage.action_pilotage_machines_probleme", None),
         "a_facturer": ("suivi_machines_pilotage.action_pilotage_facturation", "a_facturer"),
         "facturer_sage": ("suivi_machines_pilotage.action_pilotage_facturation", "bon_cree"),
+        "sage_clients": ("suivi_sage.action_sage_clients", "sage_a_transferer"),
+        "sage_fournisseurs": ("suivi_sage.action_sage_fournisseurs", "sage_a_transferer"),
     }
 
     def action_ouvrir(self):

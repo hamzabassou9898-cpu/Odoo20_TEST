@@ -144,4 +144,20 @@
         <field name="couleur">warning</field>
         <field name="description">Numéro de série à préciser</field>
     </record>
+    <record id="indicateur_sage_clients" model="pilotage.indicateur">
+        <field name="code">sage_clients</field>
+        <field name="name">Factures clients à enregistrer dans Sage</field>
+        <field name="section">facturation</field>
+        <field name="sequence">3</field>
+        <field name="couleur">danger</field>
+        <field name="description">Factures et avoirs clients comptabilisés</field>
+    </record>
+    <record id="indicateur_sage_fournisseurs" model="pilotage.indicateur">
+        <field name="code">sage_fournisseurs</field>
+        <field name="name">Factures fournisseurs à enregistrer dans Sage</field>
+        <field name="section">facturation</field>
+        <field name="sequence">4</field>
+        <field name="couleur">warning</field>
+        <field name="description">Factures et avoirs fournisseurs comptabilisés</field>
+    </record>
 </odoo>

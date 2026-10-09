@@ -2,11 +2,11 @@
 {
     "name": "Pilotage",
     "summary": "Tableau de bord du suivi des machines : entretiens, locations, reprises, bris, facturation",
-    "version": "20.0.1.0.0",
+    "version": "20.0.1.1.0",
     "category": "Productivity",
     "author": "Hamza Bassou",
     "license": "LGPL-3",
-    "depends": ["suivi_machines_helpdesk"],
+    "depends": ["suivi_machines_helpdesk", "suivi_sage"],
     "data": [
         "security/groups.xml",
         "security/ir.access.csv",

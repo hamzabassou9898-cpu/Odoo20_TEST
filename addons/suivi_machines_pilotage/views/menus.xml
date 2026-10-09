@@ -33,8 +33,13 @@
     <menuitem id="menu_pilotage_probleme" name="Machines à problème" parent="menu_pilotage_qualite"
               action="action_pilotage_machines_probleme" sequence="2"/>
 
-    <menuitem id="menu_pilotage_facturation" name="Facturation" parent="menu_pilotage_root"
-              action="action_pilotage_facturation" sequence="40"/>
+    <menuitem id="menu_pilotage_facturation_racine" name="Facturation" parent="menu_pilotage_root" sequence="40"/>
+    <menuitem id="menu_pilotage_facturation" name="Interventions à facturer" parent="menu_pilotage_facturation_racine"
+              action="action_pilotage_facturation" sequence="1"/>
+    <menuitem id="menu_pilotage_sage_clients" name="Clients : à enregistrer dans Sage" parent="menu_pilotage_facturation_racine"
+              action="suivi_sage.action_sage_clients" sequence="2"/>
+    <menuitem id="menu_pilotage_sage_fournisseurs" name="Fournisseurs : à enregistrer dans Sage" parent="menu_pilotage_facturation_racine"
+              action="suivi_sage.action_sage_fournisseurs" sequence="3"/>
 
     <menuitem id="menu_pilotage_parc" name="Parc machines" parent="menu_pilotage_root" sequence="50"/>
     <menuitem id="menu_pilotage_vue_ensemble" name="Vue d'ensemble" parent="menu_pilotage_parc"
