@@ -2,7 +2,7 @@
 {
     "name": "Pilotage",
     "summary": "Tableau de bord du suivi des machines : entretiens, locations, reprises, bris, facturation",
-    "version": "20.0.1.21.0",
+    "version": "20.0.1.22.0",
     "category": "Productivity",
     "author": "Hamza Bassou",
     "license": "LGPL-3",

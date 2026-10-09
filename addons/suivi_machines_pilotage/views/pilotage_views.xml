@@ -458,7 +458,8 @@
         <field name="model">helpdesk.ticket</field>
         <field name="priority">100</field>
         <field name="arch" type="xml">
-            <list create="false" default_order="create_date desc">
+            <!-- Bouton « Nouveau » : Josef cree le ticket ici, sans aller dans Assistance -->
+            <list default_order="create_date desc">
                 <field name="create_date" string="Reçu le"/>
                 <field name="type_demande" widget="badge" decoration-danger="type_demande == 'reparation'"
                        decoration-info="type_demande == 'entretien'" decoration-warning="type_demande == 'ramassage'"

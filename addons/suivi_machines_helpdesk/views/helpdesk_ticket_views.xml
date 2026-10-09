@@ -40,7 +40,11 @@
                 <button name="action_prolonger_location" type="object" string="Prolonger la location"
                         class="btn-secondary" invisible="not est_reprise"/>
                 <button name="action_nouvelle_intervention" type="object" string="Nouvelle intervention"
-                        class="btn-secondary" invisible="not partner_id or est_reprise or type_demande == 'commande'"/>
+                        class="btn-secondary"
+                        invisible="not partner_id or est_reprise or type_demande in ('commande', 'ajustement')"/>
+                <!-- Ajuster un contrat : ouvre le contrat de location du client -->
+                <button name="action_ajuster_contrat" type="object" string="Ajuster le contrat" class="btn-primary"
+                        invisible="type_demande != 'ajustement' or not partner_id"/>
                 <!-- Passer une commande : bon de vente pour le client -->
                 <button name="action_creer_vente" type="object" string="Bon de vente" class="btn-primary"
                         invisible="type_demande != 'commande' or not partner_id"
@@ -61,6 +65,12 @@
                         : la location <field name="commande_reprise_id" readonly="1" class="d-inline"/>
                         se termine, les machines sont à reprendre.
                     </span>
+                </div>
+                <!-- Machine a remplacer : impossible si le client n'a aucune machine -->
+                <div class="alert alert-warning mb-0 py-2" role="alert"
+                     invisible="type_demande != 'remplacement' or not partner_id or nb_machines_client">
+                    Ce client a <strong>0 machine</strong> en inventaire : impossible de créer un ticket
+                    « Machine à remplacer ». Choisissez un autre type ou vérifiez le client.
                 </div>
                 <!-- Ramassage demande a la main : Odoo cherche les machines louees chez le client -->
                 <div class="alert alert-warning mb-0 py-2" role="alert"
@@ -183,12 +193,38 @@
         </field>
     </record>
 
+    <!-- Creation rapide (bouton + du kanban) : titre, type de ticket obligatoire, client, assigne -->
+    <record id="helpdesk_ticket_view_form_creation_rapide" model="ir.ui.view">
+        <field name="name">helpdesk.ticket.form.creation.rapide</field>
+        <field name="model">helpdesk.ticket</field>
+        <field name="mode">primary</field>
+        <field name="priority">100</field>
+        <field name="arch" type="xml">
+            <form>
+                <group>
+                    <field name="name" string="Titre du ticket" placeholder="ex. Machine ne refroidit pas"/>
+                    <field name="type_demande" required="1"/>
+                    <field name="partner_id" string="Client" options="{'no_create': True}"/>
+                    <field name="user_id" string="Assigné à" widget="many2one_avatar_user"/>
+                    <field name="nb_machines_client" invisible="1"/>
+                </group>
+                <div class="alert alert-warning mb-0 py-1 small" role="alert"
+                     invisible="type_demande != 'remplacement' or not partner_id or nb_machines_client">
+                    Ce client a <strong>0 machine</strong> : impossible de faire « Machine à remplacer ».
+                </div>
+            </form>
+        </field>
+    </record>
+
     <!-- Kanban : petit badge « Technicien » sur chaque carte, a cote de l'avatar -->
     <record id="helpdesk_ticket_view_kanban_technicien" model="ir.ui.view">
         <field name="name">helpdesk.ticket.kanban.technicien</field>
         <field name="model">helpdesk.ticket</field>
         <field name="inherit_id" ref="helpdesk.helpdesk_ticket_view_kanban"/>
         <field name="arch" type="xml">
+            <xpath expr="//kanban" position="attributes">
+                <attribute name="quick_create_view">suivi_machines_helpdesk.helpdesk_ticket_view_form_creation_rapide</attribute>
+            </xpath>
             <!-- Champ declare en tete : toujours charge, quelle que soit la structure de la carte -->
             <xpath expr="//kanban" position="inside">
                 <field name="technicien_id"/>

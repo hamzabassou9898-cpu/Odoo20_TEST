@@ -78,6 +78,10 @@ class TestPilotage(TransactionCase):
         liste = self.env["ir.actions.act_window"]._for_xml_id("suivi_machines_pilotage.action_pilotage_appels")
         self.assertFalse(liste.get("domain"))
         self.assertIn("search_default_grp_type_demande", liste["context"])
+        arch = self.env["helpdesk.ticket"].get_views(
+            [(self.env.ref("suivi_machines_pilotage.view_pilotage_appels_list").id, "list")])["views"]["list"]["arch"]
+        self.assertNotIn('create="false"', arch, "bouton Nouveau : créer un ticket depuis le Pilotage")
+        self.env["helpdesk.ticket"].get_views([(False, "form")])
 
     def test_toutes_les_cartes_et_vues(self):
         indicateurs = self.env["pilotage.indicateur"].search([])

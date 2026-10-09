@@ -94,7 +94,7 @@ class PortailTache(models.Model):
                 UNION ALL
                 SELECT t.id * 10 + 2, CASE WHEN t.est_entretien THEN 'entretien'
                                            WHEN t.type_demande = 'ramassage' THEN 'ramassage'
-                                           WHEN t.type_demande = 'commande' THEN 'autre'
+                                           WHEN t.type_demande IN ('commande', 'ajustement') THEN 'autre'
                                            ELSE 'reparation' END,
                        COALESCE(t.date_planifiee, t.create_date), %(technicien_ticket)s,
                        t.partner_id, t.name, '#' || t.id, COALESCE(s.name::text, '') !~* %(ferme)s,

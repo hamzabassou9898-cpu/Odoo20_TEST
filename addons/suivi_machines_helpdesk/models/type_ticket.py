@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Type de ticket (obligatoire a la creation) et statut des entretiens (a planifier / planifie / fait)."""
 from odoo import api, fields, models
+from odoo.exceptions import UserError, ValidationError
 
 TYPES_DEMANDE = [
     ("reparation", "Réparation"),
@@ -8,6 +9,7 @@ TYPES_DEMANDE = [
     ("entretien", "Entretien"),
     ("remplacement", "Machine à remplacer"),
     ("commande", "Passer une commande"),
+    ("ajustement", "Ajuster un contrat"),
 ]
 # Tickets qui se planifient (technicien a envoyer chez le client)
 TYPES_A_PLANIFIER = ("entretien", "reparation", "remplacement")
@@ -59,6 +61,16 @@ class HelpdeskTicket(models.Model):
                 ticket.statut_entretien = "planifie"
             else:
                 ticket.statut_entretien = "a_planifier"
+
+    @api.constrains("type_demande", "partner_id")
+    def _check_remplacement_sans_machine(self):
+        """« Machine a remplacer » : le client doit avoir au moins une machine chez lui."""
+        for ticket in self:
+            if ticket.type_demande == "remplacement" and ticket.partner_id and not ticket.nb_machines_client:
+                raise ValidationError(self.env._(
+                    "%s n'a aucune machine en inventaire : impossible de créer un ticket « Machine à remplacer ». "
+                    "Choisissez un autre type (ex. Passer une commande) ou vérifiez le client.",
+                    ticket.commerce_id.display_name or ticket.partner_id.display_name))
 
     # ------------------------------------------------------------ type « Ramassage » choisi a la main
     def _contrat_location_client(self):
@@ -140,6 +152,36 @@ class HelpdeskTicket(models.Model):
                 if valeurs:
                     super(HelpdeskTicket, ticket).write(valeurs)
         return res
+
+    # ------------------------------------------------------------ type « Ajuster un contrat »
+    def _contrats_location(self):
+        self.ensure_one()
+        client = (self.commerce_id or self.partner_id).commercial_partner_id
+        if not client:
+            return self.env["sale.order"]
+        return self.env["sale.order"].search(
+            [("type_commande", "=", "location"), ("state", "=", "sale"), "|",
+             ("partner_id", "child_of", client.id), ("partner_shipping_id", "child_of", client.id)],
+            order="date_order desc, id desc")
+
+    def action_ajuster_contrat(self):
+        """Ouvre le contrat de location du client (page de l'application Location) pour l'ajuster."""
+        self.ensure_one()
+        contrats = self._contrats_location()
+        if not contrats:
+            raise UserError(self.env._("%s n'a aucun contrat de location confirmé.",
+                                       (self.commerce_id or self.partner_id).display_name))
+        # Page de l'application Location si elle est installee, sinon la page de commande
+        vue_location = self.env.ref("sale_renting.rental_order_primary_form_view", raise_if_not_found=False)
+        contexte = {"in_rental_app": True} if vue_location else {}
+        if len(contrats) == 1:
+            return {"type": "ir.actions.act_window", "name": contrats.name, "res_model": "sale.order",
+                    "res_id": contrats.id, "view_mode": "form", "target": "current", "context": contexte,
+                    "views": [(vue_location.id if vue_location else False, "form")]}
+        return {"type": "ir.actions.act_window", "name": self.env._("Contrats de location"),
+                "res_model": "sale.order", "view_mode": "list,form", "target": "current",
+                "domain": [("id", "in", contrats.ids)], "context": contexte,
+                "views": [(False, "list"), (vue_location.id if vue_location else False, "form")]}
 
     def action_nouvelle_intervention(self):
         action = super().action_nouvelle_intervention()

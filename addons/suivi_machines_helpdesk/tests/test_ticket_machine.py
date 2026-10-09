@@ -2,6 +2,7 @@
 from dateutil.relativedelta import relativedelta
 
 from odoo import fields
+from odoo.exceptions import UserError, ValidationError
 from odoo.tests import Form, TransactionCase, freeze_time, tagged
 
 
@@ -266,6 +267,62 @@ class TestTicketMachine(TransactionCase):
         arch = self.env["helpdesk.ticket"].get_views([(False, "kanban")])["views"]["kanban"]["arch"]
         self.assertIn("technicien_id", arch)
 
+    def test_ajuster_un_contrat(self):
+        so = self.env["sale.order"].create({"partner_id": self.commerce.id, "type_commande": "location",
+                                            "order_line": [(0, 0, {"product_id": self.produit.id})]})
+        ticket = self.env["helpdesk.ticket"].create({"name": "Ajouter 2 machines", "partner_id": self.commerce.id,
+                                                     "type_demande": "ajustement"})
+        with self.assertRaises(UserError):
+            ticket.action_ajuster_contrat()          # devis pas encore confirme : pas un contrat
+        so.action_confirm()
+        action = ticket.action_ajuster_contrat()
+        self.assertEqual((action["res_model"], action["res_id"], action["view_mode"]), ("sale.order", so.id, "form"))
+        so2 = self.env["sale.order"].create({"partner_id": self.commerce.id, "type_commande": "location",
+                                             "order_line": [(0, 0, {"product_id": self.produit.id})]})
+        so2.action_confirm()
+        action = ticket.action_ajuster_contrat()
+        self.assertEqual(self.env["sale.order"].search(action["domain"]), so | so2, "plusieurs : la liste")
+        self.assertFalse(ticket.statut_entretien, "rien à planifier")
+        from lxml import etree
+        arch = etree.fromstring(self.env["helpdesk.ticket"].get_views([(False, "form")])["views"]["form"]["arch"])
+        bouton = arch.xpath("//header/button[@name='action_ajuster_contrat']")
+        self.assertEqual(bouton[0].get("invisible"), "type_demande != 'ajustement' or not partner_id")
+
+    def test_creation_rapide_avec_type(self):
+        kanban = self.env["helpdesk.ticket"].get_views([(False, "kanban")])["views"]["kanban"]["arch"]
+        self.assertIn('quick_create_view="suivi_machines_helpdesk.helpdesk_ticket_view_form_creation_rapide"', kanban)
+        vue = self.env.ref("suivi_machines_helpdesk.helpdesk_ticket_view_form_creation_rapide")
+        f = Form(self.env["helpdesk.ticket"], view=vue)
+        f.name = "Fuite"
+        f.partner_id = self.commerce
+        with self.assertRaises(AssertionError):
+            f.save()                       # type obligatoire
+        f.type_demande = "reparation"
+        ticket = f.save()
+        self.assertEqual((ticket.type_demande, ticket.code_client), ("reparation", "TST100"),
+                         "code client rempli depuis le client")
+
+    def test_remplacement_sans_machine_refuse(self):
+        from lxml import etree
+        sans = self.env["res.partner"].create({"name": "Client sans machine", "ref": "TST900"})
+        f = self._form()
+        f.code_client = "TST900"
+        f.type_demande = "remplacement"
+        self.assertEqual(f.nb_machines_client, 0)
+        with self.assertRaises(ValidationError):
+            f.save()
+        with self.assertRaises(ValidationError):
+            self.env["helpdesk.ticket"].create({"name": "X", "partner_id": sans.id, "type_demande": "remplacement"})
+        # Bandeau jaune dans le formulaire
+        arch = etree.fromstring(self.env["helpdesk.ticket"].get_views([(False, "form")])["views"]["form"]["arch"])
+        bandeau = arch.xpath("//div[contains(@class, 'alert-warning')][contains(., '0 machine')]")
+        self.assertEqual(bandeau[0].get("invisible"),
+                         "type_demande != 'remplacement' or not partner_id or nb_machines_client")
+        # Client avec des machines : accepte
+        ok = self.env["helpdesk.ticket"].create({"name": "Y", "partner_id": self.commerce.id,
+                                                 "type_demande": "remplacement"})
+        self.assertGreater(ok.nb_machines_client, 0)
+
     def test_ramassage_a_la_main(self):
         """Type « Ramassage » : Odoo trouve le contrat de location et les machines louees ;
         le bouton Ramassage ouvre directement le bon de retour."""
@@ -373,7 +430,7 @@ class TestTicketMachine(TransactionCase):
         self.env.ref("suivi_machines_helpdesk.cron_tickets_reprise").method_direct_trigger()
 
     def test_bouton_creer_ticket_reprise(self):
-        from odoo.exceptions import UserError
+        from odoo.exceptions import UserError, ValidationError
         stock = self.env.ref("stock.stock_location_stock")
         lot = self.env["stock.lot"].create({"name": "REP-2", "product_id": self.produit.id})
         self.env["stock.quant"]._update_available_quantity(self.produit, stock, 1, lot_id=lot)
