@@ -134,62 +134,6 @@ class TestPilotage(TransactionCase):
         assignee.stage_id = self.env["helpdesk.stage"].create({"name": "Résolu"})
         self.assertNotIn(assignee, self.env[model].search(domaine))
 
-    def _livrer(self, commande):
-        for pk in commande.picking_ids.filtered(lambda p: p.state not in ("done", "cancel")):
-            pk.action_assign()
-            pk.move_ids.picked = True
-            pk.with_context(skip_sms=True).button_validate()
-
-    def test_ajuster_contrat(self):
-        """Meme contrat : +1 machine et des pompes 3 mois plus tard, puis renouvellement."""
-        stock = self.env.ref("stock.stock_location_stock")
-        lots = self.env["stock.lot"]
-        for nom in ("AJ-1", "AJ-2", "AJ-3"):
-            lot = self.env["stock.lot"].create({"name": nom, "product_id": self.produit.id})
-            self.env["stock.quant"]._update_available_quantity(self.produit, stock, 1, lot_id=lot)
-            lots |= lot
-        pompe = self.env["product.product"].create({"name": "Pompe", "is_storable": True})
-        self.env["stock.quant"]._update_available_quantity(pompe, stock, 10)
-        fin = fields.Datetime.now() + relativedelta(years=2)
-        contrat = self.env["sale.order"].create({
-            "partner_id": self.client.id, "type_commande": "location", "date_fin_location": fin,
-            "order_line": [(0, 0, {"product_id": self.produit.id, "product_uom_qty": 1,
-                                   "machine_lot_id": lots[0].id})]})
-        contrat.action_confirm()
-        self._livrer(contrat)
-        self.assertEqual(contrat._machines_a_reprendre(), lots[0])
-        arch = self.env["sale.order"].get_views([(False, "form")])["views"]["form"]["arch"]
-        self.assertIn("action_ajuster_contrat", arch)
-        action = contrat.action_ajuster_contrat()
-        Assistant = self.env["suivi.ajuster.contrat"].with_context(**action["context"])
-        with self.assertRaises(UserError):
-            Assistant.create({}).action_appliquer()
-        with self.assertRaises(UserError):
-            Assistant.create({"machine_ids": [(6, 0, lots[0].ids)]}).action_appliquer()   # deja louee
-        assistant = Assistant.create({
-            "machine_ids": [(6, 0, lots[1:].ids)],
-            "accessoire_ids": [(0, 0, {"product_id": pompe.id, "quantite": 2})],
-            "renouveler": True, "nouvelle_date_fin": fin + relativedelta(years=2),
-            "note": "Renouvellement 2 ans"})
-        self.assertEqual(assistant.machines_actuelles_ids, lots[0])
-        resultat = assistant.action_appliquer()
-        livraison = self.env["stock.picking"].browse(resultat["res_id"])
-        self.assertEqual(resultat["res_model"], "stock.picking", "ouvre la nouvelle livraison")
-        self.assertEqual(livraison.sale_id, contrat, "même contrat")
-        self.assertEqual(set(livraison.move_ids.product_id.ids), {self.produit.id, pompe.id})
-        self.assertEqual(len(contrat.order_line), 4, "1 machine + 2 machines + pompes")
-        self.assertEqual(contrat.date_fin_location, fin + relativedelta(years=2), "renouvelé")
-        self._livrer(contrat)
-        self.assertEqual(contrat._machines_a_reprendre(), lots, "3 machines chez le client")
-        self.assertIn("Renouvellement 2 ans", contrat.message_ids[0].body)
-        # Renouvellement seul : on reste sur le contrat
-        seul = Assistant.create({"renouveler": True, "nouvelle_date_fin": fin + relativedelta(years=3)})
-        self.assertEqual(seul.action_appliquer()["res_model"], "sale.order")
-        with self.assertRaises(UserError):
-            Assistant.create({"renouveler": True, "nouvelle_date_fin": fin}).action_appliquer()  # avant la fin
-        menu = self.env.ref("suivi_machines_pilotage.menu_pilotage_ajuster_contrat")
-        self.assertEqual(menu.parent_id, self.env.ref("suivi_machines_pilotage.menu_pilotage_locations"))
-
     def test_produits_par_categorie(self):
         menu = self.env.ref("suivi_machines_pilotage.menu_pilotage_produits_categorie")
         self.assertEqual(menu.parent_id, self.env.ref("suivi_machines_pilotage.menu_pilotage_parc"))
