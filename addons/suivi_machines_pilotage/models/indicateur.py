@@ -6,8 +6,11 @@ from dateutil.relativedelta import relativedelta
 
 from odoo import api, fields, models
 
-SECTIONS = [("appels", "Appels de service"), ("entretiens", "Entretiens"), ("livraisons", "Livraisons & ramassages"), ("locations", "Locations"),
+SECTIONS = [("appels", "Appels de service"), ("entretiens", "Entretiens & réparations"),
+            ("livraisons", "Livraisons & ramassages"), ("locations", "Locations"),
             ("qualite", "Bris & réparations"), ("facturation", "Facturation")]
+# « Bris & réparations » est regroupe avec les entretiens : colonne masquee (valeur gardee pour les mises a jour)
+SECTIONS_AFFICHEES = [k for k, _ in SECTIONS if k != "qualite"]
 COULEURS = [("danger", "Rouge"), ("warning", "Orange"), ("success", "Vert"),
             ("info", "Bleu clair"), ("primary", "Violet")]
 
@@ -29,7 +32,7 @@ class PilotageIndicateur(models.Model):
     _code_unique = models.Constraint("UNIQUE(code)", "Un seul indicateur par code.")
 
     def _expand_sections(self, sections, domain):
-        return [k for k, _ in SECTIONS]
+        return SECTIONS_AFFICHEES
 
     # ------------------------------------------------------------ domaines (partages avec les menus)
     @api.model

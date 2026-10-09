@@ -59,16 +59,16 @@
     <record id="indicateur_bris_mois" model="pilotage.indicateur">
         <field name="code">bris_mois</field>
         <field name="name">Bris ce mois</field>
-        <field name="section">qualite</field>
-        <field name="sequence">1</field>
+        <field name="section">entretiens</field>
+        <field name="sequence">5</field>
         <field name="couleur">danger</field>
         <field name="description">Bris déclarés depuis le 1er du mois</field>
     </record>
     <record id="indicateur_machines_probleme" model="pilotage.indicateur">
         <field name="code">machines_probleme</field>
         <field name="name">Machines à problème</field>
-        <field name="section">qualite</field>
-        <field name="sequence">2</field>
+        <field name="section">entretiens</field>
+        <field name="sequence">6</field>
         <field name="couleur">warning</field>
         <field name="description">En réparation, à remplacer ou hors service</field>
     </record>

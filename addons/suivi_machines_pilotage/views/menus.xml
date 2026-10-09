@@ -8,32 +8,29 @@
 
     <menuitem id="menu_pilotage_appels" name="Appels de service" parent="menu_pilotage_root"
               action="action_pilotage_appels" sequence="5"/>
-    <menuitem id="menu_pilotage_entretiens" name="Entretiens" parent="menu_pilotage_root" sequence="10"/>
-    <menuitem id="menu_pilotage_entretiens_avenir" name="À venir" parent="menu_pilotage_entretiens"
+    <menuitem id="menu_pilotage_entretiens" name="Entretiens &amp; réparations" parent="menu_pilotage_root" sequence="10"/>
+    <menuitem id="menu_pilotage_entretiens_avenir" name="Entretiens à venir" parent="menu_pilotage_entretiens"
               action="action_pilotage_entretiens" sequence="1"/>
-    <menuitem id="menu_pilotage_entretiens_retard" name="En retard" parent="menu_pilotage_entretiens"
+    <menuitem id="menu_pilotage_entretiens_retard" name="Entretiens en retard" parent="menu_pilotage_entretiens"
               action="action_pilotage_entretiens_retard" sequence="2"/>
-    <menuitem id="menu_pilotage_entretiens_faits" name="Faits" parent="menu_pilotage_entretiens"
+    <menuitem id="menu_pilotage_entretiens_faits" name="Entretiens faits" parent="menu_pilotage_entretiens"
               action="action_pilotage_entretiens_faits" sequence="3"/>
     <menuitem id="menu_pilotage_tickets_entretien" name="Tickets d'entretien" parent="menu_pilotage_entretiens"
               action="action_pilotage_tickets_entretien" sequence="4"/>
 
-    <menuitem id="menu_pilotage_transferts" name="Techniciens &amp; tournées" parent="menu_pilotage_root" sequence="15"/>
-    <menuitem id="menu_portail_livreurs" name="Portail techniciens" parent="menu_pilotage_transferts"
-              action="action_portail_techniciens" sequence="1"/>
-    <menuitem id="menu_pilotage_transferts_semaine" name="Liste de la semaine" parent="menu_pilotage_transferts"
-              action="action_pilotage_transferts" sequence="2"/>
+    <!-- Portail techniciens : entree directe de la barre de menu -->
+    <menuitem id="menu_portail_livreurs" name="Portail techniciens" parent="menu_pilotage_root"
+              action="action_portail_techniciens" sequence="12"/>
     <menuitem id="menu_pilotage_locations" name="Locations" parent="menu_pilotage_root" sequence="20"/>
     <menuitem id="menu_pilotage_contrats" name="Contrats de location" parent="menu_pilotage_locations"
               action="action_pilotage_locations" sequence="1"/>
     <menuitem id="menu_pilotage_reprises" name="Tickets de reprise" parent="menu_pilotage_locations"
               action="action_pilotage_tickets_reprise" sequence="2"/>
 
-    <menuitem id="menu_pilotage_qualite" name="Bris &amp; réparations" parent="menu_pilotage_root" sequence="30"/>
-    <menuitem id="menu_pilotage_bris" name="Interventions" parent="menu_pilotage_qualite"
-              action="action_pilotage_bris" sequence="1"/>
-    <menuitem id="menu_pilotage_probleme" name="Machines à problème" parent="menu_pilotage_qualite"
-              action="action_pilotage_machines_probleme" sequence="2"/>
+    <menuitem id="menu_pilotage_bris" name="Bris &amp; réparations" parent="menu_pilotage_entretiens"
+              action="action_pilotage_bris" sequence="5"/>
+    <menuitem id="menu_pilotage_probleme" name="Machines à problème" parent="menu_pilotage_entretiens"
+              action="action_pilotage_machines_probleme" sequence="6"/>
 
     <menuitem id="menu_pilotage_facturation_racine" name="Facturation" parent="menu_pilotage_root" sequence="40"/>
     <menuitem id="menu_pilotage_facturation" name="Interventions à facturer" parent="menu_pilotage_facturation_racine"
@@ -48,6 +45,8 @@
               action="suivi_machines.action_vue_ensemble_machines" sequence="1"/>
     <menuitem id="menu_pilotage_toutes" name="Toutes les machines" parent="menu_pilotage_parc"
               action="suivi_machines.action_machines" sequence="2"/>
+    <menuitem id="menu_pilotage_transferts_semaine" name="Livraisons &amp; ramassages de la semaine"
+              parent="menu_pilotage_parc" action="action_pilotage_transferts" sequence="3"/>
 
     <menuitem id="menu_pilotage_outils" name="Outils" parent="menu_pilotage_root" sequence="90"/>
     <menuitem id="menu_pilotage_donnees_test" name="Tickets de test" parent="menu_pilotage_outils"

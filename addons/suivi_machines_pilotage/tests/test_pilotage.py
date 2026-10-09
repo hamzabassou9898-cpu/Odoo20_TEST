@@ -54,6 +54,23 @@ class TestPilotage(TransactionCase):
             Model.get_views(vues + [(action.get("search_view_id") and action["search_view_id"][0], "search")])
         self.env["pilotage.indicateur"].get_views([(False, "kanban")])
 
+    def test_entretiens_et_reparations_regroupes(self):
+        """Une seule section « Entretiens & réparations » (plus de colonne « Bris & réparations »)."""
+        Ind = self.env["pilotage.indicateur"]
+        self.assertFalse(Ind.search([("section", "=", "qualite")]))
+        self.assertEqual(self._ind("bris_mois").section, "entretiens")
+        self.assertEqual(self._ind("machines_probleme").section, "entretiens")
+        self.assertNotIn("qualite", Ind._expand_sections(None, []))
+        self.assertEqual(self.env.ref("suivi_machines_pilotage.menu_pilotage_bris").parent_id,
+                         self.env.ref("suivi_machines_pilotage.menu_pilotage_entretiens"))
+        self.assertFalse(self.env.ref("suivi_machines_pilotage.menu_pilotage_qualite", raise_if_not_found=False))
+        # Portail techniciens : entree directe de la barre de menu
+        racine = self.env.ref("suivi_machines_pilotage.menu_pilotage_root")
+        portail = self.env.ref("suivi_machines_pilotage.menu_portail_livreurs")
+        self.assertEqual(portail.parent_id, racine)
+        self.assertTrue(portail.action)
+        self.assertFalse(self.env.ref("suivi_machines_pilotage.menu_pilotage_transferts", raise_if_not_found=False))
+
     def test_menu_reserve_au_groupe(self):
         menu = self.env.ref("suivi_machines_pilotage.menu_pilotage_root")
         groupe = self.env.ref("suivi_machines_pilotage.group_pilotage")
