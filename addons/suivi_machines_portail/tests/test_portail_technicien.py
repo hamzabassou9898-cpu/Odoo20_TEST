@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import re
+
 from odoo import fields
 from odoo.tests import HttpCase, tagged
 
@@ -113,3 +115,52 @@ class TestPortailTechnicien(HttpCase):
         self.assertEqual((planifiee.user_id, faite.user_id), (self.tech_b, interne))
         self.env["portail.tache"].invalidate_model()
         self.assertEqual(self._tache(ouvert).technicien_id, self.tech_b)
+
+
+    # ------------------------------------------------------------ note + pieces jointes depuis le portail
+    def _csrf(self, url):
+        page = self.url_open(url)
+        return re.search(r'name="csrf_token" value="([^"]+)"', page.text).group(1)
+
+    def test_note_et_pieces_jointes(self):
+        self.authenticate("tech_portail_a", "tech_portail_a_mdp_123")
+        tache = self._tache(self.ticket)
+        url = "/my/journee/tache/%s" % tache.id
+        self.assertIn("Ajouter une note", self.url_open(url).text)
+        rep = self.url_open(url + "/note", data={"csrf_token": self._csrf(url),
+                                                 "note": "Joint remplacé.\nClient satisfait."},
+                            files=[("pieces_jointes", ("photo.jpg", b"\xff\xd8\xff photo", "image/jpeg")),
+                                   ("pieces_jointes", ("rapport.pdf", b"%PDF-1.4 rapport", "application/pdf"))])
+        self.assertEqual(rep.status_code, 200)
+        self.assertIn("Note envoyée", rep.text)
+        msg = self.ticket.note_technicien_ids
+        self.assertEqual(len(msg), 1)
+        self.assertEqual(msg.technicien_id, self.tech_a)
+        self.assertEqual(msg.note, "Joint remplacé.\nClient satisfait.")
+        self.assertEqual(sorted(msg.attachment_ids.mapped("name")), ["photo.jpg", "rapport.pdf"])
+        self.assertEqual(set(msg.attachment_ids.mapped("res_model")), {"helpdesk.ticket"})
+        self.assertEqual(set(msg.attachment_ids.mapped("res_id")), {self.ticket.id})
+        self.assertFalse(self.ticket.message_ids.filtered(lambda m: m.author_id == self.tech_a.partner_id),
+                         "rien dans la discussion")
+        # Visible par le bureau sur la fiche du ticket (onglet)
+        arch = self.env["helpdesk.ticket"].get_views([(False, "form")])["views"]["form"]["arch"]
+        self.assertIn("note_technicien_ids", arch)
+        # La note apparait dans « Mes notes envoyées »
+        self.assertIn("rapport.pdf", self.url_open(url).text)
+
+    def test_note_vide_ou_autre_technicien(self):
+        self.authenticate("tech_portail_a", "tech_portail_a_mdp_123")
+        tache = self._tache(self.ticket)
+        url = "/my/journee/tache/%s" % tache.id
+        rep = self.url_open(url + "/note", data={"csrf_token": self._csrf(url), "note": "  "})
+        self.assertIn("Écrivez une note", rep.text)
+        self.assertFalse(self.ticket.note_technicien_ids)
+        # Tache d'un autre technicien : refus, rien n'est ecrit
+        autre = self._tache(self.autre)
+        rep = self.url_open("/my/journee/tache/%s/note" % autre.id,
+                            data={"csrf_token": self._csrf(url), "note": "intrusion"})
+        self.assertTrue(rep.url.endswith("/my/journee"))
+        self.assertFalse(self.autre.note_technicien_ids)
+        # Sans jeton CSRF : refuse
+        rep = self.url_open(url + "/note", data={"note": "sans jeton"})
+        self.assertNotEqual(rep.status_code, 200)

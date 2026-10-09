@@ -1,3 +1,5 @@
 id,name,model_id,group_id/id,operation,domain
 access_remplacer_techniciens,Remplacer des techniciens,suivi.remplacer.techniciens,suivi_machines_pilotage.group_pilotage,crud,
 access_remplacer_techniciens_ligne,Remplacer des techniciens (ligne),suivi.remplacer.techniciens.ligne,suivi_machines_pilotage.group_pilotage,crud,
+access_note_technicien_user,Notes du technicien (lecture),suivi.note.technicien,base.group_user,r,
+access_note_technicien_admin,Notes du technicien (admin),suivi.note.technicien,base.group_system,crud,

@@ -102,7 +102,7 @@
                         <h6 class="text-uppercase text-muted mt-3 mb-1">Client</h6>
                         <div class="fw-bold" t-out="tache.partner_id.display_name"/>
                         <div t-if="tache.route" t-out="tache.route"/>
-                        <a t-if="telephone" t-attf-href="tel:#{telephone}" class="btn btn-sm btn-success mt-2">
+                        <a t-if="telephone" t-attf-href="tel:#{telephone}" class="btn btn-sm btn-success text-white mt-2">
                             <i class="oi me-1" data-icon="phone"/>Appeler <t t-out="telephone"/>
                         </a>
 
@@ -125,6 +125,46 @@
                         <t t-if="tache.reference">
                             <div class="text-muted small mt-3">Référence : <t t-out="tache.reference"/></div>
                         </t>
+                    </div>
+                </div>
+
+                <!-- Note du technicien + pieces jointes : arrive dans le fil du document (note interne) -->
+                <div class="card shadow-sm mt-3">
+                    <div class="card-body">
+                        <h5 class="mb-1">Ajouter une note</h5>
+                        <div class="text-muted small mb-2">Ce qui a été fait, pièces changées, photos… La note s'ajoute au ticket (onglet « Notes du technicien »).</div>
+                        <div t-if="envoye" class="alert alert-success py-2" role="status">Note envoyée au bureau. Merci !</div>
+                        <div t-if="erreur == 'vide'" class="alert alert-warning py-2" role="alert">Écrivez une note ou joignez un fichier.</div>
+                        <div t-if="erreur == 'taille'" class="alert alert-danger py-2" role="alert">Un fichier dépasse 20 Mo : rien n'a été envoyé.</div>
+                        <div t-if="erreur == 'nombre'" class="alert alert-danger py-2" role="alert">
+                            <t t-out="max_fichiers"/> fichiers au plus par envoi : rien n'a été envoyé.
+                        </div>
+                        <form t-attf-action="/my/journee/tache/#{tache.id}/note" method="post" enctype="multipart/form-data">
+                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                            <textarea name="note" class="form-control mb-2" rows="4"
+                                      placeholder="ex. Machine nettoyée, joint de la vis remplacé, le client demande un rappel lundi."/>
+                            <label class="form-label small text-muted mb-1" for="pieces_jointes">Photos et documents (20 Mo max. par fichier)</label>
+                            <input type="file" id="pieces_jointes" name="pieces_jointes" multiple="multiple" class="form-control mb-3"
+                                   accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,.heic"/>
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="oi me-1" data-icon="send"/>Envoyer au bureau
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <div t-if="mes_notes" class="card shadow-sm mt-3">
+                    <div class="card-body">
+                        <h6 class="text-uppercase text-muted mb-2">Mes notes envoyées</h6>
+                        <div t-foreach="mes_notes" t-as="msg" class="border-start border-3 ps-2 mb-3">
+                            <div class="small text-muted" t-out="msg.date" t-options="{'widget': 'datetime'}"/>
+                            <div t-if="msg.note" style="white-space: pre-line;" t-out="msg.note"/>
+                            <div t-if="msg.attachment_ids" class="small mt-1">
+                                <span t-foreach="msg.attachment_ids" t-as="pj" class="badge rounded-pill border o_badge_neutre me-1">
+                                    <i class="oi me-1" data-icon="attach_file"/><t t-out="pj.name"/>
+                                </span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

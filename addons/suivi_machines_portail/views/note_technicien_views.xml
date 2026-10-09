@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Liste des notes du technicien (reutilisee dans les onglets) -->
+    <record id="view_note_technicien_list" model="ir.ui.view">
+        <field name="name">suivi.note.technicien.list</field>
+        <field name="model">suivi.note.technicien</field>
+        <field name="arch" type="xml">
+            <list create="false" edit="false" delete="false">
+                <field name="date"/>
+                <field name="technicien_id" widget="many2one_avatar_user"/>
+                <field name="note"/>
+                <field name="attachment_ids" widget="many2many_binary" string="Pièces jointes"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_note_technicien_form" model="ir.ui.view">
+        <field name="name">suivi.note.technicien.form</field>
+        <field name="model">suivi.note.technicien</field>
+        <field name="arch" type="xml">
+            <form string="Note du technicien" create="false" edit="false">
+                <sheet>
+                    <group>
+                        <field name="technicien_id" widget="many2one_avatar_user"/>
+                        <field name="date"/>
+                    </group>
+                    <field name="note" nolabel="1" placeholder="(aucun texte)"/>
+                    <separator string="Pièces jointes"/>
+                    <field name="attachment_ids" widget="many2many_binary" nolabel="1"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Ticket : onglet « Notes du technicien » juste apres « Notes internes » -->
+    <record id="view_ticket_form_notes_technicien" model="ir.ui.view">
+        <field name="name">helpdesk.ticket.form.notes.technicien</field>
+        <field name="model">helpdesk.ticket</field>
+        <field name="inherit_id" ref="helpdesk.helpdesk_ticket_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[.//field[@name='description']]" position="after">
+                <page string="Notes du technicien" name="notes_technicien" invisible="not note_technicien_ids">
+                    <field name="note_technicien_ids" readonly="1" nolabel="1"
+                           context="{'list_view_ref': 'suivi_machines_portail.view_note_technicien_list'}"/>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_picking_form_notes_technicien" model="ir.ui.view">
+        <field name="name">stock.picking.form.notes.technicien</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Notes du technicien" name="notes_technicien" invisible="not note_technicien_ids">
+                    <field name="note_technicien_ids" readonly="1" nolabel="1"
+                           context="{'list_view_ref': 'suivi_machines_portail.view_note_technicien_list'}"/>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_intervention_form_notes_technicien" model="ir.ui.view">
+        <field name="name">machine.intervention.form.notes.technicien</field>
+        <field name="model">machine.intervention</field>
+        <field name="inherit_id" ref="suivi_machines.view_intervention_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <separator string="Notes du technicien" invisible="not note_technicien_ids"/>
+                <field name="note_technicien_ids" readonly="1" nolabel="1" invisible="not note_technicien_ids"
+                       context="{'list_view_ref': 'suivi_machines_portail.view_note_technicien_list'}"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
