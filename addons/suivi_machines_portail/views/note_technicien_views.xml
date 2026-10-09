@@ -5,11 +5,16 @@
         <field name="name">suivi.note.technicien.list</field>
         <field name="model">suivi.note.technicien</field>
         <field name="arch" type="xml">
-            <list create="false" edit="false" delete="false">
+            <list create="false" edit="false" delete="false" decoration-bf="not lu">
                 <field name="date"/>
                 <field name="technicien_id" widget="many2one_avatar_user"/>
                 <field name="note"/>
                 <field name="attachment_ids" widget="many2many_binary" string="Pièces jointes"/>
+                <field name="lu" column_invisible="1"/>
+                <button name="action_marquer_lu" type="object" string="Marquer comme lue" icon="check"
+                        class="btn-sm btn-primary" invisible="lu"/>
+                <field name="statut_lecture" widget="badge" decoration-success="statut_lecture == 'lue'"
+                       decoration-danger="statut_lecture == 'a_lire'"/>
             </list>
         </field>
     </record>
@@ -19,10 +24,23 @@
         <field name="model">suivi.note.technicien</field>
         <field name="arch" type="xml">
             <form string="Note du technicien" create="false" edit="false">
+                <header>
+                    <button name="action_marquer_lu" type="object" string="Marquer comme lue" class="btn-primary"
+                            invisible="lu"/>
+                    <button name="action_ouvrir_document" type="object" string="Ouvrir le document"/>
+                </header>
                 <sheet>
+                    <widget name="web_ribbon" title="Lue" bg_color="text-bg-success" invisible="not lu"/>
                     <group>
-                        <field name="technicien_id" widget="many2one_avatar_user"/>
-                        <field name="date"/>
+                        <group>
+                            <field name="technicien_id" widget="many2one_avatar_user"/>
+                            <field name="date"/>
+                        </group>
+                        <group>
+                            <field name="document"/>
+                            <field name="responsable_id" widget="many2one_avatar_user"/>
+                            <field name="lu"/>
+                        </group>
                     </group>
                     <field name="note" nolabel="1" placeholder="(aucun texte)"/>
                     <separator string="Pièces jointes"/>
@@ -30,6 +48,78 @@
                 </sheet>
             </form>
         </field>
+    </record>
+
+    <!-- Suivi : toutes les notes des techniciens, a lire en premier -->
+    <record id="view_note_technicien_suivi_list" model="ir.ui.view">
+        <field name="name">suivi.note.technicien.suivi.list</field>
+        <field name="model">suivi.note.technicien</field>
+        <field name="priority">20</field>
+        <field name="arch" type="xml">
+            <list create="false" delete="false" decoration-bf="not lu" default_order="lu, date desc">
+                <field name="date"/>
+                <field name="technicien_id" widget="many2one_avatar_user"/>
+                <field name="document"/>
+                <field name="note"/>
+                <field name="attachment_ids" widget="many2many_binary" string="Pièces jointes" optional="show"/>
+                <field name="responsable_id" widget="many2one_avatar_user" optional="hide"/>
+                <field name="lu" column_invisible="1"/>
+                <button name="action_ouvrir_document" type="object" string="Ouvrir" icon="open_in_new"
+                        class="btn-sm btn-link"/>
+                <button name="action_marquer_lu" type="object" string="Marquer comme lue" icon="check"
+                        class="btn-sm btn-primary" invisible="lu"/>
+                <field name="statut_lecture" widget="badge" decoration-success="statut_lecture == 'lue'"
+                       decoration-danger="statut_lecture == 'a_lire'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_note_technicien_search" model="ir.ui.view">
+        <field name="name">suivi.note.technicien.search</field>
+        <field name="model">suivi.note.technicien</field>
+        <field name="arch" type="xml">
+            <search string="Notes des techniciens">
+                <field name="technicien_id"/>
+                <field name="note"/>
+                <filter name="a_lire" string="À lire" domain="[('lu', '=', False)]"/>
+                <filter name="lues" string="Lues" domain="[('lu', '=', True)]"/>
+                <separator/>
+                <filter name="tickets" string="Tickets" domain="[('ticket_id', '!=', False)]"/>
+                <filter name="transferts" string="Livraisons / ramassages" domain="[('picking_id', '!=', False)]"/>
+                <group>
+                    <filter name="grp_tech" string="Technicien" context="{'group_by': 'technicien_id'}"/>
+                    <filter name="grp_jour" string="Jour" context="{'group_by': 'date:day'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_notes_technicien" model="ir.actions.act_window">
+        <field name="name">Notes des techniciens</field>
+        <field name="res_model">suivi.note.technicien</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_a_lire': 1}</field>
+        <field name="search_view_id" ref="view_note_technicien_search"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('view_note_technicien_suivi_list')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('view_note_technicien_form')})]"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aucune note à lire</p>
+            <p>Les notes et photos envoyées par les techniciens depuis leur portail arrivent ici.</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_notes_technicien" name="Notes des techniciens"
+              parent="suivi_machines_pilotage.menu_pilotage_entretiens" action="action_notes_technicien" sequence="7"/>
+
+    <!-- Tableau de bord : carte « Notes de techniciens à lire » -->
+    <record id="indicateur_notes_a_lire" model="pilotage.indicateur">
+        <field name="code">notes_a_lire</field>
+        <field name="name">Notes de techniciens à lire</field>
+        <field name="section">appels</field>
+        <field name="sequence">0</field>
+        <field name="couleur">danger</field>
+        <field name="description">Notes et photos envoyées depuis le portail</field>
     </record>
 
     <!-- Ticket : onglet « Notes du technicien » juste apres « Notes internes » -->

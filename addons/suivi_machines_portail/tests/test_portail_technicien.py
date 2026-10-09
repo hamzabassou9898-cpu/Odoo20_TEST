@@ -222,3 +222,54 @@ class TestPortailTechnicien(HttpCase):
         self.assertEqual(picking.note_technicien_ids.note, "Client absent, laissé au voisin")
         arch = self.env["stock.picking"].get_views([(False, "form")])["views"]["form"]["arch"]
         self.assertIn("note_technicien_ids", arch)
+
+
+    # ------------------------------------------------------------ l'admin est prevenu et fait le suivi
+    def _envoyer_note(self, texte="Pièce à commander", fichiers=None):
+        self.authenticate("tech_portail_a", "tech_portail_a_mdp_123")
+        url = "/my/journee/tache/%s" % self._tache(self.ticket).id
+        self.url_open(url + "/note", data={"csrf_token": self._csrf(url), "note": texte}, files=fichiers)
+        self.env.invalidate_all()
+        return self.ticket.note_technicien_ids[:1]
+
+    def test_admin_prevenu_par_une_activite(self):
+        admin = self.env.ref("base.user_admin")
+        note = self._envoyer_note(fichiers=[("pieces_jointes", ("p.jpg", b"\xff\xd8", "image/jpeg"))])
+        self.assertFalse(note.lu)
+        activite = note.activity_id
+        self.assertTrue(activite, "une activité est créée")
+        self.assertEqual(activite.user_id, admin, "pour le responsable (l'administrateur par défaut)")
+        self.assertEqual((activite.res_model, activite.res_id), ("helpdesk.ticket", self.ticket.id))
+        self.assertIn("Tech portail A", activite.summary)
+        self.assertIn(activite, self.ticket.activity_ids)
+        # Carte du tableau de bord
+        ind = self.env.ref("suivi_machines_portail.indicateur_notes_a_lire")
+        ind.invalidate_recordset()
+        self.assertEqual(ind.valeur, 1)
+        self.assertEqual(ind.action_ouvrir()["res_model"], "suivi.note.technicien")
+        # L'admin marque l'activite « Fait » (horloge) : la note devient « Lue »
+        activite.with_user(admin).action_done()
+        self.assertTrue(note.lu)
+        ind.invalidate_recordset()
+        self.assertEqual(ind.valeur, 0)
+
+    def test_marquer_lue_ferme_l_activite(self):
+        note = self._envoyer_note("Client absent")
+        activite = note.activity_id
+        note.with_user(self.env.ref("base.user_admin")).action_marquer_lu()
+        self.assertTrue(note.lu)
+        self.assertFalse(activite.active, "activité terminée")
+        self.assertFalse(self.ticket.activity_ids.filtered(lambda a: a == activite))
+
+    def test_activite_supprimee_note_lue(self):
+        note = self._envoyer_note("Rappel lundi")
+        note.activity_id.unlink()
+        self.assertTrue(note.lu)
+
+    def test_responsable_configure(self):
+        interne = self.env["res.users"].create({"name": "Josef", "login": "josef_test",
+                                                "group_ids": [(6, 0, [self.env.ref("base.group_user").id])]})
+        self.env["ir.config_parameter"].sudo().set_int("suivi_machines_helpdesk.responsable_reprise_id", interne.id)
+        note = self._envoyer_note("Pour Josef")
+        self.assertEqual(note.activity_id.user_id, interne)
+        self.assertEqual(note.responsable_id, interne)
