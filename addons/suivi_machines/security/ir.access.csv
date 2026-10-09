@@ -5,3 +5,4 @@ access_machine_historique_employe,Historique machine : lecture,machine.historiqu
 access_machine_intervention_frais_user,Frais d'intervention : utilisateurs inventaire,machine.intervention.frais,stock.group_stock_user,crud,
 access_machine_intervention_frais_vente,Frais d'intervention : ventes,machine.intervention.frais,sales_team.group_sale_salesman,crud,
 access_machine_intervention_frais_employe,Frais d'intervention : lecture,machine.intervention.frais,base.group_user,r,
+access_planifier_ramassage_user,Planifier le ramassage,suivi.machines.planifier.ramassage,stock.group_stock_user,crud,

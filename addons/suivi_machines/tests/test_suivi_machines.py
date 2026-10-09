@@ -288,6 +288,79 @@ class TestSuiviMachines(TransactionCase):
         self.assertEqual(interv.montant_frais, 40, "frais de reprise ajoutés")
         self.assertEqual(interv.etat_facturation, "a_facturer")
 
+    # ------------------------------------------------------------ planifier le ramassage depuis la livraison
+    def _livraison_2_machines_et_pompes(self):
+        pompe = self.env["product.product"].create({"name": "Pompe test", "is_storable": True})
+        self.env["stock.quant"]._update_available_quantity(pompe, self.stock, 10)
+        so = self.env["sale.order"].create({
+            "partner_id": self.client.id, "type_commande": "location", "order_line": [
+                (0, 0, {"product_id": self.produit.id, "product_uom_qty": 1, "machine_lot_id": self.lot_a.id}),
+                (0, 0, {"product_id": self.produit.id, "product_uom_qty": 1, "machine_lot_id": self.lot_b.id}),
+                (0, 0, {"product_id": pompe.id, "product_uom_qty": 3})]})
+        so.action_confirm()
+        livraison = so.picking_ids
+        livraison.action_assign()
+        livraison.move_ids.picked = True
+        livraison.button_validate()
+        self.assertEqual(livraison.state, "done")
+        return livraison, pompe
+
+    def test_planifier_ramassage_depuis_livraison(self):
+        from odoo.tests import Form
+        technicien = self.env["res.users"].create({"name": "Tech ramassage", "login": "tech_ramassage"})
+        livraison, pompe = self._livraison_2_machines_et_pompes()
+        action = livraison.action_planifier_ramassage()
+        self.assertEqual(action["res_model"], "suivi.machines.planifier.ramassage")
+        f = Form(self.env[action["res_model"]].with_context(**action["context"]))
+        self.assertEqual(set(f.lot_ids.ids), {self.lot_a.id, self.lot_b.id}, "machines chez le client cochées")
+        f.livreur_id = technicien
+        wiz = f.save()
+        self.assertIn("3 × Pompe test", wiz.accessoires)
+        retour = self.env["stock.picking"].browse(wiz.action_planifier()["res_id"])
+        # Bon de retour pret : une ligne par machine avec SON numero, les pompes, le technicien, la date
+        self.assertEqual(retour.location_id, livraison.location_dest_id)
+        self.assertEqual(retour.location_dest_id.usage, "internal")
+        self.assertEqual(retour.livreur_id, technicien)
+        self.assertEqual(retour.scheduled_date, wiz.date)
+        self.assertEqual(retour.return_id, livraison)
+        self.assertEqual(set(retour.move_ids.machine_lot_id.ids), {self.lot_a.id, self.lot_b.id})
+        self.assertEqual(set(retour.move_line_ids.lot_id.ids), {self.lot_a.id, self.lot_b.id})
+        self.assertEqual(sum(retour.move_ids.filtered(lambda m: m.product_id == pompe).mapped("product_uom_qty")), 3)
+        # Deuxieme clic : on retrouve le meme bon de retour (pas de doublon)
+        self.assertEqual(livraison.action_planifier_ramassage()["res_id"], retour.id)
+        # Validation du retour : machines en entrepot + interventions de ramassage avec le technicien
+        retour.move_ids.picked = True
+        retour.button_validate()
+        self.assertEqual(retour.state, "done")
+        self.assertEqual((self.lot_a.machine_statut, self.lot_b.machine_statut), ("entrepot", "entrepot"))
+        interv = (self.lot_a | self.lot_b).intervention_ids.filtered(lambda i: i.type == "ramassage")
+        self.assertEqual(len(interv), 2)
+        self.assertEqual(interv.user_id, technicien)
+        # Plus rien chez le client : le formulaire ne propose plus de machine
+        f2 = Form(self.env["suivi.machines.planifier.ramassage"].with_context(default_picking_id=livraison.id))
+        self.assertFalse(f2.lot_ids)
+
+    def test_planifier_ramassage_une_seule_machine_sans_pompes(self):
+        livraison, pompe = self._livraison_2_machines_et_pompes()
+        wiz = self.env["suivi.machines.planifier.ramassage"].with_context(default_picking_id=livraison.id).create({})
+        wiz.write({"lot_ids": [(6, 0, self.lot_a.ids)], "avec_accessoires": False})
+        retour = self.env["stock.picking"].browse(wiz.action_planifier()["res_id"])
+        self.assertEqual(retour.move_ids.machine_lot_id, self.lot_a)
+        self.assertFalse(retour.move_ids.filtered(lambda m: m.product_id == pompe))
+
+    def test_planifier_ramassage_refuse_si_pas_terminee(self):
+        from odoo.exceptions import UserError
+        picking = self.env["stock.picking"].create({
+            "picking_type_id": self.env.ref("stock.picking_type_out").id, "partner_id": self.client.id,
+            "location_id": self.stock.id, "location_dest_id": self.clients_loc.id})
+        with self.assertRaises(UserError):
+            picking.action_planifier_ramassage()
+        livraison, _pompe = self._livraison_2_machines_et_pompes()
+        wiz = self.env["suivi.machines.planifier.ramassage"].with_context(default_picking_id=livraison.id).create({})
+        wiz.write({"lot_ids": [(5, 0, 0)], "avec_accessoires": False})
+        with self.assertRaises(UserError):
+            wiz.action_planifier()
+
     def test_date_fin_location_saisie(self):
         so = self._commande(self.lot_b, "location")
         fin = fields.Datetime.now() + relativedelta(days=10)

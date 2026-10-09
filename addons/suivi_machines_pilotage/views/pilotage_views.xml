@@ -351,6 +351,28 @@
         </field>
     </record>
 
+    <!-- Livraisons terminees : planifier le ramassage en un clic -->
+    <record id="view_pilotage_livraisons_faites_list" model="ir.ui.view">
+        <field name="name">pilotage.stock.picking.livraisons.faites.list</field>
+        <field name="model">stock.picking</field>
+        <field name="priority">100</field>
+        <field name="arch" type="xml">
+            <list create="false" default_order="date_done desc">
+                <field name="date_done" string="Livré le"/>
+                <field name="name" string="Livraison"/>
+                <field name="partner_id" string="Client"/>
+                <field name="route" string="Adresse" optional="show"/>
+                <field name="machines_tournee" string="Machines"/>
+                <field name="accessoires_tournee" string="Accessoires" optional="show"/>
+                <field name="origin" string="Document" optional="show"/>
+                <field name="state" column_invisible="1"/>
+                <field name="picking_type_code" column_invisible="1"/>
+                <button name="action_planifier_ramassage" type="object" string="Planifier le ramassage"
+                        icon="local_shipping" class="btn-sm btn-primary"/>
+            </list>
+        </field>
+    </record>
+
     <record id="view_pilotage_transfert_calendar" model="ir.ui.view">
         <field name="name">pilotage.stock.picking.calendar</field>
         <field name="model">stock.picking</field>
@@ -399,6 +421,22 @@
             </search>
         </field>
     </record>
+
+    <record id="action_pilotage_planifier_ramassage" model="ir.actions.act_window">
+        <field name="name">Planifier un ramassage</field>
+        <field name="res_model">stock.picking</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('type_tournee', '=', 'livraison'), ('state', '=', 'done'),
+                              ('move_ids.product_id.categ_id.suivi_machine', '=', True)]</field>
+        <field name="search_view_id" ref="view_pilotage_transfert_search"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('view_pilotage_livraisons_faites_list')})]"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aucune livraison de machine terminée</p>
+            <p>Les machines livrées chez les clients apparaissent ici : « Planifier le ramassage » crée le bon de retour.</p>
+        </field>
+    </record>
+
 
     <record id="action_pilotage_transferts" model="ir.actions.act_window">
         <field name="name">Livraisons et ramassages</field>

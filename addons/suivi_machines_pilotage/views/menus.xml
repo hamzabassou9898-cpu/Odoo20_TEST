@@ -26,6 +26,8 @@
               action="action_pilotage_locations" sequence="1"/>
     <menuitem id="menu_pilotage_reprises" name="Tickets de reprise" parent="menu_pilotage_locations"
               action="action_pilotage_tickets_reprise" sequence="2"/>
+    <menuitem id="menu_pilotage_planifier_ramassage" name="Planifier un ramassage" parent="menu_pilotage_locations"
+              action="action_pilotage_planifier_ramassage" sequence="3"/>
 
     <menuitem id="menu_pilotage_bris" name="Bris &amp; réparations" parent="menu_pilotage_entretiens"
               action="action_pilotage_bris" sequence="5"/>

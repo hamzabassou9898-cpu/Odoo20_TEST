@@ -162,6 +162,17 @@ class TestPortailLivreurs(TransactionCase):
         self.assertFalse(Tache.search([("intervention_id", "=", interv.id)]))
         Tache.get_views([(False, "kanban"), (False, "list"), (False, "calendar"), (False, "form"), (False, "search")])
 
+        # Pilotage > Locations > Planifier un ramassage : la livraison terminee y figure, avec son bouton
+        pk.action_assign()
+        pk.move_ids.picked = True
+        pk.button_validate()
+        action = env["ir.actions.act_window"]._for_xml_id("suivi_machines_pilotage.action_pilotage_planifier_ramassage")
+        self.assertIn(pk, env["stock.picking"].search(eval(action["domain"])))
+        vue = env["stock.picking"].get_views(
+            [(env.ref("suivi_machines_pilotage.view_pilotage_livraisons_faites_list").id, "list")])
+        self.assertIn("action_planifier_ramassage", vue["views"]["list"]["arch"])
+        self.assertEqual(pk.action_planifier_ramassage()["res_model"], "suivi.machines.planifier.ramassage")
+
         # Suivi de Josef : en retard / fait
         tache_ticket = Tache.search([("ticket_id", "=", ticket.id)])
         self.assertEqual(tache_ticket.etat_suivi, "a_faire")

@@ -6,6 +6,12 @@
         <field name="model">stock.picking</field>
         <field name="inherit_id" ref="stock.view_picking_form"/>
         <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <field name="picking_type_code" invisible="1"/>
+                <button name="action_planifier_ramassage" type="object" string="Planifier le ramassage"
+                        class="btn-primary" invisible="state != 'done' or picking_type_code != 'outgoing'"
+                        help="Créer le bon de retour des machines (et accessoires) de cette livraison"/>
+            </xpath>
             <field name="origin" position="before">
                 <field name="livreur_id" widget="many2one_avatar_user"
                        readonly="state in ('done', 'cancel')"/>
@@ -39,6 +45,36 @@
                 <field name="livreur_id"/>
                 <filter name="grp_livreur" string="Technicien" context="{'group_by': 'livreur_id'}"/>
             </xpath>
+        </field>
+    </record>
+
+    <record id="view_planifier_ramassage_form" model="ir.ui.view">
+        <field name="name">suivi.machines.planifier.ramassage.form</field>
+        <field name="model">suivi.machines.planifier.ramassage</field>
+        <field name="arch" type="xml">
+            <form string="Planifier le ramassage">
+                <group>
+                    <group>
+                        <field name="picking_id"/>
+                        <field name="partner_id"/>
+                    </group>
+                    <group>
+                        <field name="date"/>
+                        <field name="livreur_id" widget="many2one_avatar_user" options="{'no_create': True}"/>
+                    </group>
+                </group>
+                <field name="machines_livrees_ids" invisible="1"/>
+                <separator string="Machines à reprendre"/>
+                <field name="lot_ids" widget="many2many_checkboxes" nolabel="1"/>
+                <group invisible="not accessoires">
+                    <field name="avec_accessoires"/>
+                    <field name="accessoires" readonly="1"/>
+                </group>
+                <footer>
+                    <button name="action_planifier" type="object" string="Créer le bon de retour" class="btn-primary"/>
+                    <button string="Annuler" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
         </field>
     </record>
 </odoo>
