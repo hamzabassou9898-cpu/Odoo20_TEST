@@ -71,15 +71,21 @@ class PilotageIndicateur(models.Model):
             "reprises_30j": ("sale.order", location + [("date_fin_location", ">=", b["maintenant"]),
                                                        ("date_fin_location", "<=", b["dans_30j"])]),
             "locations_depassees": ("sale.order", location + [("date_fin_location", "<", b["maintenant"])]),
-            # Appels de service + entretiens pas encore assignes a un technicien (a planifier)
-            "appels_ouverts": ("helpdesk.ticket", ["|", ("type_ticket", "=", "appel"),
-                                                   ("statut_entretien", "=", "a_planifier")] + ouverts),
-            "entretiens_a_planifier": ("helpdesk.ticket", [("statut_entretien", "=", "a_planifier")]),
+            # Appels de service : tout ticket ouvert pas encore planifie (hors reprises). Des qu'un
+            # technicien est assigne, il passe dans Entretiens / Reparations planifies a faire.
+            "appels_ouverts": ("helpdesk.ticket", [("type_ticket", "!=", "reprise"),
+                                                   ("statut_entretien", "!=", "planifie")] + ouverts),
+            "entretiens_a_planifier": ("helpdesk.ticket", [("est_entretien", "=", True),
+                                                           ("statut_entretien", "=", "a_planifier")]),
             # Ticket qui vient d'arriver : etape « Nouveau » (ou pas encore d'etape)
             "tickets_nouveaux": ("helpdesk.ticket", ["|", ("stage_id", "=", False),
                                                      ("stage_id.name", "ilike", "nouveau")]),
             # Planifie = assigne a un technicien (ou intervention planifiee) : dans sa journee
-            "entretiens_ouverts": ("helpdesk.ticket", [("statut_entretien", "=", "planifie")]),
+            "entretiens_ouverts": ("helpdesk.ticket", [("est_entretien", "=", True),
+                                                       ("statut_entretien", "=", "planifie")]),
+            # Reparation / machine a remplacer assignee a un technicien, pas encore resolue
+            "reparations_planifiees": ("helpdesk.ticket", [("est_entretien", "=", False),
+                                                           ("statut_entretien", "=", "planifie")]),
             "reprises_ouvertes": ("helpdesk.ticket", [("type_ticket", "=", "reprise")] + ouverts),
             "appels_mois": ("helpdesk.ticket", appels + [
                 ("create_date", ">=", fields.Datetime.to_datetime(b["debut_mois"]))]),
@@ -133,6 +139,7 @@ class PilotageIndicateur(models.Model):
         "entretiens_a_planifier": ("suivi_machines_pilotage.action_pilotage_appels", ("entretiens_a_planifier",)),
         "tickets_nouveaux": ("suivi_machines_pilotage.action_pilotage_appels", ("nouveaux",)),
         "entretiens_ouverts": ("suivi_machines_pilotage.action_pilotage_appels", ("entretiens_planifies",)),
+        "reparations_planifiees": ("suivi_machines_pilotage.action_pilotage_appels", ("reparations_planifiees",)),
         "reprises_ouvertes": ("suivi_machines_pilotage.action_pilotage_appels", ("type_reprise", "ouverts")),
         "appels_mois": ("suivi_machines_pilotage.action_pilotage_appels", ("type_appel", "ce_mois")),
         "appels_sans_machine": ("suivi_machines_pilotage.action_pilotage_appels", ("type_appel", "ouverts",

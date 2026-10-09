@@ -617,14 +617,16 @@ class TestTicketMachine(TransactionCase):
             f.save()
         f.type_demande = "remplacement"
         ticket = f.save()
-        self.assertEqual((ticket.type_demande, ticket.est_entretien, ticket.origine_auto),
-                         ("remplacement", False, False), "créé par une personne : pas de bandeau")
+        self.assertEqual((ticket.type_demande, ticket.est_entretien, ticket.origine_auto, ticket.statut_entretien),
+                         ("remplacement", False, False, "a_planifier"), "créé par une personne : pas de bandeau")
         # Type « Entretien » choisi a la main : c'est un ticket d'entretien (bouton Valider, Pilotage)
         ticket.type_demande = "entretien"
         self.assertTrue(ticket.est_entretien)
         self.assertEqual(ticket.statut_entretien, "a_planifier")
         ticket.type_demande = "reparation"
         self.assertFalse(ticket.est_entretien)
-        self.assertFalse(ticket.statut_entretien)
+        self.assertEqual(ticket.statut_entretien, "a_planifier", "une réparation se planifie aussi")
+        ticket.type_demande = "commande"
+        self.assertFalse(ticket.statut_entretien, "passer une commande : rien à planifier")
         for valeur in ("reparation", "ramassage", "entretien", "remplacement", "commande"):
             self.assertIn(valeur, dict(self.env["helpdesk.ticket"]._fields["type_demande"].selection))

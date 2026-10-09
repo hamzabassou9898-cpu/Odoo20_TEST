@@ -122,45 +122,5 @@
         <field name="description">Notes et photos envoyées depuis le portail</field>
     </record>
 
-    <!-- Ticket : onglet « Notes du technicien » juste apres « Notes internes » -->
-    <record id="view_ticket_form_notes_technicien" model="ir.ui.view">
-        <field name="name">helpdesk.ticket.form.notes.technicien</field>
-        <field name="model">helpdesk.ticket</field>
-        <field name="inherit_id" ref="helpdesk.helpdesk_ticket_view_form"/>
-        <field name="arch" type="xml">
-            <xpath expr="//page[.//field[@name='description']]" position="after">
-                <page string="Notes du technicien" name="notes_technicien" invisible="not note_technicien_ids">
-                    <field name="note_technicien_ids" readonly="1" nolabel="1"
-                           context="{'list_view_ref': 'suivi_machines_portail.view_note_technicien_list'}"/>
-                </page>
-            </xpath>
-        </field>
-    </record>
-
-    <record id="view_picking_form_notes_technicien" model="ir.ui.view">
-        <field name="name">stock.picking.form.notes.technicien</field>
-        <field name="model">stock.picking</field>
-        <field name="inherit_id" ref="stock.view_picking_form"/>
-        <field name="arch" type="xml">
-            <xpath expr="//notebook" position="inside">
-                <page string="Notes du technicien" name="notes_technicien" invisible="not note_technicien_ids">
-                    <field name="note_technicien_ids" readonly="1" nolabel="1"
-                           context="{'list_view_ref': 'suivi_machines_portail.view_note_technicien_list'}"/>
-                </page>
-            </xpath>
-        </field>
-    </record>
-
-    <record id="view_intervention_form_notes_technicien" model="ir.ui.view">
-        <field name="name">machine.intervention.form.notes.technicien</field>
-        <field name="model">machine.intervention</field>
-        <field name="inherit_id" ref="suivi_machines.view_intervention_form"/>
-        <field name="arch" type="xml">
-            <xpath expr="//sheet" position="inside">
-                <separator string="Notes du technicien" invisible="not note_technicien_ids"/>
-                <field name="note_technicien_ids" readonly="1" nolabel="1" invisible="not note_technicien_ids"
-                       context="{'list_view_ref': 'suivi_machines_portail.view_note_technicien_list'}"/>
-            </xpath>
-        </field>
-    </record>
+    <!-- Pas d'onglet sur les fiches : la note du technicien est dans le fil de discussion, a droite -->
 </odoo>

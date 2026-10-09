@@ -63,7 +63,7 @@
             <!-- Un seul technicien : le champ natif « Assigné à », puis la date et le statut -->
             <xpath expr="//field[@name='user_id']" position="after">
                 <field name="date_planifiee" invisible="est_reprise"/>
-                <field name="statut_entretien" widget="badge" invisible="not est_entretien"
+                <field name="statut_entretien" widget="badge" invisible="not statut_entretien"
                        decoration-warning="statut_entretien == 'a_planifier'"
                        decoration-info="statut_entretien == 'planifie'"
                        decoration-success="statut_entretien == 'fait'"/>

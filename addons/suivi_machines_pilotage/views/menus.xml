@@ -53,6 +53,8 @@
               action="suivi_machines.action_machines" sequence="2"/>
     <menuitem id="menu_pilotage_transferts_semaine" name="Livraisons &amp; ramassages de la semaine"
               parent="menu_pilotage_parc" action="action_pilotage_transferts" sequence="3"/>
+    <menuitem id="menu_pilotage_produits_categorie" name="Produits par catégorie"
+              parent="menu_pilotage_parc" action="action_pilotage_produits_categorie" sequence="4"/>
 
     <menuitem id="menu_pilotage_outils" name="Outils" parent="menu_pilotage_root" sequence="90"/>
     <menuitem id="menu_pilotage_donnees_test" name="Tickets de test" parent="menu_pilotage_outils"

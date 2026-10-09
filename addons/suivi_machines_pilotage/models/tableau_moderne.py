@@ -56,9 +56,8 @@ class PilotageIndicateur(models.Model):
 
     @api.model
     def _domaine_clients(self):
-        # Clients = societes et commerces (pas les personnes rattachees) qui ont deja achete ou loue
-        # (Odoo ne compte un client qu'a sa 1re facture : on ajoute ceux qui ont une commande)
-        return [("parent_id", "=", False), "|", ("customer_rank", ">", 0), ("sale_order_ids", "!=", False)]
+        # Tous les contacts actifs, exactement comme l'application Contacts
+        return []
 
     @api.model
     def action_par_code(self, code):
@@ -91,7 +90,7 @@ class PilotageIndicateur(models.Model):
             xmlid = "contacts.action_contacts" if self.env.ref("contacts.action_contacts", raise_if_not_found=False) \
                 else "base.action_partner_form"
             action = self.env["ir.actions.act_window"]._for_xml_id(xmlid)
-            action.update({"name": self.env._("Nos clients"), "domain": self._domaine_clients(),
+            action.update({"name": self.env._("Nos contacts"), "domain": self._domaine_clients(),
                            "context": {"default_is_company": True}})
             return action
         if code == "tournees_a_faire":
@@ -155,7 +154,7 @@ class PilotageIndicateur(models.Model):
             {"code": "ventes_mois", "valeur": format_amount(self.env, round(ventes), devise, trailing_zeroes=False),
              "libelle": "Ventes du mois (hors taxes)", "icone": "payments", "couleur": "success",
              "tendance": tendance_ventes, "tendance_couleur": couleur_ventes},
-            {"code": "clients", "valeur": nb_clients, "libelle": "Nos clients", "icone": "person",
+            {"code": "clients", "valeur": nb_clients, "libelle": "Nos contacts", "icone": "person",
              "couleur": "primary", "tendance": "+%s ce mois" % nouveaux if nouveaux else "",
              "tendance_couleur": "success"},
             {"code": "appels_ouverts", "valeur": c.get("appels_ouverts", 0), "libelle": "Appels de service ouverts",

@@ -9,6 +9,8 @@ TYPES_DEMANDE = [
     ("remplacement", "Machine à remplacer"),
     ("commande", "Passer une commande"),
 ]
+# Tickets qui se planifient (technicien a envoyer chez le client)
+TYPES_A_PLANIFIER = ("entretien", "reparation", "remplacement")
 STATUTS_ENTRETIEN = [("a_planifier", "À planifier"), ("planifie", "Planifié"), ("fait", "Fait")]
 # Etapes qui ferment un ticket (Resolu, Cloture, Annule)
 MOTS_FERME = ("résolu", "resolu", "clôtur", "clotur", "annul")
@@ -24,9 +26,9 @@ class HelpdeskTicket(models.Model):
         precompute=True, index=True, tracking=True,
         help="Ce qu'il faut faire chez le client : aide à planifier le ticket.")
     statut_entretien = fields.Selection(
-        STATUTS_ENTRETIEN, "Statut de l'entretien", compute="_compute_statut_entretien", store=True,
-        index=True, help="À planifier : aucun technicien. Planifié : assigné à un technicien "
-                         "(ou intervention planifiée) — il apparaît dans sa journée. Fait : ticket résolu.")
+        STATUTS_ENTRETIEN, "Planification", compute="_compute_statut_entretien", store=True,
+        index=True, help="Entretiens et réparations. À planifier : aucun technicien. Planifié : assigné à un "
+                         "technicien (ou intervention planifiée) — il apparaît dans sa journée. Fait : ticket résolu.")
 
     origine_auto = fields.Selection(
         ORIGINES_AUTO, "Créé automatiquement", readonly=True, copy=False,
@@ -44,10 +46,12 @@ class HelpdeskTicket(models.Model):
             else:
                 ticket.type_demande = ticket.type_demande
 
-    @api.depends("est_entretien", "user_id", "stage_id", "intervention_ticket_ids.state")
+    @api.depends("est_entretien", "type_demande", "commande_reprise_id", "user_id", "stage_id",
+                 "intervention_ticket_ids.state")
     def _compute_statut_entretien(self):
         for ticket in self:
-            if not ticket.est_entretien:
+            if ticket.commande_reprise_id or not (ticket.est_entretien
+                                                  or ticket.type_demande in TYPES_A_PLANIFIER):
                 ticket.statut_entretien = False
             elif any(mot in (ticket.stage_id.name or "").lower() for mot in MOTS_FERME):
                 ticket.statut_entretien = "fait"

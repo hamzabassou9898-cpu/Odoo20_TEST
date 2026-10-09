@@ -167,9 +167,10 @@ class TestPortailTechnicien(HttpCase):
         self.assertIn("Joint remplacé.", msg_fil.body)
         self.assertTrue(msg_fil.subtype_id.internal, "note interne : pas de courriel au client")
         self.assertEqual(sorted(msg_fil.attachment_ids.mapped("name")), ["photo.jpg", "rapport.pdf"])
-        # Visible par le bureau sur la fiche du ticket (onglet)
-        arch = self.env["helpdesk.ticket"].get_views([(False, "form")])["views"]["form"]["arch"]
-        self.assertIn("note_technicien_ids", arch)
+        # Sur la fiche : seulement dans le fil de discussion a droite (plus d'onglet)
+        for model in ("helpdesk.ticket", "stock.picking", "machine.intervention"):
+            arch = self.env[model].get_views([(False, "form")])["views"]["form"]["arch"]
+            self.assertNotIn("note_technicien_ids", arch, model)
         # La note apparait dans « Mes notes envoyées »
         self.assertIn("rapport.pdf", self.url_open(url).text)
 
@@ -245,8 +246,7 @@ class TestPortailTechnicien(HttpCase):
         url = "/my/journee/tache/%s" % tache.id
         self.url_open(url + "/note", data={"csrf_token": self._csrf(url), "note": "Client absent, laissé au voisin"})
         self.assertEqual(picking.note_technicien_ids.note, "Client absent, laissé au voisin")
-        arch = self.env["stock.picking"].get_views([(False, "form")])["views"]["form"]["arch"]
-        self.assertIn("note_technicien_ids", arch)
+        self.assertIn("Client absent", picking.message_ids[:1].body, "dans le fil de la livraison")
 
 
     # ------------------------------------------------------------ l'admin est prevenu et fait le suivi

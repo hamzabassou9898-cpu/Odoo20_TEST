@@ -519,12 +519,14 @@
                 <filter name="type_entretien" string="Entretiens" domain="[('type_ticket', '=', 'entretien')]"/>
                 <filter name="type_reprise" string="Reprises de machine" domain="[('type_ticket', '=', 'reprise')]"/>
                 <separator/>
-                <filter name="a_traiter" string="Appels et entretiens à planifier"
-                        domain="['|', ('type_ticket', '=', 'appel'), ('statut_entretien', '=', 'a_planifier')]"/>
+                <filter name="a_traiter" string="À planifier (sans technicien)"
+                        domain="[('type_ticket', '!=', 'reprise'), ('statut_entretien', '!=', 'planifie')]"/>
                 <filter name="entretiens_a_planifier" string="Entretiens à planifier"
-                        domain="[('statut_entretien', '=', 'a_planifier')]"/>
+                        domain="[('est_entretien', '=', True), ('statut_entretien', '=', 'a_planifier')]"/>
                 <filter name="entretiens_planifies" string="Entretiens planifiés à faire"
-                        domain="[('statut_entretien', '=', 'planifie')]"/>
+                        domain="[('est_entretien', '=', True), ('statut_entretien', '=', 'planifie')]"/>
+                <filter name="reparations_planifiees" string="Réparations planifiées à faire"
+                        domain="[('est_entretien', '=', False), ('statut_entretien', '=', 'planifie')]"/>
                 <separator/>
                 <filter name="ouverts" string="Ouverts"
                         domain="['!', '|', '|', ('stage_id.name', 'ilike', 'résolu'), ('stage_id.name', 'ilike', 'annul'), ('stage_id.name', 'ilike', 'clôtur')]"/>
@@ -559,5 +561,37 @@
             (0, 0, {'view_mode': 'list', 'view_id': ref('view_pilotage_appels_list')}),
             (0, 0, {'view_mode': 'graph', 'view_id': ref('view_pilotage_appels_graph')}),
             (0, 0, {'view_mode': 'pivot', 'view_id': ref('view_pilotage_appels_pivot')})]"/>
+    </record>
+    <!-- ================================================================ PRODUITS PAR CATEGORIE -->
+    <!-- Liste simple, sans total des prix par categorie (une somme de prix ne veut rien dire) -->
+    <record id="view_pilotage_produits_list" model="ir.ui.view">
+        <field name="name">pilotage.product.template.list</field>
+        <field name="model">product.template</field>
+        <field name="priority">100</field>
+        <field name="arch" type="xml">
+            <list string="Produits">
+                <field name="name"/>
+                <field name="default_code" optional="show"/>
+                <field name="categ_id" optional="hide"/>
+                <field name="prix_vente" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                <field name="standard_price" string="Coût" widget="monetary" optional="hide"
+                       options="{'currency_field': 'cost_currency_id'}"/>
+                <field name="qty_available" string="En stock" optional="show"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="cost_currency_id" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_pilotage_produits_categorie" model="ir.actions.act_window">
+        <field name="name">Produits par catégorie</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">list,kanban,form</field>
+        <field name="search_view_id" ref="product.product_template_search_view"/>
+        <field name="context">{'search_default_group_by_categ_id': 1}</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('view_pilotage_produits_list')}),
+            (0, 0, {'view_mode': 'kanban'}),
+            (0, 0, {'view_mode': 'form'})]"/>
     </record>
 </odoo>

@@ -3,7 +3,7 @@ from dateutil.relativedelta import relativedelta
 
 from odoo import fields
 from odoo.exceptions import UserError
-from odoo.tests import TransactionCase, tagged
+from odoo.tests import Form, TransactionCase, tagged
 
 
 @tagged("post_install", "-at_install")
@@ -91,6 +91,65 @@ class TestPilotage(TransactionCase):
             vues = [(v, m) for v, m in action["views"]]
             Model.get_views(vues + [(action.get("search_view_id") and action["search_view_id"][0], "search")])
         self.env["pilotage.indicateur"].get_views([(False, "kanban")])
+
+    def test_reparations_planifiees(self):
+        Ticket = self.env["helpdesk.ticket"]
+        tech = self.env["res.users"].create({"name": "Tech répare", "login": "tech_repare"})
+        sans_tech = Ticket.create({"name": "Fuit", "code_client": "PIL1", "type_demande": "reparation"})
+        assignee = Ticket.create({"name": "Ne gèle pas", "code_client": "PIL1", "type_demande": "reparation",
+                                  "user_id": tech.id})
+        remplacer = Ticket.create({"name": "À remplacer", "code_client": "PIL1", "type_demande": "remplacement",
+                                   "user_id": tech.id})
+        commande = Ticket.create({"name": "Sirop", "code_client": "PIL1", "type_demande": "commande",
+                                  "user_id": tech.id})
+        tous = sans_tech | assignee | remplacer | commande
+        domaines = self.env["pilotage.indicateur"]._domaines()
+        model, domaine = domaines["reparations_planifiees"]
+
+        def dans(code):
+            return tous & self.env["helpdesk.ticket"].search(domaines[code][1])
+
+        self.assertEqual(dans("reparations_planifiees"), assignee | remplacer)
+        self.assertEqual(dans("appels_ouverts"), sans_tech | commande, "pas encore planifiés")
+        self.assertFalse(dans("entretiens_ouverts"))
+        # Ticket ouvert -> Nouvelle intervention de reparation : il glisse vers « Réparations planifiées »
+        f = Form(self.env["machine.intervention"].with_context(**sans_tech.action_nouvelle_intervention()["context"]))
+        f.type = "reparation"
+        f.lot_id = self.lot
+        f.user_id = tech
+        f.save()
+        self.assertEqual((sans_tech.user_id, sans_tech.statut_entretien), (tech, "planifie"))
+        domaines = self.env["pilotage.indicateur"]._domaines()
+        self.assertEqual(dans("reparations_planifiees"), sans_tech | assignee | remplacer)
+        self.assertEqual(dans("appels_ouverts"), commande)
+        ind = self._ind("reparations_planifiees")
+        self.assertEqual(ind.section, "entretiens")
+        cartes = self.env["pilotage.indicateur"].search([("section", "=", "entretiens")])
+        self.assertEqual(cartes[:2].mapped("code"), ["entretiens_ouverts", "reparations_planifiees"],
+                         "juste sous Entretiens planifiés à faire")
+        action = ind.action_ouvrir()
+        self.assertEqual(action["context"], {"search_default_reparations_planifiees": 1})
+        self.assertNotIn("help", action)
+        # Resolue : elle quitte la carte
+        assignee.stage_id = self.env["helpdesk.stage"].create({"name": "Résolu"})
+        self.assertNotIn(assignee, self.env[model].search(domaine))
+
+    def test_produits_par_categorie(self):
+        menu = self.env.ref("suivi_machines_pilotage.menu_pilotage_produits_categorie")
+        self.assertEqual(menu.parent_id, self.env.ref("suivi_machines_pilotage.menu_pilotage_parc"))
+        action = self.env["ir.actions.act_window"]._for_xml_id(
+            "suivi_machines_pilotage.action_pilotage_produits_categorie")
+        self.assertEqual(action["res_model"], "product.template")
+        self.assertIn("search_default_group_by_categ_id", action["context"])
+        self.assertEqual(list(action["views"][0]),
+                         [self.env.ref("suivi_machines_pilotage.view_pilotage_produits_list").id, "list"])
+        Produit = self.env["product.template"]
+        self.assertFalse(Produit.fields_get(["prix_vente"])["prix_vente"].get("aggregator"),
+                         "pas de total des prix par catégorie")
+        self.assertEqual(self.produit.product_tmpl_id.prix_vente, self.produit.list_price)
+        Produit.get_views([(v, m) for v, m in action["views"]], {"search_view_id": action["search_view_id"][0]})
+        categories = [getattr(categ, "id", categ) for categ, _nb in Produit.read_group([], ["categ_id"], ["__count"])]
+        self.assertIn(self.produit.categ_id.id, categories)
 
     def test_entretien_planifie_via_intervention(self):
         """Josef planifie l'entretien depuis Interventions : le ticket ouvert de la machine devient « Planifié »."""
@@ -187,11 +246,14 @@ class TestPilotage(TransactionCase):
         kpi = {k["code"]: k for k in d["kpis"]}
         self.assertIn("1", kpi["ventes_mois"]["valeur"])
         self.assertIn("500", kpi["ventes_mois"]["valeur"])
-        self.assertGreaterEqual(kpi["clients"]["valeur"], 1, "le client qui a acheté est compté")
+        self.assertEqual(kpi["clients"]["valeur"], self.env["res.partner"].search_count([]),
+                         "tous les contacts, comme l'application Contacts")
         self.assertIn(so, self.env["sale.order"].search(Ind.action_par_code("ventes_mois")["domain"]))
         clients = Ind.action_par_code("clients")
         self.assertEqual(clients["res_model"], "res.partner")
         self.assertIn(self.client, self.env["res.partner"].search(clients["domain"]))
+        personne = self.env["res.partner"].create({"name": "Sans achat", "parent_id": self.client.id})
+        self.assertIn(personne, self.env["res.partner"].search(clients["domain"]), "même sans achat")
         # Les deux vues dans le menu Tableau de bord
         racine = self.env.ref("suivi_machines_pilotage.menu_pilotage_tableau_racine")
         self.assertEqual([m.action for m in racine.child_id.sorted("sequence")], [

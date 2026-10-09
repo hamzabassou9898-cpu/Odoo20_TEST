@@ -1,7 +1,7 @@
 .o_pilotage_moderne {
     background: #f4f5f8;
-    overflow: auto;
-    height: 100%;
+    // Odoo bloque le defilement de .o_action : c'est le bloc .o_content qui defile (barre visible)
+    .o_pm_defile { flex: 1 1 auto; min-height: 0; overflow-x: hidden; overflow-y: auto; }
     .o_pm_wrap { padding: 20px 24px 28px; max-width: 1600px; margin: 0 auto; }
     .o_pm_head { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;
         h1 { font-size: 24px; font-weight: 700; margin: 0; } p { color: #6b7280; margin: 4px 0 0; } }

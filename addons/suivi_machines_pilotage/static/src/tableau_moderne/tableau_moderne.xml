@@ -2,6 +2,7 @@
 <templates xml:space="preserve">
     <div t-name="suivi_machines_pilotage.TableauModerne" t-attf-class="o_action o_pilotage_moderne {{ this.state.chargement ? 'o_pm_charge' : '' }}">
         <t t-set="d" t-value="this.state.donnees"/>
+        <div class="o_content o_pm_defile">
         <div class="o_pm_wrap" t-if="d">
             <!-- En-tete -->
             <div class="o_pm_head">
@@ -112,6 +113,7 @@
                     </div>
                 </div>
             </div>
+        </div>
         </div>
     </div>
 </templates>

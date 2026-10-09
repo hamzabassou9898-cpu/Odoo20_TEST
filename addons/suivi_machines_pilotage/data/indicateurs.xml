@@ -134,7 +134,7 @@
         <field name="section">appels</field>
         <field name="sequence">1</field>
         <field name="couleur">primary</field>
-        <field name="description">Tickets en cours et entretiens à planifier (hors reprises)</field>
+        <field name="description">Pas encore assignés à un technicien (hors reprises)</field>
     </record>
     <record id="indicateur_entretiens_a_planifier" model="pilotage.indicateur">
         <field name="code">entretiens_a_planifier</field>
@@ -151,6 +151,14 @@
         <field name="sequence">0</field>
         <field name="couleur">info</field>
         <field name="description">Assignés à un technicien, pas encore validés</field>
+    </record>
+    <record id="indicateur_reparations_planifiees" model="pilotage.indicateur">
+        <field name="code">reparations_planifiees</field>
+        <field name="name">Réparations planifiées à faire</field>
+        <field name="section">entretiens</field>
+        <field name="sequence">0</field>
+        <field name="couleur">danger</field>
+        <field name="description">Assignées à un technicien, pas encore validées</field>
     </record>
     <record id="indicateur_reprises_ouvertes" model="pilotage.indicateur">
         <field name="code">reprises_ouvertes</field>
