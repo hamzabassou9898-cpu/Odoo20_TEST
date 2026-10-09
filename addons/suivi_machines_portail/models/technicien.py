@@ -13,6 +13,12 @@ class ResPartner(models.Model):
     est_technicien = fields.Boolean(
         "Technicien (portail)",
         help="Technicien qui consulte sa journée sur le portail web (utilisateur portail gratuit).")
+    a_acces_portail = fields.Boolean("Accès portail", compute="_compute_a_acces_portail",
+                                     help="Le contact a un utilisateur portail (ex. un technicien).")
+
+    def _compute_a_acces_portail(self):
+        for partner in self:
+            partner.a_acces_portail = any(user.share for user in partner.sudo().with_context(active_test=False).user_ids)
 
 
 class ResUsers(models.Model):

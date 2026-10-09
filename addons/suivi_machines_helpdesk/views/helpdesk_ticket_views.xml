@@ -92,6 +92,14 @@
             <!-- Adresse commerciale : sa propre ligne, dans le groupe du telephone natif -->
             <xpath expr="//field[@name='partner_phone']/ancestor::group[1]" position="inside">
                 <field name="adresse_commerce" string="Adresse commerciale" invisible="not adresse_commerce"/>
+                <field name="contrat_client_id" readonly="1" invisible="not contrat_client_id"
+                       groups="sales_team.group_sale_salesman"/>
+                <field name="contrat_client_type" readonly="1" invisible="not contrat_client_id"
+                       groups="sales_team.group_sale_salesman"/>
+                <field name="contrat_client_debut" readonly="1" invisible="not contrat_client_debut"
+                       groups="sales_team.group_sale_salesman"/>
+                <field name="contrat_client_fin" readonly="1" invisible="not contrat_client_fin"
+                       groups="sales_team.group_sale_salesman"/>
             </xpath>
 
             <!-- Code client obligatoire : il remplit le client et ses machines -->

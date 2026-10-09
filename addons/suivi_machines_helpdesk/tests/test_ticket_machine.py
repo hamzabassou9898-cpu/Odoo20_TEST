@@ -267,6 +267,48 @@ class TestTicketMachine(TransactionCase):
         arch = self.env["helpdesk.ticket"].get_views([(False, "kanban")])["views"]["kanban"]["arch"]
         self.assertIn("technicien_id", arch)
 
+    def test_fiche_client_contrat_actuel_et_historique(self):
+        stock = self.env.ref("stock.stock_location_stock")
+        lot = self.env["stock.lot"].create({"name": "CLI-1", "product_id": self.produit.id})
+        self.env["stock.quant"]._update_available_quantity(self.produit, stock, 1, lot_id=lot)
+        vente = self.env["sale.order"].create({"partner_id": self.commerce.id, "type_commande": "vente",
+                                               "order_line": [(0, 0, {"product_id": self.produit.id})]})
+        vieux = self.env["sale.order"].create({"partner_id": self.commerce.id, "type_commande": "location",
+                                               "order_line": [(0, 0, {"product_id": self.produit.id})]})
+        actuel = self.env["sale.order"].create({
+            "partner_id": self.commerce.id, "type_commande": "location",
+            "order_line": [(0, 0, {"product_id": self.produit.id, "product_uom_qty": 1, "machine_lot_id": lot.id})]})
+        devis = self.env["sale.order"].create({"partner_id": self.commerce.id, "type_commande": "location"})
+        actuel.action_confirm()
+        pk = actuel.picking_ids
+        pk.action_assign()
+        pk.move_ids.picked = True
+        pk.with_context(skip_sms=True).button_validate()
+        (vente | vieux).action_confirm()
+        self.commerce.invalidate_recordset()
+        self.assertEqual(self.commerce.contrat_location_id, actuel, "celui dont la machine est chez le client")
+        self.assertEqual(set(self.commerce.historique_achat_ids.ids), {vente.id, vieux.id, actuel.id},
+                         "ventes et locations confirmées (pas les devis)")
+        self.assertNotIn(devis, self.commerce.historique_achat_ids)
+        # Contact de la societe (ex. Nathacha) : meme contrat
+        contact = self.env["res.partner"].create({"name": "Nathacha", "parent_id": self.commerce.id})
+        self.assertEqual(contact.contrat_location_id, actuel)
+        # Ticket : des que le client est choisi, son contrat, son type et ses dates s'affichent
+        f = self._form()
+        f.code_client = "TST100"
+        self.assertEqual(f.contrat_client_id, actuel)
+        self.assertEqual(f.contrat_client_type, "location")
+        actuel.date_debut_location = fields.Datetime.now()
+        actuel.date_fin_location = fields.Datetime.now() + relativedelta(years=1)
+        f.code_client = "TST200"
+        f.code_client = "TST100"
+        self.assertEqual((f.contrat_client_debut, f.contrat_client_fin),
+                         (actuel.date_debut_location, actuel.date_fin_location))
+        arch = self.env["res.partner"].get_views([(False, "form")])["views"]["form"]["arch"]
+        self.assertIn("contrat_location_id", arch)
+        self.assertEqual(self.commerce.contrat_location_type, "location")
+        self.assertIn("Historique d'achat", arch)
+
     def test_ajuster_un_contrat(self):
         so = self.env["sale.order"].create({"partner_id": self.commerce.id, "type_commande": "location",
                                             "order_line": [(0, 0, {"product_id": self.produit.id})]})
@@ -709,9 +751,11 @@ class TestTicketMachine(TransactionCase):
             self.assertEqual(visibles.count(champ), 1, f"{champ} affiché une seule fois")
         champ_tel = arch.xpath("//field[@name='partner_phone']")[0]
         groupe = next(champ_tel.iterancestors("group"))
-        self.assertEqual([f.get("name") for f in groupe.xpath("./field") if f.get("invisible") not in ("1", "True")][-1],
-                         "adresse_commerce",
-                         "adresse commerciale : sa propre ligne, dans le groupe du téléphone")
+        noms = [f.get("name") for f in groupe.xpath("./field") if f.get("invisible") not in ("1", "True")]
+        self.assertIn("adresse_commerce", noms, "adresse commerciale : sa propre ligne, dans le groupe du téléphone")
+        self.assertEqual(noms[noms.index("adresse_commerce"):],
+                         ["adresse_commerce", "contrat_client_id", "contrat_client_type", "contrat_client_debut",
+                          "contrat_client_fin"], "puis le contrat du client, son type et ses dates")
         self.assertNotIn("commerce_id", visibles, "client affiché une seule fois (champ natif)")
         boutons = [b.get("name") for b in arch.iter("button") if b.getparent().tag == "header"]
         self.assertIn("action_nouvelle_intervention", boutons)

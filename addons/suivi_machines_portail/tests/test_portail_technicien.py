@@ -45,6 +45,14 @@ class TestPortailTechnicien(HttpCase):
         self.assertEqual(self.ticket.user_id, self.tech_a)
         self.assertFalse(self.ticket.technicien_terrain_id)
 
+    def test_case_technicien_absente_des_fiches_clients(self):
+        from lxml import etree
+        arch = etree.fromstring(self.env["res.partner"].get_views([(False, "form")])["views"]["form"]["arch"])
+        champ = arch.xpath("//field[@name='est_technicien']")[0]
+        self.assertEqual(champ.get("invisible"), "not a_acces_portail and not est_technicien")
+        self.assertFalse(self.client.a_acces_portail, "fiche client : case cachée")
+        self.assertTrue(self.tech_a.partner_id.a_acces_portail, "technicien portail : case visible")
+
     def test_un_seul_champ_assigne_a(self):
         """Fiche du ticket : plus de « Technicien terrain » ; « Assigné à » propose les techniciens portail."""
         arch = self.env["helpdesk.ticket"].get_views([(False, "form")])["views"]["form"]["arch"]

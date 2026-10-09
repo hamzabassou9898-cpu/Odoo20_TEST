@@ -6,7 +6,10 @@
         <field name="inherit_id" ref="base.view_partner_form"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='category_id']" position="after">
-                <field name="est_technicien" groups="suivi_machines_pilotage.group_pilotage"/>
+                <!-- Seulement sur les contacts avec un acces portail (techniciens), jamais sur une fiche client -->
+                <field name="a_acces_portail" invisible="1"/>
+                <field name="est_technicien" groups="suivi_machines_pilotage.group_pilotage"
+                       invisible="not a_acces_portail and not est_technicien"/>
             </xpath>
         </field>
     </record>

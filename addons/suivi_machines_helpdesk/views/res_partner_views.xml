@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_partner_form_contrat_location" model="ir.ui.view">
+        <field name="name">res.partner.form.contrat.location</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <!-- Sous « Etiquettes » : le contrat de location actuel, choisi automatiquement -->
+            <xpath expr="//field[@name='category_id']" position="after">
+                <field name="contrat_location_id" groups="sales_team.group_sale_salesman"
+                       invisible="not contrat_location_id" readonly="1"/>
+                <field name="contrat_location_type" groups="sales_team.group_sale_salesman"
+                       invisible="not contrat_location_id"/>
+                <field name="contrat_location_debut" groups="sales_team.group_sale_salesman"
+                       invisible="not contrat_location_debut"/>
+                <field name="contrat_location_fin" groups="sales_team.group_sale_salesman"
+                       invisible="not contrat_location_fin"/>
+            </xpath>
+            <xpath expr="//notebook" position="inside">
+                <page string="Historique d'achat" name="historique_achat" groups="sales_team.group_sale_salesman"
+                      invisible="not historique_achat_ids">
+                    <field name="historique_achat_ids" readonly="1" nolabel="1">
+                        <list create="false" edit="false" delete="false" default_order="date_order desc">
+                            <field name="date_order" string="Date"/>
+                            <field name="name" string="Numéro"/>
+                            <field name="type_commande" widget="badge" decoration-info="type_commande == 'location'"
+                                   decoration-success="type_commande == 'vente'"/>
+                            <field name="date_fin_location" string="Fin de location"/>
+                            <field name="amount_untaxed" string="Montant (HT)" sum="Total"/>
+                            <field name="currency_id" column_invisible="1"/>
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>
