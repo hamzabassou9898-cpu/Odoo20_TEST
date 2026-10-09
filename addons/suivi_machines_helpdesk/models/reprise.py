@@ -31,6 +31,7 @@ class HelpdeskTicket(models.Model):
                                             string="Machines à reprendre", copy=False)
     est_reprise = fields.Boolean(compute="_compute_est_reprise")
 
+    @api.depends("commande_reprise_id")
     def _compute_est_reprise(self):
         for ticket in self:
             ticket.est_reprise = bool(ticket.commande_reprise_id)
@@ -72,8 +73,11 @@ class HelpdeskTicket(models.Model):
                 nb=len(lots), series=", ".join(lots.mapped("name")))
 
     def _tickets_du_contrat(self):
-        """Tickets de reprise du meme contrat dont la machine est encore chez le client."""
+        """Tickets de reprise du meme contrat dont la machine est encore chez le client.
+        Ticket « Ramassage » cree a la main : seulement ses machines."""
         self.ensure_one()
+        if self.origine_auto != "reprise":
+            return self
         tickets = self.commande_reprise_id.ticket_reprise_ids.filtered(
             lambda t: (t.machines_reprise_ids | t.lot_id).filtered("machine_client_id"))
         return tickets | self
@@ -109,7 +113,9 @@ class HelpdeskTicket(models.Model):
                          "machine_lot_id": lot.id, "partner_id": retour.partner_id.id})
         # Accessoires loues avec le contrat (pompes, etc.) : quantite livree pas encore revenue
         accessoires = []
-        for ligne in self.commande_reprise_id.order_line:
+        # Accessoires seulement si toutes les machines du contrat reviennent
+        tout_le_contrat = not (self.commande_reprise_id._machines_a_reprendre() - lots)
+        for ligne in self.commande_reprise_id.order_line if tout_le_contrat else []:
             produit = ligne.product_id
             if (not produit or not produit.is_storable or produit.categ_id.suivi_machine
                     or ligne.qty_delivered <= 0):
@@ -218,7 +224,8 @@ class SaleOrder(models.Model):
             lots = order._machines_a_reprendre() - deja
             if not lots:
                 continue
-            ouvert = existants.filtered(lambda t: not t._est_ferme())[:1]
+            # On complete seulement un ticket cree par Odoo (jamais un ticket ecrit a la main)
+            ouvert = existants.filtered(lambda t: not t._est_ferme() and t.origine_auto == "reprise")[:1]
             if ouvert:
                 ouvert.machines_reprise_ids = [(4, lot.id) for lot in lots]
                 ouvert._nommer_reprise()

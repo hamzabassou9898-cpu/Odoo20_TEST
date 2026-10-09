@@ -266,6 +266,69 @@ class TestTicketMachine(TransactionCase):
         arch = self.env["helpdesk.ticket"].get_views([(False, "kanban")])["views"]["kanban"]["arch"]
         self.assertIn("technicien_id", arch)
 
+    def test_ramassage_a_la_main(self):
+        """Type « Ramassage » : Odoo trouve le contrat de location et les machines louees ;
+        le bouton Ramassage ouvre directement le bon de retour."""
+        stock = self.env.ref("stock.stock_location_stock")
+        lots = self.env["stock.lot"]
+        for nom in ("RAM-1", "RAM-2"):
+            lot = self.env["stock.lot"].create({"name": nom, "product_id": self.produit.id, "ref": nom})
+            self.env["stock.quant"]._update_available_quantity(self.produit, stock, 1, lot_id=lot)
+            lots |= lot
+        so = self.env["sale.order"].create({
+            "partner_id": self.commerce.id, "type_commande": "location",
+            "order_line": [(0, 0, {"product_id": self.produit.id, "product_uom_qty": 1, "machine_lot_id": l.id})
+                           for l in lots]})
+        so.action_confirm()
+        pk = so.picking_ids
+        pk.action_assign()
+        pk.move_ids.picked = True
+        pk.with_context(skip_sms=True).button_validate()
+        self.assertEqual(set(lots.mapped("machine_statut")), {"chez_client"})
+        # Formulaire : code client + type Ramassage -> contrat et machines remplis tout seuls
+        f = self._form()
+        f.type_demande = "ramassage"
+        f.code_client = "TST100"
+        self.assertEqual(f.commande_reprise_id, so)
+        self.assertEqual(set(f.machines_reprise_ids.ids), set(lots.ids))
+        self.assertTrue(f.est_reprise, "boutons Ramassage / Prolonger")
+        ticket = f.save()
+        self.assertEqual((ticket.commande_reprise_id, ticket.machines_reprise_ids), (so, lots))
+        self.assertFalse(ticket.origine_auto, "créé par une personne")
+        self.assertEqual(ticket.name, "Ne refroidit pas", "le titre écrit par Josef est gardé")
+        # Le cron ne renomme pas ce ticket et ne cree pas de doublon
+        so.date_fin_location = fields.Datetime.now() + relativedelta(days=2)
+        self.env["sale.order"]._cron_tickets_reprise()
+        self.assertEqual(ticket.name, "Ne refroidit pas")
+        # Une seule machine choisie : seulement elle revient
+        ticket.lot_id = lots[0]
+        ticket.machines_reprise_ids = lots[0]
+        action = ticket.action_ramassage()
+        retour = self.env["stock.picking"].browse(action["res_id"])
+        self.assertEqual((action["res_model"], action["target"]), ("stock.picking", "current"),
+                         "ouvre directement le bon de retour")
+        self.assertEqual(retour.move_ids.machine_lot_id, lots[0])
+        self.assertEqual(retour.location_dest_id.usage, "internal")
+        self.assertEqual(retour.ticket_assistance_id, ticket)
+        self.assertEqual(ticket.action_ramassage()["res_id"], retour.id, "pas de doublon")
+        # Plus un ramassage : le contrat est detache
+        autre = self._form()
+        autre.code_client = "TST100"
+        autre.type_demande = "ramassage"
+        self.assertEqual(autre.commande_reprise_id, so)
+        autre.type_demande = "reparation"
+        self.assertFalse(autre.commande_reprise_id)
+        self.assertFalse(autre.est_reprise)
+        t2 = autre.save()
+        t2.type_demande = "ramassage"
+        self.assertEqual(t2.commande_reprise_id, so, "rempli aussi par l'ORM (écriture)")
+        t2.type_demande = "reparation"
+        self.assertFalse(t2.commande_reprise_id)
+        # Client sans location : rien a ramasser (bandeau d'alerte)
+        sans = self.env["helpdesk.ticket"].create({"name": "Rien", "partner_id": self.autre_client.id,
+                                                   "type_demande": "ramassage"})
+        self.assertFalse(sans.commande_reprise_id)
+
     def test_tickets_de_reprise(self):
         stock = self.env.ref("stock.stock_location_stock")
         lot = self.env["stock.lot"].create({"name": "REP-1", "product_id": self.produit.id, "ref": "R1"})
@@ -595,14 +658,16 @@ class TestTicketMachine(TransactionCase):
         self.assertNotIn("commerce_id", visibles, "client affiché une seule fois (champ natif)")
         boutons = [b.get("name") for b in arch.iter("button") if b.getparent().tag == "header"]
         self.assertIn("action_nouvelle_intervention", boutons)
-        self.assertNotIn("action_creer_vente", boutons, "bouton Bon de vente retiré")
+        vente = arch.xpath("//header/button[@name='action_creer_vente']")
+        self.assertEqual(vente[0].get("invisible"), "type_demande != 'commande' or not partner_id",
+                         "Bon de vente : seulement pour « Passer une commande »")
         self.assertNotIn("action_creer_livraison", boutons, "bouton Livraison retiré")
         self.env["stock.lot"].get_views([(False, "form")])
 
     def test_type_de_ticket_obligatoire(self):
         from lxml import etree
         arch = etree.fromstring(self.env["helpdesk.ticket"].get_views([(False, "form")])["views"]["form"]["arch"])
-        champ = arch.xpath("//field[@name='type_demande']")
+        champ = arch.xpath("//field[@name='type_demande'][not(@invisible='1')]")
         self.assertEqual(len(champ), 1)
         self.assertEqual(champ[0].get("required"), "1", "obligatoire à la création")
         self.assertEqual(arch.xpath("//field[@name='technicien_id'][not(ancestor::list)][not(ancestor::kanban)]"),

@@ -40,7 +40,11 @@
                 <button name="action_prolonger_location" type="object" string="Prolonger la location"
                         class="btn-secondary" invisible="not est_reprise"/>
                 <button name="action_nouvelle_intervention" type="object" string="Nouvelle intervention"
-                        class="btn-secondary" invisible="not partner_id or est_reprise"/>
+                        class="btn-secondary" invisible="not partner_id or est_reprise or type_demande == 'commande'"/>
+                <!-- Passer une commande : bon de vente pour le client -->
+                <button name="action_creer_vente" type="object" string="Bon de vente" class="btn-primary"
+                        invisible="type_demande != 'commande' or not partner_id"
+                        groups="sales_team.group_sale_salesman"/>
 
             </xpath>
 
@@ -57,6 +61,12 @@
                         : la location <field name="commande_reprise_id" readonly="1" class="d-inline"/>
                         se termine, les machines sont à reprendre.
                     </span>
+                </div>
+                <!-- Ramassage demande a la main : Odoo cherche les machines louees chez le client -->
+                <div class="alert alert-warning mb-0 py-2" role="alert"
+                     invisible="type_demande != 'ramassage' or commande_reprise_id or not partner_id">
+                    Aucune machine en location chez ce client : rien à ramasser.
+                    Vérifiez le client (code client) ou le contrat de location.
                 </div>
             </xpath>
 
