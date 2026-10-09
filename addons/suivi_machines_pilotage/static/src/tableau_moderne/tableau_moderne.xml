@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <div t-name="suivi_machines_pilotage.TableauModerne" class="o_action o_pilotage_moderne">
+        <t t-set="d" t-value="this.state.donnees"/>
+        <div class="o_pm_wrap" t-if="d">
+            <!-- En-tete -->
+            <div class="o_pm_head">
+                <div>
+                    <h1>Bonjour <t t-out="d.bonjour"/></h1>
+                    <p><t t-out="d.date"/> · ce qui demande votre attention</p>
+                </div>
+                <div class="o_pm_chips">
+                    <button t-attf-class="o_pm_chip {{ this.state.periode === 'jour' ? 'on' : '' }}" t-on-click="() => this.charger('jour')">Aujourd'hui</button>
+                    <button t-attf-class="o_pm_chip {{ this.state.periode === 'semaine' ? 'on' : '' }}" t-on-click="() => this.charger('semaine')">7 jours</button>
+                    <button t-attf-class="o_pm_chip {{ this.state.periode === 'mois' ? 'on' : '' }}" t-on-click="() => this.charger('mois')">30 jours</button>
+                    <button class="o_pm_chip o_pm_lien" t-on-click="() => this.ouvrirAction('suivi_machines_pilotage.action_pilotage_tableau_bord')">
+                        <i class="oi me-1" data-icon="bar_chart"/>Toutes les cartes
+                    </button>
+                </div>
+            </div>
+
+            <!-- Grands chiffres -->
+            <div class="o_pm_kpis">
+                <div t-foreach="d.kpis" t-as="k" t-key="k.code" class="o_pm_kpi" t-on-click="() => this.ouvrir(k.code)">
+                    <span t-attf-class="o_pm_tag o_pm_{{ k.tendance_couleur }}" t-if="k.tendance" t-out="k.tendance"/>
+                    <div t-attf-class="o_pm_ic o_pm_{{ k.couleur }}"><i class="oi" t-att-data-icon="k.icone"/></div>
+                    <div class="o_pm_v" t-out="k.valeur"/>
+                    <div class="o_pm_l" t-out="k.libelle"/>
+                </div>
+            </div>
+
+            <div class="o_pm_grid">
+                <!-- A traiter maintenant -->
+                <div class="o_pm_card">
+                    <h3>À traiter maintenant</h3>
+                    <div t-if="!d.alertes.length" class="o_pm_vide"><i class="oi me-1" data-icon="check"/>Rien d'urgent. Bravo !</div>
+                    <div t-foreach="d.alertes" t-as="a" t-key="a.code" t-attf-class="o_pm_alerte o_pm_{{ a.niveau }}">
+                        <span class="o_pm_n" t-out="a.nombre"/>
+                        <div class="o_pm_txt"><b t-out="a.titre"/><span t-out="a.detail"/></div>
+                        <button class="o_pm_go" t-on-click="() => this.ouvrir(a.code)" t-out="a.bouton"/>
+                    </div>
+                </div>
+
+                <!-- Techniciens -->
+                <div class="o_pm_card">
+                    <h3>Techniciens
+                        <a class="o_pm_more" t-on-click="() => this.ouvrirAction('suivi_machines_pilotage.action_portail_techniciens')">Portail →</a></h3>
+                    <div t-if="!d.techniciens.length" class="o_pm_vide">Aucune tâche sur la période.</div>
+                    <div t-foreach="d.techniciens" t-as="t" t-key="t.id" class="o_pm_tech">
+                        <span class="o_pm_av" t-attf-style="background: {{ t.couleur }}" t-out="t.initiales"/>
+                        <span class="o_pm_nom" t-out="t.nom"/>
+                        <div class="o_pm_bar">
+                            <i class="o_pm_g" t-att-style="'width:' + this.largeur(t.fait, t.total)"/>
+                            <i class="o_pm_r" t-att-style="'width:' + this.largeur(t.retard, t.total)"/>
+                            <i class="o_pm_gy" t-att-style="'width:' + this.largeur(t.a_faire, t.total)"/>
+                        </div>
+                        <span class="o_pm_c"><t t-out="t.fait"/>/<t t-out="t.total"/></span>
+                    </div>
+                    <div class="o_pm_leg"><span class="g">Fait</span><span class="r">En retard</span><span class="gy">À faire</span></div>
+                    <div class="o_pm_bilan">
+                        <div class="o_pm_ring" t-att-style="this.anneau(d.progression)">
+                            <div><t t-out="d.progression.pourcentage"/>%<small>fait</small></div>
+                        </div>
+                        <div class="o_pm_m"><div class="o_pm_v2" t-out="d.progression.total"/><div class="o_pm_l">Tâches</div></div>
+                        <div class="o_pm_m"><div class="o_pm_v2 text-danger" t-out="d.progression.retards"/><div class="o_pm_l">En retard</div></div>
+                    </div>
+                </div>
+
+                <!-- Problemes et appels -->
+                <div class="o_pm_card">
+                    <h3>Appels par problème <small>30 jours</small></h3>
+                    <div t-if="!d.problemes.length" class="o_pm_vide">Aucun appel étiqueté.</div>
+                    <div t-foreach="d.problemes" t-as="p" t-key="p.nom" class="o_pm_hb">
+                        <span class="o_pm_lab" t-out="p.nom"/>
+                        <div class="o_pm_bar"><i class="o_pm_violet" t-att-style="'width:' + this.largeur(p.nombre, d.max_probleme)"/></div>
+                        <span class="o_pm_num" t-out="p.nombre"/>
+                    </div>
+                    <h3 class="mt-3">Appels reçus <small>8 semaines</small></h3>
+                    <div class="o_pm_spark">
+                        <i t-foreach="d.semaines" t-as="s" t-key="s.libelle" t-att-title="s.libelle + ' : ' + s.nombre"
+                           t-attf-class="{{ s_last ? 'h' : '' }}" t-att-style="'height:' + Math.max(4, Math.round(100 * s.nombre / d.max_semaine)) + '%'"/>
+                    </div>
+                    <div class="o_pm_spl"><span t-out="d.semaines[0].libelle"/><span>cette semaine</span></div>
+                </div>
+            </div>
+
+            <div class="o_pm_grid o_pm_grid2">
+                <!-- Prochaines taches -->
+                <div class="o_pm_card">
+                    <h3>Prochaines tâches
+                        <a class="o_pm_more" t-on-click="() => this.ouvrirAction('suivi_machines_pilotage.action_portail_techniciens')">Tout voir →</a></h3>
+                    <div t-if="!d.tournees.length" class="o_pm_vide">Rien de prévu sur la période.</div>
+                    <div t-foreach="d.tournees" t-as="r" t-key="r.id" class="o_pm_row">
+                        <span class="o_pm_tm" t-out="r.quand"/>
+                        <span t-attf-class="badge rounded-pill text-bg-{{ r.couleur }}" t-out="r.type"/>
+                        <span class="o_pm_cl"><t t-out="r.client"/><small t-if="r.titre" class="text-muted"> · <t t-out="r.titre"/></small></span>
+                        <span class="text-muted" t-out="r.technicien"/>
+                    </div>
+                </div>
+                <!-- Parc -->
+                <div class="o_pm_card">
+                    <h3>Parc &amp; activité <small>ce mois</small></h3>
+                    <div class="o_pm_parc">
+                        <div t-foreach="d.parc" t-as="m" t-key="m.code" class="o_pm_m o_pm_clic" t-on-click="() => this.ouvrir(m.code)">
+                            <div t-attf-class="o_pm_v2 {{ m.alerte ? 'text-danger' : '' }}" t-out="m.valeur"/>
+                            <div class="o_pm_l" t-out="m.libelle"/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</templates>

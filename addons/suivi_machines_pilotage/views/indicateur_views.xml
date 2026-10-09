@@ -36,4 +36,10 @@
         <field name="view_mode">kanban</field>
         <field name="view_id" ref="view_pilotage_indicateur_kanban"/>
     </record>
+
+    <!-- Vue d'ensemble moderne (la vue « Toutes les cartes » reste disponible) -->
+    <record id="action_pilotage_vue_ensemble" model="ir.actions.client">
+        <field name="name">Vue d'ensemble</field>
+        <field name="tag">suivi_pilotage_tableau_moderne</field>
+    </record>
 </odoo>

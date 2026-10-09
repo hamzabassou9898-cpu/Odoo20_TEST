@@ -94,6 +94,33 @@ class TestPilotage(TransactionCase):
         self.assertTrue(portail.action)
         self.assertFalse(self.env.ref("suivi_machines_pilotage.menu_pilotage_transferts", raise_if_not_found=False))
 
+    def test_vue_ensemble_moderne(self):
+        Ind = self.env["pilotage.indicateur"]
+        self.env["helpdesk.ticket"].create({"name": "Ne gèle pas", "code_client": "PIL1"})
+        for periode in ("jour", "semaine", "mois"):
+            d = Ind.donnees_tableau_moderne(periode)
+            self.assertEqual(d["periode"], periode)
+            self.assertEqual(len(d["kpis"]), 5)
+            self.assertEqual(len(d["semaines"]), 8)
+            self.assertEqual(len(d["parc"]), 5)
+            for cle in ("alertes", "techniciens", "progression", "problemes", "tournees", "bonjour", "date"):
+                self.assertIn(cle, d)
+        d = Ind.donnees_tableau_moderne("jour")
+        kpi = {k["code"]: k for k in d["kpis"]}
+        self.assertEqual(kpi["appels_ouverts"]["valeur"], Ind._compte("appels_ouverts"))
+        self.assertGreaterEqual(kpi["appels_ouverts"]["valeur"], 1)
+        self.assertTrue(all(a["nombre"] > 0 for a in d["alertes"]), "seulement ce qui est à traiter")
+        # Chaque carte et chaque alerte ouvre une liste
+        for code in [k["code"] for k in d["kpis"]] + [a["code"] for a in d["alertes"]]:
+            action = Ind.action_par_code(code)
+            self.assertEqual(action["type"], "ir.actions.act_window", code)
+        self.assertFalse(Ind.action_par_code("code_inconnu"))
+        # Les deux vues dans le menu Tableau de bord
+        racine = self.env.ref("suivi_machines_pilotage.menu_pilotage_tableau_racine")
+        self.assertEqual([m.action for m in racine.child_id.sorted("sequence")], [
+            self.env.ref("suivi_machines_pilotage.action_pilotage_vue_ensemble"),
+            self.env.ref("suivi_machines_pilotage.action_pilotage_tableau_bord")])
+
     def test_menu_reserve_au_groupe(self):
         menu = self.env.ref("suivi_machines_pilotage.menu_pilotage_root")
         groupe = self.env.ref("suivi_machines_pilotage.group_pilotage")

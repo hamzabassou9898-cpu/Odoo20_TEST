@@ -1,0 +1,66 @@
+.o_pilotage_moderne {
+    background: #f4f5f8;
+    overflow: auto;
+    height: 100%;
+    .o_pm_wrap { padding: 20px 24px 28px; max-width: 1600px; margin: 0 auto; }
+    .o_pm_head { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;
+        h1 { font-size: 24px; font-weight: 700; margin: 0; } p { color: #6b7280; margin: 4px 0 0; } }
+    .o_pm_chips { display: flex; gap: 8px; flex-wrap: wrap; }
+    .o_pm_chip { background: #fff; border: 1px solid #e3e5ea; border-radius: 20px; padding: 6px 14px; font-size: 13px; color: #4b5563;
+        &.on { background: #714B67; color: #fff; border-color: #714B67; } &.o_pm_lien { color: #714B67; font-weight: 600; } }
+    .o_pm_kpis { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; margin-bottom: 16px; }
+    .o_pm_kpi, .o_pm_card { background: #fff; border-radius: 14px; border: 1px solid #eceef2; box-shadow: 0 1px 2px rgba(16, 24, 40, .06); }
+    .o_pm_kpi { padding: 14px 16px; position: relative; cursor: pointer; transition: transform .1s, box-shadow .1s;
+        &:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(16, 24, 40, .08); } }
+    .o_pm_ic { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: 8px; }
+    .o_pm_v { font-size: 30px; font-weight: 700; line-height: 1; }
+    .o_pm_v2 { font-size: 22px; font-weight: 700; }
+    .o_pm_l { font-size: 12.5px; color: #6b7280; margin-top: 4px; }
+    .o_pm_tag { position: absolute; top: 14px; right: 14px; font-size: 11.5px; font-weight: 600; padding: 3px 8px; border-radius: 12px; }
+    .o_pm_danger { background: #fdecec; color: #b91c1c; } .o_pm_warning { background: #fff6e8; color: #92400e; }
+    .o_pm_info { background: #e8f2ff; color: #1e40af; } .o_pm_success { background: #e8f6ee; color: #15803d; }
+    .o_pm_primary { background: #f5eef4; color: #714B67; } .o_pm_secondary { background: #eef0f4; color: #4b5563; }
+    .o_pm_grid { display: grid; grid-template-columns: 1.35fr 1fr 1fr; gap: 14px; }
+    .o_pm_grid2 { grid-template-columns: 1.35fr 2fr; margin-top: 14px; }
+    .o_pm_card { padding: 16px 18px;
+        h3 { font-size: 15px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
+            small { font-weight: 500; color: #6b7280; font-size: 12px; } } }
+    .o_pm_more { font-size: 12.5px; font-weight: 600; color: #714B67; cursor: pointer; }
+    .o_pm_vide { color: #6b7280; font-size: 13px; padding: 10px 0; }
+    .o_pm_alerte { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px; margin-bottom: 8px; font-size: 13px; }
+    .o_pm_n { font-weight: 700; font-size: 18px; min-width: 32px; text-align: center; }
+    .o_pm_txt { display: flex; flex-direction: column; span { opacity: .8; } }
+    .o_pm_go { margin-left: auto; font-size: 12.5px; font-weight: 600; border-radius: 8px; padding: 5px 10px; background: #fff; border: 1px solid rgba(0, 0, 0, .1); color: inherit; white-space: nowrap; }
+    .o_pm_tech { display: flex; align-items: center; gap: 10px; margin-bottom: 11px; font-size: 13px; }
+    .o_pm_av { width: 30px; height: 30px; border-radius: 50%; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; flex-shrink: 0; }
+    .o_pm_nom { width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .o_pm_bar { flex: 1; height: 9px; background: #eef0f4; border-radius: 6px; overflow: hidden; display: flex;
+        i { display: block; height: 100%; } }
+    .o_pm_g { background: #22c55e; } .o_pm_r { background: #ef4444; } .o_pm_gy { background: #cbd5e1; } .o_pm_violet { background: #714B67; }
+    .o_pm_c { width: 44px; text-align: right; color: #6b7280; font-size: 12px; }
+    .o_pm_leg { display: flex; gap: 14px; font-size: 12px; color: #6b7280;
+        span::before { content: ""; display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+        .g::before { background: #22c55e; } .r::before { background: #ef4444; } .gy::before { background: #cbd5e1; } }
+    .o_pm_bilan { display: flex; align-items: center; gap: 12px; margin-top: 16px; }
+    .o_pm_ring { width: 92px; height: 92px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        > div { width: 68px; height: 68px; border-radius: 50%; background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 700; font-size: 19px; }
+        small { font-size: 10.5px; color: #6b7280; font-weight: 500; } }
+    .o_pm_m { flex: 1; border-radius: 10px; padding: 10px 12px; background: #f8f9fb; border: 1px solid #eef0f4; }
+    .o_pm_clic { cursor: pointer; &:hover { border-color: #d9c7d4; } }
+    .o_pm_hb { display: flex; align-items: center; gap: 10px; font-size: 13px; margin-bottom: 8px;
+        .o_pm_lab { width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .o_pm_bar { height: 11px; }
+        .o_pm_num { width: 26px; text-align: right; font-weight: 600; } }
+    .o_pm_spark { display: flex; align-items: flex-end; gap: 5px; height: 70px;
+        i { flex: 1; background: #d9c7d4; border-radius: 4px 4px 0 0; &.h { background: #714B67; } } }
+    .o_pm_spl { display: flex; justify-content: space-between; font-size: 11px; color: #9ca3af; margin-top: 4px; }
+    .o_pm_row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f0f1f4; font-size: 13px;
+        &:last-child { border: 0; } }
+    .o_pm_tm { color: #6b7280; min-width: 64px; white-space: nowrap; }
+    .o_pm_cl { flex: 1; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .o_pm_parc { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+    @media (max-width: 1100px) {
+        .o_pm_kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .o_pm_grid, .o_pm_grid2 { grid-template-columns: 1fr; }
+        .o_pm_parc { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+}
