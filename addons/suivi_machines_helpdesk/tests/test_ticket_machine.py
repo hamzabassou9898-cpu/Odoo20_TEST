@@ -53,6 +53,30 @@ class TestTicketMachine(TransactionCase):
         self.assertEqual(ticket.lot_id, self.lots[1])
         self.assertEqual(ticket.machine_modele_id, self.produit, "le modèle reste après enregistrement")
 
+    def test_code_client_rempli_par_le_client(self):
+        """Client choisi sans passer par l'ecran (generateur, courriel...) : le code client se remplit."""
+        Ticket = self.env["helpdesk.ticket"]
+        self.assertEqual(Ticket.create({"name": "A", "partner_id": self.commerce.id}).code_client, "TST100")
+        self.assertEqual(Ticket.create({"name": "B", "partner_id": self.personne.id}).code_client, "TST100",
+                         "personne rattachée : code de son commerce")
+        # Code seulement sur la banniere (societe mere)
+        self.banniere.ref = "BAN1"
+        sans_code = self.env["res.partner"].create({"name": "Succursale", "parent_id": self.banniere.id,
+                                                    "type": "delivery"})
+        self.assertEqual(Ticket.create({"name": "C", "partner_id": sans_code.id}).code_client, "BAN1")
+        # Changement de client : le code suit
+        ticket = Ticket.create({"name": "D", "partner_id": self.commerce.id})
+        ticket.partner_id = self.autre_client
+        self.assertEqual(ticket.code_client, "TST200")
+        # Client sans aucun code : le code saisi est garde
+        inconnu = self.env["res.partner"].create({"name": "Sans code"})
+        self.assertEqual(Ticket.create({"name": "E", "partner_id": inconnu.id, "code_client": "XYZ9"}).code_client,
+                         "XYZ9")
+        # A l'ecran : choisir le client remplit le code
+        f = self._form()
+        f.partner_id = self.commerce
+        self.assertEqual(f.code_client, "TST100")
+
     def test_une_seule_machine_choisie_automatiquement(self):
         f = self._form()
         f.code_client = "TST200"

@@ -7,7 +7,9 @@ class HelpdeskTicket(models.Model):
     _inherit = "helpdesk.ticket"
 
     code_client = fields.Char("Code client", index="btree_not_null", tracking=True,
-                              help="Numéro de client (ex. MON134) : remplit le client et ses machines.")
+                              compute="_compute_code_client", store=True, readonly=False, precompute=True,
+                              help="Numéro de client (ex. MON134) : remplit le client et ses machines. "
+                                   "Rempli tout seul quand le client est choisi.")
 
     # ------------------------------------------------------------ client
     # Natifs utilises : partner_id, commercial_partner_id (banniere), partner_phone, partner_email,
@@ -64,8 +66,18 @@ class HelpdeskTicket(models.Model):
 
     @staticmethod
     def _code_du_client(partner):
+        """Code du commerce, sinon de la personne, sinon de la banniere (societe mere)."""
+        if not partner:
+            return False
         commerce = partner.parent_id if partner.parent_id and partner.type == "contact" else partner
-        return commerce.ref or partner.ref or False
+        return commerce.ref or partner.ref or partner.commercial_partner_id.ref or False
+
+    @api.depends("partner_id", "partner_id.ref", "partner_id.parent_id.ref", "partner_id.commercial_partner_id.ref")
+    def _compute_code_client(self):
+        # Client choisi (a l'ecran, par courriel, par un automatisme...) : son code client.
+        # Client sans code : on garde le code saisi.
+        for ticket in self:
+            ticket.code_client = self._code_du_client(ticket.partner_id) or ticket.code_client
 
     @api.onchange("code_client")
     def _onchange_code_client(self):
