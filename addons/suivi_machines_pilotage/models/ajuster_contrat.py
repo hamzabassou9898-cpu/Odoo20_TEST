@@ -42,6 +42,13 @@ class AjusterContrat(models.TransientModel):
         return {"in_rental_app": True} if "is_rental_order" in self.contrat_id._fields \
             and self.contrat_id.is_rental_order else {}
 
+    def _valeurs_ligne(self, produit, quantite, **autres):
+        valeurs = dict(autres, product_id=produit.id, product_uom_qty=quantite)
+        # Application Location : produit « peut etre loue » = ligne de location (meme periode que le contrat)
+        if "is_rental" in self.env["sale.order.line"]._fields and self._contexte_lignes():
+            valeurs["is_rental"] = bool(getattr(produit, "rent_ok", False))
+        return valeurs
+
     def action_appliquer(self):
         self.ensure_one()
         contrat = self.contrat_id
@@ -54,9 +61,8 @@ class AjusterContrat(models.TransientModel):
                                        ", ".join(deja_louees.mapped("name"))))
         if self.renouveler and not self.nouvelle_date_fin:
             raise UserError(self.env._("Indiquez la nouvelle date de fin de location."))
-        lignes = [(0, 0, {"product_id": lot.product_id.id, "product_uom_qty": 1, "machine_lot_id": lot.id})
-                  for lot in self.machine_ids]
-        lignes += [(0, 0, {"product_id": l.product_id.id, "product_uom_qty": l.quantite}) for l in accessoires]
+        lignes = [(0, 0, self._valeurs_ligne(lot.product_id, 1, machine_lot_id=lot.id)) for lot in self.machine_ids]
+        lignes += [(0, 0, self._valeurs_ligne(l.product_id, l.quantite)) for l in accessoires]
         livraisons_avant = contrat.picking_ids
         resume = []
         if lignes:
