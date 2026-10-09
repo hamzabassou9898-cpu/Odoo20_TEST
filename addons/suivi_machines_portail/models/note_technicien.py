@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """Notes envoyees par les techniciens depuis le portail, affichees sur le ticket / transfert / intervention."""
+from markupsafe import Markup
+
 from odoo import api, fields, models
 from odoo.tools import plaintext2html
 
@@ -54,8 +56,23 @@ class SuiviNoteTechnicien(models.Model):
             "technicien_id": technicien.id, "note": note or False,
             "attachment_ids": [(6, 0, attachments.ids)], self._champ_source(source): source.id,
         })
+        note_tech._noter_dans_le_fil()
         note_tech._prevenir_responsable()
         return note_tech
+
+    def _noter_dans_le_fil(self):
+        """Aussi en « Note » (interne) dans le fil du document, au nom du technicien, avec les pieces jointes."""
+        for note in self.sudo():
+            corps = Markup("<p><b>%s</b></p>") % self.env._("Note du technicien (portail)")
+            if note.note:
+                corps += plaintext2html(note.note)
+            message = note._source().with_context(mail_create_nosubscribe=True).message_post(
+                body=corps, author_id=note.technicien_id.partner_id.id,
+                message_type="comment", subtype_xmlid="mail.mt_note")
+            # Odoo n'attache pas de fichiers au message d'un utilisateur portail : on les relie ici
+            # (memes fichiers, deja rattaches au document)
+            if note.attachment_ids:
+                message.sudo().attachment_ids = [(6, 0, note.attachment_ids.ids)]
 
     def _responsable(self):
         """Responsable de la planification (parametre de l'assistance), sinon l'administrateur."""

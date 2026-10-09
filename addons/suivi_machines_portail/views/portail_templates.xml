@@ -132,7 +132,7 @@
                 <div class="card shadow-sm mt-3">
                     <div class="card-body">
                         <h5 class="mb-1">Ajouter une note</h5>
-                        <div class="text-muted small mb-2">Ce qui a été fait, pièces changées, photos… La note s'ajoute au ticket (onglet « Notes du technicien »).</div>
+                        <div class="text-muted small mb-2">Ce qui a été fait, pièces changées, photos… La note s'ajoute au ticket et le bureau est prévenu.</div>
                         <div t-if="envoye" class="alert alert-success py-2" role="status">Note envoyée au bureau. Merci !</div>
                         <div t-if="erreur == 'vide'" class="alert alert-warning py-2" role="alert">Écrivez une note ou joignez un fichier.</div>
                         <div t-if="erreur == 'taille'" class="alert alert-danger py-2" role="alert">Un fichier dépasse 20 Mo : rien n'a été envoyé.</div>

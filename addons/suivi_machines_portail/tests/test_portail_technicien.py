@@ -140,8 +140,12 @@ class TestPortailTechnicien(HttpCase):
         self.assertEqual(sorted(msg.attachment_ids.mapped("name")), ["photo.jpg", "rapport.pdf"])
         self.assertEqual(set(msg.attachment_ids.mapped("res_model")), {"helpdesk.ticket"})
         self.assertEqual(set(msg.attachment_ids.mapped("res_id")), {self.ticket.id})
-        self.assertFalse(self.ticket.message_ids.filtered(lambda m: m.author_id == self.tech_a.partner_id),
-                         "rien dans la discussion")
+        # Aussi en « Note » interne dans le fil du ticket, au nom du technicien, avec les fichiers
+        msg_fil = self.ticket.message_ids.filtered(lambda m: m.author_id == self.tech_a.partner_id)
+        self.assertEqual(len(msg_fil), 1)
+        self.assertIn("Joint remplacé.", msg_fil.body)
+        self.assertTrue(msg_fil.subtype_id.internal, "note interne : pas de courriel au client")
+        self.assertEqual(sorted(msg_fil.attachment_ids.mapped("name")), ["photo.jpg", "rapport.pdf"])
         # Visible par le bureau sur la fiche du ticket (onglet)
         arch = self.env["helpdesk.ticket"].get_views([(False, "form")])["views"]["form"]["arch"]
         self.assertIn("note_technicien_ids", arch)
