@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_carte_itineraire_form" model="ir.ui.view">
+        <field name="name">suivi.carte.itineraire.form</field>
+        <field name="model">suivi.carte.itineraire</field>
+        <field name="arch" type="xml">
+            <form string="Itinéraire Google Maps">
+                <group>
+                    <group>
+                        <field name="livreur_id" options="{'no_create': True}" widget="many2one_avatar_user"/>
+                        <field name="date"/>
+                    </group>
+                    <group>
+                        <field name="inclure_faits"/>
+                        <field name="nb_arrets"/>
+                    </group>
+                </group>
+                <field name="arret_ids" readonly="1" nolabel="1">
+                    <list create="false" delete="false">
+                        <field name="date_tournee" string="Heure"/>
+                        <field name="type_tournee" string="Type" widget="badge"
+                               decoration-success="type_tournee == 'livraison'"
+                               decoration-warning="type_tournee == 'ramassage'"/>
+                        <field name="partner_id" string="Client"/>
+                        <field name="route"/>
+                        <field name="machines_tournee"/>
+                        <field name="name" optional="hide"/>
+                    </list>
+                </field>
+                <div class="text-muted small mt-2">
+                    L'itinéraire part de votre position et suit les arrêts dans l'ordre des heures
+                    (10 arrêts au plus).
+                </div>
+                <footer>
+                    <button name="action_ouvrir_itineraire" type="object" string="Ouvrir dans Google Maps"
+                            class="btn-primary" icon="directions_car" invisible="not nb_arrets"/>
+                    <button string="Fermer" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_carte_itineraire" model="ir.actions.act_window">
+        <field name="name">Itinéraire du jour</field>
+        <field name="res_model">suivi.carte.itineraire</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

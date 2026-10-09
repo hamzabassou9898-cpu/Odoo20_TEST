@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vues « Carte » (application Map d'Odoo Enterprise) : epingles numerotees dans l'ordre -->
+    <record id="view_picking_map_tournees" model="ir.ui.view">
+        <field name="name">stock.picking.map.tournees</field>
+        <field name="model">stock.picking</field>
+        <field name="arch" type="xml">
+            <map res_partner="partner_id" default_order="scheduled_date" routing="1">
+                <field name="date_tournee" string="Quand"/>
+                <field name="type_tournee" string="Type"/>
+                <field name="livreur_id" string="Livreur"/>
+                <field name="machines_tournee" string="Machines"/>
+            </map>
+        </field>
+    </record>
+
+    <record id="view_ticket_map_appels" model="ir.ui.view">
+        <field name="name">helpdesk.ticket.map.appels</field>
+        <field name="model">helpdesk.ticket</field>
+        <field name="arch" type="xml">
+            <map res_partner="partner_id" default_order="create_date desc">
+                <field name="name" string="Ticket"/>
+                <field name="stage_id" string="Étape"/>
+                <field name="technicien_id" string="Technicien"/>
+            </map>
+        </field>
+    </record>
+
+    <record id="view_lot_map_parc" model="ir.ui.view">
+        <field name="name">stock.lot.map.parc</field>
+        <field name="model">stock.lot</field>
+        <field name="arch" type="xml">
+            <map res_partner="machine_client_id">
+                <field name="ref" string="# machine"/>
+                <field name="product_id" string="Modèle"/>
+                <field name="machine_statut" string="Statut"/>
+            </map>
+        </field>
+    </record>
+
+    <!-- Ajout de la carte aux ecrans existants -->
+    <record id="suivi_machines_pilotage.action_portail_livreurs" model="ir.actions.act_window">
+        <field name="view_mode">kanban,map,list,calendar,form</field>
+    </record>
+    <record id="action_portail_livreurs_vue_carte" model="ir.actions.act_window.view">
+        <field name="sequence">2</field>
+        <field name="view_mode">map</field>
+        <field name="view_id" ref="view_picking_map_tournees"/>
+        <field name="act_window_id" ref="suivi_machines_pilotage.action_portail_livreurs"/>
+    </record>
+    <record id="suivi_machines_pilotage.action_pilotage_appels" model="ir.actions.act_window">
+        <field name="view_mode">list,map,graph,pivot,form</field>
+    </record>
+    <record id="action_pilotage_appels_vue_carte" model="ir.actions.act_window.view">
+        <field name="sequence">2</field>
+        <field name="view_mode">map</field>
+        <field name="view_id" ref="view_ticket_map_appels"/>
+        <field name="act_window_id" ref="suivi_machines_pilotage.action_pilotage_appels"/>
+    </record>
+
+    <!-- Carte du parc : machines chez les clients -->
+    <record id="action_carte_parc" model="ir.actions.act_window">
+        <field name="name">Carte du parc</field>
+        <field name="res_model">stock.lot</field>
+        <field name="view_mode">map,list,form</field>
+        <field name="domain">[('est_machine', '=', True), ('machine_client_id', '!=', False)]</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'map', 'view_id': ref('view_lot_map_parc')})]"/>
+    </record>
+    <record id="action_carte_tournees" model="ir.actions.act_window">
+        <field name="name">Carte des tournées</field>
+        <field name="res_model">stock.picking</field>
+        <field name="view_mode">map,kanban,list,form</field>
+        <field name="domain">[('type_tournee', 'in', ('livraison', 'ramassage')),
+                              '|', ('livreur_id', '!=', False), ('move_ids.product_id.categ_id.suivi_machine', '=', True)]</field>
+        <field name="context">{'search_default_a_faire': 1, 'search_default_aujourdhui': 1, 'search_default_grp_livreur': 1}</field>
+        <field name="search_view_id" ref="suivi_machines_pilotage.view_portail_livreurs_search"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'map', 'view_id': ref('view_picking_map_tournees')}),
+            (0, 0, {'view_mode': 'kanban', 'view_id': ref('suivi_machines_pilotage.view_portail_livreurs_kanban')})]"/>
+    </record>
+
+    <menuitem id="menu_carte_tournees" name="Carte des tournées" parent="suivi_machines_pilotage.menu_pilotage_transferts"
+              action="action_carte_tournees" sequence="3"/>
+    <menuitem id="menu_carte_itineraire" name="Itinéraire du jour (Google Maps)"
+              parent="suivi_machines_pilotage.menu_pilotage_transferts" action="action_carte_itineraire" sequence="4"/>
+    <menuitem id="menu_carte_parc" name="Carte du parc" parent="suivi_machines_pilotage.menu_pilotage_parc"
+              action="action_carte_parc" sequence="3"/>
+</odoo>
