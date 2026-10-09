@@ -164,3 +164,61 @@ class TestPortailTechnicien(HttpCase):
         # Sans jeton CSRF : refuse
         rep = self.url_open(url + "/note", data={"note": "sans jeton"})
         self.assertNotEqual(rep.status_code, 200)
+
+
+    def test_note_limites_fichiers(self):
+        self.authenticate("tech_portail_a", "tech_portail_a_mdp_123")
+        url = "/my/journee/tache/%s" % self._tache(self.ticket).id
+        # 11 fichiers : refuse, rien n'est enregistre
+        onze = [("pieces_jointes", ("f%s.txt" % i, b"x", "text/plain")) for i in range(11)]
+        rep = self.url_open(url + "/note", data={"csrf_token": self._csrf(url), "note": "trop"}, files=onze)
+        self.assertIn("fichiers au plus", rep.text)
+        self.assertFalse(self.ticket.note_technicien_ids)
+        # Fichier de plus de 20 Mo : refuse
+        gros = [("pieces_jointes", ("gros.jpg", b"0" * (20 * 1024 * 1024 + 1), "image/jpeg"))]
+        rep = self.url_open(url + "/note", data={"csrf_token": self._csrf(url), "note": "gros"}, files=gros,
+                            timeout=60)
+        self.assertIn("dépasse 20 Mo", rep.text)
+        self.assertFalse(self.ticket.note_technicien_ids)
+        # Photo seule, sans texte : acceptee ; 10 fichiers : acceptes
+        dix = [("pieces_jointes", ("p%s.jpg" % i, b"\xff\xd8 photo", "image/jpeg")) for i in range(10)]
+        rep = self.url_open(url + "/note", data={"csrf_token": self._csrf(url), "note": ""}, files=dix)
+        self.assertIn("Note envoyée", rep.text)
+        self.assertEqual(len(self.ticket.note_technicien_ids.attachment_ids), 10)
+
+    def test_bureau_telecharge_la_piece_jointe(self):
+        self.authenticate("tech_portail_a", "tech_portail_a_mdp_123")
+        url = "/my/journee/tache/%s" % self._tache(self.ticket).id
+        self.url_open(url + "/note", data={"csrf_token": self._csrf(url), "note": "photo"},
+                      files=[("pieces_jointes", ("photo.jpg", b"\xff\xd8\xff contenu-photo", "image/jpeg"))])
+        piece = self.ticket.note_technicien_ids.attachment_ids
+        self.assertEqual(len(piece), 1)
+        # Le technicien (portail) ne peut pas telecharger les fichiers du ticket directement
+        self.assertNotEqual(self.url_open("/web/content/%s?download=true" % piece.id).content,
+                            b"\xff\xd8\xff contenu-photo")
+        # Le bureau (interne) telecharge la photo depuis le ticket
+        self.authenticate("admin", "admin")
+        rep = self.url_open("/web/content/%s?download=true" % piece.id)
+        self.assertEqual(rep.status_code, 200)
+        self.assertEqual(rep.content, b"\xff\xd8\xff contenu-photo")
+
+    def test_note_sur_bon_de_livraison(self):
+        type_out = self.env.ref("stock.picking_type_out")
+        categ = self.env["product.category"].create({"name": "Mach note", "suivi_machine": True})
+        prod = self.env["product.product"].create({"name": "F note", "categ_id": categ.id, "is_storable": True})
+        picking = self.env["stock.picking"].create({
+            "name": "TEST/NOTE/1", "partner_id": self.client.id, "picking_type_id": type_out.id,
+            "location_id": type_out.default_location_src_id.id,
+            "location_dest_id": self.env.ref("stock.stock_location_customers").id,
+            "livreur_id": self.tech_a.id, "scheduled_date": fields.Datetime.now(),
+            "move_ids": [(0, 0, {"product_id": prod.id, "product_uom_qty": 1,
+                                 "location_id": type_out.default_location_src_id.id,
+                                 "location_dest_id": self.env.ref("stock.stock_location_customers").id})]})
+        tache = self.env["portail.tache"].search([("picking_id", "=", picking.id)])
+        self.assertEqual(tache.technicien_id, self.tech_a)
+        self.authenticate("tech_portail_a", "tech_portail_a_mdp_123")
+        url = "/my/journee/tache/%s" % tache.id
+        self.url_open(url + "/note", data={"csrf_token": self._csrf(url), "note": "Client absent, laissé au voisin"})
+        self.assertEqual(picking.note_technicien_ids.note, "Client absent, laissé au voisin")
+        arch = self.env["stock.picking"].get_views([(False, "form")])["views"]["form"]["arch"]
+        self.assertIn("note_technicien_ids", arch)
