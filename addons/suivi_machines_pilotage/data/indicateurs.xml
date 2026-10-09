@@ -128,11 +128,27 @@
         <field name="couleur">primary</field>
         <field name="description">Tickets en cours (hors entretiens et reprises)</field>
     </record>
+    <record id="indicateur_entretiens_ouverts" model="pilotage.indicateur">
+        <field name="code">entretiens_ouverts</field>
+        <field name="name">Tickets d'entretien ouverts</field>
+        <field name="section">appels</field>
+        <field name="sequence">2</field>
+        <field name="couleur">info</field>
+        <field name="description">Entretiens planifiés pas encore faits</field>
+    </record>
+    <record id="indicateur_reprises_ouvertes" model="pilotage.indicateur">
+        <field name="code">reprises_ouvertes</field>
+        <field name="name">Tickets de reprise ouverts</field>
+        <field name="section">appels</field>
+        <field name="sequence">3</field>
+        <field name="couleur">warning</field>
+        <field name="description">Machines à reprendre en fin de location</field>
+    </record>
     <record id="indicateur_appels_mois" model="pilotage.indicateur">
         <field name="code">appels_mois</field>
         <field name="name">Appels ce mois</field>
         <field name="section">appels</field>
-        <field name="sequence">2</field>
+        <field name="sequence">4</field>
         <field name="couleur">info</field>
         <field name="description">Appels reçus depuis le 1er du mois</field>
     </record>
@@ -140,7 +156,7 @@
         <field name="code">appels_sans_machine</field>
         <field name="name">Appels sans machine</field>
         <field name="section">appels</field>
-        <field name="sequence">3</field>
+        <field name="sequence">5</field>
         <field name="couleur">warning</field>
         <field name="description">Numéro de série à préciser</field>
     </record>

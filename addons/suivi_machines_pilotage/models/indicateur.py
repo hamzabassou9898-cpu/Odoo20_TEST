@@ -72,6 +72,8 @@ class PilotageIndicateur(models.Model):
                                                        ("date_fin_location", "<=", b["dans_30j"])]),
             "locations_depassees": ("sale.order", location + [("date_fin_location", "<", b["maintenant"])]),
             "appels_ouverts": ("helpdesk.ticket", appels + ouverts),
+            "entretiens_ouverts": ("helpdesk.ticket", [("type_ticket", "=", "entretien")] + ouverts),
+            "reprises_ouvertes": ("helpdesk.ticket", [("type_ticket", "=", "reprise")] + ouverts),
             "appels_mois": ("helpdesk.ticket", appels + [
                 ("create_date", ">=", fields.Datetime.to_datetime(b["debut_mois"]))]),
             "appels_sans_machine": ("helpdesk.ticket", appels + ouverts + [("lot_id", "=", False)]),
@@ -120,9 +122,12 @@ class PilotageIndicateur(models.Model):
         "locations_actives": ("suivi_machines_pilotage.action_pilotage_locations", "en_cours"),
         "reprises_30j": ("suivi_machines_pilotage.action_pilotage_locations", "fin_30j"),
         "locations_depassees": ("suivi_machines_pilotage.action_pilotage_locations", "depassees"),
-        "appels_ouverts": ("suivi_machines_pilotage.action_pilotage_appels", "ouverts"),
-        "appels_mois": ("suivi_machines_pilotage.action_pilotage_appels", "ce_mois"),
-        "appels_sans_machine": ("suivi_machines_pilotage.action_pilotage_appels", "sans_machine"),
+        "appels_ouverts": ("suivi_machines_pilotage.action_pilotage_appels", ("type_appel", "ouverts")),
+        "entretiens_ouverts": ("suivi_machines_pilotage.action_pilotage_appels", ("type_entretien", "ouverts")),
+        "reprises_ouvertes": ("suivi_machines_pilotage.action_pilotage_appels", ("type_reprise", "ouverts")),
+        "appels_mois": ("suivi_machines_pilotage.action_pilotage_appels", ("type_appel", "ce_mois")),
+        "appels_sans_machine": ("suivi_machines_pilotage.action_pilotage_appels", ("type_appel", "ouverts",
+                                                                                   "sans_machine")),
         "livraisons_a_faire": ("suivi_machines_pilotage.action_pilotage_transferts", "livraisons_a_faire"),
         "ramassages_a_faire": ("suivi_machines_pilotage.action_pilotage_transferts", "ramassages_a_faire"),
         "sans_livreur": ("suivi_machines_pilotage.action_pilotage_transferts", "sans_livreur"),
@@ -142,8 +147,8 @@ class PilotageIndicateur(models.Model):
             return False
         action = self.env["ir.actions.act_window"]._for_xml_id(xmlid)
         contexte = {}
-        if filtre:
-            contexte["search_default_" + filtre] = 1
+        for nom in ((filtre,) if isinstance(filtre, str) else filtre or ()):
+            contexte["search_default_" + nom] = 1
         action["context"] = contexte
         action["display_name"] = action["name"] = self.name
         return action

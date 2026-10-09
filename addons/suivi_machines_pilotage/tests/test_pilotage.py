@@ -41,9 +41,32 @@ class TestPilotage(TransactionCase):
         self._ind("appels_ouverts").invalidate_recordset()
         self.assertEqual(self._ind("appels_ouverts").valeur, avant + 1, "un appel sans étape est ouvert")
 
+    def test_types_de_ticket(self):
+        Ticket = self.env["helpdesk.ticket"]
+        appel = Ticket.create({"name": "Ne gèle pas", "code_client": "PIL1"})
+        entretien = Ticket.create({"name": "ENTRETIEN - PIL-1", "partner_id": self.client.id, "est_entretien": True})
+        so = self.env["sale.order"].create({"partner_id": self.client.id, "type_commande": "location"})
+        reprise = Ticket.create({"name": "Reprise - PIL-1", "partner_id": self.client.id,
+                                 "commande_reprise_id": so.id})
+        self.assertEqual((appel.type_ticket, entretien.type_ticket, reprise.type_ticket),
+                         ("appel", "entretien", "reprise"))
+        for code, ticket in (("appels_ouverts", appel), ("entretiens_ouverts", entretien),
+                             ("reprises_ouvertes", reprise)):
+            model, domaine = self.env["pilotage.indicateur"]._domaines()[code]
+            self.assertIn(ticket, self.env[model].search(domaine), code)
+            autres = (appel | entretien | reprise) - ticket
+            self.assertFalse(autres & self.env[model].search(domaine), code)
+        # Clic sur la carte : la liste s'ouvre filtree sur le type + ouverts
+        action = self._ind("reprises_ouvertes").action_ouvrir()
+        self.assertEqual(action["context"], {"search_default_type_reprise": 1, "search_default_ouverts": 1})
+        # La liste « Appels de service » montre tous les types, regroupes par type
+        liste = self.env["ir.actions.act_window"]._for_xml_id("suivi_machines_pilotage.action_pilotage_appels")
+        self.assertFalse(liste.get("domain"))
+        self.assertIn("search_default_grp_type_ticket", liste["context"])
+
     def test_toutes_les_cartes_et_vues(self):
         indicateurs = self.env["pilotage.indicateur"].search([])
-        self.assertGreaterEqual(len(indicateurs), 18)
+        self.assertGreaterEqual(len(indicateurs), 20)
         indicateurs.mapped("valeur")
         for ind in indicateurs:
             action = ind.action_ouvrir()

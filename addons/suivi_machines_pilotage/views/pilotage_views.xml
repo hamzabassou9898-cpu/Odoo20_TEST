@@ -422,7 +422,9 @@
         <field name="arch" type="xml">
             <list create="false" default_order="create_date desc">
                 <field name="create_date" string="Reçu le"/>
-                <field name="name" string="Appel"/>
+                <field name="type_ticket" widget="badge" decoration-primary="type_ticket == 'appel'"
+                       decoration-info="type_ticket == 'entretien'" decoration-warning="type_ticket == 'reprise'"/>
+                <field name="name" string="Ticket"/>
                 <field name="code_client" optional="show"/>
                 <field name="partner_id" string="Client"/>
                 <field name="lot_id" string="Machine"/>
@@ -439,8 +441,8 @@
         <field name="name">pilotage.helpdesk.ticket.graph</field>
         <field name="model">helpdesk.ticket</field>
         <field name="arch" type="xml">
-            <graph string="Appels par type de problème" type="bar">
-                <field name="tag_ids"/>
+            <graph string="Tickets par type" type="bar">
+                <field name="type_ticket"/>
             </graph>
         </field>
     </record>
@@ -450,7 +452,7 @@
         <field name="model">helpdesk.ticket</field>
         <field name="arch" type="xml">
             <pivot string="Appels de service">
-                <field name="tag_ids" type="row"/>
+                <field name="type_ticket" type="row"/>
                 <field name="create_date" interval="month" type="col"/>
             </pivot>
         </field>
@@ -467,6 +469,10 @@
                 <field name="partner_id"/>
                 <field name="lot_id"/>
                 <field name="tag_ids"/>
+                <filter name="type_appel" string="Appels de service" domain="[('type_ticket', '=', 'appel')]"/>
+                <filter name="type_entretien" string="Entretiens" domain="[('type_ticket', '=', 'entretien')]"/>
+                <filter name="type_reprise" string="Reprises de machine" domain="[('type_ticket', '=', 'reprise')]"/>
+                <separator/>
                 <filter name="ouverts" string="Ouverts"
                         domain="['!', '|', '|', ('stage_id.name', 'ilike', 'résolu'), ('stage_id.name', 'ilike', 'annul'), ('stage_id.name', 'ilike', 'clôtur')]"/>
                 <filter name="sans_machine" string="Sans machine" domain="[('lot_id', '=', False)]"/>
@@ -475,6 +481,7 @@
                 <filter name="trois_mois" string="3 derniers mois"
                         domain="[('create_date', '&gt;=', (context_today() - relativedelta(months=3)).strftime('%Y-%m-%d'))]"/>
                 <group>
+                    <filter name="grp_type_ticket" string="Type de ticket" context="{'group_by': 'type_ticket'}"/>
                     <filter name="grp_type" string="Type de problème" context="{'group_by': 'tag_ids'}"/>
                     <filter name="grp_statut" string="Statut" context="{'group_by': 'stage_id'}"/>
                     <filter name="grp_client" string="Client" context="{'group_by': 'partner_id'}"/>
@@ -489,8 +496,9 @@
         <field name="name">Appels de service</field>
         <field name="res_model">helpdesk.ticket</field>
         <field name="view_mode">list,graph,pivot,form</field>
-        <field name="domain">[('est_entretien', '=', False), ('commande_reprise_id', '=', False)]</field>
-        <field name="context">{'search_default_ouverts': 1}</field>
+        <!-- Tous les types de ticket (appels, entretiens, reprises) : on efface l'ancien filtre -->
+        <field name="domain" eval="False"/>
+        <field name="context">{'search_default_ouverts': 1, 'search_default_grp_type_ticket': 1}</field>
         <field name="search_view_id" ref="view_pilotage_appels_search"/>
         <field name="view_ids" eval="[(5, 0, 0),
             (0, 0, {'view_mode': 'list', 'view_id': ref('view_pilotage_appels_list')}),
