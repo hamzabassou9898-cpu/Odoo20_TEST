@@ -30,10 +30,8 @@ class StockPicking(models.Model):
 class HelpdeskTicket(models.Model):
     _inherit = "helpdesk.ticket"
 
-    technicien_terrain_id = fields.Many2one(
-        "res.users", "Technicien terrain", domain=DOMAINE_TECHNICIEN, index="btree_not_null",
-        tracking=True, copy=False,
-        help="Technicien portail qui se déplace chez le client (le ticket reste assigné à l'équipe interne).")
+    # Ancien champ (remplace par « Assigne a ») : garde pour les anciennes donnees, plus affiche
+    technicien_terrain_id = fields.Many2one("res.users", "Technicien terrain (ancien)", copy=False)
 
 
 class PortailTache(models.Model):
@@ -42,19 +40,7 @@ class PortailTache(models.Model):
     _depends = {"helpdesk.ticket": ["technicien_terrain_id"]}
 
     def _sql_technicien_ticket(self):
-        return SQL("COALESCE(t.technicien_terrain_id, t.user_id, t.technicien_id)")
-
-    def _valeurs_source(self, vals):
-        valeurs = super()._valeurs_source(vals)
-        if self.ticket_id and "user_id" in valeurs:
-            # Technicien portail : technicien terrain ; interne : assigne au ticket
-            user = self.env["res.users"].browse(valeurs["user_id"])
-            if user.share:
-                valeurs = dict(valeurs, technicien_terrain_id=user.id)
-                del valeurs["user_id"]
-            else:
-                valeurs["technicien_terrain_id"] = False
-        return valeurs
+        return SQL("COALESCE(t.user_id, t.technicien_terrain_id, t.technicien_id)")
 
 
 class PortalEntry(models.Model):

@@ -64,9 +64,7 @@ class PilotageDonneesTest(models.TransientModel):
         return machines
 
     def _assigner(self, user):
-        """Technicien portail (phase 2) : technicien terrain ; interne : assigne au ticket."""
-        if user.share and "technicien_terrain_id" in self.env["helpdesk.ticket"]._fields:
-            return {"technicien_terrain_id": user.id}
+        """Technicien interne ou portail : champ natif « Assigne a »."""
         return {"user_id": user.id}
 
     def _date(self, i):

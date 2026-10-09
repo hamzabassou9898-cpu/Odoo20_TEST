@@ -120,13 +120,29 @@
         <field name="couleur">success</field>
         <field name="description">Machines livrées depuis le 1er du mois</field>
     </record>
+    <record id="indicateur_tickets_nouveaux" model="pilotage.indicateur">
+        <field name="code">tickets_nouveaux</field>
+        <field name="name">Nouveaux tickets</field>
+        <field name="section">appels</field>
+        <field name="sequence">0</field>
+        <field name="couleur">danger</field>
+        <field name="description">Tickets arrivés, pas encore pris en charge</field>
+    </record>
     <record id="indicateur_appels_ouverts" model="pilotage.indicateur">
         <field name="code">appels_ouverts</field>
         <field name="name">Appels de service ouverts</field>
         <field name="section">appels</field>
         <field name="sequence">1</field>
         <field name="couleur">primary</field>
-        <field name="description">Tickets en cours (hors entretiens et reprises)</field>
+        <field name="description">Tickets en cours et entretiens à planifier (hors reprises)</field>
+    </record>
+    <record id="indicateur_entretiens_a_planifier" model="pilotage.indicateur">
+        <field name="code">entretiens_a_planifier</field>
+        <field name="name">Entretiens à planifier</field>
+        <field name="section">appels</field>
+        <field name="sequence">2</field>
+        <field name="couleur">warning</field>
+        <field name="description">Aucun technicien assigné pour l'instant</field>
     </record>
     <record id="indicateur_entretiens_ouverts" model="pilotage.indicateur">
         <field name="code">entretiens_ouverts</field>
@@ -134,7 +150,7 @@
         <field name="section">entretiens</field>
         <field name="sequence">0</field>
         <field name="couleur">info</field>
-        <field name="description">Tickets d'entretien pas encore validés</field>
+        <field name="description">Assignés à un technicien, pas encore validés</field>
     </record>
     <record id="indicateur_reprises_ouvertes" model="pilotage.indicateur">
         <field name="code">reprises_ouvertes</field>

@@ -1,7 +1,7 @@
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
 import { standardActionServiceProps } from "@web/webclient/actions/action_plugin";
-import { Component, onWillStart, proxy, useProps } from "@odoo/owl";
+import { Component, onMounted, onWillStart, onWillUnmount, proxy, useProps } from "@odoo/owl";
 
 /** Pilotage : vue d'ensemble moderne (la vue « Toutes les cartes » reste disponible). */
 export class TableauModerne extends Component {
@@ -11,15 +11,27 @@ export class TableauModerne extends Component {
     setup() {
         this.orm = useService("orm");
         this.actionService = useService("action");
-        this.state = proxy({ donnees: null, periode: "jour", chargement: true });
+        this.state = proxy({ donnees: null, periode: "jour", chargement: true, majA: "" });
         onWillStart(() => this.charger("jour"));
+        // Rafraichissement automatique toutes les 2 minutes
+        onMounted(() => {
+            this.minuteur = setInterval(() => this.charger(this.state.periode, true), 120000);
+        });
+        onWillUnmount(() => clearInterval(this.minuteur));
     }
 
-    async charger(periode) {
-        this.state.chargement = true;
+    async charger(periode, silencieux = false) {
+        if (!silencieux) {
+            this.state.chargement = true;
+        }
         this.state.periode = periode;
-        this.state.donnees = await this.orm.call("pilotage.indicateur", "donnees_tableau_moderne", [periode]);
-        this.state.chargement = false;
+        try {
+            this.state.donnees = await this.orm.call("pilotage.indicateur", "donnees_tableau_moderne", [periode]);
+            const maintenant = new Date();
+            this.state.majA = maintenant.toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" });
+        } finally {
+            this.state.chargement = false;
+        }
     }
 
     async ouvrir(code) {

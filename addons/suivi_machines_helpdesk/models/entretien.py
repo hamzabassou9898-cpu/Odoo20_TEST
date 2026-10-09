@@ -91,6 +91,7 @@ class HelpdeskTicket(models.Model):
                 "code_client": Ticket._code_du_client(client) if client else False,
                 "lot_id": lot.id,
                 "est_entretien": True,
+                "origine_auto": "entretien",
                 "date_entretien_prevu": lot.date_prochain_entretien,
                 "tag_ids": [(4, (retard if en_retard else semaine).id)],
                 "description": self.env._(

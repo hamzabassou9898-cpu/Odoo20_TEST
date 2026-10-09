@@ -44,10 +44,29 @@
 
             </xpath>
 
-            <!-- Technicien de la derniere intervention, sous « Assigné à » -->
+            <!-- Bandeau : ticket cree par une action planifiee d'Odoo (d'ou il vient) -->
+            <xpath expr="//sheet" position="before">
+                <field name="origine_auto" invisible="1"/>
+                <div class="alert alert-info mb-0 py-2" role="status" invisible="not origine_auto">
+                    Ticket créé <strong>automatiquement par Odoo</strong> (action planifiée)
+                    <span invisible="origine_auto != 'entretien'">
+                        : l'entretien de cette machine arrive à échéance<span invisible="not date_entretien_prevu">
+                        (prévu le <field name="date_entretien_prevu" readonly="1" class="d-inline"/>)</span>.
+                    </span>
+                    <span invisible="origine_auto != 'reprise'">
+                        : la location <field name="commande_reprise_id" readonly="1" class="d-inline"/>
+                        se termine, les machines sont à reprendre.
+                    </span>
+                </div>
+            </xpath>
+
+            <!-- Un seul technicien : le champ natif « Assigné à », puis la date et le statut -->
             <xpath expr="//field[@name='user_id']" position="after">
-                <field name="technicien_id" invisible="not technicien_id" widget="many2one_avatar_user"/>
                 <field name="date_planifiee" invisible="est_reprise"/>
+                <field name="statut_entretien" widget="badge" invisible="not est_entretien"
+                       decoration-warning="statut_entretien == 'a_planifier'"
+                       decoration-info="statut_entretien == 'planifie'"
+                       decoration-success="statut_entretien == 'fait'"/>
             </xpath>
 
             <!-- Adresse commerciale : sa propre ligne, dans le groupe du telephone natif -->
@@ -57,6 +76,7 @@
 
             <!-- Code client obligatoire : il remplit le client et ses machines -->
             <xpath expr="//field[@name='partner_id']" position="before">
+                <field name="type_demande" required="1" placeholder="Réparation, entretien, ramassage…"/>
                 <field name="code_client" required="not est_entretien" placeholder="ex. MON134"
                        class="fw-bold"/>
             </xpath>
@@ -165,7 +185,7 @@
             </xpath>
             <!-- Dans la carte (templates), pas dans les declarations de champs en tete -->
             <xpath expr="(//templates//field[@name='user_id'])[1]" position="before">
-                <field name="technicien_id" invisible="not technicien_id"
+                <field name="technicien_id" invisible="not technicien_id or technicien_id == user_id"
                        class="badge rounded-pill text-bg-info me-1 text-truncate" style="max-width: 160px;"/>
             </xpath>
         </field>

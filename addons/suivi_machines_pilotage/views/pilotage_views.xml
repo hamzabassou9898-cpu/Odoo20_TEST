@@ -460,8 +460,9 @@
         <field name="arch" type="xml">
             <list create="false" default_order="create_date desc">
                 <field name="create_date" string="Reçu le"/>
-                <field name="type_ticket" widget="badge" decoration-primary="type_ticket == 'appel'"
-                       decoration-info="type_ticket == 'entretien'" decoration-warning="type_ticket == 'reprise'"/>
+                <field name="type_demande" widget="badge" decoration-danger="type_demande == 'reparation'"
+                       decoration-info="type_demande == 'entretien'" decoration-warning="type_demande == 'ramassage'"
+                       decoration-primary="type_demande == 'remplacement'"/>
                 <field name="name" string="Ticket"/>
                 <field name="date_planifiee" optional="show"/>
                 <field name="code_client" optional="show"/>
@@ -469,8 +470,11 @@
                 <field name="lot_id" string="Machine"/>
                 <field name="tag_ids" widget="many2many_tags" options="{'color_field': 'color'}" string="Type de problème"/>
                 <field name="priority" widget="priority" optional="show"/>
-                <field name="technicien_id" widget="many2one_avatar_user" optional="show"/>
-                <field name="user_id" widget="many2one_avatar_user" optional="hide"/>
+                <field name="user_id" string="Technicien" widget="many2one_avatar_user" optional="show"/>
+                <field name="statut_entretien" widget="badge" optional="show"
+                       decoration-warning="statut_entretien == 'a_planifier'"
+                       decoration-info="statut_entretien == 'planifie'"
+                       decoration-success="statut_entretien == 'fait'"/>
                 <field name="stage_id" string="Statut"/>
             </list>
         </field>
@@ -481,7 +485,7 @@
         <field name="model">helpdesk.ticket</field>
         <field name="arch" type="xml">
             <graph string="Tickets par type" type="bar">
-                <field name="type_ticket"/>
+                <field name="type_demande"/>
             </graph>
         </field>
     </record>
@@ -491,7 +495,7 @@
         <field name="model">helpdesk.ticket</field>
         <field name="arch" type="xml">
             <pivot string="Appels de service">
-                <field name="type_ticket" type="row"/>
+                <field name="type_demande" type="row"/>
                 <field name="create_date" interval="month" type="col"/>
             </pivot>
         </field>
@@ -508,9 +512,19 @@
                 <field name="partner_id"/>
                 <field name="lot_id"/>
                 <field name="tag_ids"/>
+                <filter name="nouveaux" string="Nouveaux (à prendre en charge)"
+                        domain="['|', ('stage_id', '=', False), ('stage_id.name', 'ilike', 'nouveau')]"/>
+                <separator/>
                 <filter name="type_appel" string="Appels de service" domain="[('type_ticket', '=', 'appel')]"/>
                 <filter name="type_entretien" string="Entretiens" domain="[('type_ticket', '=', 'entretien')]"/>
                 <filter name="type_reprise" string="Reprises de machine" domain="[('type_ticket', '=', 'reprise')]"/>
+                <separator/>
+                <filter name="a_traiter" string="Appels et entretiens à planifier"
+                        domain="['|', ('type_ticket', '=', 'appel'), ('statut_entretien', '=', 'a_planifier')]"/>
+                <filter name="entretiens_a_planifier" string="Entretiens à planifier"
+                        domain="[('statut_entretien', '=', 'a_planifier')]"/>
+                <filter name="entretiens_planifies" string="Entretiens planifiés à faire"
+                        domain="[('statut_entretien', '=', 'planifie')]"/>
                 <separator/>
                 <filter name="ouverts" string="Ouverts"
                         domain="['!', '|', '|', ('stage_id.name', 'ilike', 'résolu'), ('stage_id.name', 'ilike', 'annul'), ('stage_id.name', 'ilike', 'clôtur')]"/>
@@ -520,11 +534,13 @@
                 <filter name="trois_mois" string="3 derniers mois"
                         domain="[('create_date', '&gt;=', (context_today() - relativedelta(months=3)).strftime('%Y-%m-%d'))]"/>
                 <group>
-                    <filter name="grp_type_ticket" string="Type de ticket" context="{'group_by': 'type_ticket'}"/>
+                    <filter name="grp_type_demande" string="Type de ticket" context="{'group_by': 'type_demande'}"/>
+                    <filter name="grp_type_ticket" string="Origine (appel, entretien, reprise)"
+                            context="{'group_by': 'type_ticket'}"/>
                     <filter name="grp_type" string="Type de problème" context="{'group_by': 'tag_ids'}"/>
                     <filter name="grp_statut" string="Statut" context="{'group_by': 'stage_id'}"/>
                     <filter name="grp_client" string="Client" context="{'group_by': 'partner_id'}"/>
-                    <filter name="grp_tech" string="Technicien" context="{'group_by': 'technicien_id'}"/>
+                    <filter name="grp_tech" string="Technicien" context="{'group_by': 'user_id'}"/>
                     <filter name="grp_mois" string="Mois" context="{'group_by': 'create_date:month'}"/>
                 </group>
             </search>
@@ -537,7 +553,7 @@
         <field name="view_mode">list,graph,pivot,form</field>
         <!-- Tous les types de ticket (appels, entretiens, reprises) : on efface l'ancien filtre -->
         <field name="domain" eval="False"/>
-        <field name="context">{'search_default_ouverts': 1, 'search_default_grp_type_ticket': 1}</field>
+        <field name="context">{'search_default_ouverts': 1, 'search_default_grp_type_demande': 1}</field>
         <field name="search_view_id" ref="view_pilotage_appels_search"/>
         <field name="view_ids" eval="[(5, 0, 0),
             (0, 0, {'view_mode': 'list', 'view_id': ref('view_pilotage_appels_list')}),

@@ -36,7 +36,7 @@ class PortailTache(models.Model):
                           "type_tournee", "company_id"],
         "stock.move": ["picking_id", "product_id"],
         "helpdesk.ticket": ["user_id", "technicien_id", "date_planifiee", "partner_id", "stage_id", "name",
-                            "est_entretien", "commande_reprise_id", "lot_id"],
+                            "est_entretien", "commande_reprise_id", "lot_id", "type_demande"],
         "helpdesk.stage": ["name"],
         "machine.intervention": ["user_id", "date", "partner_id", "state", "name", "type", "lot_id",
                                  "ticket_id", "company_id"],
@@ -92,7 +92,10 @@ class PortailTache(models.Model):
                           JOIN product_category c ON c.id = pt.categ_id
                          WHERE m.picking_id = p.id AND c.suivi_machine))
                 UNION ALL
-                SELECT t.id * 10 + 2, CASE WHEN t.est_entretien THEN 'entretien' ELSE 'reparation' END,
+                SELECT t.id * 10 + 2, CASE WHEN t.est_entretien THEN 'entretien'
+                                           WHEN t.type_demande = 'ramassage' THEN 'ramassage'
+                                           WHEN t.type_demande = 'commande' THEN 'autre'
+                                           ELSE 'reparation' END,
                        COALESCE(t.date_planifiee, t.create_date), %(technicien_ticket)s,
                        t.partner_id, t.name, '#' || t.id, COALESCE(s.name::text, '') !~* %(ferme)s,
                        t.lot_id, %(societe_ticket)s, NULL, t.id, NULL

@@ -229,6 +229,7 @@ class SaleOrder(models.Model):
                 "lot_id": lots[:1].id,
                 "machines_reprise_ids": [(6, 0, lots.ids)],
                 "commande_reprise_id": order.id,
+                "origine_auto": "reprise",
                 "date_fin_reprise": order.date_fin_location,
                 "name": self.env._("Reprise"),
             }

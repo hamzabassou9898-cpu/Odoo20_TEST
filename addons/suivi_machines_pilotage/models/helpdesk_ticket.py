@@ -8,7 +8,7 @@ TYPES_TICKET = [("appel", "Appel de service"), ("entretien", "Entretien"), ("rep
 class HelpdeskTicket(models.Model):
     _inherit = "helpdesk.ticket"
 
-    type_ticket = fields.Selection(TYPES_TICKET, "Type de ticket", compute="_compute_type_ticket",
+    type_ticket = fields.Selection(TYPES_TICKET, "Origine du ticket", compute="_compute_type_ticket",
                                    store=True, index=True)
 
     @api.depends("est_entretien", "commande_reprise_id")

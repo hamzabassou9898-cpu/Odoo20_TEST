@@ -71,8 +71,15 @@ class PilotageIndicateur(models.Model):
             "reprises_30j": ("sale.order", location + [("date_fin_location", ">=", b["maintenant"]),
                                                        ("date_fin_location", "<=", b["dans_30j"])]),
             "locations_depassees": ("sale.order", location + [("date_fin_location", "<", b["maintenant"])]),
-            "appels_ouverts": ("helpdesk.ticket", appels + ouverts),
-            "entretiens_ouverts": ("helpdesk.ticket", [("type_ticket", "=", "entretien")] + ouverts),
+            # Appels de service + entretiens pas encore assignes a un technicien (a planifier)
+            "appels_ouverts": ("helpdesk.ticket", ["|", ("type_ticket", "=", "appel"),
+                                                   ("statut_entretien", "=", "a_planifier")] + ouverts),
+            "entretiens_a_planifier": ("helpdesk.ticket", [("statut_entretien", "=", "a_planifier")]),
+            # Ticket qui vient d'arriver : etape « Nouveau » (ou pas encore d'etape)
+            "tickets_nouveaux": ("helpdesk.ticket", ["|", ("stage_id", "=", False),
+                                                     ("stage_id.name", "ilike", "nouveau")]),
+            # Planifie = assigne a un technicien (ou intervention planifiee) : dans sa journee
+            "entretiens_ouverts": ("helpdesk.ticket", [("statut_entretien", "=", "planifie")]),
             "reprises_ouvertes": ("helpdesk.ticket", [("type_ticket", "=", "reprise")] + ouverts),
             "appels_mois": ("helpdesk.ticket", appels + [
                 ("create_date", ">=", fields.Datetime.to_datetime(b["debut_mois"]))]),
@@ -122,8 +129,10 @@ class PilotageIndicateur(models.Model):
         "locations_actives": ("suivi_machines_pilotage.action_pilotage_locations", "en_cours"),
         "reprises_30j": ("suivi_machines_pilotage.action_pilotage_locations", "fin_30j"),
         "locations_depassees": ("suivi_machines_pilotage.action_pilotage_locations", "depassees"),
-        "appels_ouverts": ("suivi_machines_pilotage.action_pilotage_appels", ("type_appel", "ouverts")),
-        "entretiens_ouverts": ("suivi_machines_pilotage.action_pilotage_appels", ("type_entretien", "ouverts")),
+        "appels_ouverts": ("suivi_machines_pilotage.action_pilotage_appels", ("a_traiter", "ouverts")),
+        "entretiens_a_planifier": ("suivi_machines_pilotage.action_pilotage_appels", ("entretiens_a_planifier",)),
+        "tickets_nouveaux": ("suivi_machines_pilotage.action_pilotage_appels", ("nouveaux",)),
+        "entretiens_ouverts": ("suivi_machines_pilotage.action_pilotage_appels", ("entretiens_planifies",)),
         "reprises_ouvertes": ("suivi_machines_pilotage.action_pilotage_appels", ("type_reprise", "ouverts")),
         "appels_mois": ("suivi_machines_pilotage.action_pilotage_appels", ("type_appel", "ce_mois")),
         "appels_sans_machine": ("suivi_machines_pilotage.action_pilotage_appels", ("type_appel", "ouverts",
@@ -151,4 +160,6 @@ class PilotageIndicateur(models.Model):
             contexte["search_default_" + nom] = 1
         action["context"] = contexte
         action["display_name"] = action["name"] = self.name
+        # Le message « aucun enregistrement » (HTML) s'afficherait en texte brut depuis un bouton
+        action.pop("help", None)
         return action

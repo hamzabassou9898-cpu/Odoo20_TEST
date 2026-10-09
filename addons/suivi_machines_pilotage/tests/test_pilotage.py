@@ -50,19 +50,34 @@ class TestPilotage(TransactionCase):
                                  "commande_reprise_id": so.id})
         self.assertEqual((appel.type_ticket, entretien.type_ticket, reprise.type_ticket),
                          ("appel", "entretien", "reprise"))
-        for code, ticket in (("appels_ouverts", appel), ("entretiens_ouverts", entretien),
-                             ("reprises_ouvertes", reprise)):
+        tous = appel | entretien | reprise
+
+        def dans(code):
             model, domaine = self.env["pilotage.indicateur"]._domaines()[code]
-            self.assertIn(ticket, self.env[model].search(domaine), code)
-            autres = (appel | entretien | reprise) - ticket
-            self.assertFalse(autres & self.env[model].search(domaine), code)
+            return tous & self.env[model].search(domaine)
+
+        # Entretien sans technicien : « a planifier », donc dans les Appels de service
+        self.assertEqual(entretien.statut_entretien, "a_planifier")
+        self.assertEqual(dans("appels_ouverts"), appel | entretien)
+        self.assertEqual(dans("entretiens_a_planifier"), entretien)
+        self.assertFalse(dans("entretiens_ouverts"))
+        self.assertEqual(dans("reprises_ouvertes"), reprise)
+        # Assigne a un technicien : « planifie », il passe dans les Entretiens planifies a faire
+        tech = self.env["res.users"].create({"name": "Tech pilotage", "login": "tech_pilotage"})
+        entretien.user_id = tech
+        self.assertEqual(entretien.statut_entretien, "planifie")
+        self.assertEqual(dans("appels_ouverts"), appel)
+        self.assertEqual(dans("entretiens_ouverts"), entretien)
+        self.assertFalse(dans("entretiens_a_planifier"))
+        tache = self.env["portail.tache"].search([("ticket_id", "=", entretien.id)])
+        self.assertEqual((tache.technicien_id, tache.type_tache), (tech, "entretien"), "dans sa journée")
         # Clic sur la carte : la liste s'ouvre filtree sur le type + ouverts
         action = self._ind("reprises_ouvertes").action_ouvrir()
         self.assertEqual(action["context"], {"search_default_type_reprise": 1, "search_default_ouverts": 1})
         # La liste « Appels de service » montre tous les types, regroupes par type
         liste = self.env["ir.actions.act_window"]._for_xml_id("suivi_machines_pilotage.action_pilotage_appels")
         self.assertFalse(liste.get("domain"))
-        self.assertIn("search_default_grp_type_ticket", liste["context"])
+        self.assertIn("search_default_grp_type_demande", liste["context"])
 
     def test_toutes_les_cartes_et_vues(self):
         indicateurs = self.env["pilotage.indicateur"].search([])
@@ -76,6 +91,34 @@ class TestPilotage(TransactionCase):
             vues = [(v, m) for v, m in action["views"]]
             Model.get_views(vues + [(action.get("search_view_id") and action["search_view_id"][0], "search")])
         self.env["pilotage.indicateur"].get_views([(False, "kanban")])
+
+    def test_entretien_planifie_via_intervention(self):
+        """Josef planifie l'entretien depuis Interventions : le ticket ouvert de la machine devient « Planifié »."""
+        Ticket = self.env["helpdesk.ticket"]
+        ticket = Ticket.create({"name": "Entretien - PIL-1", "partner_id": self.client.id, "lot_id": self.lot.id,
+                                "est_entretien": True})
+        self.assertEqual(ticket.statut_entretien, "a_planifier")
+        tech = self.env["res.users"].create({"name": "Tech interv", "login": "tech_interv"})
+        date = fields.Datetime.now() + relativedelta(days=3)
+        interv = self.env["machine.intervention"].create({
+            "lot_id": self.lot.id, "type": "entretien", "user_id": tech.id, "date": date,
+            "partner_id": self.client.id})
+        self.assertEqual(interv.ticket_id, ticket, "rattachée au ticket d'entretien ouvert de la machine")
+        self.assertEqual((ticket.statut_entretien, ticket.user_id, ticket.date_planifiee),
+                         ("planifie", tech, date))
+        model, domaine = self.env["pilotage.indicateur"]._domaines()["entretiens_ouverts"]
+        self.assertIn(ticket, self.env[model].search(domaine))
+        # Une seule tache dans la journee du technicien (le ticket, pas l'intervention en double)
+        taches = self.env["portail.tache"].search([("technicien_id", "=", tech.id)])
+        self.assertEqual(len(taches), 1)
+        self.assertEqual(taches.ticket_id, ticket)
+        # Une reparation n'est jamais rattachee a un ticket d'entretien
+        bris = self.env["machine.intervention"].create({"lot_id": self.lot.id, "type": "bris"})
+        self.assertFalse(bris.ticket_id)
+        # Resolu : « Fait », il quitte les listes
+        ticket.stage_id = self.env["helpdesk.stage"].create({"name": "Résolu"})
+        self.assertEqual(ticket.statut_entretien, "fait")
+        self.assertNotIn(ticket, self.env[model].search(domaine))
 
     def test_entretiens_et_reparations_regroupes(self):
         """Une seule section « Entretiens & réparations » (plus de colonne « Bris & réparations »)."""
@@ -100,7 +143,7 @@ class TestPilotage(TransactionCase):
         for periode in ("jour", "semaine", "mois"):
             d = Ind.donnees_tableau_moderne(periode)
             self.assertEqual(d["periode"], periode)
-            self.assertEqual(len(d["kpis"]), 5)
+            self.assertEqual(len(d["kpis"]), 7)
             self.assertEqual(len(d["semaines"]), 8)
             self.assertEqual(len(d["parc"]), 5)
             for cle in ("alertes", "techniciens", "progression", "problemes", "tournees", "bonjour", "date"):
@@ -110,16 +153,69 @@ class TestPilotage(TransactionCase):
         self.assertEqual(kpi["appels_ouverts"]["valeur"], Ind._compte("appels_ouverts"))
         self.assertGreaterEqual(kpi["appels_ouverts"]["valeur"], 1)
         self.assertTrue(all(a["nombre"] > 0 for a in d["alertes"]), "seulement ce qui est à traiter")
-        # Chaque carte et chaque alerte ouvre une liste
-        for code in [k["code"] for k in d["kpis"]] + [a["code"] for a in d["alertes"]]:
+        # Tout est cliquable : chaque element ouvre une liste (sans le message HTML brut)
+        tag = self.env["helpdesk.tag"].create({"name": "Fait du bruit"})
+        tech = self.env["res.users"].create({"name": "Tech vue", "login": "tech_vue"})
+        self.env["helpdesk.ticket"].create({"name": "Bruit", "code_client": "PIL1", "tag_ids": [(6, 0, tag.ids)],
+                                            "user_id": tech.id, "date_planifiee": fields.Datetime.now()})
+        d = Ind.donnees_tableau_moderne("semaine")
+        codes = ([k["code"] for k in d["kpis"]] + [a["code"] for a in d["alertes"]]
+                 + [t["code"] for t in d["techniciens"]] + [p["code"] for p in d["problemes"]]
+                 + [s["code"] for s in d["semaines"]] + [r["code"] for r in d["tournees"]]
+                 + [m["code"] for m in d["parc"]])
+        self.assertIn("probleme:Fait du bruit", codes)
+        self.assertIn("technicien:%s" % tech.id, codes)
+        self.assertTrue(any(c.startswith("tache:") for c in codes))
+        for code in codes:
             action = Ind.action_par_code(code)
             self.assertEqual(action["type"], "ir.actions.act_window", code)
+            self.assertNotIn("help", action, code)
+            domaine = action.get("domain") or []
+            self.env[action["res_model"]].search_count(eval(domaine) if isinstance(domaine, str) else domaine)
+        # Le chiffre « Livraisons & ramassages » ouvre les deux (pas seulement les livraisons)
+        self.assertEqual(Ind.action_par_code("tournees_a_faire")["context"],
+                         {"search_default_livraisons_a_faire": 1, "search_default_ramassages_a_faire": 1})
+        bruit = Ind.action_par_code("probleme:Fait du bruit")
+        self.assertEqual(self.env["helpdesk.ticket"].search_count(bruit["domain"]), 1)
         self.assertFalse(Ind.action_par_code("code_inconnu"))
+        # Ventes du mois et clients (Contacts)
+        prod = self.env["product.product"].create({"name": "Location machine", "type": "service", "list_price": 1500})
+        so = self.env["sale.order"].create({"partner_id": self.client.id,
+                                            "order_line": [(0, 0, {"product_id": prod.id, "price_unit": 1500})]})
+        so.action_confirm()
+        d = Ind.donnees_tableau_moderne("jour")
+        kpi = {k["code"]: k for k in d["kpis"]}
+        self.assertIn("1", kpi["ventes_mois"]["valeur"])
+        self.assertIn("500", kpi["ventes_mois"]["valeur"])
+        self.assertGreaterEqual(kpi["clients"]["valeur"], 1, "le client qui a acheté est compté")
+        self.assertIn(so, self.env["sale.order"].search(Ind.action_par_code("ventes_mois")["domain"]))
+        clients = Ind.action_par_code("clients")
+        self.assertEqual(clients["res_model"], "res.partner")
+        self.assertIn(self.client, self.env["res.partner"].search(clients["domain"]))
         # Les deux vues dans le menu Tableau de bord
         racine = self.env.ref("suivi_machines_pilotage.menu_pilotage_tableau_racine")
         self.assertEqual([m.action for m in racine.child_id.sorted("sequence")], [
             self.env.ref("suivi_machines_pilotage.action_pilotage_vue_ensemble"),
             self.env.ref("suivi_machines_pilotage.action_pilotage_tableau_bord")])
+
+    def test_nouveau_ticket_dans_a_traiter(self):
+        Ind = self.env["pilotage.indicateur"]
+        nouveau = self.env["helpdesk.stage"].create({"name": "Nouveau"})
+        en_cours = self.env["helpdesk.stage"].create({"name": "En cours"})
+        avant = Ind._compte("tickets_nouveaux")
+        ticket = self.env["helpdesk.ticket"].create({"name": "La vis ne tourne pas", "code_client": "PIL1",
+                                                     "stage_id": nouveau.id})
+        d = Ind.donnees_tableau_moderne("jour")
+        alerte = d["alertes"][0]
+        self.assertEqual(alerte["code"], "tickets_nouveaux", "en premier dans À traiter maintenant")
+        self.assertEqual(alerte["nombre"], avant + 1)
+        self.assertIn("La vis ne tourne pas", alerte["detail"])
+        self.assertIn("Client pilotage", alerte["detail"])
+        action = Ind.action_par_code("tickets_nouveaux")
+        self.assertEqual(action["context"], {"search_default_nouveaux": 1})
+        # Pris en charge (etape suivante) : il quitte la liste
+        ticket.stage_id = en_cours
+        self.assertEqual(Ind._compte("tickets_nouveaux"), avant)
 
     def test_menu_reserve_au_groupe(self):
         menu = self.env.ref("suivi_machines_pilotage.menu_pilotage_root")

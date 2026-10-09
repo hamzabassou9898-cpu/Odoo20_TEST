@@ -2,13 +2,13 @@
 <odoo>
     <!-- Ticket : technicien terrain (peut etre un technicien portail) -->
     <record id="view_ticket_form_technicien_terrain" model="ir.ui.view">
-        <field name="name">helpdesk.ticket.form.technicien.terrain</field>
+        <field name="name">helpdesk.ticket.form.assigne.technicien.portail</field>
         <field name="model">helpdesk.ticket</field>
         <field name="inherit_id" ref="helpdesk.helpdesk_ticket_view_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//field[@name='date_planifiee']" position="before">
-                <field name="technicien_terrain_id" widget="many2one_avatar_user" options="{'no_create': True}"
-                       invisible="est_reprise"/>
+            <!-- Un seul champ : « Assigne a » propose aussi les techniciens portail -->
+            <xpath expr="//field[@name='user_id']" position="attributes">
+                <attribute name="domain">['|', ('share', '=', False), ('partner_id.est_technicien', '=', True)]</attribute>
             </xpath>
         </field>
     </record>

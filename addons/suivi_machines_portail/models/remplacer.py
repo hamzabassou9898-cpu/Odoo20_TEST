@@ -79,14 +79,7 @@ class SuiviRemplacerTechniciensLigne(models.TransientModel):
         tickets = self.env["helpdesk.ticket"].search([
             "|", "|", ("user_id", "=", ancien.id), ("technicien_terrain_id", "=", ancien.id),
             ("technicien_id", "=", ancien.id)]).filtered(lambda t: not t._est_ferme())
-        for ticket in tickets:
-            if nouveau.share:
-                vals = {"technicien_terrain_id": nouveau.id}
-                if ticket.user_id == ancien:
-                    vals["user_id"] = False
-            else:
-                vals = {"user_id": nouveau.id, "technicien_terrain_id": False}
-            ticket.write(vals)
+        tickets.write({"user_id": nouveau.id, "technicien_terrain_id": False})
         nb += len(tickets)
         # Interventions planifiees
         interventions = self.env["machine.intervention"].search([("user_id", "=", ancien.id),

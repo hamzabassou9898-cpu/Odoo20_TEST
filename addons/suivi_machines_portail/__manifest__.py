@@ -3,7 +3,7 @@
     "name": "Phase 2 - Portail web des techniciens",
     "summary": "Les techniciens deviennent des utilisateurs portail (gratuits) : leur journée sur le portail web "
                "(livraisons, ramassages, entretiens, réparations)",
-    "version": "20.0.1.4.0",
+    "version": "20.0.1.5.0",
     "category": "Productivity",
     "author": "Hamza Bassou",
     "license": "LGPL-3",

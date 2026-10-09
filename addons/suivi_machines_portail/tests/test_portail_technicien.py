@@ -26,25 +26,48 @@ class TestPortailTechnicien(HttpCase):
                                                 "city": "Lac-Beauport", "phone": "418 555 0101"})
         cls.ticket = env["helpdesk.ticket"].create({
             "name": "Machine ne refroidit pas", "partner_id": cls.client.id,
-            "technicien_terrain_id": cls.tech_a.id, "date_planifiee": fields.Datetime.now(),
+            "user_id": cls.tech_a.id, "date_planifiee": fields.Datetime.now(),
             "description": "<p>Le client entend un bruit</p>"})
         cls.autre = env["helpdesk.ticket"].create({
             "name": "Ticket d'un autre technicien", "partner_id": cls.client.id,
-            "technicien_terrain_id": cls.tech_b.id, "date_planifiee": fields.Datetime.now()})
+            "user_id": cls.tech_b.id, "date_planifiee": fields.Datetime.now()})
 
     def _tache(self, ticket):
         return self.env["portail.tache"].search([("ticket_id", "=", ticket.id)])
 
     def test_tache_du_technicien_portail(self):
         tache = self._tache(self.ticket)
-        self.assertEqual(tache.technicien_id, self.tech_a, "le technicien terrain passe avant l'assigné")
-        # Glisser vers un technicien interne : le ticket lui est assigné, le terrain est vidé
+        self.assertEqual(tache.technicien_id, self.tech_a, "« Assigné à » (technicien portail)")
+        # Glisser vers un technicien interne puis portail : toujours le champ natif « Assigné à »
         tache.write({"technicien_id": self.env.ref("base.user_admin").id})
-        self.assertEqual((self.ticket.user_id, self.ticket.technicien_terrain_id),
-                         (self.env.ref("base.user_admin"), self.env["res.users"]))
-        tache = self._tache(self.ticket)
-        tache.write({"technicien_id": self.tech_a.id})
-        self.assertEqual(self.ticket.technicien_terrain_id, self.tech_a)
+        self.assertEqual(self.ticket.user_id, self.env.ref("base.user_admin"))
+        self._tache(self.ticket).write({"technicien_id": self.tech_a.id})
+        self.assertEqual(self.ticket.user_id, self.tech_a)
+        self.assertFalse(self.ticket.technicien_terrain_id)
+
+    def test_un_seul_champ_assigne_a(self):
+        """Fiche du ticket : plus de « Technicien terrain » ; « Assigné à » propose les techniciens portail."""
+        arch = self.env["helpdesk.ticket"].get_views([(False, "form")])["views"]["form"]["arch"]
+        self.assertNotIn('name="technicien_terrain_id"', arch)
+        self.assertIn("partner_id.est_technicien", arch)
+        # Migration : l'ancien « Technicien terrain » passe dans « Assigné à »
+        import importlib.util, os
+        chemin = os.path.join(os.path.dirname(os.path.dirname(__file__)), "migrations", "20.0.1.5.0", "post-migrate.py")
+        spec = importlib.util.spec_from_file_location("migration_un_champ", chemin)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        ancien = self.env["helpdesk.ticket"].create({"name": "Ancien", "partner_id": self.client.id,
+                                                     "technicien_terrain_id": self.tech_b.id})
+        entretien = self.env["helpdesk.ticket"].create({"name": "Entretien ancien", "partner_id": self.client.id,
+                                                        "est_entretien": True,
+                                                        "technicien_terrain_id": self.tech_b.id})
+        self.assertEqual(entretien.statut_entretien, "a_planifier")
+        self.env.flush_all()
+        module.migrate(self.env.cr, "20.0.1.4.0")
+        self.env.invalidate_all()
+        self.assertEqual((ancien.user_id, ancien.technicien_terrain_id), (self.tech_b, self.env["res.users"]))
+        self.assertEqual((entretien.user_id, entretien.statut_entretien), (self.tech_b, "planifie"),
+                         "entretien déjà assigné : planifié")
 
     def test_page_ma_journee(self):
         self.authenticate("tech_portail_a", "tech_portail_a_mdp_123")
@@ -81,9 +104,7 @@ class TestPortailTechnicien(HttpCase):
         wiz.action_generer()
         test = self.env.ref("suivi_machines_pilotage.tag_donnees_test")
         tickets = self.env["helpdesk.ticket"].search([("tag_ids", "in", test.ids)])
-        portail = tickets.filtered(lambda t: t.technicien_terrain_id)
-        self.assertTrue(portail, "les techniciens portail reçoivent des tickets")
-        self.assertFalse(portail.user_id.filtered("share"), "jamais un utilisateur portail en « Assigné à »")
+        self.assertTrue(tickets.filtered(lambda t: t.user_id.share), "les techniciens portail reçoivent des tickets")
 
 
     def test_remplacer_techniciens(self):
@@ -110,7 +131,7 @@ class TestPortailTechnicien(HttpCase):
         self.assertEqual(ligne.nouveau_id, self.tech_a, "proposé dans l'ordre des techniciens portail")
         ligne.nouveau_id = self.tech_b
         wiz.action_remplacer()
-        self.assertEqual((ouvert.technicien_terrain_id, ouvert.user_id), (self.tech_b, Users))
+        self.assertEqual(ouvert.user_id, self.tech_b)
         self.assertEqual(ferme.user_id, interne, "l'historique ne bouge pas")
         self.assertEqual((planifiee.user_id, faite.user_id), (self.tech_b, interne))
         self.env["portail.tache"].invalidate_model()
@@ -295,7 +316,7 @@ class TestPortailTechnicien(HttpCase):
         interv = self.env["machine.intervention"].create({
             "ticket_id": ticket.id, "lot_id": lot.id, "type": "entretien", "state": "planifie",
             "user_id": self.tech_a.id, "date": quand})
-        self.assertEqual(ticket.technicien_terrain_id, self.tech_a, "technicien portail = technicien terrain")
+        self.assertEqual(ticket.user_id, self.tech_a, "technicien portail dans « Assigné à »")
         self.assertEqual(ticket.date_planifiee, quand)
         self.env.invalidate_all()
         tache = self.env["portail.tache"].search([("ticket_id", "=", ticket.id)])

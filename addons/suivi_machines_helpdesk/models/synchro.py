@@ -2,7 +2,7 @@
 """Synchronisation ticket <-> intervention planifiee : meme date, meme technicien, des deux cotes."""
 from odoo import api, models
 
-CHAMPS_TICKET = {"date_planifiee", "user_id", "technicien_terrain_id"}
+CHAMPS_TICKET = {"date_planifiee", "user_id"}
 CHAMPS_INTERVENTION = {"date", "user_id", "ticket_id", "state"}
 
 
@@ -10,10 +10,9 @@ class HelpdeskTicket(models.Model):
     _inherit = "helpdesk.ticket"
 
     def _technicien_assigne(self):
-        """Technicien assigne au ticket : technicien terrain (portail), sinon « Assigne a »."""
+        """Technicien assigne au ticket : le champ natif « Assigne a » (interne ou technicien portail)."""
         self.ensure_one()
-        terrain = self["technicien_terrain_id"] if "technicien_terrain_id" in self._fields else False
-        return terrain or self.user_id
+        return self.user_id
 
     def _technicien_ticket(self):
         """Technicien qui se deplace : l'assigne, sinon celui de la derniere intervention."""
@@ -21,12 +20,8 @@ class HelpdeskTicket(models.Model):
         return self._technicien_assigne() or self.technicien_id
 
     def _valeurs_technicien(self, user):
-        """Valeurs du ticket pour ce technicien (portail : technicien terrain ; interne : assigne)."""
-        if "technicien_terrain_id" not in self._fields:
-            return {"user_id": user.id}
-        if user.share:
-            return {"technicien_terrain_id": user.id}
-        return {"user_id": user.id, "technicien_terrain_id": False}
+        """Valeurs du ticket pour ce technicien : un seul champ, « Assigne a »."""
+        return {"user_id": user.id}
 
     def write(self, vals):
         res = super().write(vals)
@@ -50,10 +45,23 @@ class MachineIntervention(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        vals_list = [self._rattacher_ticket_entretien(vals) for vals in vals_list]
         interventions = super().create(vals_list)
         if not self.env.context.get("synchro_intervention"):
             interventions._synchroniser_ticket()
         return interventions
+
+    @api.model
+    def _rattacher_ticket_entretien(self, vals):
+        """Entretien planifie depuis Interventions : il rejoint le ticket d'entretien ouvert de la machine
+        (le ticket passe « Planifie » et va dans la journee du technicien)."""
+        if (vals.get("ticket_id") or not vals.get("lot_id") or vals.get("type", "entretien") != "entretien"
+                or vals.get("state", "planifie") != "planifie"):
+            return vals
+        ticket = self.env["helpdesk.ticket"].sudo().search(
+            [("est_entretien", "=", True), ("lot_id", "=", vals["lot_id"]),
+             ("statut_entretien", "in", ("a_planifier", "planifie"))], order="id desc", limit=1)
+        return dict(vals, ticket_id=ticket.id) if ticket else vals
 
     def write(self, vals):
         res = super().write(vals)

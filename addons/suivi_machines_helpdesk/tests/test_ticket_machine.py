@@ -34,6 +34,7 @@ class TestTicketMachine(TransactionCase):
     def _form(self, **ctx):
         f = Form(self.env["helpdesk.ticket"].with_context(**ctx))
         f.name = "Ne refroidit pas"
+        f.type_demande = "reparation"
         return f
 
     def test_code_client_remplit_le_dossier(self):
@@ -298,6 +299,7 @@ class TestTicketMachine(TransactionCase):
         self.assertEqual(len(tickets), 1)
         self.assertEqual((tickets.lot_id, tickets.partner_id, tickets.code_client, tickets.commande_reprise_id),
                          (lot, self.commerce, "TST100", so))
+        self.assertEqual((tickets.type_demande, tickets.origine_auto), ("ramassage", "reprise"), "créé par Odoo")
         self.assertIn("Reprise", tickets.name)
         self.assertFalse(SO._cron_tickets_reprise(), "pas de doublon")
         self.assertEqual(so.nb_tickets_reprise, 1)
@@ -475,6 +477,8 @@ class TestTicketMachine(TransactionCase):
         self.assertEqual(t1.tag_ids, semaine)
         self.assertEqual((t0.partner_id, t0.code_client), (self.commerce, "TST100"))
         self.assertTrue(t0.est_entretien)
+        self.assertEqual((t0.type_demande, t0.origine_auto, t0.statut_entretien),
+                         ("entretien", "entretien", "a_planifier"), "créé par Odoo, à planifier")
         self.assertEqual(t0.name, "Entretien - M0 - Commerce Test", "chez le client : nom du client")
         self.assertEqual(t0.activity_ids.summary, "Planifier entretien")
         self.assertFalse(T._cron_tickets_entretien(), "pas de doublon")
@@ -594,3 +598,33 @@ class TestTicketMachine(TransactionCase):
         self.assertNotIn("action_creer_vente", boutons, "bouton Bon de vente retiré")
         self.assertNotIn("action_creer_livraison", boutons, "bouton Livraison retiré")
         self.env["stock.lot"].get_views([(False, "form")])
+
+    def test_type_de_ticket_obligatoire(self):
+        from lxml import etree
+        arch = etree.fromstring(self.env["helpdesk.ticket"].get_views([(False, "form")])["views"]["form"]["arch"])
+        champ = arch.xpath("//field[@name='type_demande']")
+        self.assertEqual(len(champ), 1)
+        self.assertEqual(champ[0].get("required"), "1", "obligatoire à la création")
+        self.assertEqual(arch.xpath("//field[@name='technicien_id'][not(ancestor::list)][not(ancestor::kanban)]"),
+                         [], "un seul technicien : « Assigné à »")
+        self.assertTrue(arch.xpath("//div[contains(@class, 'alert')][.//field[@name='origine_auto']] "
+                                   "| //div[contains(@class, 'alert')][@invisible='not origine_auto']"),
+                        "bandeau « créé automatiquement par Odoo »")
+        f = Form(self.env["helpdesk.ticket"])
+        f.name = "Sans type"
+        f.code_client = "TST100"
+        with self.assertRaises(AssertionError):
+            f.save()
+        f.type_demande = "remplacement"
+        ticket = f.save()
+        self.assertEqual((ticket.type_demande, ticket.est_entretien, ticket.origine_auto),
+                         ("remplacement", False, False), "créé par une personne : pas de bandeau")
+        # Type « Entretien » choisi a la main : c'est un ticket d'entretien (bouton Valider, Pilotage)
+        ticket.type_demande = "entretien"
+        self.assertTrue(ticket.est_entretien)
+        self.assertEqual(ticket.statut_entretien, "a_planifier")
+        ticket.type_demande = "reparation"
+        self.assertFalse(ticket.est_entretien)
+        self.assertFalse(ticket.statut_entretien)
+        for valeur in ("reparation", "ramassage", "entretien", "remplacement", "commande"):
+            self.assertIn(valeur, dict(self.env["helpdesk.ticket"]._fields["type_demande"].selection))
