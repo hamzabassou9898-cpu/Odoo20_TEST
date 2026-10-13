@@ -105,6 +105,8 @@
             <!-- Code client obligatoire : il remplit le client et ses machines -->
             <xpath expr="//field[@name='partner_id']" position="before">
                 <field name="type_demande" required="1" placeholder="Réparation, entretien, ramassage…"/>
+                <field name="type_reparation" widget="radio" invisible="type_demande != 'reparation'"
+                       required="type_demande == 'reparation'"/>
                 <field name="code_client" required="not est_entretien" placeholder="ex. MON134"
                        class="fw-bold"/>
             </xpath>
@@ -212,6 +214,8 @@
                 <group>
                     <field name="name" string="Titre du ticket" placeholder="ex. Machine ne refroidit pas"/>
                     <field name="type_demande" required="1"/>
+                    <field name="type_reparation" widget="radio" invisible="type_demande != 'reparation'"
+                           required="type_demande == 'reparation'"/>
                     <field name="partner_id" string="Client" options="{'no_create': True}"/>
                     <field name="user_id" string="Assigné à" widget="many2one_avatar_user"/>
                     <field name="nb_machines_client" invisible="1"/>

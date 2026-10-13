@@ -36,6 +36,7 @@ class TestTicketMachine(TransactionCase):
         f = Form(self.env["helpdesk.ticket"].with_context(**ctx))
         f.name = "Ne refroidit pas"
         f.type_demande = "reparation"
+        f.type_reparation = "ne_gele_pas"
         return f
 
     def test_code_client_remplit_le_dossier(self):
@@ -365,6 +366,9 @@ class TestTicketMachine(TransactionCase):
         with self.assertRaises(AssertionError):
             f.save()                       # type obligatoire
         f.type_demande = "reparation"
+        with self.assertRaises(AssertionError):
+            f.save()                       # type de reparation obligatoire pour une reparation
+        f.type_reparation = "coule"
         ticket = f.save()
         self.assertEqual((ticket.type_demande, ticket.code_client), ("reparation", "TST100"),
                          "code client rempli depuis le client")
@@ -443,6 +447,7 @@ class TestTicketMachine(TransactionCase):
         autre.type_demande = "reparation"
         self.assertFalse(autre.commande_reprise_id)
         self.assertFalse(autre.est_reprise)
+        autre.type_reparation = "coule"
         t2 = autre.save()
         t2.type_demande = "ramassage"
         self.assertEqual(t2.commande_reprise_id, so, "rempli aussi par l'ORM (écriture)")
@@ -821,3 +826,33 @@ class TestTicketMachine(TransactionCase):
         self.assertFalse(ticket.statut_entretien, "passer une commande : rien à planifier")
         for valeur in ("reparation", "ramassage", "entretien", "remplacement", "commande"):
             self.assertIn(valeur, dict(self.env["helpdesk.ticket"]._fields["type_demande"].selection))
+
+    def test_type_de_reparation(self):
+        """Ticket de reparation : choix a cocher (Coule, Ne gele pas...) obligatoire dans le formulaire,
+        efface si le ticket change de type."""
+        from lxml import etree
+        self.assertEqual([v for v, _l in self.env["helpdesk.ticket"]._fields["type_reparation"].selection],
+                         ["coule", "ne_gele_pas", "ne_tourne_pas", "bruit", "gele_trop", "autre"])
+        f = self._form()
+        f.code_client = "TST100"
+        f.type_reparation = False
+        with self.assertRaises(AssertionError):
+            f.save()                       # obligatoire pour une reparation
+        f.type_reparation = "bruit"
+        ticket = f.save()
+        self.assertEqual(ticket.type_reparation, "bruit")
+        # Autre type : le choix disparait du formulaire et n'est plus obligatoire
+        f = Form(ticket)
+        f.type_demande = "commande"
+        self.assertFalse(f.type_reparation)
+        f.save()
+        self.assertFalse(ticket.type_reparation)
+        ticket.write({"type_demande": "reparation", "type_reparation": "gele_trop"})
+        ticket.type_demande = "entretien"
+        self.assertFalse(ticket.type_reparation, "effacé quand le ticket n'est plus une réparation")
+        # Boutons radio, visibles seulement pour une reparation
+        arch = etree.fromstring(self.env["helpdesk.ticket"].get_views([(False, "form")])["views"]["form"]["arch"])
+        champ = arch.xpath("//field[@name='type_reparation']")[0]
+        self.assertEqual((champ.get("widget"), champ.get("invisible")), ("radio", "type_demande != 'reparation'"))
+        # Ticket sans formulaire (cree par Odoo, formulaire web) : accepte sans type de reparation
+        self.env["helpdesk.ticket"].create({"name": "Web", "type_demande": "reparation"})

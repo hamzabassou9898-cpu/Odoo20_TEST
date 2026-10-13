@@ -11,6 +11,15 @@ TYPES_DEMANDE = [
     ("commande", "Passer une commande"),
     ("ajustement", "Ajuster un contrat"),
 ]
+# Type de reparation (comme le formulaire web) : choix a cocher quand le ticket est une reparation
+TYPES_REPARATION = [
+    ("coule", "Coule"),
+    ("ne_gele_pas", "Ne gèle pas"),
+    ("ne_tourne_pas", "Ne tourne pas"),
+    ("bruit", "Fait du bruit"),
+    ("gele_trop", "Gèle trop"),
+    ("autre", "Autre (détails dans le message)"),
+]
 # Tickets qui se planifient (technicien a envoyer chez le client)
 TYPES_A_PLANIFIER = ("entretien", "reparation", "remplacement")
 STATUTS_ENTRETIEN = [("a_planifier", "À planifier"), ("planifie", "Planifié"), ("fait", "Fait")]
@@ -27,6 +36,11 @@ class HelpdeskTicket(models.Model):
         TYPES_DEMANDE, "Type de ticket", compute="_compute_type_demande", store=True, readonly=False,
         precompute=True, index=True, tracking=True,
         help="Ce qu'il faut faire chez le client : aide à planifier le ticket.")
+    type_reparation = fields.Selection(
+        TYPES_REPARATION, "Type de réparation", compute="_compute_type_reparation", store=True,
+        readonly=False, precompute=True, tracking=True,
+        help="Le problème de la machine. Obligatoire pour un ticket de réparation ; « Autre » : "
+             "décrire le problème dans la description.")
     statut_entretien = fields.Selection(
         STATUTS_ENTRETIEN, "Planification", compute="_compute_statut_entretien", store=True,
         index=True, help="Entretiens et réparations. À planifier : aucun technicien. Planifié : assigné à un "
@@ -47,6 +61,13 @@ class HelpdeskTicket(models.Model):
                 ticket.type_demande = False
             else:
                 ticket.type_demande = ticket.type_demande
+
+    @api.depends("type_demande")
+    def _compute_type_reparation(self):
+        # Seulement pour une reparation : on l'efface si le ticket change de type
+        for ticket in self:
+            if ticket.type_demande != "reparation":
+                ticket.type_reparation = False
 
     @api.depends("est_entretien", "type_demande", "commande_reprise_id", "user_id", "stage_id",
                  "intervention_ticket_ids.state")

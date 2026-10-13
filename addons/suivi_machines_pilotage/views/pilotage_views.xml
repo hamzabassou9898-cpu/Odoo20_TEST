@@ -464,6 +464,7 @@
                 <field name="type_demande" widget="badge" decoration-danger="type_demande == 'reparation'"
                        decoration-info="type_demande == 'entretien'" decoration-warning="type_demande == 'ramassage'"
                        decoration-primary="type_demande == 'remplacement'"/>
+                <field name="type_reparation" string="Problème" optional="show"/>
                 <field name="name" string="Ticket"/>
                 <field name="date_planifiee" optional="show"/>
                 <field name="code_client" optional="show"/>

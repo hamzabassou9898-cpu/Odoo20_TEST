@@ -117,6 +117,11 @@
                             <span t-foreach="tache.tag_ids" t-as="tag" class="badge rounded-pill border o_badge_neutre me-1" t-out="tag.name"/>
                         </t>
 
+                        <t t-if="ticket and ticket.type_reparation">
+                            <h6 class="text-uppercase text-muted mt-3 mb-1">Type de réparation</h6>
+                            <span class="badge rounded-pill text-bg-danger" t-field="ticket.type_reparation"/>
+                        </t>
+
                         <t t-if="ticket and ticket.description">
                             <h6 class="text-uppercase text-muted mt-3 mb-1">Problème signalé</h6>
                             <div class="border rounded p-2 bg-light" t-field="ticket.description"/>

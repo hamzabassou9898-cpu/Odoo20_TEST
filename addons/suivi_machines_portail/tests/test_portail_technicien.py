@@ -27,7 +27,8 @@ class TestPortailTechnicien(HttpCase):
         cls.ticket = env["helpdesk.ticket"].create({
             "name": "Machine ne refroidit pas", "partner_id": cls.client.id,
             "user_id": cls.tech_a.id, "date_planifiee": fields.Datetime.now(),
-            "description": "<p>Le client entend un bruit</p>"})
+            "description": "<p>Le client entend un bruit</p>", "type_demande": "reparation",
+            "type_reparation": "bruit"})
         cls.autre = env["helpdesk.ticket"].create({
             "name": "Ticket d'un autre technicien", "partner_id": cls.client.id,
             "user_id": cls.tech_b.id, "date_planifiee": fields.Datetime.now()})
@@ -87,6 +88,8 @@ class TestPortailTechnicien(HttpCase):
         # Detail de sa tache : oui ; celle d'un autre : retour a sa journee
         detail = self.url_open("/my/journee/tache/%s" % self._tache(self.ticket).id)
         self.assertIn("Le client entend un bruit", detail.text)
+        self.assertIn("Type de réparation", detail.text)
+        self.assertIn("Fait du bruit", detail.text)
         self.assertIn("tel:418 555 0101", detail.text)
         refus = self.url_open("/my/journee/tache/%s" % self._tache(self.autre).id)
         self.assertNotIn("Ticket d'un autre technicien", refus.text)
