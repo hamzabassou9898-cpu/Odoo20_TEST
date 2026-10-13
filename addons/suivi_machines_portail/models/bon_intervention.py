@@ -99,7 +99,27 @@ class BonIntervention(models.Model):
         bon._source().with_context(mail_create_nosubscribe=True).message_post(
             body=self.env._("Bon %s signé par le technicien %s.", bon.name, bon.technicien_id.name),
             author_id=bon.technicien_id.partner_id.id, message_type="comment", subtype_xmlid="mail.mt_note")
+        bon._prevenir_bureau()
         return True
+
+    def _prevenir_bureau(self):
+        """Bon complet (client, et technicien pour un entretien / une reparation) : notification au
+        responsable (Josef). Seulement lui : ni le client ni les abonnes du document ne sont prevenus."""
+        responsable = self.env["sale.order"]._reglages_reprise()["responsable"]
+        if not responsable:
+            return
+        for bon in self.sudo():
+            source = bon._source()
+            signatures = bon.signe_par or "?"
+            if bon.signature_technicien:
+                signatures = self.env._("%(client)s et le technicien %(tech)s",
+                                        client=signatures, tech=bon.technicien_id.name)
+            source.message_notify(
+                partner_ids=responsable.partner_id.ids, author_id=bon.technicien_id.partner_id.id,
+                subject=self.env._("Bon %s signé", bon.name),
+                body=Markup("<p>%s</p>") % self.env._(
+                    "Bon %(bon)s signé par %(signatures)s (%(client)s). Le PDF est dans le document.",
+                    bon=bon.name, signatures=signatures, client=bon.partner_id.display_name or ""))
 
     def _rendre_pdf(self):
         """PDF du bon (False sans moteur PDF : le bon reste consultable dans Odoo)."""
@@ -152,6 +172,8 @@ class BonIntervention(models.Model):
         })
         bon._joindre_pdf()
         bon._terminer_source()
+        if not bon.doit_signer_technicien:
+            bon._prevenir_bureau()   # sinon : quand le technicien aura signe
         return bon
 
     def _joindre_pdf(self):

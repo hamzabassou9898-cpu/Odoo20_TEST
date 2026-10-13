@@ -487,6 +487,7 @@ class TestSuiviMachines(TransactionCase):
         """Upgrade : une machine (ou un accessoire) ajoutée au contrat déjà livré part en livraison ;
         son n° de série est choisi à la livraison et revient sur la ligne du contrat."""
         contrat = self._commande(self.lot_a, "location")
+        self.assertFalse(contrat.nb_livraisons_a_faire, "livraison normale du contrat : pas « Livraison à faire »")
         self._valider(contrat.picking_ids)
         self.assertEqual(self.lot_a.machine_statut, "chez_client")
         # Josef ajoute une deuxieme machine au meme contrat
@@ -494,6 +495,8 @@ class TestSuiviMachines(TransactionCase):
                                                     "product_uom_qty": 1, "price_unit": 50})
         a_livrer = contrat.picking_ids.filtered(lambda p: p.state not in ("done", "cancel"))
         self.assertEqual(len(a_livrer), 1, "livraison du nouveau composant créée")
+        contrat.invalidate_recordset(["nb_livraisons_a_faire"])
+        self.assertEqual(contrat.nb_livraisons_a_faire, 1, "ajout : « Livraison à faire » apparaît")
         self.assertEqual(a_livrer.move_ids.product_id, self.produit)
         self.assertEqual(a_livrer.move_ids.sale_line_id, ligne)
         self.assertEqual(contrat.action_livraison_a_faire()["res_id"], a_livrer.id)

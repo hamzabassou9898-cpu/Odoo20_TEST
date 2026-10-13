@@ -387,8 +387,16 @@ class TestPortailTechnicien(HttpCase):
         self.assertIn("/signer_technicien", page, "le technicien signe à son tour")
         self.assertTrue(bon.doit_signer_technicien)
         self.assertIn("error", self.make_jsonrpc_request(url + "/signer_technicien", {"name": "T", "signature": ""}))
+        admin = self.env.ref("base.user_admin").partner_id
+        notif = lambda: self.env["mail.message"].search([("partner_ids", "in", admin.ids),
+                                                        ("subject", "=", "Bon %s signé" % bon.name)])
+        self.assertFalse(notif(), "pas encore : le technicien doit signer")
         rep = self.make_jsonrpc_request(url + "/signer_technicien", {"name": "Tech", "signature": self.SIGNATURE})
         self.assertTrue(rep.get("force_refresh"), rep)
+        self.env.invalidate_all()
+        message = notif()
+        self.assertEqual(len(message), 1, "Josef (responsable) est prévenu quand le bon est complet")
+        self.assertNotIn(self.client.id, message.partner_ids.ids, "le client n'est pas prévenu")
         self.env.invalidate_all()
         self.assertTrue(bon.signature_technicien)
         self.assertFalse(bon.doit_signer_technicien)

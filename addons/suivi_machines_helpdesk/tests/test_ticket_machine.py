@@ -1043,3 +1043,36 @@ class TestTicketMachine(TransactionCase):
         self.assertEqual(so.order_line.qty_delivered, 1, "toujours une machine louée")
         self.assertEqual((interv.state, interv.lot_remplacement_id), ("fait", nouvelle))
         self.assertEqual(ticket.stage_id, resolu, "ticket résolu")
+
+    def test_ticket_assigne_va_dans_son_etape(self):
+        """Ticket « Nouveau » assigné à quelqu'un (planifié) : il passe dans l'étape de son type."""
+        Etape = self.env["helpdesk.stage"]
+        nouveau = Etape.create({"name": "Nouveau"})
+        entretien_rep = Etape.create({"name": "Entretien & Réparation"})
+        remplacer = Etape.create({"name": "Machine à remplacer"})
+        reprise = Etape.search([("name", "ilike", "reprise")], limit=1) or \
+            Etape.create({"name": "Installation de machine / Reprise de machine"})
+        tech = self.env["res.users"].create({"name": "Tech étape", "login": "tech_etape"})
+        T = self.env["helpdesk.ticket"]
+        cas = [("reparation", entretien_rep), ("entretien", entretien_rep), ("remplacement", remplacer),
+               ("ramassage", reprise)]
+        for type_demande, etape in cas:
+            with self.subTest(type_demande=type_demande):
+                ticket = T.create({"name": "Étape %s" % type_demande, "partner_id": self.commerce.id,
+                                   "type_demande": type_demande, "stage_id": nouveau.id})
+                self.assertEqual(ticket.stage_id, nouveau, "personne assigné : reste dans Nouveau")
+                ticket.user_id = tech
+                self.assertEqual(ticket.stage_id, etape)
+        # Assigne des la creation ; un ticket deja plus loin (ex. Resolu) ne recule pas
+        direct = T.create({"name": "Direct", "partner_id": self.commerce.id, "type_demande": "reparation",
+                           "stage_id": nouveau.id, "user_id": tech.id})
+        self.assertEqual(direct.stage_id, entretien_rep)
+        resolu = Etape.search([("name", "ilike", "résolu")], limit=1) or Etape.create({"name": "Résolu"})
+        fini = T.create({"name": "Fini", "partner_id": self.commerce.id, "type_demande": "reparation",
+                         "stage_id": resolu.id})
+        fini.user_id = tech
+        self.assertEqual(fini.stage_id, resolu)
+        commande = T.create({"name": "Commande", "partner_id": self.commerce.id, "type_demande": "commande",
+                             "stage_id": nouveau.id, "user_id": tech.id})
+        self.assertEqual(commande.stage_id, nouveau, "pas d'étape propre : on ne touche pas")
+

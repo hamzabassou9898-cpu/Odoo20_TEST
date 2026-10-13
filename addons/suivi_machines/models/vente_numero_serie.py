@@ -77,9 +77,11 @@ class SaleOrder(models.Model):
             order.nb_livraisons_a_faire = len(order._livraisons_a_faire())
 
     def _livraisons_a_faire(self):
+        """Livraisons des ajouts au contrat confirme (ligne ajoutee ou quantite augmentee apres la
+        premiere livraison) : ni la premiere livraison du contrat, ni un reliquat."""
         self.ensure_one()
-        return self.picking_ids.filtered(lambda p: p.state not in ("done", "cancel")
-                                         and p.picking_type_code == "outgoing")
+        sorties = self.picking_ids.filtered(lambda p: p.picking_type_code == "outgoing").sorted("id")
+        return sorties[1:].filtered(lambda p: p.state not in ("done", "cancel") and not p.backorder_id)
 
     def action_livraison_a_faire(self):
         """Ajustement du contrat (machine ou accessoire ajouté) : la livraison des ajouts, prête à planifier."""

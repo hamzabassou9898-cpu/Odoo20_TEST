@@ -13,6 +13,10 @@ from odoo import api, models
 from odoo.exceptions import UserError
 
 # Type de ticket -> type d'intervention creee automatiquement
+# Ticket pris en charge (assigne a quelqu'un) : il quitte « Nouveau » pour l'etape de son type
+# (mot cherche dans le nom de l'etape, ex. « Entretien & Reparation », « Machine a remplacer »)
+ETAPE_PAR_TYPE = {"reparation": "réparation", "entretien": "entretien", "remplacement": "remplacer",
+                  "ramassage": "reprise"}
 TYPES_INTERVENTION_AUTO = {"reparation": "reparation", "remplacement": "remplacement", "entretien": "entretien"}
 CHAMPS_DECLENCHEURS = {"type_demande", "type_reparation", "date_planifiee", "lot_id", "user_id", "stage_id"}
 
@@ -76,16 +80,30 @@ class HelpdeskTicket(models.Model):
                     del valeurs["user_id"]
                 planifiees.with_context(synchro_intervention=True).write(valeurs)
 
+    def _ranger_dans_son_etape(self):
+        """Ticket encore « Nouveau » et assigne a quelqu'un : etape de son type (s'il y en a une)."""
+        for ticket in self:
+            mot = ETAPE_PAR_TYPE.get(ticket.type_demande)
+            nom = (ticket.stage_id.name or "").lower()
+            if not (mot and ticket.user_id) or (ticket.stage_id and "nouveau" not in nom):
+                continue
+            etape = ticket._etape_contenant(mot, ticket.team_id if "team_id" in ticket._fields else None)
+            if etape and etape != ticket.stage_id:
+                ticket.stage_id = etape
+
     @api.model_create_multi
     def create(self, vals_list):
         tickets = super().create(vals_list)
         tickets._planifier_intervention_auto()
+        tickets._ranger_dans_son_etape()
         return tickets
 
     def write(self, vals):
         res = super().write(vals)
         if CHAMPS_DECLENCHEURS & set(vals) and not self.env.context.get("synchro_intervention"):
             self._planifier_intervention_auto()
+        if {"user_id", "type_demande"} & set(vals):
+            self._ranger_dans_son_etape()
         return res
 
     def action_marquer_fait(self):
