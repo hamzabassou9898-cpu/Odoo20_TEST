@@ -65,10 +65,53 @@ class BonIntervention(models.Model):
     travail = fields.Text("Travail fait", readonly=True)
     signe_par = fields.Char("Signé par", readonly=True)
     signature = fields.Binary("Signature du client", attachment=True, readonly=True)
+    signature_technicien = fields.Binary("Signature du technicien", attachment=True, readonly=True)
+    technicien_signe_le = fields.Datetime("Signé par le technicien le", readonly=True)
+    doit_signer_technicien = fields.Boolean(
+        "Signature du technicien attendue", compute="_compute_doit_signer_technicien",
+        help="Entretien / réparation : le technicien signe aussi le bon (comme sur le formulaire papier).")
     ticket_id = fields.Many2one("helpdesk.ticket", "Ticket", readonly=True, index="btree_not_null")
     picking_id = fields.Many2one("stock.picking", "Transfert", readonly=True, index="btree_not_null")
     intervention_id = fields.Many2one("machine.intervention", "Intervention", readonly=True, index="btree_not_null")
     pdf_id = fields.Many2one("ir.attachment", "PDF", readonly=True)
+
+    @api.depends("type_bon", "signature_technicien")
+    def _compute_doit_signer_technicien(self):
+        for bon in self:
+            bon.doit_signer_technicien = bon.type_bon == "entretien" and not bon.signature_technicien
+
+    def _signer_technicien(self, signature):
+        """Le technicien signe le bon apres le client : le PDF est refait avec ses deux signatures."""
+        self.ensure_one()
+        if not signature:
+            raise UserError(self.env._("La signature est vide."))
+        if self.type_bon != "entretien" or self.signature_technicien:
+            raise UserError(self.env._("Ce bon n'attend pas la signature du technicien."))
+        bon = self.sudo()
+        bon.write({"signature_technicien": signature, "technicien_signe_le": fields.Datetime.now()})
+        pdf = bon._rendre_pdf()
+        if pdf and bon.pdf_id:
+            bon.pdf_id.raw = pdf        # meme piece jointe : le message du fil montre le bon complet
+        elif pdf:
+            source = bon._source()
+            bon.pdf_id = self.env["ir.attachment"].sudo().create({
+                "name": "%s.pdf" % bon.name.replace("/", "-"), "raw": pdf, "mimetype": "application/pdf",
+                "res_model": source._name, "res_id": source.id})
+        bon._source().with_context(mail_create_nosubscribe=True).message_post(
+            body=self.env._("Bon %s signé par le technicien %s.", bon.name, bon.technicien_id.name),
+            author_id=bon.technicien_id.partner_id.id, message_type="comment", subtype_xmlid="mail.mt_note")
+        return True
+
+    def _rendre_pdf(self):
+        """PDF du bon (False sans moteur PDF : le bon reste consultable dans Odoo)."""
+        self.ensure_one()
+        try:
+            pdf, _type = self.env["ir.actions.report"].sudo()._render_qweb_pdf(
+                "suivi_machines_portail.rapport_bon_intervention", self.ids)
+            return pdf
+        except Exception:  # noqa: BLE001 - pas de moteur PDF
+            _logger.warning("Bon %s : PDF non genere", self.name, exc_info=True)
+            return False
 
     def _source(self):
         self.ensure_one()
@@ -117,16 +160,13 @@ class BonIntervention(models.Model):
         for bon in self.sudo():
             source = bon._source()
             pieces = []
-            try:
-                pdf, _type = self.env["ir.actions.report"].sudo()._render_qweb_pdf(
-                    "suivi_machines_portail.rapport_bon_intervention", bon.ids)
+            pdf = bon._rendre_pdf()
+            if pdf:
                 piece = self.env["ir.attachment"].sudo().create({
                     "name": "%s.pdf" % bon.name.replace("/", "-"), "raw": pdf, "mimetype": "application/pdf",
                     "res_model": source._name, "res_id": source.id})
                 bon.pdf_id = piece
                 pieces = piece.ids
-            except Exception:  # pas de moteur PDF : le bon reste consultable dans Odoo
-                _logger.warning("Bon %s : PDF non genere", bon.name, exc_info=True)
             message = source.with_context(mail_create_nosubscribe=True).message_post(
                 body=Markup("<p><b>%s</b></p><p>%s</p>") % (
                     self.env._("Bon d'intervention %s signé", bon.name),

@@ -380,6 +380,24 @@ class TestPortailTechnicien(HttpCase):
         self.assertTrue(bon.signature)
         self.assertEqual(self.ticket.stage_id, resolu, "tâche terminée : ticket résolu")
         self.assertTrue(self.ticket.message_ids.filtered(lambda m: "signé" in (m.body or "")), "dans le fil du ticket")
+        # Apres le client : date de l'entretien, signature du client, puis signature du technicien
+        page = self.url_open(url).text
+        self.assertIn("Date de l'entretien", page)
+        self.assertIn('alt="Signature du client"', page)
+        self.assertIn("/signer_technicien", page, "le technicien signe à son tour")
+        self.assertTrue(bon.doit_signer_technicien)
+        self.assertIn("error", self.make_jsonrpc_request(url + "/signer_technicien", {"name": "T", "signature": ""}))
+        rep = self.make_jsonrpc_request(url + "/signer_technicien", {"name": "Tech", "signature": self.SIGNATURE})
+        self.assertTrue(rep.get("force_refresh"), rep)
+        self.env.invalidate_all()
+        self.assertTrue(bon.signature_technicien)
+        self.assertFalse(bon.doit_signer_technicien)
+        page = self.url_open(url).text
+        self.assertIn('alt="Signature du technicien"', page)
+        self.assertNotIn("/signer_technicien", page)
+        self.assertIn("error", self.make_jsonrpc_request(url + "/signer_technicien",
+                                                         {"name": "Tech", "signature": self.SIGNATURE}),
+                      "une seule fois")
         # Deuxieme signature : refusee (deja terminee) ; page : bon affiche
         self.assertIn("error", self.make_jsonrpc_request(url + "/signer", {"name": "X", "signature": self.SIGNATURE}))
         self.assertIn(bon.name, self.url_open(url).text)

@@ -169,6 +169,41 @@
                                 <i class="oi me-1" data-icon="check"/>Bon <strong t-out="bon.name"/> signé par
                                 <strong t-out="bon.signe_par"/>. Le bureau l'a reçu.
                             </div>
+                            <!-- Ce qui est sur le bon : date, signature du client, signature du technicien -->
+                            <div class="row g-3 mb-3">
+                                <div class="col-12">
+                                    <div class="small text-muted text-uppercase">
+                                        <t t-if="bon.type_bon == 'livraison'">Date de livraison</t>
+                                        <t t-elif="bon.type_bon == 'reprise'">Date de reprise des équipements</t>
+                                        <t t-else="">Date de l'entretien</t>
+                                    </div>
+                                    <div class="fw-bold" t-field="bon.date" t-options="{'widget': 'date'}"/>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="small text-muted text-uppercase">Signature du client</div>
+                                    <img t-if="bon.signature" t-att-src="image_data_uri(bon.signature)" alt="Signature du client"
+                                         class="img-fluid border rounded bg-white p-1" style="max-height: 110px;"/>
+                                    <div class="small" t-out="bon.signe_par"/>
+                                </div>
+                                <div class="col-sm-6" t-if="bon.type_bon == 'entretien'">
+                                    <div class="small text-muted text-uppercase">Signature du technicien</div>
+                                    <t t-if="bon.signature_technicien">
+                                        <img t-att-src="image_data_uri(bon.signature_technicien)" alt="Signature du technicien"
+                                             class="img-fluid border rounded bg-white p-1" style="max-height: 110px;"/>
+                                        <div class="small" t-out="bon.technicien_id.name"/>
+                                    </t>
+                                    <div t-else="" class="text-warning small">À signer ci-dessous.</div>
+                                </div>
+                            </div>
+                            <!-- Le technicien signe a son tour (entretien / reparation) -->
+                            <div t-if="bon.doit_signer_technicien" class="border rounded p-2 mb-3">
+                                <div class="fw-bold mb-1">Signature du technicien</div>
+                                <t t-call="portal.signature_form"
+                                   call_url="'/my/journee/tache/%s/signer_technicien' % tache.id"
+                                   default_name="bon.technicien_id.name or ''"
+                                   mode="'draw'"
+                                   send_label="'Signer le bon (technicien)'"/>
+                            </div>
                             <a t-if="bon.pdf_id" t-attf-href="/my/journee/tache/#{tache.id}/bon" class="btn btn-outline-primary w-100">
                                 <i class="oi me-1" data-icon="download"/>Voir le bon (PDF)
                             </a>

@@ -12,6 +12,7 @@ from odoo.addons.portal.controllers.web import Home
 from odoo.http import request
 
 from ..models.bon_intervention import PROPRETES, TYPES_BON, texte_engagement, type_bon_de
+from odoo.tools.image import image_data_uri
 from odoo.tools.misc import format_date
 
 # Pieces jointes envoyees depuis le portail
@@ -100,6 +101,7 @@ class PortailTechnicien(CustomerPortal):
             "erreur": erreur,
             "max_fichiers": MAX_FICHIERS,
             "bon": tache._source().sudo().bon_intervention_ids[:1],
+            "image_data_uri": image_data_uri,
             **self._valeurs_formulaire(tache),
         })
         return request.render("suivi_machines_portail.portal_ma_tache", values)
@@ -174,6 +176,21 @@ class PortailTechnicien(CustomerPortal):
             return {"error": request.env._("La signature est vide.")}
         try:
             request.env["suivi.bon.intervention"]._creer_depuis_tache(tache, name, signature)
+        except (UserError, ValueError, binascii.Error) as erreur:
+            return {"error": str(erreur)}
+        return {"force_refresh": True, "redirect_url": "/my/journee/tache/%s#bon_intervention" % tache_id}
+
+    @http.route(["/my/journee/tache/<int:tache_id>/signer_technicien"], type="jsonrpc", auth="user", website=True)
+    def ma_tache_signer_technicien(self, tache_id, name=None, signature=None, **kw):
+        """Signature du technicien sur le bon deja signe par le client (entretien / reparation)."""
+        tache = self._ma_tache(tache_id)
+        bon = tache and tache._source().sudo().bon_intervention_ids[:1]
+        if not bon:
+            return {"error": request.env._("Le client doit d'abord signer le bon.")}
+        if bon.technicien_id != request.env.user:
+            return {"error": request.env._("Seul le technicien du bon peut le signer.")}
+        try:
+            bon._signer_technicien(signature)
         except (UserError, ValueError, binascii.Error) as erreur:
             return {"error": str(erreur)}
         return {"force_refresh": True, "redirect_url": "/my/journee/tache/%s#bon_intervention" % tache_id}
