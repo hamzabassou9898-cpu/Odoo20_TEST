@@ -37,6 +37,11 @@
                         class="btn-primary" invisible="not est_reprise" groups="stock.group_stock_user"/>
                 <button name="action_prolonger_location" type="object" string="Prolonger la location"
                         class="btn-secondary" invisible="not est_reprise"/>
+                <!-- Machine a remplacer : ramassage de l'ancienne + livraison de la nouvelle, une seule operation -->
+                <button name="action_echanger_machine" type="object" string="Échanger la machine" class="btn-primary"
+                        invisible="not id or type_demande != 'remplacement' or not lot_remplacement_id or echange_livraison_id"
+                        groups="stock.group_stock_user"
+                        confirm="Créer le ramassage de l'ancienne machine et la livraison de la nouvelle (validés ensemble) ?"/>
                 <!-- Reparation / entretien : l'intervention est planifiee toute seule ; on la termine ici -->
                 <button name="action_marquer_fait" type="object" string="Marquer comme fait" class="btn-primary"
                         invisible="not id or est_entretien or type_demande not in ('reparation', 'remplacement') or statut_entretien == 'fait'"
@@ -148,6 +153,11 @@
                                domain="[('id', 'in', machines_client_ids)]"
                                placeholder="Choisir parmi les machines du client"/>
                         <field name="machine_dernier_entretien" invisible="not lot_id"/>
+                        <field name="lot_remplacement_id" invisible="type_demande != 'remplacement'"
+                               readonly="echange_livraison_id" options="{'no_create': True}"
+                               placeholder="Machine en entrepôt à livrer à la place"/>
+                        <field name="echange_retour_id" invisible="not echange_retour_id"/>
+                        <field name="echange_livraison_id" invisible="not echange_livraison_id"/>
                         <field name="commande_reprise_id" invisible="not commande_reprise_id"/>
                         <field name="machines_reprise_ids" widget="many2many_tags" readonly="1"
                                invisible="not commande_reprise_id"/>

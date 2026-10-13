@@ -1058,3 +1058,45 @@ class TestTicketMachine(TransactionCase):
         autre = self.lots[2]
         autre.prochain_entretien_fixe = fields.Date.today() + relativedelta(months=2)
         self.assertFalse(T._cron_tickets_entretien().filtered(lambda t: t.lot_id == autre), "trop tôt")
+
+    def test_echanger_la_machine(self):
+        """Machine à remplacer : ramassage de l'ancienne + livraison de la nouvelle en une seule opération ;
+        l'ancien n° de série revient en inventaire, la nouvelle machine est chez le client (même contrat)."""
+        lot, so, _reprise = self._location_livree("ECH-1")
+        resolu = self.env["helpdesk.stage"].search([("name", "ilike", "résolu")], limit=1) \
+            or self.env["helpdesk.stage"].create({"name": "Résolu"})
+        stock = self.env.ref("stock.stock_location_stock")
+        nouvelle = self.env["stock.lot"].create({"name": "ECH-2", "product_id": self.produit.id})
+        self.env["stock.quant"]._update_available_quantity(self.produit, stock, 1, lot_id=nouvelle)
+        self.assertEqual((lot.machine_statut, nouvelle.machine_statut), ("chez_client", "entrepot"))
+        tech = self.env["res.users"].create({"name": "Tech échange", "login": "tech_echange"})
+        ticket = self.env["helpdesk.ticket"].create({
+            "name": "Machine à changer", "partner_id": self.commerce.id, "type_demande": "remplacement",
+            "lot_id": lot.id, "user_id": tech.id, "date_planifiee": fields.Datetime.now()})
+        interv = ticket.intervention_ticket_ids
+        self.assertEqual((interv.type, interv.state), ("remplacement", "planifie"))
+        with self.assertRaisesRegex(UserError, "machine de remplacement"):
+            ticket.action_echanger_machine()
+        ticket.lot_remplacement_id = nouvelle
+        action = ticket.action_echanger_machine()
+        retour, livraison = ticket.echange_retour_id, ticket.echange_livraison_id
+        self.assertEqual(action["res_id"], livraison.id)
+        self.assertEqual((retour.echange_picking_id, livraison.echange_picking_id), (livraison, retour))
+        self.assertEqual((retour.livreur_id, livraison.livreur_id), (tech, tech))
+        self.assertEqual(retour.move_ids.move_line_ids.lot_id, lot, "l'ancienne machine revient")
+        self.assertEqual(livraison.move_ids.move_line_ids.lot_id, nouvelle, "la nouvelle part")
+        self.assertTrue(livraison.prochain_entretien and livraison.frequence_entretien, "entretien repris")
+        with self.assertRaises(UserError):
+            ticket.action_echanger_machine()   # pas deux fois
+        # Une seule operation : valider la livraison valide aussi le ramassage
+        for pk in retour | livraison:
+            pk.move_ids.picked = True
+        livraison.with_context(skip_sms=True).button_validate()
+        self.assertEqual((retour.state, livraison.state), ("done", "done"))
+        self.assertEqual(lot.machine_statut, "entrepot", "n° de série revenu en inventaire")
+        self.assertEqual(nouvelle.machine_statut, "chez_client", "nouvelle machine en location chez le client")
+        self.assertEqual(nouvelle.machine_client_id, self.commerce)
+        self.assertIn(nouvelle, so.machine_ids, "dans le même contrat")
+        self.assertEqual(so.order_line.qty_delivered, 1, "toujours une machine louée")
+        self.assertEqual((interv.state, interv.lot_remplacement_id), ("fait", nouvelle))
+        self.assertEqual(ticket.stage_id, resolu, "ticket résolu")

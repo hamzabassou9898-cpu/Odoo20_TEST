@@ -23,6 +23,11 @@ class StockPicking(models.Model):
         FREQUENCES_ENTRETIEN, "Fréquence des entretiens", copy=False,
         help="Ensuite, Odoo calcule chaque entretien : dernier entretien + fréquence.")
 
+    # Echange de machine : le ramassage de l'ancienne et la livraison de la nouvelle, valides ensemble
+    echange_picking_id = fields.Many2one(
+        "stock.picking", "Échange lié", copy=False, readonly=True, index="btree_not_null",
+        help="Échange de machine : l'autre transfert (ramassage ou livraison). Valider l'un valide les deux.")
+
     @api.depends("move_ids.product_id", "location_dest_id")
     def _compute_livre_machines(self):
         for picking in self:
@@ -46,6 +51,10 @@ class StockPicking(models.Model):
         return "customer" in emplacements.mapped("usage") or bool(loc_location and loc_location in emplacements)
 
     def button_validate(self):
+        # Echange de machine : une seule operation (le ramassage et la livraison ensemble)
+        lies = self.echange_picking_id.filtered(lambda p: p.state not in ("done", "cancel")) - self
+        if lies:
+            return (self | lies).button_validate()
         sans_technicien = self.filtered(lambda p: p._est_tournee_client() and not p.livreur_id
                                         and p.state not in ("done", "cancel"))
         if sans_technicien:

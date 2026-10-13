@@ -16,6 +16,11 @@
             <xpath expr="//sheet" position="before">
                 <field name="technicien_requis" invisible="1"/>
                 <field name="livre_machines" invisible="1"/>
+                <field name="echange_picking_id" invisible="1"/>
+                <div class="alert alert-info mb-0 py-2" role="status" invisible="not echange_picking_id">
+                    <strong>Échange de machine</strong> avec <field name="echange_picking_id" class="d-inline"
+                    readonly="1"/> : valider ce transfert valide aussi l'autre (une seule opération).
+                </div>
                 <div class="alert alert-danger mb-0 py-2" role="alert"
                      invisible="not livre_machines or state in ('done', 'cancel') or (prochain_entretien and frequence_entretien)">
                     Indiquez le <strong>Prochain entretien</strong> et la <strong>Fréquence des entretiens</strong> des
