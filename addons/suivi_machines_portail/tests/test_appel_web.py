@@ -41,8 +41,10 @@ class TestAppelWeb(HttpCase):
         page = self.url_open("/appel-de-service")
         self.assertEqual(page.status_code, 200)
         for texte in ("Appel de service", "Code client", "Type de demande", "Type de réparation", "Ne gèle pas",
-                      "Ajuster un contrat", "Envoyer"):
+                      "Envoyer"):
             self.assertIn(texte, page.text)
+        types = re.findall(r'name="type_demande"[^>]*value="(\w+)"', page.text)
+        self.assertEqual(types, ["reparation", "ramassage", "entretien", "remplacement"], "4 types sur le site")
         self.assertRegex(page.text, r'<input type="radio" name="type_demande"[^>]*value="reparation"')
         self.assertIn('<textarea id="appel_message" name="message"', page.text)
         # Code client juste apres Entreprise
@@ -77,7 +79,7 @@ class TestAppelWeb(HttpCase):
         self.assertFalse(ticket.type_reparation, "type de réparation ignoré hors réparation")
 
     def test_code_inconnu_garde_dans_la_description(self):
-        self._envoyer(code_client="XYZ999", type_demande="commande")
+        self._envoyer(code_client="XYZ999", type_demande="entretien")
         ticket = self._tickets_web()
         self.assertFalse(ticket.partner_id)
         self.assertFalse(ticket.code_client)
@@ -88,6 +90,7 @@ class TestAppelWeb(HttpCase):
             ({"type_demande": "reparation"}, "type de réparation"),
             ({"type_demande": "reparation", "type_reparation": "autre"}, "section Message"),
             ({"type_demande": "inconnu"}, "type de demande"),
+            ({"type_demande": "commande"}, "type de demande"),
             ({"type_demande": "entretien", "courriel": "pas-un-courriel"}, "courriel"),
             ({"type_demande": "entretien", "ville": ""}, "Ville"),
             ({"type_demande": "remplacement", "code_client": "WEB200"}, "Aucune machine"),
@@ -112,11 +115,11 @@ class TestAppelWeb(HttpCase):
     def test_texte_echappe(self):
         Ticket = self.env["helpdesk.ticket"]
         ticket = Ticket._creer_depuis_formulaire_web(
-            self._post(type_demande="commande", entreprise="<b>Café</b>", message="<script>x</script>"))
+            self._post(type_demande="entretien", entreprise="<b>Café</b>", message="<script>x</script>"))
         self.assertNotIn("<script>", ticket.description)
         self.assertNotIn("<b>Café</b>", ticket.description)
         with self.assertRaises(UserError):
-            Ticket._creer_depuis_formulaire_web({"type_demande": "commande"})
+            Ticket._creer_depuis_formulaire_web({"type_demande": "entretien"})
 
     def test_bandeau_dans_le_ticket(self):
         from lxml import etree

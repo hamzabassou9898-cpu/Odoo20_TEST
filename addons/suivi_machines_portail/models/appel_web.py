@@ -23,6 +23,8 @@ CHAMPS_FORMULAIRE = [
     ("adresse", "Adresse", SANS_CODE),
     ("ville", "Ville", SANS_CODE),
 ]
+# Types proposes au client sur le site (les autres types restent pour Josef dans le ticket)
+TYPES_WEB = ("reparation", "ramassage", "entretien", "remplacement")
 LONGUEUR_CHAMP = 200
 LONGUEUR_MESSAGE = 5000
 
@@ -49,7 +51,7 @@ class HelpdeskTicket(models.Model):
             raise UserError(self.env._("Veuillez remplir : %s.", ", ".join(manquants)))
         if not email_normalize(valeurs["courriel"]):
             raise UserError(self.env._("L'adresse courriel n'est pas valide."))
-        if valeurs["type_demande"] not in dict(self._fields["type_demande"].selection):
+        if valeurs["type_demande"] not in TYPES_WEB:
             raise UserError(self.env._("Veuillez choisir le type de demande."))
         if valeurs["type_demande"] == "reparation":
             if valeurs["type_reparation"] not in dict(self._fields["type_reparation"].selection):

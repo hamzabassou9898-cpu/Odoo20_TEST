@@ -6,7 +6,7 @@ from odoo import http
 from odoo.exceptions import UserError, ValidationError
 from odoo.http import request
 
-from ..models.appel_web import CHAMPS_FORMULAIRE
+from ..models.appel_web import CHAMPS_FORMULAIRE, TYPES_WEB
 
 
 class AppelDeServiceWeb(http.Controller):
@@ -15,7 +15,8 @@ class AppelDeServiceWeb(http.Controller):
         Ticket = request.env["helpdesk.ticket"].sudo()
         return request.render("suivi_machines_portail.appel_de_service_page", {
             "champs": CHAMPS_FORMULAIRE,
-            "types_demande": Ticket._fields["type_demande"]._description_selection(request.env),
+            "types_demande": [t for t in Ticket._fields["type_demande"]._description_selection(request.env)
+                              if t[0] in TYPES_WEB],
             "types_reparation": Ticket._fields["type_reparation"]._description_selection(request.env),
             "valeurs": valeurs or {},
             "erreur": erreur,
