@@ -23,26 +23,62 @@
         <t t-call="web.html_container">
             <t t-foreach="docs" t-as="bon">
                 <t t-call="web.external_layout">
-                    <div class="page">
-                        <h2>Bon d'intervention <span t-field="bon.name"/></h2>
-                        <table class="table table-sm mt-3">
-                            <tr><th style="width:30%">Client</th><td t-out="bon.partner_id.display_name"/></tr>
-                            <tr t-if="bon.partner_id.contact_address"><th>Adresse</th>
-                                <td t-out="bon.partner_id.contact_address"/></tr>
-                            <tr><th>Travail</th><td><t t-out="bon.type_tache"/> · <t t-out="bon.titre"/></td></tr>
-                            <tr t-if="bon.lot_id"><th>Machine</th>
-                                <td><t t-out="bon.lot_id.product_id.display_name"/> · n° <t t-out="bon.lot_id.name"/></td></tr>
-                            <tr><th>Technicien</th><td t-out="bon.technicien_id.name"/></tr>
-                            <tr><th>Date</th><td><span t-field="bon.date"/></td></tr>
+                    <div class="page" style="font-size: 13px;">
+                        <div class="d-flex justify-content-between">
+                            <h4 class="mb-0">Bon <span t-field="bon.name"/></h4>
+                            <span class="text-muted">Rév. 01/26</span>
+                        </div>
+                        <table class="table table-sm mt-2 mb-2">
+                            <tr><th style="width:25%">Client</th><td t-out="bon.partner_id.display_name"/></tr>
+                            <tr t-if="bon.partner_id.contact_address"><th>Adresse</th><td t-out="bon.partner_id.contact_address"/></tr>
+                            <tr><th>Équipements</th><td style="white-space: pre-line;" t-out="bon.equipements or (bon.lot_id and bon.lot_id.display_name) or '—'"/></tr>
+                            <tr t-if="bon.travail"><th>Travail fait</th><td style="white-space: pre-line;" t-out="bon.travail"/></tr>
                         </table>
-                        <h5 class="mt-4">Travail fait</h5>
-                        <p t-if="bon.travail" t-out="bon.travail" style="white-space: pre-line;"/>
-                        <p t-else="" class="text-muted">—</p>
-                        <div class="mt-5" style="width: 50%;">
-                            <p class="mb-1"><strong>Signature du client</strong></p>
-                            <img t-if="bon.signature" t-att-src="image_data_uri(bon.signature)"
-                                 style="max-height: 4cm; max-width: 8cm;"/>
-                            <p>Signé par <t t-out="bon.signe_par"/> le <span t-field="bon.date"/></p>
+
+                        <!-- Section du formulaire papier, encadree comme l'original -->
+                        <div style="border: 2px solid #000; padding: 12px;">
+                            <div class="text-center mb-2">
+                                <span style="border: 2px solid #000; padding: 3px 10px; font-weight: bold; text-transform: uppercase;"
+                                      t-field="bon.type_bon"/>
+                            </div>
+                            <p style="text-align: justify;" t-out="bon.texte"/>
+                            <t t-if="bon.type_bon == 'reprise'">
+                                <p class="text-center" style="font-size: 14px;">
+                                    <t t-foreach="[('tres_propre', 'TRÈS PROPRE'), ('moyen', 'MOYEN'), ('sale', 'SALE')]" t-as="choix">
+                                        <span class="me-4"><t t-out="choix[1]"/> <t t-out="'☒' if bon.proprete == choix[0] else '☐'"/></span>
+                                    </t><br/>
+                                    <span class="me-4">PLEINE <t t-out="'☒' if bon.pleine else '☐'"/></span>
+                                    <span>EN FONCTION <t t-out="'☒' if bon.en_fonction else '☐'"/></span>
+                                </p>
+                            </t>
+                            <table style="width: 100%; margin-top: 18px;">
+                                <tr>
+                                    <td style="width: 34%; vertical-align: bottom; padding-right: 10px;">
+                                        <img t-if="bon.signature" t-att-src="image_data_uri(bon.signature)" style="max-height: 2.5cm; max-width: 6cm;"/>
+                                        <div style="border-top: 1px solid #000;" class="text-center">
+                                            <t t-if="bon.type_bon == 'entretien'">SIGNATURE DU CLIENT</t>
+                                            <t t-else="">SIGNATURE DU CLIENT OU DU COMMIS</t>
+                                        </div>
+                                    </td>
+                                    <td style="width: 33%; vertical-align: bottom; padding-right: 10px;">
+                                        <div class="text-center fw-bold" t-out="(bon.signe_par or '').upper()"/>
+                                        <div style="border-top: 1px solid #000;" class="text-center">NOM EN LETTRES MOULÉES</div>
+                                    </td>
+                                    <td style="width: 33%; vertical-align: bottom;">
+                                        <div class="text-center"><span t-field="bon.date" t-options="{'widget': 'date'}"/></div>
+                                        <div style="border-top: 1px solid #000;" class="text-center">
+                                            <t t-if="bon.type_bon == 'livraison'">DATE DE LIVRAISON</t>
+                                            <t t-elif="bon.type_bon == 'reprise'">DATE DE REPRISE DES ÉQUIPEMENTS</t>
+                                            <t t-else="">DATE DE L'ENTRETIEN</t>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                            <div t-if="bon.type_bon == 'entretien'" style="margin-top: 14px; width: 34%;">
+                                <div class="text-center fw-bold" t-out="bon.technicien_id.name"/>
+                                <div style="border-top: 1px solid #000;" class="text-center">SIGNATURE DU TECHNICIEN</div>
+                                <div class="text-center text-muted" style="font-size: 10px;">Signature électronique (technicien connecté au portail)</div>
+                            </div>
                         </div>
                     </div>
                 </t>
@@ -58,7 +94,7 @@
                 <field name="date"/>
                 <field name="name"/>
                 <field name="partner_id"/>
-                <field name="type_tache"/>
+                <field name="type_bon"/>
                 <field name="titre"/>
                 <field name="lot_id" optional="show"/>
                 <field name="technicien_id" widget="many2one_avatar_user"/>
@@ -81,9 +117,10 @@
                     <group>
                         <group>
                             <field name="partner_id"/>
+                            <field name="type_bon"/>
                             <field name="type_tache"/>
                             <field name="titre"/>
-                            <field name="lot_id"/>
+                            <field name="equipements"/>
                         </group>
                         <group>
                             <field name="technicien_id"/>
@@ -93,6 +130,13 @@
                             <field name="picking_id" invisible="not picking_id"/>
                             <field name="intervention_id" invisible="not intervention_id"/>
                         </group>
+                    </group>
+                    <separator string="Engagement signé par le client"/>
+                    <field name="texte" nolabel="1"/>
+                    <group invisible="type_bon != 'reprise'">
+                        <field name="proprete"/>
+                        <field name="pleine"/>
+                        <field name="en_fonction"/>
                     </group>
                     <separator string="Travail fait"/>
                     <field name="travail" nolabel="1"/>

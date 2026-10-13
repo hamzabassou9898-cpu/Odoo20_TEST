@@ -10,6 +10,39 @@ from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
 
+# Formulaire Monroy (papier « Rév. 01/26 ») : trois sections selon le travail
+TYPES_BON = [("livraison", "Livraison des équipements"), ("entretien", "Entretien sur les équipements"),
+             ("reprise", "Reprise des équipements")]
+PROPRETES = [("tres_propre", "Très propre"), ("moyen", "Moyen"), ("sale", "Sale")]
+
+
+def type_bon_de(type_tache):
+    """Livraison / installation -> livraison ; ramassage -> reprise ; entretien, reparation... -> entretien."""
+    if type_tache in ("livraison", "installation"):
+        return "livraison"
+    if type_tache == "ramassage":
+        return "reprise"
+    return "entretien"
+
+
+def texte_engagement(env, type_bon, type_tache=None):
+    """Texte que le client lit avant de signer (repris du formulaire papier)."""
+    societe = (env.company.name or "").upper()
+    if type_bon == "livraison":
+        return env._(
+            "J'ai reçu en bon état les articles mentionnés ci-dessus, ainsi que le congélateur pour lesquels je suis "
+            "responsable. Je m'engage à remettre dans le même état de propreté qu'ils m'ont été livrés. Je comprends "
+            "également que %(societe)s pourra me facturer tous items manquants ou en mauvais état lors de la remise des "
+            "équipements. Dans le cas où les items ne sont pas remis lors de la reprise des équipements, le client devra "
+            "les retourner à SES FRAIS.", societe=societe)
+    if type_bon == "reprise":
+        return env._("La propreté du congélateur et des accessoires lors de la reprise de possession à la fin du "
+                     "contrat était :")
+    travail = env._("une réparation") if type_tache == "reparation" else env._("un entretien")
+    return env._(
+        "Je confirme que %(societe)s a effectué %(travail)s sur les équipements en place. Je confirme également que les "
+        "équipements que j'ai en ma possession sont tels qu'indiqué ci-dessus.", societe=env.company.name, travail=travail)
+
 
 class BonIntervention(models.Model):
     _name = "suivi.bon.intervention"
@@ -22,6 +55,12 @@ class BonIntervention(models.Model):
     partner_id = fields.Many2one("res.partner", "Client", readonly=True)
     lot_id = fields.Many2one("stock.lot", "Machine", readonly=True)
     type_tache = fields.Char("Travail", readonly=True)
+    type_bon = fields.Selection(TYPES_BON, "Formulaire", readonly=True)
+    equipements = fields.Text("Équipements", readonly=True)
+    texte = fields.Text("Engagement signé", readonly=True)
+    proprete = fields.Selection(PROPRETES, "Propreté à la reprise", readonly=True)
+    pleine = fields.Boolean("Pleine", readonly=True)
+    en_fonction = fields.Boolean("En fonction", readonly=True)
     titre = fields.Char("Tâche", readonly=True)
     travail = fields.Text("Travail fait", readonly=True)
     signe_par = fields.Char("Signé par", readonly=True)
@@ -54,7 +93,15 @@ class BonIntervention(models.Model):
         champ = {"helpdesk.ticket": "ticket_id", "stock.picking": "picking_id",
                  "machine.intervention": "intervention_id"}[source._name]
         types = dict(tache._fields["type_tache"]._description_selection(self.env))
+        type_bon = type_bon_de(tache.type_tache)
+        equipements = [ligne for ligne in (tache.machines, tache.accessoires) if ligne]
+        etat = {}
+        if type_bon == "reprise" and source._name == "stock.picking":
+            etat = {"proprete": source.reprise_proprete, "pleine": source.reprise_pleine,
+                    "en_fonction": source.reprise_en_fonction}
         bon = self.sudo().create({
+            **etat, "type_bon": type_bon, "equipements": "\n".join(equipements) or False,
+            "texte": texte_engagement(self.env, type_bon, tache.type_tache),
             "name": self.env["ir.sequence"].sudo().next_by_code("suivi.bon.intervention") or "/",
             "technicien_id": technicien.id, "partner_id": tache.partner_id.id, "lot_id": tache.lot_id.id,
             "type_tache": types.get(tache.type_tache, ""), "titre": tache.titre,
@@ -146,6 +193,10 @@ class HelpdeskTicket(models.Model):
 class StockPicking(models.Model):
     _name = "stock.picking"
     _inherit = ["stock.picking", "suivi.bon.intervention.mixin"]
+
+    reprise_proprete = fields.Selection(PROPRETES, "Propreté à la reprise", copy=False)
+    reprise_pleine = fields.Boolean("Pleine", copy=False)
+    reprise_en_fonction = fields.Boolean("En fonction", copy=False)
 
 
 class MachineIntervention(models.Model):

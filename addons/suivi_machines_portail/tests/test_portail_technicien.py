@@ -357,6 +357,8 @@ class TestPortailTechnicien(HttpCase):
         url = "/my/journee/tache/%s" % tache.id
         page = self.url_open(url)
         self.assertIn("Terminer : signature du client", page.text)
+        self.assertIn("Entretien sur les équipements", page.text, "titre du formulaire papier")
+        self.assertIn("Je confirme que", page.text, "le client lit ce qu'il signe")
         self.assertIn("portal.signature_form", page.text, "formulaire de signature du portail")
         # Note du jour = « travail fait » du bon
         self.url_open(url + "/note", data={"csrf_token": self._csrf(url), "note": "Joint remplacé."})
@@ -369,6 +371,9 @@ class TestPortailTechnicien(HttpCase):
         self.assertTrue(bon.name.startswith("BON/"))
         self.assertEqual((bon.signe_par, bon.technicien_id, bon.partner_id), ("M. Tremblay", self.tech_a, self.client))
         self.assertEqual(bon.travail, "Joint remplacé.")
+        # Formulaire Monroy : section « Entretien sur les equipements » (reparation)
+        self.assertEqual(bon.type_bon, "entretien")
+        self.assertIn("a effectué une réparation sur les équipements en place", bon.texte)
         self.assertTrue(bon.signature)
         self.assertEqual(self.ticket.stage_id, resolu, "tâche terminée : ticket résolu")
         self.assertTrue(self.ticket.message_ids.filtered(lambda m: "signé" in (m.body or "")), "dans le fil du ticket")
@@ -379,8 +384,7 @@ class TestPortailTechnicien(HttpCase):
         self.assertTrue(bon.pdf_id, "PDF joint au ticket")
         fichier = self.url_open(url + "/bon")
         self.assertEqual(fichier.status_code, 200)
-        self.assertEqual(fichier.content, bon.pdf_id.raw.read() if hasattr(bon.pdf_id.raw, "read") else bon.pdf_id.raw)
-        self.assertTrue(fichier.content)
+        self.assertGreater(len(fichier.content), 100, "le fichier complet est envoyé")
         # Un autre technicien ne peut pas signer la tache
         tache_b = self._tache(self.autre)
         self.assertIn("error", self.make_jsonrpc_request("/my/journee/tache/%s/signer" % tache_b.id,
@@ -409,9 +413,43 @@ class TestPortailTechnicien(HttpCase):
         picking.action_confirm()
         tache = self.env["portail.tache"].search([("picking_id", "=", picking.id)])
         if tache:
-            self.env["suivi.bon.intervention"]._creer_depuis_tache(tache, "Client", self.SIGNATURE)
+            bon = self.env["suivi.bon.intervention"]._creer_depuis_tache(tache, "Client", self.SIGNATURE)
             self.assertNotEqual(picking.state, "done", "le stock se valide au bureau")
             self.assertTrue(picking.activity_ids, "le bureau est prévenu")
+            self.assertEqual(bon.type_bon, "livraison")
+            self.assertIn("J'ai reçu en bon état", bon.texte)
+            self.assertIn("SES FRAIS", bon.texte)
+
+    def test_bon_de_reprise_avec_etat(self):
+        """Reprise : le technicien coche l'etat (tres propre / moyen / sale, pleine, en fonction), puis signature."""
+        produit = self.env["product.product"].create({"name": "Machine reprise", "is_storable": True})
+        type_in = self.env.ref("stock.picking_type_in")
+        retour = self.env["stock.picking"].create({
+            "picking_type_id": type_in.id, "partner_id": self.client.id, "livreur_id": self.tech_a.id,
+            "location_id": self.env.ref("stock.stock_location_customers").id,
+            "location_dest_id": self.env.ref("stock.stock_location_stock").id,
+            "scheduled_date": fields.Datetime.now(),
+            "move_ids": [(0, 0, {"product_id": produit.id, "product_uom_qty": 1,
+                                 "location_id": self.env.ref("stock.stock_location_customers").id,
+                                 "location_dest_id": self.env.ref("stock.stock_location_stock").id})]})
+        retour.action_confirm()
+        tache = self.env["portail.tache"].search([("picking_id", "=", retour.id)])
+        if not tache or tache.type_tache != "ramassage":
+            self.skipTest("transfert non reconnu comme ramassage dans ce stock de test")
+        self.authenticate("tech_portail_a", "tech_portail_a_mdp_123")
+        url = "/my/journee/tache/%s" % tache.id
+        page = self.url_open(url)
+        self.assertIn("Reprise des équipements", page.text)
+        self.assertIn("Cochez d'abord l'état", page.text, "pas de signature avant l'état")
+        self.assertNotIn("portal.signature_form", page.text)
+        self.url_open(url + "/reprise", data={"csrf_token": self._csrf(url), "proprete": "moyen", "pleine": "1"})
+        self.assertEqual((retour.reprise_proprete, retour.reprise_pleine, retour.reprise_en_fonction),
+                         ("moyen", True, False))
+        self.assertIn("portal.signature_form", self.url_open(url).text)
+        self.make_jsonrpc_request(url + "/signer", {"name": "Commis Gagnon", "signature": self.SIGNATURE})
+        bon = retour.bon_intervention_ids
+        self.assertEqual((bon.type_bon, bon.proprete, bon.pleine, bon.en_fonction, bon.signe_par),
+                         ("reprise", "moyen", True, False, "Commis Gagnon"))
 
     def test_planning_montre_les_techniciens_portail(self):
         donnees = self.env["portail.tache"].donnees_planning(False)

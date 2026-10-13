@@ -10,6 +10,8 @@ from odoo.exceptions import UserError
 from odoo.addons.portal.controllers.portal import CustomerPortal
 from odoo.addons.portal.controllers.web import Home
 from odoo.http import request
+
+from ..models.bon_intervention import PROPRETES, TYPES_BON, texte_engagement, type_bon_de
 from odoo.tools.misc import format_date
 
 # Pieces jointes envoyees depuis le portail
@@ -98,8 +100,37 @@ class PortailTechnicien(CustomerPortal):
             "erreur": erreur,
             "max_fichiers": MAX_FICHIERS,
             "bon": tache._source().sudo().bon_intervention_ids[:1],
+            **self._valeurs_formulaire(tache),
         })
         return request.render("suivi_machines_portail.portal_ma_tache", values)
+
+    def _valeurs_formulaire(self, tache):
+        """Section du formulaire Monroy a signer (livraison, entretien/reparation, reprise)."""
+        type_bon = type_bon_de(tache.type_tache)
+        source = tache._source().sudo()
+        reprise = type_bon == "reprise" and source._name == "stock.picking"
+        return {
+            "type_bon": type_bon,
+            "titre_bon": dict(TYPES_BON)[type_bon],
+            "texte_bon": texte_engagement(request.env, type_bon, tache.type_tache),
+            "reprise": source if reprise else False,
+            "proprietes": PROPRETES,
+            # Reprise : l'etat (propre / moyen / sale...) est coche avant la signature
+            "peut_signer": not reprise or bool(source.reprise_proprete),
+        }
+
+    @http.route(["/my/journee/tache/<int:tache_id>/reprise"], type="http", auth="user", website=True,
+                methods=["POST"])
+    def ma_tache_reprise(self, tache_id, proprete=None, pleine=None, en_fonction=None, **kw):
+        """Etat des equipements a la reprise (cases du formulaire papier), avant la signature du client."""
+        tache = self._ma_tache(tache_id)
+        if not tache:
+            return request.redirect("/my/journee")
+        source = tache._source().sudo()
+        if source._name == "stock.picking" and proprete in dict(PROPRETES):
+            source.write({"reprise_proprete": proprete, "reprise_pleine": bool(pleine),
+                          "reprise_en_fonction": bool(en_fonction)})
+        return request.redirect("/my/journee/tache/%s#bon_intervention" % tache_id)
 
     def _mes_notes(self, tache):
         """Notes deja envoyees par ce technicien sur le document de la tache (plus recentes d'abord)."""
