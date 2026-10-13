@@ -375,6 +375,12 @@ class TestPortailTechnicien(HttpCase):
         # Deuxieme signature : refusee (deja terminee) ; page : bon affiche
         self.assertIn("error", self.make_jsonrpc_request(url + "/signer", {"name": "X", "signature": self.SIGNATURE}))
         self.assertIn(bon.name, self.url_open(url).text)
+        # « Voir le bon (PDF) » : le fichier est bien envoye (pas de page blanche)
+        self.assertTrue(bon.pdf_id, "PDF joint au ticket")
+        fichier = self.url_open(url + "/bon")
+        self.assertEqual(fichier.status_code, 200)
+        self.assertEqual(fichier.content, bon.pdf_id.raw.read() if hasattr(bon.pdf_id.raw, "read") else bon.pdf_id.raw)
+        self.assertTrue(fichier.content)
         # Un autre technicien ne peut pas signer la tache
         tache_b = self._tache(self.autre)
         self.assertIn("error", self.make_jsonrpc_request("/my/journee/tache/%s/signer" % tache_b.id,

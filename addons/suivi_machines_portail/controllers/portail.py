@@ -154,9 +154,9 @@ class PortailTechnicien(CustomerPortal):
         bon = tache and tache._source().sudo().bon_intervention_ids[:1]
         if not bon or not bon.pdf_id:
             return request.redirect("/my/journee")
-        return request.make_response(bon.pdf_id.raw, headers=[
-            ("Content-Type", "application/pdf"),
-            ("Content-Disposition", 'inline; filename="%s"' % bon.pdf_id.name)])
+        # Envoi standard d'Odoo (le contenu d'une piece jointe est un fichier, pas des octets)
+        stream = request.env["ir.binary"].sudo()._get_stream_from(bon.pdf_id.sudo())
+        return stream.get_response(as_attachment=False)
 
 
 class HomeTechnicien(Home):
