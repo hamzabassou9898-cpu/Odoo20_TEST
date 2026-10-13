@@ -6,6 +6,10 @@ from odoo.exceptions import UserError, ValidationError
 from odoo.tests import Form, TransactionCase, tagged
 
 
+# Periode de location obligatoire pour confirmer un contrat de location
+PERIODE_TEST = (fields.Datetime.to_datetime("2026-01-01 12:00:00"), fields.Datetime.to_datetime("2027-12-31 12:00:00"))
+
+
 @tagged("post_install", "-at_install")
 class TestSuiviMachines(TransactionCase):
 
@@ -51,8 +55,10 @@ class TestSuiviMachines(TransactionCase):
         return picking
 
     def _commande(self, lot, type_commande="vente"):
+        periode = {"date_debut_location": PERIODE_TEST[0], "date_fin_location": PERIODE_TEST[1]} \
+            if type_commande == "location" else {}
         so = self.env["sale.order"].create({
-            "partner_id": self.client.id, "type_commande": type_commande,
+            "partner_id": self.client.id, "type_commande": type_commande, **periode,
             "order_line": [(0, 0, {"product_id": self.produit.id, "product_uom_qty": 1,
                                    "machine_lot_id": lot.id})]})
         so.action_confirm()
@@ -256,8 +262,11 @@ class TestSuiviMachines(TransactionCase):
         # changement d'avis : l'autre machine
         picking.move_ids.machine_lot_id = self.lot_a
         self.assertEqual(picking.move_ids.move_line_ids.lot_id, self.lot_a)
+        self.assertFalse(so.order_line.machine_lot_id, "pas de n° de série au bon de vente")
         self._valider(picking)
         self.assertEqual(picking.livreur_id, livreur)
+        self.assertEqual(so.order_line.machine_lot_id, self.lot_a, "n° de série livré repris sur le bon de vente")
+        self.assertTrue(so.message_ids.filtered(lambda m: "TST-A" in (m.body or "")), "noté dans le bon de vente")
         self.assertEqual(self.lot_a.machine_statut, "vendue")
         self.assertEqual(self.lot_b.machine_statut, "entrepot")
 
@@ -294,7 +303,7 @@ class TestSuiviMachines(TransactionCase):
         pompe = self.env["product.product"].create({"name": "Pompe test", "is_storable": True})
         self.env["stock.quant"]._update_available_quantity(pompe, self.stock, 10)
         so = self.env["sale.order"].create({
-            "partner_id": self.client.id, "type_commande": "location", "order_line": [
+            "partner_id": self.client.id, "type_commande": "location", "date_debut_location": PERIODE_TEST[0], "date_fin_location": PERIODE_TEST[1], "order_line": [
                 (0, 0, {"product_id": self.produit.id, "product_uom_qty": 1, "machine_lot_id": self.lot_a.id}),
                 (0, 0, {"product_id": self.produit.id, "product_uom_qty": 1, "machine_lot_id": self.lot_b.id}),
                 (0, 0, {"product_id": pompe.id, "product_uom_qty": 3})]})
@@ -445,3 +454,20 @@ class TestSuiviMachines(TransactionCase):
         arch = etree.fromstring(self.env["stock.picking"].get_views([(False, "form")])["views"]["form"]["arch"])
         bandeau = arch.xpath("//div[contains(@class, 'alert-danger')][contains(., 'Technicien assigné')]")
         self.assertEqual(bandeau[0].get("invisible"), "not technicien_requis or livreur_id")
+
+    def test_periode_de_location_obligatoire(self):
+        """Contrat de location : la période (début et fin) est obligatoire, à l'écran et à la confirmation."""
+        from lxml import etree
+        so = self.env["sale.order"].create({
+            "partner_id": self.client.id, "type_commande": "location",
+            "order_line": [(0, 0, {"product_id": self.produit.id, "product_uom_qty": 1})]})
+        with self.assertRaisesRegex(ValidationError, "période de location"):
+            so.action_confirm()
+        so.write({"date_debut_location": PERIODE_TEST[0], "date_fin_location": PERIODE_TEST[1]})
+        so.action_confirm()
+        self.assertEqual(so.state, "sale")
+        vente = self._commande(self.lot_a)
+        self.assertEqual(vente.state, "sale", "une vente n'a pas de période")
+        arch = etree.fromstring(self.env["sale.order"].get_views([(False, "form")])["views"]["form"]["arch"])
+        for nom in ("date_debut_location", "date_fin_location"):
+            self.assertEqual(arch.xpath("//field[@name='%s']" % nom)[0].get("required"), "type_commande == 'location'")

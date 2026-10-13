@@ -35,6 +35,8 @@
             <xpath expr="//header" position="inside">
                 <button name="action_creer_tickets_reprise" type="object" string="Créer le ticket de reprise"
                         class="btn-secondary" invisible="type_commande != 'location' or state != 'sale'"/>
+                <button name="action_prolonger_location" type="object" string="Prolonger la location"
+                        class="btn-secondary" invisible="type_commande != 'location' or state != 'sale'"/>
             </xpath>
             <div name="button_box" position="inside">
                 <button name="action_voir_tickets_reprise" type="object" class="oe_stat_button"
@@ -81,6 +83,8 @@
                     <field name="commande_id" readonly="1"/>
                     <field name="date_fin_actuelle" readonly="1"/>
                     <field name="nouvelle_date_fin"/>
+                    <field name="currency_id" invisible="1"/>
+                    <field name="montant"/>
                     <field name="note" placeholder="ex. renouvellement pour la saison d'été"/>
                 </group>
                 <footer>

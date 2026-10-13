@@ -6,6 +6,10 @@ from odoo.exceptions import UserError, ValidationError
 from odoo.tests import Form, TransactionCase, freeze_time, tagged
 
 
+# Periode de location obligatoire pour confirmer un contrat de location
+PERIODE_TEST = (fields.Datetime.to_datetime("2026-01-01 12:00:00"), fields.Datetime.to_datetime("2027-12-31 12:00:00"))
+
+
 @tagged("post_install", "-at_install")
 class TestTicketMachine(TransactionCase):
 
@@ -276,12 +280,12 @@ class TestTicketMachine(TransactionCase):
         self.env["stock.quant"]._update_available_quantity(self.produit, stock, 1, lot_id=lot)
         vente = self.env["sale.order"].create({"partner_id": self.commerce.id, "type_commande": "vente",
                                                "order_line": [(0, 0, {"product_id": self.produit.id})]})
-        vieux = self.env["sale.order"].create({"partner_id": self.commerce.id, "type_commande": "location",
+        vieux = self.env["sale.order"].create({"partner_id": self.commerce.id, "type_commande": "location", "date_debut_location": PERIODE_TEST[0], "date_fin_location": PERIODE_TEST[1],
                                                "order_line": [(0, 0, {"product_id": self.produit.id})]})
         actuel = self.env["sale.order"].create({
-            "partner_id": self.commerce.id, "type_commande": "location",
+            "partner_id": self.commerce.id, "type_commande": "location", "date_debut_location": PERIODE_TEST[0], "date_fin_location": PERIODE_TEST[1],
             "order_line": [(0, 0, {"product_id": self.produit.id, "product_uom_qty": 1, "machine_lot_id": lot.id})]})
-        devis = self.env["sale.order"].create({"partner_id": self.commerce.id, "type_commande": "location"})
+        devis = self.env["sale.order"].create({"partner_id": self.commerce.id, "type_commande": "location", "date_debut_location": PERIODE_TEST[0], "date_fin_location": PERIODE_TEST[1]})
         actuel.action_confirm()
         pk = actuel.picking_ids
         pk.action_assign()
@@ -337,7 +341,7 @@ class TestTicketMachine(TransactionCase):
             self.assertIn(champ, arch)
 
     def test_ajuster_un_contrat(self):
-        so = self.env["sale.order"].create({"partner_id": self.commerce.id, "type_commande": "location",
+        so = self.env["sale.order"].create({"partner_id": self.commerce.id, "type_commande": "location", "date_debut_location": PERIODE_TEST[0], "date_fin_location": PERIODE_TEST[1],
                                             "order_line": [(0, 0, {"product_id": self.produit.id})]})
         ticket = self.env["helpdesk.ticket"].create({"name": "Ajouter 2 machines", "partner_id": self.commerce.id,
                                                      "type_demande": "ajustement"})
@@ -346,7 +350,7 @@ class TestTicketMachine(TransactionCase):
         so.action_confirm()
         action = ticket.action_ajuster_contrat()
         self.assertEqual((action["res_model"], action["res_id"], action["view_mode"]), ("sale.order", so.id, "form"))
-        so2 = self.env["sale.order"].create({"partner_id": self.commerce.id, "type_commande": "location",
+        so2 = self.env["sale.order"].create({"partner_id": self.commerce.id, "type_commande": "location", "date_debut_location": PERIODE_TEST[0], "date_fin_location": PERIODE_TEST[1],
                                              "order_line": [(0, 0, {"product_id": self.produit.id})]})
         so2.action_confirm()
         action = ticket.action_ajuster_contrat()
@@ -405,7 +409,7 @@ class TestTicketMachine(TransactionCase):
             self.env["stock.quant"]._update_available_quantity(self.produit, stock, 1, lot_id=lot)
             lots |= lot
         so = self.env["sale.order"].create({
-            "partner_id": self.commerce.id, "type_commande": "location",
+            "partner_id": self.commerce.id, "type_commande": "location", "date_debut_location": PERIODE_TEST[0], "date_fin_location": PERIODE_TEST[1],
             "order_line": [(0, 0, {"product_id": self.produit.id, "product_uom_qty": 1, "machine_lot_id": l.id})
                            for l in lots]})
         so.action_confirm()
@@ -465,7 +469,7 @@ class TestTicketMachine(TransactionCase):
         lot = self.env["stock.lot"].create({"name": "REP-1", "product_id": self.produit.id, "ref": "R1"})
         self.env["stock.quant"]._update_available_quantity(self.produit, stock, 1, lot_id=lot)
         so = self.env["sale.order"].create({
-            "partner_id": self.commerce.id, "type_commande": "location",
+            "partner_id": self.commerce.id, "type_commande": "location", "date_debut_location": PERIODE_TEST[0], "date_fin_location": PERIODE_TEST[1],
             "order_line": [(0, 0, {"product_id": self.produit.id, "product_uom_qty": 1, "machine_lot_id": lot.id})]})
         so.action_confirm()
         pk = so.picking_ids
@@ -510,7 +514,7 @@ class TestTicketMachine(TransactionCase):
         lot = self.env["stock.lot"].create({"name": "REP-2", "product_id": self.produit.id})
         self.env["stock.quant"]._update_available_quantity(self.produit, stock, 1, lot_id=lot)
         so = self.env["sale.order"].create({
-            "partner_id": self.commerce.id, "type_commande": "location",
+            "partner_id": self.commerce.id, "type_commande": "location", "date_debut_location": PERIODE_TEST[0], "date_fin_location": PERIODE_TEST[1],
             "order_line": [(0, 0, {"product_id": self.produit.id, "product_uom_qty": 1, "machine_lot_id": lot.id})]})
         so.action_confirm()
         with self.assertRaises(UserError) as err:
@@ -533,7 +537,7 @@ class TestTicketMachine(TransactionCase):
         lot = self.env["stock.lot"].create({"name": nom, "product_id": self.produit.id})
         self.env["stock.quant"]._update_available_quantity(self.produit, stock, 1, lot_id=lot)
         so = self.env["sale.order"].create({
-            "partner_id": self.commerce.id, "type_commande": "location",
+            "partner_id": self.commerce.id, "type_commande": "location", "date_debut_location": PERIODE_TEST[0],
             "date_fin_location": fields.Datetime.now() + relativedelta(days=1),
             "order_line": [(0, 0, {"product_id": self.produit.id, "product_uom_qty": 1, "machine_lot_id": lot.id})]})
         so.action_confirm()
@@ -581,7 +585,7 @@ class TestTicketMachine(TransactionCase):
         self.env["stock.quant"]._update_available_quantity(pompe, stock, 10)
         # une ligne de 2 machines (sans n° sur la ligne) + une autre ligne + 3 pompes (accessoire)
         so = self.env["sale.order"].create({
-            "partner_id": self.commerce.id, "type_commande": "location",
+            "partner_id": self.commerce.id, "type_commande": "location", "date_debut_location": PERIODE_TEST[0],
             "date_fin_location": fields.Datetime.now() + relativedelta(days=1),
             "order_line": [(0, 0, {"product_id": self.produit.id, "product_uom_qty": 2}),
                            (0, 0, {"product_id": frosty.id, "product_uom_qty": 1}),
@@ -966,3 +970,32 @@ class TestTicketMachine(TransactionCase):
         self.assertNotIn("action_valider_entretien", noms)
         self.assertEqual(noms.count("action_marquer_fait"), 2)
         self.assertTrue(arch.xpath("//div[contains(@class, 'alert-warning')][contains(., 'Pour planifier l')]"))
+
+    def test_prolonger_avec_prix(self):
+        """Prolonger depuis la page de location, avec un prix : ligne « Prolongation de location » à facturer,
+        la ligne déjà facturée ne change pas."""
+        lot, so, ticket = self._location_livree("PRO-2")
+        lignes_avant = so.order_line
+        prix_avant = lignes_avant.mapped("price_unit")
+        action = so.action_prolonger_location()
+        f = Form(self.env[action["res_model"]].with_context(**action["context"]))
+        self.assertEqual(f.commande_id, so)
+        ancienne = so.date_fin_location
+        f.nouvelle_date_fin = ancienne + relativedelta(months=3)
+        f.montant = 150
+        f.save().action_prolonger()
+        self.assertEqual(so.date_fin_location, ancienne + relativedelta(months=3))
+        nouvelle = so.order_line - lignes_avant
+        self.assertEqual(len(nouvelle), 1)
+        self.assertEqual((nouvelle.product_id, nouvelle.price_unit, nouvelle.product_uom_qty),
+                         (self.env.ref("suivi_machines_helpdesk.produit_prolongation_location"), 150, 1))
+        self.assertIn(so.name, nouvelle.name)
+        self.assertEqual(lignes_avant.mapped("price_unit"), prix_avant, "lignes existantes inchangées")
+        self.assertEqual(len(so.picking_ids.filtered(lambda p: p.state not in ("done", "cancel"))), 0,
+                         "service : pas de nouvelle livraison")
+        self.assertIn("150", so.message_ids[0].body)
+        # Sans prix : seulement la date
+        f = Form(self.env[action["res_model"]].with_context(**action["context"]))
+        f.nouvelle_date_fin = so.date_fin_location + relativedelta(months=1)
+        f.save().action_prolonger()
+        self.assertEqual(len(so.order_line), len(lignes_avant) + 1)

@@ -24,6 +24,25 @@ class SaleOrder(models.Model):
     machine_ids = fields.Many2many("stock.lot", string="Machines", compute="_compute_machine_ids")
     nb_machines = fields.Integer("Fiche de machine", compute="_compute_machine_ids")
 
+    @api.constrains("state", "type_commande", "date_debut_location", "date_fin_location")
+    def _check_periode_location(self):
+        """Contrat de location confirme : la periode de location (debut et fin) est obligatoire."""
+        for order in self:
+            if order.type_commande == "location" and order.state == "sale" and not (
+                    order.date_debut_location and order.date_fin_location):
+                raise ValidationError(self.env._(
+                    "%s : indiquez la période de location (début et fin) avant de confirmer.", order.name))
+
+    @api.model
+    def _get_view(self, view_id=None, view_type="form", **options):
+        """Periode de location obligatoire a l'ecran (application Location si installee)."""
+        arch, view = super()._get_view(view_id, view_type, **options)
+        if view_type == "form":
+            for node in arch.xpath("//field[@name='rental_start_date' or @name='rental_return_date' "
+                                   "or @name='date_debut_location' or @name='date_fin_location']"):
+                node.set("required", "type_commande == 'location'")
+        return arch, view
+
     @api.depends(lambda self: ["rental_start_date"] if "rental_start_date" in self._fields else [])
     def _compute_date_debut_location(self):
         auto = "rental_start_date" in self._fields
@@ -215,6 +234,34 @@ class StockMove(models.Model):
                 raise ValidationError(self.env._(
                     "Le n° de série %(lot)s n'appartient pas au produit %(prod)s.",
                     lot=move.machine_lot_id.name, prod=move.product_id.display_name))
+
+    def _action_done(self, cancel_backorder=False):
+        moves = super()._action_done(cancel_backorder=cancel_backorder)
+        moves._reporter_numero_serie_vente()
+        return moves
+
+    def _reporter_numero_serie_vente(self):
+        """N° de serie choisi a la livraison (pas au bon de vente) : repris sur la ligne du bon de vente,
+        et note dans le bon de vente."""
+        livrees = self.filtered(lambda m: m.state == "done" and m.sale_line_id and m.est_machine
+                                and m._vers_client())
+        for move in livrees:
+            lots = move.move_line_ids.lot_id
+            ligne = move.sale_line_id
+            if len(lots) == 1 and ligne.product_uom_qty == 1 and ligne.machine_lot_id != lots:
+                ligne.machine_lot_id = lots
+        for commande in livrees.sale_line_id.order_id:
+            lots = livrees.filtered(lambda m: m.sale_line_id.order_id == commande).move_line_ids.lot_id
+            if lots:
+                commande.message_post(body=self.env._(
+                    "N° de série livrés : %s.", ", ".join(lots.mapped("display_name"))))
+
+    def _vers_client(self):
+        """Livraison chez le client (vente) ou vers l'emplacement de location."""
+        self.ensure_one()
+        societe = self.company_id or self.env.company
+        loc_location = societe.rental_loc_id if "rental_loc_id" in societe._fields else False
+        return self.location_dest_id.usage == "customer" or bool(loc_location and self.location_dest_id == loc_location)
 
     def _prepare_merge_moves_distinct_fields(self):
         # Deux machines differentes (n° de serie choisis) ne sont jamais fusionnees

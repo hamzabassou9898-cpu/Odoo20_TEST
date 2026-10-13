@@ -6,6 +6,10 @@ from odoo.exceptions import UserError
 from odoo.tests import Form, TransactionCase, tagged
 
 
+# Periode de location obligatoire pour confirmer un contrat de location
+PERIODE_TEST = (fields.Datetime.to_datetime("2026-01-01 12:00:00"), fields.Datetime.to_datetime("2027-12-31 12:00:00"))
+
+
 @tagged("post_install", "-at_install")
 class TestPilotage(TransactionCase):
 
@@ -44,7 +48,7 @@ class TestPilotage(TransactionCase):
         Ticket = self.env["helpdesk.ticket"]
         appel = Ticket.create({"name": "Ne gèle pas", "code_client": "PIL1"})
         entretien = Ticket.create({"name": "ENTRETIEN - PIL-1", "partner_id": self.client.id, "est_entretien": True})
-        so = self.env["sale.order"].create({"partner_id": self.client.id, "type_commande": "location"})
+        so = self.env["sale.order"].create({"partner_id": self.client.id, "type_commande": "location", "date_debut_location": PERIODE_TEST[0], "date_fin_location": PERIODE_TEST[1]})
         reprise = Ticket.create({"name": "Reprise - PIL-1", "partner_id": self.client.id,
                                  "commande_reprise_id": so.id})
         self.assertEqual((appel.type_ticket, entretien.type_ticket, reprise.type_ticket),
@@ -428,7 +432,7 @@ class TestPortailLivreurs(TransactionCase):
         env["stock.quant"]._update_available_quantity(prod, stock, 1, lot_id=lot)
         env["stock.quant"]._update_available_quantity(pompe, stock, 5)
         livreur_a = env["res.users"].create({"name": "Livreur A", "login": "livreur_a_test"})
-        so = env["sale.order"].create({"partner_id": client.id, "type_commande": "location", "order_line": [
+        so = env["sale.order"].create({"partner_id": client.id, "type_commande": "location", "date_debut_location": PERIODE_TEST[0], "date_fin_location": PERIODE_TEST[1], "order_line": [
             (0, 0, {"product_id": prod.id, "product_uom_qty": 1, "machine_lot_id": lot.id}),
             (0, 0, {"product_id": pompe.id, "product_uom_qty": 2})]})
         so.action_confirm()
