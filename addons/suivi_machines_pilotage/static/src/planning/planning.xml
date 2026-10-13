@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <div t-name="suivi_machines_pilotage.PlanningSemaine" t-attf-class="o_action o_pilotage_planning {{ this.state.chargement ? 'o_pp_charge' : '' }}">
+        <t t-set="d" t-value="this.state.donnees"/>
+        <div class="o_content o_pp_defile">
+        <div class="o_pp_wrap" t-if="d">
+            <div class="o_pp_head">
+                <div>
+                    <h1>Planning</h1>
+                    <p t-if="d.peut_deplacer">Glissez une tâche sur un technicien ou un autre jour : le ticket, le transfert ou l'intervention est mis à jour.</p>
+                </div>
+                <div class="o_pp_nav">
+                    <button class="o_pp_btn" t-on-click="() => this.charger(d.precedente)" title="Semaine précédente">‹</button>
+                    <button class="o_pp_btn" t-on-click="() => this.charger()">Cette semaine</button>
+                    <button class="o_pp_btn" t-on-click="() => this.charger(d.suivante)" title="Semaine suivante">›</button>
+                    <span class="o_pp_titre" t-out="d.titre"/>
+                </div>
+            </div>
+            <div class="o_pp_grille">
+                <div class="o_pp_tete o_pp_tech">Technicien</div>
+                <div t-foreach="d.jours" t-as="jour" t-key="jour.iso" t-attf-class="o_pp_tete {{ jour.aujourdhui ? 'o_pp_auj' : '' }}" t-out="jour.titre"/>
+                <t t-foreach="d.lignes" t-as="ligne" t-key="ligne.id">
+                    <div t-attf-class="o_pp_tech {{ ligne.id ? '' : 'o_pp_sans' }}">
+                        <span class="o_pp_avatar" t-out="ligne.initiales"/><span t-out="ligne.nom"/>
+                    </div>
+                    <div t-foreach="d.jours" t-as="jour" t-key="jour.iso"
+                         t-attf-class="o_pp_case {{ jour.aujourdhui ? 'o_pp_auj' : '' }} {{ this.state.survol === ligne.id + '-' + jour.iso ? 'o_pp_survol' : '' }}"
+                         t-on-dragover="(ev) => this.survoler(ev, ligne, jour)"
+                         t-on-drop="(ev) => this.deposer(ev, ligne, jour)">
+                        <div t-foreach="this.cartes(ligne, jour)" t-as="c" t-key="c.id"
+                             t-attf-class="o_pp_carte o_pp_{{ c.couleur }} {{ c.etat === 'fait' ? 'o_pp_fait' : '' }} {{ c.etat === 'en_retard' ? 'o_pp_retard' : '' }}"
+                             t-att-draggable="d.peut_deplacer and c.deplacable ? 'true' : 'false'"
+                             t-on-dragstart="(ev) => this.debutGlisser(ev, c)" t-on-dragend="() => this.finGlisser()"
+                             t-on-click="() => this.ouvrir(c)" t-att-title="c.libelle_type + ' · ' + c.titre">
+                            <div class="o_pp_l1"><span t-out="c.heure"/> · <span t-out="c.libelle_type"/>
+                                <span t-if="c.etat === 'fait'" class="ms-1">✓</span>
+                                <span t-if="c.etat === 'en_retard'" class="ms-1">En retard</span></div>
+                            <div class="o_pp_l2" t-out="c.client or c.titre"/>
+                        </div>
+                    </div>
+                </t>
+            </div>
+            <div class="o_pp_legende">
+                <span class="o_pp_carte o_pp_success">Livraison</span>
+                <span class="o_pp_carte o_pp_warning">Ramassage</span>
+                <span class="o_pp_carte o_pp_info">Entretien</span>
+                <span class="o_pp_carte o_pp_danger">Réparation</span>
+                <span class="ms-2">Cliquez sur une tâche pour l'ouvrir.</span>
+            </div>
+        </div>
+        </div>
+    </div>
+</templates>

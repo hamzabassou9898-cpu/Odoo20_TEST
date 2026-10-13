@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Phase 2 : techniciens utilisateurs portail (gratuits), assignables aux taches."""
-from odoo import fields, models
+from odoo import api, fields, models
 from odoo.tools import SQL
 
 # Utilisateurs assignables comme technicien : internes, ou portail coches « Technicien »
@@ -47,6 +47,12 @@ class PortailTache(models.Model):
 
     def _sql_technicien_ticket(self):
         return SQL("COALESCE(t.user_id, t.technicien_terrain_id, t.technicien_id)")
+
+    @api.model
+    def _techniciens_planning(self, taches):
+        """Planning : tous les techniciens portail (meme sans tache cette semaine) + ceux qui ont des taches."""
+        portail = self.env["res.users"].sudo().search([("partner_id.est_technicien", "=", True)])
+        return super()._techniciens_planning(taches) | portail.sudo(False)
 
 
 class PortalEntry(models.Model):

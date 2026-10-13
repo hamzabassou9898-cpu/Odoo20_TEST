@@ -55,6 +55,8 @@
                         <field name="nb_bris" decoration-danger="nb_bris &gt; 3"/>
                     </group>
                 </group>
+                <separator string="Vie de la machine" invisible="not est_machine"/>
+                <field name="frise_html" nolabel="1" colspan="2" readonly="1" invisible="not est_machine"/>
                 <notebook invisible="not est_machine">
                     <page string="Historique" name="historique">
                         <field name="historique_ids" readonly="1">

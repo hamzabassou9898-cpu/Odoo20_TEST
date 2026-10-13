@@ -203,6 +203,80 @@ class TestPilotage(TransactionCase):
         arch = self.env["pilotage.indicateur"].get_views([(False, "kanban")])["views"]["kanban"]["arch"]
         self.assertIn("action_ouvrir_reparations", arch)
 
+    def _demain_14h(self):
+        import pytz
+        from datetime import datetime, time, timedelta
+        fuseau = pytz.timezone("America/Toronto")
+        demain = datetime.now(fuseau).date() + timedelta(days=1)
+        return fuseau.localize(datetime.combine(demain, time(14, 0))).astimezone(pytz.UTC).replace(tzinfo=None)
+
+    def test_rappel_la_veille(self):
+        Ticket = self.env["helpdesk.ticket"]
+        self.client.email = "client.pilotage@example.com"
+        tech = self.env["res.users"].create({"name": "Tech rappel", "login": "tech_rappel"})
+        ticket = Ticket.create({"name": "Ne gèle pas", "partner_id": self.client.id, "type_demande": "reparation",
+                                "user_id": tech.id, "date_planifiee": self._demain_14h()})
+        sans_courriel = self.env["res.partner"].create({"name": "Sans courriel"})
+        Ticket.create({"name": "Autre", "partner_id": sans_courriel.id, "type_demande": "reparation",
+                       "user_id": tech.id, "date_planifiee": self._demain_14h()})
+        avant = self.env["mail.mail"].search_count([])
+        envoyees = self.env["portail.tache"]._cron_rappel_veille()
+        self.assertEqual(envoyees.ticket_id, ticket, "seulement le client joignable")
+        courriel = self.env["mail.mail"].search([], order="id desc", limit=1)
+        self.assertEqual(self.env["mail.mail"].search_count([]), avant + 1)
+        self.assertIn(self.client, courriel.recipient_ids)
+        self.assertIn("Tech rappel", courriel.body_html)
+        self.assertIn("demain", courriel.body_html)
+        self.assertEqual((courriel.model, courriel.res_id), ("helpdesk.ticket", ticket.id), "réponse dans le ticket")
+        self.assertEqual(ticket.rappel_veille_le, fields.Date.context_today(ticket))
+        self.assertTrue(ticket.message_ids.filtered(lambda m: "Rappel envoyé" in (m.body or "")))
+        self.assertFalse(self.env["portail.tache"]._cron_rappel_veille(), "une seule fois")
+        # Desactivable
+        self.env["ir.config_parameter"].sudo().set_bool("suivi_machines_pilotage.rappel_veille_actif", False)
+        ticket.rappel_veille_le = False
+        self.assertFalse(self.env["portail.tache"]._cron_rappel_veille())
+        self.assertTrue(self.env.ref("suivi_machines_pilotage.cron_rappel_veille").active)
+
+    def test_planning_glisser_deposer(self):
+        import pytz
+        Ticket = self.env["helpdesk.ticket"]
+        tech_a = self.env["res.users"].create({"name": "Tech Alpha", "login": "tech_alpha"})
+        tech_b = self.env["res.users"].create({"name": "Tech Bravo", "login": "tech_bravo"})
+        date = self._demain_14h()
+        ticket = Ticket.create({"name": "Fuit", "partner_id": self.client.id, "type_demande": "reparation",
+                                "user_id": tech_a.id, "date_planifiee": date})
+        jour = pytz.UTC.localize(date).astimezone(pytz.timezone("America/Toronto")).date()
+        donnees = self.env["portail.tache"].donnees_planning(jour.isoformat())
+        self.assertEqual(len(donnees["jours"]), 7)
+        self.assertEqual(donnees["jours"][0]["titre"][:3], "Lun")
+        carte = next(c for c in donnees["cartes"] if c["titre"] == "Fuit")
+        self.assertEqual((carte["technicien_id"], carte["jour"], carte["heure"]), (tech_a.id, jour.isoformat(), "14 h 00"))
+        self.assertIn(tech_a.id, [l["id"] for l in donnees["lignes"]])
+        self.assertTrue(donnees["peut_deplacer"])
+        # Glisser sur Tech Bravo, le surlendemain : meme heure
+        nouveau_jour = jour + relativedelta(days=1)
+        self.env["portail.tache"].deplacer_planning(carte["id"], tech_b.id, nouveau_jour.isoformat())
+        self.assertEqual(ticket.user_id, tech_b)
+        self.assertEqual(ticket.date_planifiee, date + relativedelta(days=1))
+        # Vers « Sans technicien »
+        tache = self.env["portail.tache"].search([("ticket_id", "=", ticket.id)])
+        self.env["portail.tache"].deplacer_planning(tache.id, 0, nouveau_jour.isoformat())
+        self.assertFalse(ticket.user_id)
+        # Tache faite : ne bouge plus
+        ticket.stage_id = self.env["helpdesk.stage"].create({"name": "Résolu"})
+        tache = self.env["portail.tache"].search([("ticket_id", "=", ticket.id)])
+        with self.assertRaises(UserError):
+            self.env["portail.tache"].deplacer_planning(tache.id, tech_a.id, jour.isoformat())
+        self.assertTrue(self.env.ref("suivi_machines_pilotage.menu_pilotage_planning").action)
+        # Tache en retard (semaine passee, pas faite) : dans la colonne d'aujourd'hui de la semaine courante
+        retard = Ticket.create({"name": "Oubliée", "partner_id": self.client.id, "type_demande": "reparation",
+                                "user_id": tech_a.id, "date_planifiee": fields.Datetime.now() - relativedelta(days=9)})
+        donnees = self.env["portail.tache"].donnees_planning(False)
+        carte = next(c for c in donnees["cartes"] if c["titre"] == "Oubliée")
+        aujourdhui = next(j["iso"] for j in donnees["jours"] if j["aujourdhui"])
+        self.assertEqual((carte["jour"], carte["etat"]), (aujourdhui, "en_retard"))
+        self.assertTrue(retard)
+
     def test_entretien_planifie_via_intervention(self):
         """Josef planifie l'entretien depuis Interventions : le ticket ouvert de la machine devient « Planifié »."""
         Ticket = self.env["helpdesk.ticket"]

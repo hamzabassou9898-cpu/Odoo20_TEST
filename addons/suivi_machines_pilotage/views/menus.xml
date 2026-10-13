@@ -23,6 +23,8 @@
               action="action_pilotage_tickets_entretien" sequence="4"/>
 
     <!-- Portail techniciens : entree directe de la barre de menu -->
+    <menuitem id="menu_pilotage_planning" name="Planning" parent="menu_pilotage_root"
+              action="action_pilotage_planning" sequence="14"/>
     <menuitem id="menu_portail_livreurs" name="Portail techniciens" parent="menu_pilotage_root"
               action="action_portail_techniciens" sequence="12"/>
     <menuitem id="menu_pilotage_locations" name="Locations" parent="menu_pilotage_root" sequence="20"/>

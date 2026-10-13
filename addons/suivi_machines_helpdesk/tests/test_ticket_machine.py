@@ -311,6 +311,29 @@ class TestTicketMachine(TransactionCase):
         self.assertEqual(self.commerce.contrat_location_type, "location")
         self.assertIn("Historique d'achat", arch)
 
+    def test_sante_du_client(self):
+        Ticket = self.env["helpdesk.ticket"]
+        client = self.commerce
+        client.invalidate_recordset()
+        self.assertEqual(client.sante_niveau, "fidele")
+        self.assertGreaterEqual(client.sante_nb_machines, 2, "machines chez lui")
+        for i in range(3):
+            Ticket.create({"name": "Appel %s" % i, "partner_id": client.id})
+        client.invalidate_recordset()
+        self.assertEqual(client.sante_niveau, "surveiller")
+        self.assertIn("3 appels", client.sante_raison)
+        for i in range(3):
+            Ticket.create({"name": "Encore %s" % i, "partner_id": client.id})
+        client.invalidate_recordset()
+        self.assertEqual(client.sante_niveau, "risque", "plus de 5 appels en 3 mois")
+        self.assertEqual(client.sante_nb_appels, 6)
+        self.assertEqual(client.sante_impayes, 0)
+        contact = self.env["res.partner"].create({"name": "Personne", "parent_id": client.id})
+        self.assertEqual(contact.sante_niveau, "risque", "même santé que la société")
+        arch = self.env["res.partner"].get_views([(False, "form")])["views"]["form"]["arch"]
+        for champ in ("sante_niveau", "sante_nb_machines", "sante_impayes", "sante_chiffre"):
+            self.assertIn(champ, arch)
+
     def test_ajuster_un_contrat(self):
         so = self.env["sale.order"].create({"partner_id": self.commerce.id, "type_commande": "location",
                                             "order_line": [(0, 0, {"product_id": self.produit.id})]})

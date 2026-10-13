@@ -16,6 +16,36 @@
                 <field name="contrat_location_fin" groups="sales_team.group_sale_salesman"
                        invisible="not contrat_location_fin"/>
             </xpath>
+            <!-- Sante du client : un coup d'oeil avant d'appeler -->
+            <xpath expr="//notebook" position="before">
+                <div class="d-flex flex-wrap align-items-stretch gap-2 mb-3" groups="sales_team.group_sale_salesman"
+                     invisible="not sante_niveau">
+                    <field name="sante_devise_id" invisible="1"/>
+                    <div class="border rounded px-3 py-2 d-flex flex-column justify-content-center">
+                        <field name="sante_niveau" widget="badge" class="fs-6"
+                               decoration-success="sante_niveau == 'fidele'"
+                               decoration-warning="sante_niveau == 'surveiller'"
+                               decoration-danger="sante_niveau == 'risque'"/>
+                        <field name="sante_raison" class="small text-muted" invisible="not sante_raison"/>
+                    </div>
+                    <div class="border rounded px-3 py-2">
+                        <div class="fs-4 fw-bold"><field name="sante_nb_machines"/></div>
+                        <div class="small text-muted">Machines chez lui</div>
+                    </div>
+                    <div class="border rounded px-3 py-2">
+                        <div class="fs-4 fw-bold"><field name="sante_nb_appels"/></div>
+                        <div class="small text-muted">Appels (12 mois)</div>
+                    </div>
+                    <div class="border rounded px-3 py-2">
+                        <div class="fs-4 fw-bold"><field name="sante_impayes" decoration-danger="sante_impayes &gt; 0"/></div>
+                        <div class="small text-muted">Impayés</div>
+                    </div>
+                    <div class="border rounded px-3 py-2">
+                        <div class="fs-4 fw-bold"><field name="sante_chiffre"/></div>
+                        <div class="small text-muted">Chiffre d'affaires total</div>
+                    </div>
+                </div>
+            </xpath>
             <xpath expr="//notebook" position="inside">
                 <page string="Historique d'achat" name="historique_achat" groups="sales_team.group_sale_salesman"
                       invisible="not historique_achat_ids">

@@ -8,3 +8,4 @@ from . import vente_numero_serie
 from . import machine_intervention_frais
 from . import stock_picking
 from . import ramassage
+from . import frise_machine

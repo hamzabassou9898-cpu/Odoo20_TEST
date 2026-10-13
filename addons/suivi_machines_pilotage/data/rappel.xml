@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Courriel de rappel envoye au client la veille de la visite -->
+    <record id="mail_rappel_veille" model="mail.template">
+        <field name="name">Rappel : visite du technicien demain</field>
+        <field name="model_id" ref="model_portail_tache"/>
+        <field name="subject">Rappel : visite de notre technicien demain</field>
+        <field name="email_from">{{ (object.env.company.email_formatted or user.email_formatted) }}</field>
+        <field name="lang">{{ object.partner_id.lang }}</field>
+        <field name="auto_delete" eval="True"/>
+        <field name="body_html" type="html">
+<div style="font-family: Arial, sans-serif; font-size: 14px; color: #1f2937;">
+    <p>Bonjour <t t-out="object.partner_id.name or ''"/>,</p>
+    <p>
+        Notre technicien <strong t-out="object.technicien_id.name or ''"/> passera
+        <strong>demain, <t t-out="format_datetime(object.date, tz='America/Toronto', dt_format='EEEE d MMMM')"/>,
+        vers <t t-out="format_datetime(object.date, tz='America/Toronto', dt_format='H:mm')"/></strong>
+        pour : <strong t-out="dict(object._fields['type_tache']._description_selection(object.env)).get(object.type_tache, '')"/>
+        <t t-if="object.lot_id"> (machine <t t-out="object.lot_id.ref or object.lot_id.name"/>)</t>.
+    </p>
+    <p>Merci de libérer l'accès à la machine.</p>
+    <p>Un empêchement ? Répondez simplement à ce courriel ou appelez-nous pour changer la date.</p>
+    <p>Merci,<br/><t t-out="object.env.company.name"/></p>
+</div>
+        </field>
+    </record>
+
+    <!-- noupdate : Josef peut desactiver l'action planifiee, une mise a jour ne la reactive pas -->
+    <data noupdate="1">
+    <record id="cron_rappel_veille" model="ir.cron">
+        <field name="name">Pilotage : rappel au client la veille de la visite</field>
+        <field name="model_id" ref="model_portail_tache"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_rappel_veille()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="nextcall" eval="(DateTime.now().replace(hour=21, minute=0, second=0)).strftime('%Y-%m-%d %H:%M:%S')"/>
+    </record>
+    </data>
+</odoo>

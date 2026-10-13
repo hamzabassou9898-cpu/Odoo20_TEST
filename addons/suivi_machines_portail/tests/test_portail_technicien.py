@@ -345,3 +345,72 @@ class TestPortailTechnicien(HttpCase):
         self.assertNotIn(ticket, self.env[model].search(domaine), "plus dans les entretiens à faire")
         self.env.invalidate_all()
         self.assertEqual(self.env["portail.tache"].search([("ticket_id", "=", ticket.id)]).etat_suivi, "fait")
+
+    # ------------------------------------------------------------ bon d'intervention signe
+    SIGNATURE = ("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==")
+
+    def test_bon_signe_par_le_client(self):
+        resolu = self.env["helpdesk.stage"].search([("name", "=ilike", "résolu")], limit=1) \
+            or self.env["helpdesk.stage"].create({"name": "Résolu"})
+        tache = self._tache(self.ticket)
+        self.authenticate("tech_portail_a", "tech_portail_a_mdp_123")
+        url = "/my/journee/tache/%s" % tache.id
+        page = self.url_open(url)
+        self.assertIn("Terminer : signature du client", page.text)
+        self.assertIn("portal.signature_form", page.text, "formulaire de signature du portail")
+        # Note du jour = « travail fait » du bon
+        self.url_open(url + "/note", data={"csrf_token": self._csrf(url), "note": "Joint remplacé."})
+        # Signature vide : refusee
+        self.assertIn("error", self.make_jsonrpc_request(url + "/signer", {"name": "M. Tremblay", "signature": ""}))
+        rep = self.make_jsonrpc_request(url + "/signer", {"name": "M. Tremblay", "signature": self.SIGNATURE})
+        self.assertTrue(rep.get("force_refresh"), rep)
+        bon = self.ticket.bon_intervention_ids
+        self.assertEqual(len(bon), 1)
+        self.assertTrue(bon.name.startswith("BON/"))
+        self.assertEqual((bon.signe_par, bon.technicien_id, bon.partner_id), ("M. Tremblay", self.tech_a, self.client))
+        self.assertEqual(bon.travail, "Joint remplacé.")
+        self.assertTrue(bon.signature)
+        self.assertEqual(self.ticket.stage_id, resolu, "tâche terminée : ticket résolu")
+        self.assertTrue(self.ticket.message_ids.filtered(lambda m: "signé" in (m.body or "")), "dans le fil du ticket")
+        # Deuxieme signature : refusee (deja terminee) ; page : bon affiche
+        self.assertIn("error", self.make_jsonrpc_request(url + "/signer", {"name": "X", "signature": self.SIGNATURE}))
+        self.assertIn(bon.name, self.url_open(url).text)
+        # Un autre technicien ne peut pas signer la tache
+        tache_b = self._tache(self.autre)
+        self.assertIn("error", self.make_jsonrpc_request("/my/journee/tache/%s/signer" % tache_b.id,
+                                                         {"name": "X", "signature": self.SIGNATURE}))
+        self.assertFalse(self.autre.bon_intervention_ids)
+        # Le bureau voit les bons signes
+        self.env["suivi.bon.intervention"].get_views([(False, "list"), (False, "form")])
+        self.assertTrue(self.env.ref("suivi_machines_portail.menu_bons_intervention"))
+
+    def test_bon_signe_intervention_et_transfert(self):
+        lot_produit = self.env["product.product"].create({"name": "Machine bon", "is_storable": True})
+        lot = self.env["stock.lot"].create({"name": "BON-1", "product_id": lot_produit.id})
+        interv = self.env["machine.intervention"].create({
+            "lot_id": lot.id, "type": "reparation", "user_id": self.tech_a.id, "partner_id": self.client.id,
+            "date": fields.Datetime.now()})
+        tache = self.env["portail.tache"].search([("intervention_id", "=", interv.id)])
+        bon = self.env["suivi.bon.intervention"]._creer_depuis_tache(tache, "Client", self.SIGNATURE)
+        self.assertEqual(interv.state, "fait", "intervention faite")
+        self.assertEqual(bon.intervention_id, interv)
+        type_out = self.env.ref("stock.picking_type_out")
+        picking = self.env["stock.picking"].create({
+            "picking_type_id": type_out.id, "partner_id": self.client.id, "livreur_id": self.tech_a.id,
+            "move_ids": [(0, 0, {"product_id": lot_produit.id, "product_uom_qty": 1,
+                                 "location_id": type_out.default_location_src_id.id,
+                                 "location_dest_id": self.env.ref("stock.stock_location_customers").id})]})
+        picking.action_confirm()
+        tache = self.env["portail.tache"].search([("picking_id", "=", picking.id)])
+        if tache:
+            self.env["suivi.bon.intervention"]._creer_depuis_tache(tache, "Client", self.SIGNATURE)
+            self.assertNotEqual(picking.state, "done", "le stock se valide au bureau")
+            self.assertTrue(picking.activity_ids, "le bureau est prévenu")
+
+    def test_planning_montre_les_techniciens_portail(self):
+        donnees = self.env["portail.tache"].donnees_planning(False)
+        noms = [ligne["nom"] for ligne in donnees["lignes"]]
+        self.assertIn("Tech portail A", noms)
+        self.assertIn("Tech portail B", noms)
+        self.assertEqual(noms[-1], "Sans technicien")
+

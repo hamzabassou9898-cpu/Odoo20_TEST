@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 """Phase 2 : « Ma journée » des techniciens sur le portail web (/my/journee)."""
+import binascii
 from datetime import date, datetime, time, timedelta
 
 import pytz
 
 from odoo import fields, http
+from odoo.exceptions import UserError
 from odoo.addons.portal.controllers.portal import CustomerPortal
 from odoo.addons.portal.controllers.web import Home
 from odoo.http import request
@@ -95,6 +97,7 @@ class PortailTechnicien(CustomerPortal):
             "envoye": envoye,
             "erreur": erreur,
             "max_fichiers": MAX_FICHIERS,
+            "bon": tache._source().sudo().bon_intervention_ids[:1],
         })
         return request.render("suivi_machines_portail.portal_ma_tache", values)
 
@@ -126,6 +129,34 @@ class PortailTechnicien(CustomerPortal):
         # Pas de message dans la discussion : la note va dans l'onglet du document (aucun courriel)
         request.env["suivi.note.technicien"]._creer(tache._source().sudo(), request.env.user, note, pieces)
         return request.redirect(url + "?envoye=1")
+
+
+    @http.route(["/my/journee/tache/<int:tache_id>/signer"], type="jsonrpc", auth="user", website=True)
+    def ma_tache_signer(self, tache_id, name=None, signature=None, **kw):
+        """Signature du client (formulaire de signature du portail) : bon d'intervention + tache terminee."""
+        tache = self._ma_tache(tache_id)
+        if not tache:
+            return {"error": request.env._("Tâche introuvable.")}
+        if not tache.a_faire:
+            return {"error": request.env._("Cette tâche est déjà terminée.")}
+        if not signature:
+            return {"error": request.env._("La signature est vide.")}
+        try:
+            request.env["suivi.bon.intervention"]._creer_depuis_tache(tache, name, signature)
+        except (UserError, ValueError, binascii.Error) as erreur:
+            return {"error": str(erreur)}
+        return {"force_refresh": True, "redirect_url": "/my/journee/tache/%s#bon_intervention" % tache_id}
+
+    @http.route(["/my/journee/tache/<int:tache_id>/bon"], type="http", auth="user", website=True)
+    def ma_tache_bon(self, tache_id, **kw):
+        """PDF du bon signe (le technicien de la tache seulement)."""
+        tache = self._ma_tache(tache_id)
+        bon = tache and tache._source().sudo().bon_intervention_ids[:1]
+        if not bon or not bon.pdf_id:
+            return request.redirect("/my/journee")
+        return request.make_response(bon.pdf_id.raw, headers=[
+            ("Content-Type", "application/pdf"),
+            ("Content-Disposition", 'inline; filename="%s"' % bon.pdf_id.name)])
 
 
 class HomeTechnicien(Home):

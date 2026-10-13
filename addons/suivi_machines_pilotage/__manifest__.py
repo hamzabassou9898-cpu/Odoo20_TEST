@@ -2,7 +2,7 @@
 {
     "name": "Pilotage",
     "summary": "Tableau de bord du suivi des machines : entretiens, locations, reprises, bris, facturation",
-    "version": "20.0.1.24.0",
+    "version": "20.0.1.25.0",
     "category": "Productivity",
     "author": "Hamza Bassou",
     "license": "LGPL-3",
@@ -11,6 +11,7 @@
         "security/groups.xml",
         "security/ir.access.csv",
         "data/indicateurs.xml",
+        "data/rappel.xml",
         "views/pilotage_views.xml",
         "views/portail_views.xml",
         "views/portail_techniciens_views.xml",
@@ -21,6 +22,7 @@
     "assets": {
         "web.assets_backend": [
             "suivi_machines_pilotage/static/src/tableau_moderne/*",
+            "suivi_machines_pilotage/static/src/planning/*",
         ],
     },
     "application": True,

@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
-"""Fiche client : contrat de location actuel (choisi automatiquement) et historique d'achat."""
+"""Fiche client : contrat de location actuel (choisi automatiquement), historique d'achat, sante du client."""
+from datetime import timedelta
+
 from odoo import api, fields, models
+
+NIVEAUX_SANTE = [("fidele", "Client fidèle"), ("surveiller", "À surveiller"), ("risque", "À risque")]
 
 
 class ResPartner(models.Model):
@@ -22,6 +26,63 @@ class ResPartner(models.Model):
     historique_achat_ids = fields.Many2many(
         "sale.order", string="Historique d'achat", compute="_compute_contrats_client",
         groups="sales_team.group_sale_salesman")
+
+    # Sante du client (un coup d'oeil sur la fiche)
+    sante_devise_id = fields.Many2one("res.currency", compute="_compute_sante")
+    sante_nb_machines = fields.Integer("Machines chez lui", compute="_compute_sante",
+                                       groups="sales_team.group_sale_salesman")
+    sante_nb_appels = fields.Integer("Appels (12 mois)", compute="_compute_sante",
+                                     groups="sales_team.group_sale_salesman")
+    sante_impayes = fields.Monetary("Impayés", currency_field="sante_devise_id", compute="_compute_sante",
+                                    groups="sales_team.group_sale_salesman")
+    sante_chiffre = fields.Monetary("Chiffre d'affaires total", currency_field="sante_devise_id",
+                                    compute="_compute_sante", groups="sales_team.group_sale_salesman")
+    sante_niveau = fields.Selection(NIVEAUX_SANTE, "Santé du client", compute="_compute_sante",
+                                    groups="sales_team.group_sale_salesman")
+    sante_raison = fields.Char("Pourquoi", compute="_compute_sante", groups="sales_team.group_sale_salesman")
+
+    def _compute_sante(self):
+        maintenant = fields.Datetime.now()
+        aujourdhui = fields.Date.context_today(self)
+        Lot, Ticket, Facture = (self.env["stock.lot"].sudo(), self.env["helpdesk.ticket"].sudo(),
+                                self.env["account.move"].sudo())
+        for partner in self:
+            partner.sante_devise_id = self.env.company.currency_id
+            client = partner.commercial_partner_id
+            if not client.id:
+                partner.update({"sante_nb_machines": 0, "sante_nb_appels": 0, "sante_impayes": 0,
+                                "sante_chiffre": 0, "sante_niveau": False, "sante_raison": False})
+                continue
+            du_client = [("partner_id", "child_of", client.id)]
+            factures = Facture.search(du_client + [("move_type", "=", "out_invoice"), ("state", "=", "posted"),
+                                                   ("payment_state", "in", ("not_paid", "partial"))])
+            en_retard = factures.filtered(
+                lambda f: f.invoice_date_due and f.invoice_date_due < aujourdhui - timedelta(days=60))
+            appels_90j = Ticket.search_count(du_client + [("create_date", ">=", maintenant - timedelta(days=90))])
+            raisons = []
+            if en_retard:
+                raisons.append(self.env._("factures impayées depuis plus de 60 jours"))
+            if appels_90j > 5:
+                raisons.append(self.env._("%s appels en 3 mois", appels_90j))
+            if raisons:
+                niveau = "risque"
+            elif factures or appels_90j >= 3:
+                niveau = "surveiller"
+                raisons.append(self.env._("factures à payer") if factures
+                               else self.env._("%s appels en 3 mois", appels_90j))
+            else:
+                niveau = "fidele"
+            commandes = self.env["sale.order"].sudo().search(du_client + [("state", "=", "sale")])
+            partner.update({
+                "sante_nb_machines": Lot.search_count([("est_machine", "=", True),
+                                                       ("machine_client_id", "child_of", client.id)]),
+                "sante_nb_appels": Ticket.search_count(du_client + [
+                    ("create_date", ">=", maintenant - timedelta(days=365))]),
+                "sante_impayes": sum(factures.mapped("amount_residual")),
+                "sante_chiffre": sum(commandes.mapped("amount_untaxed")),
+                "sante_niveau": niveau,
+                "sante_raison": ", ".join(raisons).capitalize() if raisons else False,
+            })
 
     def _compute_contrats_client(self):
         Commande = self.env["sale.order"]

@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="seq_bon_intervention" model="ir.sequence">
+        <field name="name">Bon d'intervention</field>
+        <field name="code">suivi.bon.intervention</field>
+        <field name="prefix">BON/%(year)s/</field>
+        <field name="padding">4</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <!-- PDF du bon d'intervention signe -->
+    <record id="action_rapport_bon_intervention" model="ir.actions.report">
+        <field name="name">Bon d'intervention</field>
+        <field name="model">suivi.bon.intervention</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">suivi_machines_portail.rapport_bon_intervention</field>
+        <field name="print_report_name">'Bon %s' % object.name</field>
+        <field name="binding_model_id" ref="model_suivi_bon_intervention"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="rapport_bon_intervention">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="bon">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <h2>Bon d'intervention <span t-field="bon.name"/></h2>
+                        <table class="table table-sm mt-3">
+                            <tr><th style="width:30%">Client</th><td t-out="bon.partner_id.display_name"/></tr>
+                            <tr t-if="bon.partner_id.contact_address"><th>Adresse</th>
+                                <td t-out="bon.partner_id.contact_address"/></tr>
+                            <tr><th>Travail</th><td><t t-out="bon.type_tache"/> · <t t-out="bon.titre"/></td></tr>
+                            <tr t-if="bon.lot_id"><th>Machine</th>
+                                <td><t t-out="bon.lot_id.product_id.display_name"/> · n° <t t-out="bon.lot_id.name"/></td></tr>
+                            <tr><th>Technicien</th><td t-out="bon.technicien_id.name"/></tr>
+                            <tr><th>Date</th><td><span t-field="bon.date"/></td></tr>
+                        </table>
+                        <h5 class="mt-4">Travail fait</h5>
+                        <p t-if="bon.travail" t-out="bon.travail" style="white-space: pre-line;"/>
+                        <p t-else="" class="text-muted">—</p>
+                        <div class="mt-5" style="width: 50%;">
+                            <p class="mb-1"><strong>Signature du client</strong></p>
+                            <img t-if="bon.signature" t-att-src="image_data_uri(bon.signature)"
+                                 style="max-height: 4cm; max-width: 8cm;"/>
+                            <p>Signé par <t t-out="bon.signe_par"/> le <span t-field="bon.date"/></p>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <record id="view_bon_intervention_list" model="ir.ui.view">
+        <field name="name">suivi.bon.intervention.list</field>
+        <field name="model">suivi.bon.intervention</field>
+        <field name="arch" type="xml">
+            <list create="false" edit="false">
+                <field name="date"/>
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="type_tache"/>
+                <field name="titre"/>
+                <field name="lot_id" optional="show"/>
+                <field name="technicien_id" widget="many2one_avatar_user"/>
+                <field name="signe_par"/>
+                <button name="action_telecharger" type="object" string="PDF" icon="download"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_bon_intervention_form" model="ir.ui.view">
+        <field name="name">suivi.bon.intervention.form</field>
+        <field name="model">suivi.bon.intervention</field>
+        <field name="arch" type="xml">
+            <form create="false" edit="false">
+                <header>
+                    <button name="action_telecharger" type="object" string="Télécharger le PDF" class="btn-primary"/>
+                </header>
+                <sheet>
+                    <h1><field name="name"/></h1>
+                    <group>
+                        <group>
+                            <field name="partner_id"/>
+                            <field name="type_tache"/>
+                            <field name="titre"/>
+                            <field name="lot_id"/>
+                        </group>
+                        <group>
+                            <field name="technicien_id"/>
+                            <field name="date"/>
+                            <field name="signe_par"/>
+                            <field name="ticket_id" invisible="not ticket_id"/>
+                            <field name="picking_id" invisible="not picking_id"/>
+                            <field name="intervention_id" invisible="not intervention_id"/>
+                        </group>
+                    </group>
+                    <separator string="Travail fait"/>
+                    <field name="travail" nolabel="1"/>
+                    <separator string="Signature du client"/>
+                    <field name="signature" widget="image" nolabel="1" options="{'size': [0, 120]}"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_bons_intervention" model="ir.actions.act_window">
+        <field name="name">Bons d'intervention signés</field>
+        <field name="res_model">suivi.bon.intervention</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aucun bon signé pour l'instant</p>
+            <p>Le client signe sur le téléphone du technicien à la fin du travail (portail « Ma journée »).</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_bons_intervention" name="Bons d'intervention signés"
+              parent="suivi_machines_pilotage.menu_pilotage_entretiens" action="action_bons_intervention" sequence="8"/>
+</odoo>

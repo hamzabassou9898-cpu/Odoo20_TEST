@@ -153,6 +153,32 @@
                     </div>
                 </div>
 
+                <!-- Fin du travail : le client signe sur le telephone, le bon PDF part au bureau -->
+                <div class="card shadow-sm mt-3" id="bon_intervention">
+                    <div class="card-body">
+                        <h5 class="mb-1">Terminer : signature du client</h5>
+                        <t t-if="bon">
+                            <div class="alert alert-success py-2 mb-2" role="status">
+                                <i class="oi me-1" data-icon="check"/>Bon <strong t-out="bon.name"/> signé par
+                                <strong t-out="bon.signe_par"/>. Le bureau l'a reçu.
+                            </div>
+                            <a t-if="bon.pdf_id" t-attf-href="/my/journee/tache/#{tache.id}/bon" class="btn btn-outline-primary w-100">
+                                <i class="oi me-1" data-icon="download"/>Voir le bon (PDF)
+                            </a>
+                        </t>
+                        <t t-elif="tache.a_faire">
+                            <div class="text-muted small mb-2">Écrivez d'abord ce qui a été fait (note ci-dessus), puis faites signer
+                                le client : le bon d'intervention est envoyé au bureau et la tâche est terminée.</div>
+                            <t t-call="portal.signature_form"
+                               call_url="'/my/journee/tache/%s/signer' % tache.id"
+                               default_name="tache.partner_id.name or ''"
+                               mode="'draw'"
+                               send_label="'Terminer et envoyer le bon'"/>
+                        </t>
+                        <div t-else="" class="text-muted small">Tâche déjà terminée.</div>
+                    </div>
+                </div>
+
                 <div t-if="mes_notes" class="card shadow-sm mt-3">
                     <div class="card-body">
                         <h6 class="text-uppercase text-muted mb-2">Mes notes envoyées</h6>

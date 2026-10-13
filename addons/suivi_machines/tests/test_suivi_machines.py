@@ -390,3 +390,28 @@ class TestSuiviMachines(TransactionCase):
         nom = location.name
         location.type_commande = "vente"
         self.assertEqual(location.name, nom)
+
+    def test_frise_de_la_machine(self):
+        so = self._commande(self.lot_b, "location")
+        pk = so.picking_ids
+        pk.action_assign()
+        pk.move_ids.picked = True
+        pk.with_context(skip_sms=True).button_validate()
+        self.env["machine.intervention"].create({"lot_id": self.lot_b.id, "type": "entretien", "state": "fait",
+                                                 "partner_id": self.client.id})
+        self.env["machine.intervention"].create({"lot_id": self.lot_b.id, "type": "bris", "state": "fait",
+                                                 "description": "Joint usé"})
+        self.lot_b.invalidate_recordset()
+        frise = str(self.lot_b.frise_html)
+        self.assertIn("Livrée", frise)
+        self.assertIn(self.client.name, frise)
+        self.assertIn("Entretien", frise)
+        self.assertIn("Joint usé", frise)
+        self.assertIn("Prochain entretien", frise)
+        self.assertLess(frise.index("Livrée"), frise.index("Joint usé"), "du plus ancien au plus récent")
+        # Machine sans evenement : message simple
+        neuve = self.env["stock.lot"].create({"name": "NEUVE-1", "product_id": self.produit.id})
+        self.assertIn("Aucun événement", str(neuve.frise_html))
+        arch = self.env["stock.lot"].get_views([(False, "form")])["views"]["form"]["arch"]
+        self.assertIn("frise_html", arch)
+
