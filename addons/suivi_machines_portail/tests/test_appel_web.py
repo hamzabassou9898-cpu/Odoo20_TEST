@@ -62,7 +62,9 @@ class TestAppelWeb(HttpCase):
         self.assertEqual((ticket.type_demande, ticket.type_reparation, ticket.statut_entretien),
                          ("reparation", "ne_gele_pas", "a_planifier"))
         self.assertEqual(ticket.name, "Réparation : Ne gèle pas — Café Web")
-        self.assertEqual((ticket.partner_email, ticket.partner_phone), ("julie@exemple.ca", "418 555 0123"))
+        self.assertEqual(ticket.partner_phone, "418 555 0199", "téléphone du dossier Odoo (code client)")
+        self.assertEqual(ticket.partner_email, "julie@exemple.ca", "client sans courriel dans Odoo : celui tapé")
+        self.assertIn("418 555 0123", ticket.description, "ce qui a été tapé reste dans la description")
         self.assertIn("Plus de slush depuis ce matin", ticket.description)
         self.assertIn("Julie", ticket.description)
 
@@ -121,3 +123,20 @@ class TestAppelWeb(HttpCase):
         arch = etree.fromstring(self.env["helpdesk.ticket"].get_views([(False, "form")])["views"]["form"]["arch"])
         bandeau = arch.xpath("//div[contains(@class, 'alert-info')][contains(., 'formulaire web')]")
         self.assertEqual(bandeau[0].get("invisible"), "not recu_par_web")
+
+    def test_code_client_suffit(self):
+        """Notre base : le code client. Avec un code valide, entreprise / adresse / ville viennent d'Odoo."""
+        page = self.url_open("/appel-de-service")
+        self.assertRegex(page.text, r'<input[^>]*name="adresse"[^>]*>')
+        self.assertNotRegex(page.text, r'<input[^>]*name="adresse"[^>]*required')
+        self.assertRegex(page.text, r'<input[^>]*name="prenom"[^>]*required')
+        self._envoyer(code_client="WEB100", type_demande="entretien", entreprise="", adresse="", ville="")
+        ticket = self._tickets_web()
+        self.assertEqual(len(ticket), 1)
+        self.assertEqual(ticket.partner_id, self.client)
+        self.assertEqual(ticket.name, "Entretien — Café Web", "nom de l'entreprise pris dans Odoo")
+        self.assertIn("5 rue du Web", ticket.adresse_commerce, "adresse du dossier Odoo")
+        # Sans code valide : entreprise, adresse et ville obligatoires
+        reponse = self._envoyer(code_client="INCONNU", type_demande="entretien", adresse="", ville="")
+        self.assertIn("Adresse, Ville", reponse.text)
+        self.assertEqual(len(self._tickets_web()), 1)

@@ -10,16 +10,18 @@ from odoo import api, fields, models
 from odoo.exceptions import UserError
 from odoo.tools.mail import email_normalize, plaintext2html
 
-# Champs du formulaire : (nom, libelle, obligatoire)
+# Champs du formulaire : (nom, libelle, obligatoire). SANS_CODE : obligatoire seulement sans code client
+# valide (sinon Odoo connait deja l'entreprise et son adresse : notre base, c'est le code client).
+SANS_CODE = "sans_code"
 CHAMPS_FORMULAIRE = [
     ("prenom", "Prénom", True),
     ("nom", "Nom", True),
     ("courriel", "Courriel", True),
-    ("entreprise", "Entreprise", True),
+    ("entreprise", "Entreprise", SANS_CODE),
     ("code_client", "Code client", False),
     ("telephone", "Téléphone", True),
-    ("adresse", "Adresse", True),
-    ("ville", "Ville", True),
+    ("adresse", "Adresse", SANS_CODE),
+    ("ville", "Ville", SANS_CODE),
 ]
 LONGUEUR_CHAMP = 200
 LONGUEUR_MESSAGE = 5000
@@ -39,7 +41,10 @@ class HelpdeskTicket(models.Model):
         valeurs["message"] = (post.get("message") or "").strip()[:LONGUEUR_MESSAGE]
         valeurs["type_demande"] = post.get("type_demande") or ""
         valeurs["type_reparation"] = post.get("type_reparation") or ""
-        manquants = [libelle for nom, libelle, obligatoire in CHAMPS_FORMULAIRE if obligatoire and not valeurs[nom]]
+        valeurs["code_client"] = valeurs["code_client"].upper()
+        avec_code = bool(self._client_par_code(valeurs["code_client"]))
+        manquants = [libelle for nom, libelle, obligatoire in CHAMPS_FORMULAIRE
+                     if (obligatoire is True or (obligatoire == SANS_CODE and not avec_code)) and not valeurs[nom]]
         if manquants:
             raise UserError(self.env._("Veuillez remplir : %s.", ", ".join(manquants)))
         if not email_normalize(valeurs["courriel"]):
@@ -53,7 +58,6 @@ class HelpdeskTicket(models.Model):
             valeurs["type_reparation"] = ""
         if valeurs["type_reparation"] == "autre" and not valeurs["message"]:
             raise UserError(self.env._("Réparation « Autre » : décrivez le problème dans la section Message."))
-        valeurs["code_client"] = valeurs["code_client"].upper()
         return valeurs
 
     @api.model
@@ -83,12 +87,15 @@ class HelpdeskTicket(models.Model):
         if valeurs["type_reparation"]:
             titre += " : %s" % dict(self._fields["type_reparation"]._description_selection(self.env))[
                 valeurs["type_reparation"]]
+        # Client connu (code client) : ses informations viennent d'Odoo ; ce qui a ete tape reste dans la
+        # description. Client inconnu : ce qui a ete tape.
+        commerce = (client.parent_id if client.parent_id and client.type == "contact" else client) if client else client
         vals = {
-            "name": "%s — %s" % (titre, valeurs["entreprise"]),
+            "name": "%s — %s" % (titre, commerce.name if client else valeurs["entreprise"]),
             "type_demande": type_demande,
             "type_reparation": valeurs["type_reparation"] or False,
-            "partner_email": email_normalize(valeurs["courriel"]),
-            "partner_phone": valeurs["telephone"],
+            "partner_email": (client and (client.email or commerce.email)) or email_normalize(valeurs["courriel"]),
+            "partner_phone": (client and (client.phone or commerce.phone)) or valeurs["telephone"],
             "description": self._description_formulaire_web(valeurs),
             "recu_par_web": True,
         }

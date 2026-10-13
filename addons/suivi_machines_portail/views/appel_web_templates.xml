@@ -21,16 +21,17 @@
                                 <t t-set="nom" t-value="champ[0]"/>
                                 <div t-attf-class="o_appel_champ #{'col-md-6' if nom in ('prenom', 'nom') else 'col-12'}">
                                     <label t-att-for="'appel_%s' % nom">
-                                        <t t-out="champ[1]"/><span t-if="champ[2]" class="o_appel_requis">*</span>
+                                        <t t-out="champ[1]"/><span t-if="champ[2] is True" class="o_appel_requis">*</span><span t-elif="champ[2]" class="o_appel_requis" title="Obligatoire sans code client">*</span>
                                     </label>
                                     <input t-att-id="'appel_%s' % nom" t-att-name="nom"
                                            t-att-type="'email' if nom == 'courriel' else ('tel' if nom == 'telephone' else 'text')"
-                                           t-att-required="champ[2] or None" maxlength="200"
+                                           t-att-required="(champ[2] is True) or None" maxlength="200"
                                            t-att-value="valeurs.get(nom)"
                                            t-att-placeholder="'Si vous le connaissez (ex. MON134)' if nom == 'code_client' else None"
                                            t-att-autocomplete="{'prenom': 'given-name', 'nom': 'family-name', 'courriel': 'email', 'entreprise': 'organization', 'telephone': 'tel', 'adresse': 'street-address', 'ville': 'address-level2'}.get(nom, 'off')"/>
                                     <small t-if="nom == 'code_client'" class="o_appel_aide">
-                                        Inscrit sur vos factures. Il nous permet de retrouver votre dossier et vos machines.
+                                        Inscrit sur vos factures. Avec votre code client, nous retrouvons votre dossier
+                                        (entreprise, adresse, machines) : pas besoin de remplir l'entreprise, l'adresse et la ville.
                                     </small>
                                 </div>
                             </t>
