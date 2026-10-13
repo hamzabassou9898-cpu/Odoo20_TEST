@@ -50,13 +50,9 @@
                 <!-- Ajuster un contrat : ouvre le contrat de location du client -->
                 <button name="action_ajuster_contrat" type="object" string="Ajuster le contrat" class="btn-primary"
                         invisible="type_demande != 'ajustement' or not partner_id"/>
-                <!-- Passer une commande : bon de vente pour le client -->
-                <!-- Bon de vente : pieces, frais de service ou de livraison a facturer (des le debut) -->
+                <!-- Passer une commande : bon de vente -->
                 <button name="action_creer_vente" type="object" string="Bon de vente" class="btn-primary"
                         invisible="type_demande != 'commande' or not partner_id"
-                        groups="sales_team.group_sale_salesman"/>
-                <button name="action_creer_vente" type="object" string="Bon de vente" class="btn-secondary"
-                        invisible="type_demande in ('commande', 'ajustement') or est_reprise or not partner_id"
                         groups="sales_team.group_sale_salesman"/>
 
             </xpath>

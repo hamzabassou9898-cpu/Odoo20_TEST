@@ -801,10 +801,8 @@ class TestTicketMachine(TransactionCase):
         self.assertNotIn("action_nouvelle_intervention", boutons, "intervention planifiée toute seule")
         self.assertIn("action_marquer_fait", boutons)
         vente = arch.xpath("//header/button[@name='action_creer_vente']")
-        self.assertEqual([b.get("invisible") for b in vente],
-                         ["type_demande != 'commande' or not partner_id",
-                          "type_demande in ('commande', 'ajustement') or est_reprise or not partner_id"],
-                         "Bon de vente : en avant pour « Passer une commande », dès le début pour les autres")
+        self.assertEqual([b.get("invisible") for b in vente], ["type_demande != 'commande' or not partner_id"],
+                         "Bon de vente : seulement pour « Passer une commande »")
         self.assertNotIn("action_creer_livraison", boutons, "bouton Livraison retiré")
         self.env["stock.lot"].get_views([(False, "form")])
 
