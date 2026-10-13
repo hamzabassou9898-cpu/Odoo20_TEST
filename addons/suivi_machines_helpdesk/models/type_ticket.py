@@ -18,7 +18,7 @@ TYPES_REPARATION = [
     ("ne_tourne_pas", "Ne tourne pas"),
     ("bruit", "Fait du bruit"),
     ("gele_trop", "Gèle trop"),
-    ("autre", "Autre (détails dans le message)"),
+    ("autre", "Autre (inscrire les détails dans la section Message)"),
 ]
 # Tickets qui se planifient (technicien a envoyer chez le client)
 TYPES_A_PLANIFIER = ("entretien", "reparation", "remplacement")

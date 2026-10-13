@@ -1,0 +1,111 @@
+// Formulaire « Appel de service » : meme style que le site Volcan (jaune, champs soulignes)
+.o_appel_service {
+    background: #e9e44b;
+    color: #2b313b;
+    min-height: calc(100vh - 110px);
+
+    .o_appel_conteneur {
+        max-width: 960px;
+        padding-top: 3rem;
+        padding-bottom: 4rem;
+    }
+    .o_appel_titre {
+        font-family: Georgia, "Times New Roman", serif;
+        font-weight: 900;
+        font-size: clamp(2.4rem, 8vw, 5rem);
+        text-align: center;
+        margin-bottom: 2.5rem;
+    }
+    .o_appel_champ {
+        margin-bottom: 2rem;
+        border: 0;
+        padding: 0;
+
+        label, legend {
+            display: block;
+            font-size: 1.15rem;
+            font-weight: 500;
+            margin-bottom: .25rem;
+        }
+        input[type="text"], input[type="email"], input[type="tel"], select, textarea {
+            width: 100%;
+            background: transparent;
+            border: 0;
+            border-bottom: 1px solid #2b313b;
+            border-radius: 0;
+            padding: .4rem 0;
+            font-size: 1.05rem;
+            color: inherit;
+            &:focus {
+                outline: none;
+                border-bottom-width: 2px;
+            }
+        }
+    }
+    .o_appel_requis {
+        margin-left: .2rem;
+        font-size: .8em;
+    }
+    .o_appel_aide {
+        display: block;
+        margin-top: .3rem;
+        opacity: .75;
+    }
+    .o_appel_types {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+        gap: .6rem;
+        margin-top: .5rem;
+    }
+    .o_appel_type {
+        display: flex !important;
+        align-items: center;
+        gap: .6rem;
+        margin: 0;
+        padding: .7rem .9rem;
+        border: 1px solid #2b313b;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, .35);
+        cursor: pointer;
+        font-size: 1.05rem !important;
+
+        input {
+            accent-color: #2f6fd1;
+            width: 1.1rem;
+            height: 1.1rem;
+        }
+        &:has(input:checked) {
+            background: #fff;
+            border-width: 2px;
+        }
+    }
+    .o_appel_envoyer {
+        background: #2f6fd1;
+        color: #fff;
+        border: 0;
+        border-radius: 999px;
+        padding: .9rem 4rem;
+        font-size: 1.2rem;
+        font-weight: 700;
+        &, &:hover, &:focus {
+            // Le portail colore tous les liens (!important) : le bouton reste blanc sur bleu
+            color: #fff !important;
+        }
+        &:hover {
+            background: #255bb0;
+        }
+    }
+    .o_appel_pot {
+        position: absolute;
+        left: -10000px;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+    }
+}
+
+// « Type de reparation » : affiche seulement quand « Reparation » est coche
+// (navigateur sans :has() : la regle est ignoree, le champ reste affiche et le serveur verifie)
+.o_appel_service .o_appel_form:not(:has(input[name="type_demande"][value="reparation"]:checked)) .o_appel_reparation {
+    display: none;
+}

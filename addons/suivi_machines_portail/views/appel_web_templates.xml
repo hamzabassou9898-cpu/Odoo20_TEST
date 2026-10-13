@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ================================================================ PAGE PUBLIQUE /appel-de-service -->
+    <template id="appel_de_service_page" name="Appel de service (formulaire web)">
+        <t t-call="portal.frontend_layout">
+            <t t-set="title">Appel de service</t>
+            <div class="o_appel_service">
+                <div class="container o_appel_conteneur">
+                    <h1 class="o_appel_titre">Appel de service</h1>
+                    <div t-if="erreur" class="alert alert-danger" role="alert" t-out="erreur"/>
+                    <form action="/appel-de-service" method="post" class="o_appel_form">
+                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                        <!-- Piege a robots : invisible pour les personnes -->
+                        <div class="o_appel_pot" aria-hidden="true">
+                            <label for="site_web">Site web</label>
+                            <input type="text" id="site_web" name="site_web" tabindex="-1" autocomplete="off"/>
+                        </div>
+
+                        <div class="row">
+                            <t t-foreach="champs" t-as="champ">
+                                <t t-set="nom" t-value="champ[0]"/>
+                                <div t-attf-class="o_appel_champ #{'col-md-6' if nom in ('prenom', 'nom') else 'col-12'}">
+                                    <label t-att-for="'appel_%s' % nom">
+                                        <t t-out="champ[1]"/><span t-if="champ[2]" class="o_appel_requis">*</span>
+                                    </label>
+                                    <input t-att-id="'appel_%s' % nom" t-att-name="nom"
+                                           t-att-type="'email' if nom == 'courriel' else ('tel' if nom == 'telephone' else 'text')"
+                                           t-att-required="champ[2] or None" maxlength="200"
+                                           t-att-value="valeurs.get(nom)"
+                                           t-att-placeholder="'Si vous le connaissez (ex. MON134)' if nom == 'code_client' else None"
+                                           t-att-autocomplete="{'prenom': 'given-name', 'nom': 'family-name', 'courriel': 'email', 'entreprise': 'organization', 'telephone': 'tel', 'adresse': 'street-address', 'ville': 'address-level2'}.get(nom, 'off')"/>
+                                    <small t-if="nom == 'code_client'" class="o_appel_aide">
+                                        Inscrit sur vos factures. Il nous permet de retrouver votre dossier et vos machines.
+                                    </small>
+                                </div>
+                            </t>
+
+                        <!-- Type de demande : choix a cocher -->
+                        <fieldset class="o_appel_champ col-12">
+                            <legend>Type de demande<span class="o_appel_requis">*</span></legend>
+                            <div class="o_appel_types">
+                                <label t-foreach="types_demande" t-as="type" class="o_appel_type">
+                                    <input type="radio" name="type_demande" t-att-value="type[0]" required="required"
+                                           t-att-checked="valeurs.get('type_demande') == type[0] or None"/>
+                                    <span t-out="type[1]"/>
+                                </label>
+                            </div>
+                        </fieldset>
+
+                        <!-- Seulement si « Reparation » est coche -->
+                        <div class="o_appel_champ col-12 o_appel_reparation">
+                            <label for="appel_type_reparation">Type de réparation<span class="o_appel_requis">*</span></label>
+                            <select id="appel_type_reparation" name="type_reparation">
+                                <option value="">Sélectionner une option</option>
+                                <option t-foreach="types_reparation" t-as="rep" t-att-value="rep[0]"
+                                        t-att-selected="valeurs.get('type_reparation') == rep[0] or None" t-out="rep[1]"/>
+                            </select>
+                        </div>
+
+                        <div class="o_appel_champ col-12">
+                            <label for="appel_message">Message</label>
+                            <textarea id="appel_message" name="message" rows="4" maxlength="5000"><t t-out="valeurs.get('message') or ''"/></textarea>
+                        </div>
+                        </div>
+
+                        <div class="text-center">
+                            <button type="submit" class="o_appel_envoyer">Envoyer</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <template id="appel_de_service_merci" name="Appel de service envoyé">
+        <t t-call="portal.frontend_layout">
+            <t t-set="title">Appel de service</t>
+            <div class="o_appel_service">
+                <div class="container o_appel_conteneur text-center">
+                    <h1 class="o_appel_titre">Merci !</h1>
+                    <p class="fs-4">Votre demande est bien reçue<t t-if="numero"> (n° <strong t-out="numero"/>)</t>.</p>
+                    <p>Notre équipe vous contactera rapidement pour planifier la visite.</p>
+                    <a href="/appel-de-service" class="o_appel_envoyer d-inline-block text-decoration-none">Nouvelle demande</a>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <!-- ================================================================ BANDEAU DANS LE TICKET -->
+    <record id="helpdesk_ticket_view_form_recu_par_web" model="ir.ui.view">
+        <field name="name">helpdesk.ticket.form.recu.par.web</field>
+        <field name="model">helpdesk.ticket</field>
+        <field name="inherit_id" ref="helpdesk.helpdesk_ticket_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="before">
+                <field name="recu_par_web" invisible="1"/>
+                <div class="alert alert-info mb-0 py-2" role="status" invisible="not recu_par_web">
+                    Ticket envoyé <strong>par le client</strong> avec le formulaire web « Appel de service ».
+                    <span invisible="partner_id">Code client absent ou inconnu : choisissez le client (code client).</span>
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>
