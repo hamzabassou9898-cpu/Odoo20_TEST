@@ -50,7 +50,7 @@ class HelpdeskTicket(models.Model):
     nb_livraisons = fields.Integer("Nb livraisons", compute="_compute_suites")
     technicien_id = fields.Many2one(
         "res.users", "Technicien", compute="_compute_technicien", store=True, index="btree_not_null",
-        help="Technicien de la dernière intervention du ticket (choisi dans « Nouvelle intervention »).")
+        help="Technicien de la dernière intervention du ticket.")
 
     # ------------------------------------------------------------ code client <-> client
     @api.model
@@ -193,28 +193,26 @@ class HelpdeskTicket(models.Model):
                           views=[(False, "list"), (False, "form")])
         return action
 
-    def action_nouvelle_intervention(self):
-        """Intervention liee au ticket : machine, client, probleme, date prevue et technicien deja remplis."""
+    def _contexte_intervention(self):
+        """Nouvelle intervention depuis le ticket : machine, client, probleme, date prevue, technicien et type."""
         self.ensure_one()
+        type_interv = ("entretien" if self.est_entretien
+                       else "remplacement" if self.type_demande == "remplacement" else "reparation")
         contexte = {"default_ticket_id": self.id,
                     "default_lot_id": self.lot_id.id,
                     "default_partner_id": self.commerce_id.id or self.partner_id.id,
-                    "default_type": "reparation",
+                    "default_type": type_interv,
                     "default_description": self.name}
         if self.date_planifiee:
             contexte["default_date"] = self.date_planifiee
         if self._technicien_ticket():
             contexte["default_user_id"] = self._technicien_ticket().id
-        return {"type": "ir.actions.act_window", "name": self.env._("Nouvelle intervention"),
-                "res_model": "machine.intervention", "view_mode": "form",
-                "views": [(False, "form")], "target": "new", "context": contexte}
+        return contexte
 
     def action_voir_interventions_ticket(self):
         self.ensure_one()
         return self._action_liste("machine.intervention", self.env._("Interventions - %s", self.name),
-                                  self.intervention_ticket_ids,
-                                  {"default_ticket_id": self.id, "default_lot_id": self.lot_id.id,
-                                   "default_partner_id": self.commerce_id.id})
+                                  self.intervention_ticket_ids, self._contexte_intervention())
 
     def action_creer_vente(self):
         """Bon de vente (pieces, accessoires, machine) pour le client du ticket."""

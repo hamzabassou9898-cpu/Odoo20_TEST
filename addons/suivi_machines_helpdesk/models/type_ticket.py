@@ -203,9 +203,3 @@ class HelpdeskTicket(models.Model):
                 "res_model": "sale.order", "view_mode": "list,form", "target": "current",
                 "domain": [("id", "in", contrats.ids)], "context": contexte,
                 "views": [(False, "list"), (vue_location.id if vue_location else False, "form")]}
-
-    def action_nouvelle_intervention(self):
-        action = super().action_nouvelle_intervention()
-        if self.type_demande == "remplacement":
-            action["context"]["default_type"] = "remplacement"
-        return action

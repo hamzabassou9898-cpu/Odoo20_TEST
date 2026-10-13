@@ -2,8 +2,6 @@
 """Indicateurs du tableau de bord « Pilotage » : un compteur par carte, un clic ouvre la liste."""
 from datetime import timedelta
 
-from dateutil.relativedelta import relativedelta
-
 from odoo import api, fields, models
 
 SECTIONS = [("appels", "Appels de service"), ("entretiens", "Entretiens & réparations"),

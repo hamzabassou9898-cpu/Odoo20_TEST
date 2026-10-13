@@ -169,12 +169,6 @@ class HelpdeskTicket(models.Model):
                 "res_model": "suivi.machines.valider.entretien", "view_mode": "form",
                 "views": [(False, "form")], "target": "new", "context": {"default_ticket_id": self.id}}
 
-    def action_nouvelle_intervention(self):
-        action = super().action_nouvelle_intervention()
-        if self.est_entretien:
-            action["context"]["default_type"] = "entretien"
-        return action
-
 
 FREQUENCES = [("3", "Tous les 3 mois"), ("6", "Tous les 6 mois"), ("12", "Tous les 12 mois"),
               ("24", "Tous les 24 mois")]

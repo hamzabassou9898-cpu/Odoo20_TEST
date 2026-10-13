@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from odoo.tests import Form, TransactionCase, tagged
+from odoo.tests import TransactionCase, tagged
 
 
 @tagged("post_install", "-at_install")

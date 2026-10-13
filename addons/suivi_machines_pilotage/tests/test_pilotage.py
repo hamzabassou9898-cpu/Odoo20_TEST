@@ -118,8 +118,8 @@ class TestPilotage(TransactionCase):
 
         self.assertEqual(dans("entretiens_ouverts"), assignee | remplacer, "un seul bloc : réparations comprises")
         self.assertEqual(dans("appels_ouverts"), sans_tech | commande, "pas encore planifiés")
-        # Ticket ouvert -> Nouvelle intervention de reparation : il glisse vers « Réparations planifiées »
-        f = Form(self.env["machine.intervention"].with_context(**sans_tech.action_nouvelle_intervention()["context"]))
+        # Ticket ouvert -> intervention de reparation (bouton Interventions) : il glisse vers « Réparations planifiées »
+        f = Form(self.env["machine.intervention"].with_context(**sans_tech._contexte_intervention()))
         f.type = "reparation"
         f.lot_id = self.lot
         f.user_id = tech

@@ -2,10 +2,7 @@
 """Tickets « Reprise » crees automatiquement avant la fin d'une location."""
 from datetime import timedelta
 
-from dateutil.relativedelta import relativedelta
-
 from odoo import api, fields, models
-from odoo.tools.misc import formatLang
 from odoo.exceptions import UserError
 
 PARAM_JOURS = "suivi_machines_helpdesk.jours_avant_reprise"
@@ -90,14 +87,15 @@ class HelpdeskTicket(models.Model):
         tickets = self._tickets_du_contrat()
         tickets._mettre_en_reprise()
         Picking = self.env["stock.picking"]
+        # Retour deja en cours (depuis le client ou l'emplacement Location, vers l'entrepot)
         encours = Picking.search([("ticket_assistance_id", "in", tickets.ids),
-                                  ("state", "not in", ("done", "cancel")),
-                                  ("location_dest_id.usage", "=", "internal")], limit=1)
+                                  ("state", "not in", ("done", "cancel"))]).filtered(
+            lambda p: p.move_ids and not any(m._vers_client() for m in p.move_ids))[:1]
         if encours:
             return self._ouvrir_picking(encours)
         lots = (tickets.machines_reprise_ids | tickets.lot_id).filtered("machine_client_id")
         livraisons = self.commande_reprise_id.picking_ids.filtered(
-            lambda p: p.state == "done" and p.location_dest_id.usage != "internal"
+            lambda p: p.state == "done" and any(m._vers_client() for m in p.move_ids)
             and p.move_line_ids.lot_id & lots).sorted("date_done", reverse=True)
         if not lots or not livraisons:
             raise UserError(self.env._(
@@ -156,12 +154,6 @@ class HelpdeskTicket(models.Model):
         return {"type": "ir.actions.act_window", "res_model": "stock.picking", "res_id": picking.id,
                 "view_mode": "form", "views": [(False, "form")], "target": "current"}
 
-    def action_prolonger_location(self):
-        self.ensure_one()
-        return {"type": "ir.actions.act_window", "name": self.env._("Prolonger la location"),
-                "res_model": "suivi.machines.prolonger.location", "view_mode": "form",
-                "views": [(False, "form")], "target": "new", "context": {"default_ticket_id": self.id}}
-
 
 class SaleOrder(models.Model):
     _inherit = "sale.order"
@@ -195,47 +187,6 @@ class SaleOrder(models.Model):
             or self.env.ref("base.user_admin", raise_if_not_found=False)
         return {"jours": _param_int(icp, PARAM_JOURS, 30), "equipe": equipe, "etape": etape,
                 "responsable": responsable}
-
-    def action_prolonger_location(self):
-        """Prolonger le contrat depuis la page de location (nouvelle date de fin, prix de la prolongation)."""
-        self.ensure_one()
-        return {"type": "ir.actions.act_window", "name": self.env._("Prolonger la location"),
-                "res_model": "suivi.machines.prolonger.location", "view_mode": "form",
-                "views": [(False, "form")], "target": "new", "context": {"default_commande_id": self.id}}
-
-    def _ajouter_ligne_prolongation(self, debut, fin, montant):
-        """Prix de la prolongation : nouvelle ligne a facturer (une ligne deja facturee ne change pas)."""
-        self.ensure_one()
-        produit = self.env.ref("suivi_machines_helpdesk.produit_prolongation_location", raise_if_not_found=False)
-        if not produit:
-            raise UserError(self.env._("Produit « Prolongation de location » introuvable."))
-        return self.env["sale.order.line"].create({
-            "order_id": self.id, "product_id": produit.id, "product_uom_qty": 1, "price_unit": montant,
-            "name": self.env._("Prolongation de location %(contrat)s : du %(debut)s au %(fin)s",
-                               contrat=self.name, debut=fields.Datetime.to_string(debut)[:10] if debut else "?",
-                               fin=fields.Datetime.to_string(fin)[:10]),
-        })
-
-    def _prolonger_location(self, nouvelle_date_fin, note=None, montant=0.0):
-        """Renouvellement : meme contrat, nouvelle date de fin (application Location si installee) ;
-        avec un prix : ligne « Prolongation de location » a facturer."""
-        self.ensure_one()
-        ancienne_fin = self.date_fin_location
-        if self.date_fin_location and nouvelle_date_fin <= self.date_fin_location:
-            raise UserError(self.env._("La nouvelle date doit être après la fin actuelle."))
-        champ = "rental_return_date" if "rental_return_date" in self._fields else "date_fin_location"
-        self.write({champ: nouvelle_date_fin})
-        if champ != "date_fin_location":
-            self.date_fin_location = nouvelle_date_fin
-        message = self.env._("Location prolongée jusqu'au %s.", fields.Datetime.to_string(nouvelle_date_fin)[:10])
-        if montant:
-            ligne = self._ajouter_ligne_prolongation(ancienne_fin, nouvelle_date_fin, montant)
-            message += " " + self.env._("Prix de la prolongation : %s (ligne ajoutée au contrat).",
-                                       formatLang(self.env, ligne.price_unit, currency_obj=self.currency_id))
-        if note:
-            message += " " + note
-        self.message_post(body=message)
-        return message
 
     def _machines_a_reprendre(self):
         """Machines de la commande encore chez un client (pas revenues en entrepot)."""
@@ -332,44 +283,3 @@ class SaleOrder(models.Model):
         return {"type": "ir.actions.act_window", "name": self.env._("Reprise - %s", self.name),
                 "res_model": "helpdesk.ticket", "view_mode": "list,form",
                 "views": [(False, "list"), (False, "form")], "domain": [("id", "in", tickets.ids)]}
-
-
-class ProlongerLocation(models.TransientModel):
-    _name = "suivi.machines.prolonger.location"
-    _description = "Prolonger une location"
-
-    ticket_id = fields.Many2one("helpdesk.ticket", "Ticket de reprise")
-    commande_id = fields.Many2one("sale.order", "Contrat", required=True,
-                                  default=lambda s: s._default_commande())
-    date_fin_actuelle = fields.Datetime(related="commande_id.date_fin_location", string="Fin actuelle")
-    nouvelle_date_fin = fields.Datetime("Nouvelle fin de location", required=True,
-                                        default=lambda s: s._default_nouvelle_date())
-    currency_id = fields.Many2one(related="commande_id.currency_id")
-    montant = fields.Monetary("Prix de la prolongation", currency_field="currency_id",
-                              help="Avant taxes. Ajouté au contrat comme ligne « Prolongation de location » "
-                                   "à facturer (la ligne déjà facturée ne change pas). Vide : pas de nouveau prix.")
-    note = fields.Text("Note")
-
-    def _default_commande(self):
-        ticket = self.env["helpdesk.ticket"].browse(self.env.context.get("default_ticket_id"))
-        return ticket.commande_reprise_id or self.env["sale.order"].browse(self.env.context.get("default_commande_id"))
-
-    def _default_nouvelle_date(self):
-        fin = self._default_commande().date_fin_location or fields.Datetime.now()
-        return fin + relativedelta(months=1)
-
-    def action_prolonger(self):
-        self.ensure_one()
-        message = self.commande_id._prolonger_location(self.nouvelle_date_fin, self.note, self.montant)
-        ticket = self.ticket_id
-        if not ticket:
-            return {"type": "ir.actions.act_window_close"}
-        ticket.message_post(body=message)
-        ticket.activity_ids.filtered(
-            lambda a: a.activity_type_id == self.env.ref("mail.mail_activity_data_todo")
-        ).action_feedback(feedback=message)
-        # Ticket resolu (etape « Resolu » si elle existe)
-        resolu = self.env["helpdesk.stage"].search([("name", "=ilike", "résolu")], limit=1)
-        if resolu:
-            ticket.stage_id = resolu
-        return {"type": "ir.actions.act_window_close"}

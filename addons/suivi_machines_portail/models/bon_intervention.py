@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """Bon d'intervention signe par le client sur le telephone du technicien (portail « Ma journee »)."""
-import base64
 import logging
 
 from markupsafe import Markup

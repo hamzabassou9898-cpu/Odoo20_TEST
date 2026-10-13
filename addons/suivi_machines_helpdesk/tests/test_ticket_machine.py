@@ -95,8 +95,7 @@ class TestTicketMachine(TransactionCase):
         ticket = self.env["helpdesk.ticket"].create({
             "name": "Ne refroidit pas", "partner_id": self.commerce.id, "lot_id": self.lots[0].id,
             "user_id": tech.id, "date_planifiee": datetime(2030, 10, 10, 14, 0)})
-        action = ticket.action_nouvelle_intervention()
-        f = Form(self.env["machine.intervention"].with_context(**action["context"]))
+        f = Form(self.env["machine.intervention"].with_context(**ticket._contexte_intervention()))
         interv = f.save()
         self.assertEqual(interv.date, datetime(2030, 10, 10, 14, 0), "date prévue du ticket, pas « maintenant »")
         self.assertEqual(interv.user_id, tech, "technicien du ticket, pas l'utilisateur connecté")
@@ -187,8 +186,7 @@ class TestTicketMachine(TransactionCase):
         self.env.flush_all()
         self.assertEqual(len(t.machine_historique_ids), 2)
         self.assertEqual(t.action_fiche_machine()["res_id"], self.lots[0].id)
-        nouvelle = t.action_nouvelle_intervention()
-        self.assertEqual(nouvelle["context"]["default_lot_id"], self.lots[0].id)
+        self.assertEqual(t._contexte_intervention()["default_lot_id"], self.lots[0].id)
 
     def test_appels_de_service(self):
         T = self.env["helpdesk.ticket"]
@@ -222,8 +220,7 @@ class TestTicketMachine(TransactionCase):
     def test_intervention_depuis_ticket(self):
         t = self.env["helpdesk.ticket"].create({"name": "Fuite", "code_client": "TST100",
                                                 "lot_id": self.lots[0].id})
-        action = t.action_nouvelle_intervention()
-        f = Form(self.env["machine.intervention"].with_context(**action["context"]))
+        f = Form(self.env["machine.intervention"].with_context(**t._contexte_intervention()))
         interv = f.save()
         self.assertEqual(interv.ticket_id, t)
         self.assertEqual(interv.lot_id, self.lots[0])
@@ -253,7 +250,7 @@ class TestTicketMachine(TransactionCase):
         t = self.env["helpdesk.ticket"].create({"name": "Bris", "code_client": "TST100",
                                                 "lot_id": self.lots[0].id})
         self.assertFalse(t.technicien_id)
-        f = Form(self.env["machine.intervention"].with_context(**t.action_nouvelle_intervention()["context"]))
+        f = Form(self.env["machine.intervention"].with_context(**t._contexte_intervention()))
         f.user_id = tech_a
         i1 = f.save()
         self.assertEqual(t.technicien_id, tech_a, "le technicien choisi apparaît sur le ticket")
@@ -510,12 +507,11 @@ class TestTicketMachine(TransactionCase):
         self.assertEqual(so.nb_tickets_reprise, 1)
         icp = self.env["ir.config_parameter"]
         (icp.set_int if hasattr(icp, "set_int") else icp.set_param)("suivi_machines_helpdesk.jours_avant_reprise", 0)
-        so2 = so.copy({"date_fin_location": fields.Datetime.now() + relativedelta(days=2)})
+        so.copy({"date_fin_location": fields.Datetime.now() + relativedelta(days=2)})
         self.assertFalse(SO._cron_tickets_reprise(), "machine pas encore livrée / délai 0 : rien")
         self.env.ref("suivi_machines_helpdesk.cron_tickets_reprise").method_direct_trigger()
 
     def test_bouton_creer_ticket_reprise(self):
-        from odoo.exceptions import UserError, ValidationError
         stock = self.env.ref("stock.stock_location_stock")
         lot = self.env["stock.lot"].create({"name": "REP-2", "product_id": self.produit.id})
         self.env["stock.quant"]._update_available_quantity(self.produit, stock, 1, lot_id=lot)
@@ -650,28 +646,6 @@ class TestTicketMachine(TransactionCase):
         self.assertGreater(Trigger.search_count([("cron_id", "=", reprise.id)]), avant_r,
                            "livraison / date de fin : vérification des reprises relancée")
 
-    def test_prolonger_location(self):
-        lot, so, ticket = self._location_livree("PRO-1")
-        resolu = self.env["helpdesk.stage"].search([("name", "=ilike", "résolu")], limit=1) \
-            or self.env["helpdesk.stage"].create({"name": "Résolu"})
-        ancienne = so.date_fin_location
-        f = Form(self.env["suivi.machines.prolonger.location"].with_context(**ticket.action_prolonger_location()["context"]))
-        self.assertEqual(f.nouvelle_date_fin, ancienne + relativedelta(months=1), "proposé : +1 mois")
-        f.nouvelle_date_fin = ancienne + relativedelta(days=30)
-        f.save().action_prolonger()
-        self.assertEqual(so.date_fin_location, ancienne + relativedelta(days=30))
-        self.assertEqual(ticket.stage_id, resolu)
-        self.assertFalse(ticket.activity_ids, "activité Planifier ramassage terminée")
-        # a l'approche de la nouvelle date : nouveau ticket de reprise
-        so.date_fin_location = fields.Datetime.now() + relativedelta(days=2)
-        nouveau = self.env["sale.order"]._cron_tickets_reprise().filtered(lambda t: t.commande_reprise_id == so)
-        self.assertEqual(len(nouveau), 1)
-        self.assertNotEqual(nouveau, ticket)
-        with self.assertRaises(Exception):
-            f2 = Form(self.env["suivi.machines.prolonger.location"].with_context(default_ticket_id=nouveau.id))
-            f2.nouvelle_date_fin = so.date_fin_location - relativedelta(days=5)
-            f2.save().action_prolonger()
-
     def test_tickets_entretien(self):
         T = self.env["helpdesk.ticket"]
         retard = self.env.ref("suivi_machines_helpdesk.tag_entretien_retard")
@@ -707,7 +681,7 @@ class TestTicketMachine(TransactionCase):
             T._cron_tickets_entretien()
         self.assertEqual(t1.tag_ids, retard, "dépassé : étiquette en retard")
         # entretien fait depuis le ticket : etiquettes retirees, nouvelle echeance dans 12 mois
-        f = Form(Interv.with_context(**t0.action_nouvelle_intervention()["context"]))
+        f = Form(Interv.with_context(**t0._contexte_intervention()))
         self.assertEqual(f.type, "entretien")
         f.save().action_fait()
         T._cron_tickets_entretien()
@@ -994,35 +968,6 @@ class TestTicketMachine(TransactionCase):
         self.assertNotIn("action_valider_entretien", noms)
         self.assertEqual(noms.count("action_marquer_fait"), 2)
         self.assertTrue(arch.xpath("//div[contains(@class, 'alert-warning')][contains(., 'Pour planifier l')]"))
-
-    def test_prolonger_avec_prix(self):
-        """Prolonger depuis la page de location, avec un prix : ligne « Prolongation de location » à facturer,
-        la ligne déjà facturée ne change pas."""
-        lot, so, ticket = self._location_livree("PRO-2")
-        lignes_avant = so.order_line
-        prix_avant = lignes_avant.mapped("price_unit")
-        action = so.action_prolonger_location()
-        f = Form(self.env[action["res_model"]].with_context(**action["context"]))
-        self.assertEqual(f.commande_id, so)
-        ancienne = so.date_fin_location
-        f.nouvelle_date_fin = ancienne + relativedelta(months=3)
-        f.montant = 150
-        f.save().action_prolonger()
-        self.assertEqual(so.date_fin_location, ancienne + relativedelta(months=3))
-        nouvelle = so.order_line - lignes_avant
-        self.assertEqual(len(nouvelle), 1)
-        self.assertEqual((nouvelle.product_id, nouvelle.price_unit, nouvelle.product_uom_qty),
-                         (self.env.ref("suivi_machines_helpdesk.produit_prolongation_location"), 150, 1))
-        self.assertIn(so.name, nouvelle.name)
-        self.assertEqual(lignes_avant.mapped("price_unit"), prix_avant, "lignes existantes inchangées")
-        self.assertEqual(len(so.picking_ids.filtered(lambda p: p.state not in ("done", "cancel"))), 0,
-                         "service : pas de nouvelle livraison")
-        self.assertIn("150", so.message_ids[0].body)
-        # Sans prix : seulement la date
-        f = Form(self.env[action["res_model"]].with_context(**action["context"]))
-        f.nouvelle_date_fin = so.date_fin_location + relativedelta(months=1)
-        f.save().action_prolonger()
-        self.assertEqual(len(so.order_line), len(lignes_avant) + 1)
 
     def test_fiche_client_machines_et_boutons(self):
         """Fiche client : onglets Machines chez le client, Historique des appels, Historique d'achat
