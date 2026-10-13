@@ -6,3 +6,4 @@ from . import declencheurs
 from . import synchro
 from . import type_ticket
 from . import res_partner
+from . import planification_auto

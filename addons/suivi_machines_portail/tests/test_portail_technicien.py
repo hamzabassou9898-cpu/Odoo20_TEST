@@ -397,6 +397,37 @@ class TestPortailTechnicien(HttpCase):
         self.env["suivi.bon.intervention"].get_views([(False, "list"), (False, "form")])
         self.assertTrue(self.env.ref("suivi_machines_portail.menu_bons_intervention"))
 
+    def test_reparation_auto_signee_au_portail(self):
+        """Réparation datée : intervention planifiée toute seule ; la signature du client la termine et
+        le bon signé (PDF) est dans le fil du ticket, à droite."""
+        self.env["helpdesk.stage"].search([("name", "=ilike", "résolu")], limit=1) \
+            or self.env["helpdesk.stage"].create({"name": "Résolu"})
+        categ = self.env["product.category"].create({"name": "Machines (auto)", "suivi_machine": True})
+        produit = self.env["product.product"].create({"name": "Machine auto", "categ_id": categ.id,
+                                                      "is_storable": True, "tracking": "serial"})
+        lot = self.env["stock.lot"].create({"name": "AUTO-1", "product_id": produit.id})
+        ticket = self.env["helpdesk.ticket"].create({
+            "name": "Coule", "partner_id": self.client.id, "type_demande": "reparation", "type_reparation": "coule",
+            "lot_id": lot.id, "user_id": self.tech_a.id, "date_planifiee": fields.Datetime.now()})
+        interv = ticket.intervention_ticket_ids
+        self.assertEqual((interv.state, interv.user_id), ("planifie", self.tech_a))
+        self.assertEqual(len(self.env["portail.tache"].search([("partner_id", "=", self.client.id),
+                                                                ("lot_id", "=", lot.id)])), 1,
+                         "une seule tâche au portail (le ticket), pas de doublon")
+        tache = self._tache(ticket)
+        self.authenticate("tech_portail_a", "tech_portail_a_mdp_123")
+        url = "/my/journee/tache/%s" % tache.id
+        self.url_open(url)
+        rep = self.make_jsonrpc_request(url + "/signer", {"name": "Mme Roy", "signature": self.SIGNATURE})
+        self.assertTrue(rep.get("force_refresh"), rep)
+        self.env.invalidate_all()
+        self.assertEqual(interv.state, "fait", "intervention terminée avec la signature")
+        self.assertEqual(ticket.statut_entretien, "fait")
+        bon = ticket.bon_intervention_ids
+        message = ticket.message_ids.filtered(lambda m: bon.name in (m.body or ""))
+        self.assertTrue(message, "bon signé dans le fil du ticket")
+        self.assertEqual(message.attachment_ids, bon.pdf_id, "avec le PDF")
+
     def test_bon_signe_intervention_et_transfert(self):
         lot_produit = self.env["product.product"].create({"name": "Machine bon", "is_storable": True})
         lot = self.env["stock.lot"].create({"name": "BON-1", "product_id": lot_produit.id})

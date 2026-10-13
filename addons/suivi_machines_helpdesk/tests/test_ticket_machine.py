@@ -788,10 +788,13 @@ class TestTicketMachine(TransactionCase):
                           "contrat_client_fin"], "puis le contrat du client, son type et ses dates")
         self.assertNotIn("commerce_id", visibles, "client affiché une seule fois (champ natif)")
         boutons = [b.get("name") for b in arch.iter("button") if b.getparent().tag == "header"]
-        self.assertIn("action_nouvelle_intervention", boutons)
+        self.assertNotIn("action_nouvelle_intervention", boutons, "intervention planifiée toute seule")
+        self.assertIn("action_marquer_fait", boutons)
         vente = arch.xpath("//header/button[@name='action_creer_vente']")
-        self.assertEqual(vente[0].get("invisible"), "type_demande != 'commande' or not partner_id",
-                         "Bon de vente : seulement pour « Passer une commande »")
+        self.assertEqual([b.get("invisible") for b in vente],
+                         ["type_demande != 'commande' or not partner_id",
+                          "type_demande in ('commande', 'ajustement') or est_reprise or not partner_id"],
+                         "Bon de vente : en avant pour « Passer une commande », dès le début pour les autres")
         self.assertNotIn("action_creer_livraison", boutons, "bouton Livraison retiré")
         self.env["stock.lot"].get_views([(False, "form")])
 
@@ -856,3 +859,70 @@ class TestTicketMachine(TransactionCase):
         self.assertEqual((champ.get("widget"), champ.get("invisible")), ("radio", "type_demande != 'reparation'"))
         # Ticket sans formulaire (cree par Odoo, formulaire web) : accepte sans type de reparation
         self.env["helpdesk.ticket"].create({"name": "Web", "type_demande": "reparation"})
+
+    def test_reparation_planifiee_toute_seule(self):
+        """Réparation avec date prévue et machine : l'intervention planifiée est créée à l'enregistrement,
+        suit le ticket, et « Marquer comme fait » termine tout."""
+        Interv = self.env["machine.intervention"]
+        tech = self.env["res.users"].create({"name": "Tech auto", "login": "tech_auto"})
+        resolu = self.env["helpdesk.stage"].search([("name", "ilike", "résolu")], limit=1) or \
+            self.env["helpdesk.stage"].create({"name": "Résolu"})
+        f = self._form()
+        f.code_client = "TST100"
+        f.lot_id = self.lots[0]
+        ticket = f.save()
+        self.assertFalse(ticket.intervention_ticket_ids, "sans date : rien à planifier")
+        self.assertEqual(ticket.statut_entretien, "a_planifier")
+        quand = fields.Datetime.now() + relativedelta(days=2)
+        ticket.date_planifiee = quand
+        interv = ticket.intervention_ticket_ids
+        self.assertEqual(len(interv), 1)
+        self.assertEqual((interv.state, interv.type, interv.lot_id, interv.date, interv.partner_id),
+                         ("planifie", "reparation", self.lots[0], quand, self.commerce))
+        self.assertFalse(interv.user_id, "pas l'utilisateur connecté par défaut")
+        self.assertIn("Ne gèle pas", interv.description)
+        self.assertEqual(ticket.statut_entretien, "planifie")
+        self.assertIn(interv, Interv.search([("state", "=", "planifie")]), "dans la liste des interventions planifiées")
+        # Le ticket change : l'intervention suit (une seule)
+        ticket.write({"user_id": tech.id, "date_planifiee": quand + relativedelta(days=1), "lot_id": self.lots[1].id})
+        self.assertEqual(ticket.intervention_ticket_ids, interv)
+        self.assertEqual((interv.user_id, interv.date, interv.lot_id), (tech, quand + relativedelta(days=1), self.lots[1]))
+        self.assertEqual(ticket.user_id, tech, "le ticket garde son technicien")
+        # Marquer comme fait
+        ticket.action_marquer_fait()
+        self.assertEqual((interv.state, ticket.stage_id, ticket.statut_entretien), ("fait", resolu, "fait"))
+        self.assertEqual(len(ticket.intervention_ticket_ids), 1, "pas de nouvelle intervention")
+        # Ticket glisse dans Resolu (ou bon signe au portail) : l'intervention est faite aussi
+        autre = self.env["helpdesk.ticket"].create({
+            "name": "Bruit", "partner_id": self.commerce.id, "type_demande": "reparation",
+            "type_reparation": "bruit", "lot_id": self.lots[0].id, "date_planifiee": quand})
+        autre.stage_id = resolu
+        self.assertEqual(autre.intervention_ticket_ids.state, "fait")
+        annule = self.env["helpdesk.stage"].create({"name": "Annulé"})
+        dernier = self.env["helpdesk.ticket"].create({
+            "name": "Annulé ensuite", "partner_id": self.commerce.id, "type_demande": "reparation",
+            "type_reparation": "bruit", "lot_id": self.lots[1].id, "date_planifiee": quand})
+        dernier.stage_id = annule
+        self.assertEqual(dernier.intervention_ticket_ids.state, "annule")
+
+    def test_reparation_auto_annulee_si_le_type_change(self):
+        ticket = self.env["helpdesk.ticket"].create({
+            "name": "Fuite", "partner_id": self.commerce.id, "type_demande": "reparation",
+            "type_reparation": "coule", "lot_id": self.lots[0].id, "date_planifiee": fields.Datetime.now()})
+        interv = ticket.intervention_ticket_ids
+        self.assertEqual((len(interv), interv.state), (1, "planifie"), "créée dès la création du ticket")
+        ticket.type_demande = "commande"
+        self.assertEqual(interv.state, "annule")
+        ticket.type_demande = "remplacement"
+        self.assertEqual(len(ticket.intervention_ticket_ids.filtered(lambda i: i.state == "planifie")), 1)
+        self.assertEqual(ticket.intervention_ticket_ids.filtered(lambda i: i.state == "planifie").type,
+                         "remplacement")
+        # Sans machine : pas d'intervention (machine obligatoire), le bandeau le dit
+        sans = self.env["helpdesk.ticket"].create({
+            "name": "Sans machine", "partner_id": self.commerce.id, "type_demande": "reparation",
+            "type_reparation": "bruit", "date_planifiee": fields.Datetime.now()})
+        if not sans.lot_id:
+            self.assertFalse(sans.intervention_ticket_ids)
+        from lxml import etree
+        arch = etree.fromstring(self.env["helpdesk.ticket"].get_views([(False, "form")])["views"]["form"]["arch"])
+        self.assertTrue(arch.xpath("//div[contains(@class, 'alert-warning')][contains(., 'Date prévue')]"))
