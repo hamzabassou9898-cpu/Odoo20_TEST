@@ -999,3 +999,16 @@ class TestTicketMachine(TransactionCase):
         f.nouvelle_date_fin = so.date_fin_location + relativedelta(months=1)
         f.save().action_prolonger()
         self.assertEqual(len(so.order_line), len(lignes_avant) + 1)
+
+    def test_fiche_client_machines_et_boutons(self):
+        """Fiche client : « Machines chez lui » ouvre la liste des machines ; boutons inutiles masqués."""
+        from lxml import etree
+        action = self.commerce.action_machines_chez_client()
+        self.assertEqual((action["res_model"], action["target"]), ("stock.lot", "new"))
+        machines = self.env["stock.lot"].search(action["domain"])
+        self.assertEqual(machines, self.lots[:2], "les 2 machines du commerce, pas celle de l'autre client")
+        self.assertEqual(self.commerce.sante_nb_machines, len(machines))
+        arch = etree.fromstring(self.env["res.partner"].get_views([(False, "form")])["views"]["form"]["arch"])
+        self.assertTrue(arch.xpath("//button[@name='action_machines_chez_client']"))
+        for bouton in arch.xpath("//div[@name='button_box']/button[@name='action_schedule_meeting']"):
+            self.assertEqual(bouton.get("invisible"), "1", "réunions masquées")

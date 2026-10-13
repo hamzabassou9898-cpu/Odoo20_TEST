@@ -84,6 +84,30 @@ class ResPartner(models.Model):
                 "sante_raison": ", ".join(raisons).capitalize() if raisons else False,
             })
 
+    def action_machines_chez_client(self):
+        """Fiche client : les machines en inventaire chez le client (fenetre agrandissable)."""
+        self.ensure_one()
+        client = self.commercial_partner_id
+        return {"type": "ir.actions.act_window", "name": self.env._("Machines chez %s", client.display_name),
+                "res_model": "stock.lot", "view_mode": "list,form", "views": [(False, "list"), (False, "form")],
+                "target": "new", "domain": [("est_machine", "=", True), ("machine_client_id", "child_of", client.id)],
+                "context": {"create": False}}
+
+    # Boutons intelligents inutiles pour Monroy, retires de la fiche client (si le module est installe)
+    BOUTONS_MASQUES = ("action_schedule_meeting", "action_open_partner_ledger", "open_partner_ledger",
+                       "action_view_partner_ledger", "action_open_unreconciled_items")
+    TEXTES_MASQUES = ("Éléments ouverts", "Open Items")
+
+    @api.model
+    def _get_view(self, view_id=None, view_type="form", **options):
+        arch, view = super()._get_view(view_id, view_type, **options)
+        if view_type == "form":
+            for bouton in arch.xpath("//div[@name='button_box']/button"):
+                texte = " ".join(bouton.itertext())
+                if bouton.get("name") in self.BOUTONS_MASQUES or any(t in texte for t in self.TEXTES_MASQUES):
+                    bouton.set("invisible", "1")
+        return arch, view
+
     def _compute_contrats_client(self):
         Commande = self.env["sale.order"]
         for partner in self:
