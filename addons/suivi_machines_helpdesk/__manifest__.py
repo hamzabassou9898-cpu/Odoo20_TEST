@@ -3,9 +3,10 @@
     "name": "Suivi des machines - Assistance",
     "summary": "Ticket d'assistance relié au code client et au dossier de la machine "
                "(série, location, entretien, historique, interventions)",
-    "version": "20.0.1.53.0",
+    "version": "20.0.1.54.0",
     "category": "Services/Helpdesk",
-    "author": "Hamza Bassou",
+    "author": "Volcan",
+    "website": "https://volcan.ca/",
     "license": "LGPL-3",
     "depends": ["suivi_machines", "helpdesk", "sale"],
     "data": [

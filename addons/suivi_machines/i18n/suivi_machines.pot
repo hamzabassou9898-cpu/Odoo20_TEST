@@ -1,0 +1,1430 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* suivi_machines
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 20.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-13 17:54+0000\n"
+"PO-Revision-Date: 2026-10-13 17:54+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: \n"
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__machine_ref
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_lot_list_machine
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_lot_search_machine
+msgid "# machine"
+msgstr ""
+
+#. module: suivi_machines
+#. odoo-python
+#: code:addons/suivi_machines/models/vente_numero_serie.py:0
+msgid ""
+"%s : indiquez la période de location (début et fin) avant de confirmer."
+msgstr ""
+
+#. module: suivi_machines
+#. odoo-python
+#: code:addons/suivi_machines/models/frise_machine.py:0
+msgid "+%s plus anciens"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_picking_form_machine
+msgid ": valider ce transfert valide aussi l'autre (une seule opération)."
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_intervention_form
+msgid "<span class=\"o_stat_text\">Bon de commande</span>"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_order_form_machine_lot
+msgid "<span class=\"o_stat_text\">Fiche de machine</span>"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_lot_form_machine
+msgid "<span class=\"o_stat_text\">Historique</span>"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_picking_form_machine
+msgid "<strong>Échange de machine</strong> avec"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_suivi_machines_planifier_ramassage__accessoires
+msgid "Accessoires"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__message_needaction
+msgid "Action Needed"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__activity_ids
+msgid "Activities"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__activity_exception_decoration
+msgid "Activity Exception Decoration"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__activity_plans_ids
+msgid "Activity Plans"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__activity_state
+msgid "Activity State"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__activity_type_icon
+msgid "Activity Type Icon"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,help:suivi_machines.field_machine_intervention__route
+msgid "Adresse du commerce du client, pour planifier la tournée."
+msgstr ""
+
+#. module: suivi_machines
+#. odoo-python
+#: code:addons/suivi_machines/models/machine_intervention_frais.py:0
+msgid "Ajoutez d'abord les frais de l'intervention."
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_intervention_form
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_planifier_ramassage_form
+msgid "Annuler"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields.selection,name:suivi_machines.selection__machine_intervention__state__annule
+msgid "Annulée"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__message_attachment_count
+msgid "Attachment Count"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.actions.act_window,help:suivi_machines.action_vue_ensemble_machines
+msgid "Aucun produit machine"
+msgstr ""
+
+#. module: suivi_machines
+#. odoo-python
+#: code:addons/suivi_machines/models/frise_machine.py:0
+msgid "Aucun événement pour l'instant (pas encore livrée ni entretenue)."
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.actions.act_window,help:suivi_machines.action_interventions
+msgid "Aucune intervention"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.actions.act_window,help:suivi_machines.action_machines
+msgid "Aucune machine"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields.selection,name:suivi_machines.selection__machine_intervention__etat_facturation__aucun
+msgid "Aucuns frais"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields.selection,name:suivi_machines.selection__machine_historique__type__autre
+#: model:ir.model.fields.selection,name:suivi_machines.selection__machine_intervention__type__autre
+msgid "Autre"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__sale_order_id
+msgid "Bon de commande"
+msgstr ""
+
+#. module: suivi_machines
+#. odoo-python
+#: code:addons/suivi_machines/models/machine_intervention_frais.py:0
+msgid "Bon de commande %s créé avec les frais."
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields.selection,name:suivi_machines.selection__machine_intervention__etat_facturation__bon_cree
+msgid "Bon de commande créé"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_intervention_search
+msgid "Bon de commande créé (à facturer dans Sage)"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_stock_lot__nb_bris
+#: model:ir.model.fields.selection,name:suivi_machines.selection__machine_historique__type__bris
+#: model:ir.model.fields.selection,name:suivi_machines.selection__machine_intervention__type__bris
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_historique_search
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_intervention_search
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_lot_form_machine
+msgid "Bris"
+msgstr ""
+
+#. module: suivi_machines
+#. odoo-python
+#: code:addons/suivi_machines/models/frise_machine.py:0
+msgid "Bris / réparations"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_intervention_form
+msgid "Ce qui a été fait, problème constaté, pièces changées..."
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields.selection,name:suivi_machines.selection__stock_lot__machine_statut__livree
+msgid "Chez un client (sans commande)"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,help:suivi_machines.field_stock_lot__prochain_entretien_fixe
+msgid ""
+"Choisi à la livraison chez le client. Une fois cet entretien fait, le "
+"suivant est calculé avec la fréquence (dernier entretien + fréquence)."
+msgstr ""
+
+#. module: suivi_machines
+#. odoo-python
+#: code:addons/suivi_machines/models/ramassage.py:0
+msgid "Choisissez au moins une machine ou un accessoire à reprendre."
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_picking_form_machine
+msgid ""
+"Choisissez le <strong>Technicien assigné</strong> : il est obligatoire pour valider cette\n"
+"                    livraison ou ce ramassage."
+msgstr ""
+
+#. module: suivi_machines
+#. odoo-python
+#: code:addons/suivi_machines/models/stock_picking.py:0
+msgid "Choisissez le technicien assigné avant de valider : %s."
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_historique__partner_id
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__partner_id
+#: model:ir.model.fields,field_description:suivi_machines.field_suivi_machines_planifier_ramassage__partner_id
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_intervention_search
+msgid "Client"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_stock_lot__machine_client_id
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_lot_search_machine
+msgid "Client actuel"
+msgstr ""
+
+#. module: suivi_machines
+#. odoo-python
+#: code:addons/suivi_machines/models/frise_machine.py:0
+msgid "Clients"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.actions.act_window,help:suivi_machines.action_vue_ensemble_machines
+msgid ""
+"Cochez « Suivi des machines » sur la catégorie de produits des machines."
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_stock_lot__commande_count
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_lot_form_machine
+msgid "Commandes"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__company_id
+msgid "Company"
+msgstr ""
+
+#. module: suivi_machines
+#. odoo-python
+#: code:addons/suivi_machines/models/vente_numero_serie.py:0
+msgid "Contrat ajusté : ajout de %s."
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__create_uid
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention_frais__create_uid
+#: model:ir.model.fields,field_description:suivi_machines.field_suivi_machines_planifier_ramassage__create_uid
+msgid "Created by"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__create_date
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention_frais__create_date
+#: model:ir.model.fields,field_description:suivi_machines.field_suivi_machines_planifier_ramassage__create_date
+msgid "Created on"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_intervention_form
+msgid "Créer le bon de commande"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_planifier_ramassage_form
+msgid "Créer le bon de retour"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_picking_form_machine
+msgid ""
+"Créer le bon de retour des machines (et accessoires) de cette livraison"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__currency_id
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention_frais__currency_id
+msgid "Currency"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_historique__date
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__date
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_historique_search
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_intervention_search
+msgid "Date"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_sale_order__date_fin_auto
+msgid "Date Fin Auto"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,help:suivi_machines.field_stock_lot__date_mise_service
+msgid "Date d'achat ou de première mise en service."
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_stock_lot__date_installation
+msgid "Date d'installation"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,help:suivi_machines.field_sale_order__date_fin_location
+msgid ""
+"Date de reprise prévue : reprise de l'application Location si elle est "
+"installée, sinon à saisir. Sert à créer le ticket de reprise."
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,help:suivi_machines.field_stock_picking__prochain_entretien
+msgid ""
+"Date du premier entretien des machines livrées. Odoo la garde sur la fiche "
+"de chaque machine et prévient le bureau un mois avant."
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_suivi_machines_planifier_ramassage__date
+msgid "Date du ramassage"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_stock_lot__date_dernier_entretien
+msgid "Dernier entretien"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_historique__description
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__description
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention_frais__name
+msgid "Description"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_historique__display_name
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__display_name
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention_frais__display_name
+#: model:ir.model.fields,field_description:suivi_machines.field_product_category__display_name
+#: model:ir.model.fields,field_description:suivi_machines.field_product_template__display_name
+#: model:ir.model.fields,field_description:suivi_machines.field_sale_order__display_name
+#: model:ir.model.fields,field_description:suivi_machines.field_sale_order_line__display_name
+#: model:ir.model.fields,field_description:suivi_machines.field_stock_lot__display_name
+#: model:ir.model.fields,field_description:suivi_machines.field_stock_move__display_name
+#: model:ir.model.fields,field_description:suivi_machines.field_stock_picking__display_name
+#: model:ir.model.fields,field_description:suivi_machines.field_stock_rule__display_name
+#: model:ir.model.fields,field_description:suivi_machines.field_suivi_machines_planifier_ramassage__display_name
+msgid "Display Name"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.module.module,summary:base.module_suivi_machines
+msgid ""
+"Dossier de chaque machine (numéro de série) : interventions, historique, "
+"santé et tableau de bord"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_sale_order__date_debut_location
+msgid "Début de la location"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_lot_search_machine
+msgid "Emplacement"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_product_product__machine_entrepot
+#: model:ir.model.fields,field_description:suivi_machines.field_product_template__machine_entrepot
+#: model:ir.model.fields.selection,name:suivi_machines.selection__stock_lot__machine_statut__entrepot
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_lot_search_machine
+msgid "En entrepôt"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_template_kanban_machine
+msgid "En entrepôt :"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_product_product__machine_client
+#: model:ir.model.fields,field_description:suivi_machines.field_product_template__machine_client
+msgid "En location"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields.selection,name:suivi_machines.selection__stock_lot__machine_statut__chez_client
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_lot_search_machine
+msgid "En location (chez un client)"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields.selection,name:suivi_machines.selection__stock_lot__machine_etat__en_reparation
+#: model:ir.model.fields.selection,name:suivi_machines.selection__stock_lot__machine_statut__en_reparation
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_lot_search_machine
+msgid "En réparation"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,help:suivi_machines.field_stock_picking__frequence_entretien
+msgid ""
+"Ensuite, Odoo calcule chaque entretien : dernier entretien + fréquence."
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields.selection,name:suivi_machines.selection__machine_historique__type__entretien
+#: model:ir.model.fields.selection,name:suivi_machines.selection__machine_intervention__type__entretien
+msgid "Entretien"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_lot_kanban_machine
+msgid "Entretien :"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_stock_lot__intervalle_entretien
+msgid "Entretien aux (mois)"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_product_product__machine_retard
+#: model:ir.model.fields,field_description:suivi_machines.field_product_template__machine_retard
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_lot_search_machine
+msgid "Entretien en retard"
+msgstr ""
+
+#. module: suivi_machines
+#. odoo-python
+#: code:addons/suivi_machines/models/frise_machine.py:0
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_intervention_search
+msgid "Entretiens"
+msgstr ""
+
+#. module: suivi_machines
+#. odoo-python
+#: code:addons/suivi_machines/models/frise_machine.py:0
+msgid "Entrée en stock"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_stock_lot__est_machine
+msgid "Est une machine"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__etat_facturation
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_intervention_search
+msgid "Facturation"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_stock_lot__facture_count
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_lot_form_machine
+msgid "Factures"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__facture_sage
+#: model:ir.model.fields.selection,name:suivi_machines.selection__machine_intervention__etat_facturation__facture
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_intervention_form
+msgid "Facturé dans Sage"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields.selection,name:suivi_machines.selection__machine_intervention__state__fait
+msgid "Faite"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_intervention_search
+msgid "Faites"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_sale_order__nb_machines
+msgid "Fiche de machine"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_sale_order__date_fin_location
+msgid "Fin de la location"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__message_follower_ids
+msgid "Followers"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__message_partner_ids
+msgid "Followers (Partners)"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__frais_ids
+msgid "Frais"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_intervention_form
+msgid "Frais (déplacement, réparation, livraison, pièces...)"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model,name:suivi_machines.model_machine_intervention_frais
+msgid "Frais d'une intervention"
+msgstr ""
+
+#. module: suivi_machines
+#: model:product.template,name:suivi_machines.produit_frais_deplacement_product_template
+msgid "Frais de déplacement"
+msgstr ""
+
+#. module: suivi_machines
+#: model:product.template,name:suivi_machines.produit_frais_livraison_product_template
+msgid "Frais de livraison / reprise"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_stock_picking__frequence_entretien
+msgid "Fréquence des entretiens"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__has_message
+msgid "Has Message"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_stock_lot__historique_ids
+#: model:ir.ui.menu,name:suivi_machines.menu_machines_historique
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_lot_form_machine
+msgid "Historique"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.actions.act_window,name:suivi_machines.action_historique
+msgid "Historique des machines"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model,name:suivi_machines.model_machine_historique
+msgid "Historique machine"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields.selection,name:suivi_machines.selection__stock_lot__machine_etat__hors_service
+#: model:ir.model.fields.selection,name:suivi_machines.selection__stock_lot__machine_statut__hors_service
+msgid "Hors service"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_historique__id
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__id
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention_frais__id
+#: model:ir.model.fields,field_description:suivi_machines.field_product_category__id
+#: model:ir.model.fields,field_description:suivi_machines.field_product_template__id
+#: model:ir.model.fields,field_description:suivi_machines.field_sale_order__id
+#: model:ir.model.fields,field_description:suivi_machines.field_sale_order_line__id
+#: model:ir.model.fields,field_description:suivi_machines.field_stock_lot__id
+#: model:ir.model.fields,field_description:suivi_machines.field_stock_move__id
+#: model:ir.model.fields,field_description:suivi_machines.field_stock_picking__id
+#: model:ir.model.fields,field_description:suivi_machines.field_stock_rule__id
+#: model:ir.model.fields,field_description:suivi_machines.field_suivi_machines_planifier_ramassage__id
+msgid "ID"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__activity_exception_icon
+msgid "Icon"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,help:suivi_machines.field_machine_intervention__activity_exception_icon
+msgid "Icon to indicate an exception activity."
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,help:suivi_machines.field_machine_intervention__message_needaction
+msgid "If checked, new messages require your attention."
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,help:suivi_machines.field_machine_intervention__message_has_error
+#: model:ir.model.fields,help:suivi_machines.field_machine_intervention__message_has_sms_error
+msgid "If checked, some messages have a delivery error."
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_picking_form_machine
+msgid ""
+"Indiquez le <strong>Prochain entretien</strong> et la <strong>Fréquence des entretiens</strong> des\n"
+"                    machines livrées : Odoo les garde sur la fiche de chaque machine et prévient le bureau un mois avant."
+msgstr ""
+
+#. module: suivi_machines
+#. odoo-python
+#: code:addons/suivi_machines/models/machine_intervention_frais.py:0
+msgid "Indiquez le client de l'intervention."
+msgstr ""
+
+#. module: suivi_machines
+#. odoo-python
+#: code:addons/suivi_machines/models/stock_picking.py:0
+msgid ""
+"Indiquez le prochain entretien et sa fréquence (3, 6, 12 mois…) avant de "
+"valider : %s."
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields.selection,name:suivi_machines.selection__machine_historique__type__installation
+#: model:ir.model.fields.selection,name:suivi_machines.selection__machine_intervention__type__installation
+msgid "Installation"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.actions.act_window,help:suivi_machines.action_interventions
+msgid ""
+"Installation, entretien, bris, réparation, remplacement, ramassage : tout ce"
+" qui arrive à une machine."
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_intervention_search
+msgid "Installations"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,help:suivi_machines.field_machine_intervention__machine_ref
+msgid ""
+"Internal reference number in case it differs from the manufacturer's "
+"lot/serial number"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention_frais__intervention_id
+msgid "Intervention"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model,name:suivi_machines.model_machine_intervention
+msgid "Intervention sur une machine"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.actions.act_window,name:suivi_machines.action_interventions
+#: model:ir.model.fields,field_description:suivi_machines.field_stock_lot__intervention_ids
+#: model:ir.ui.menu,name:suivi_machines.menu_machines_interventions
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_historique_search
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_lot_form_machine
+msgid "Interventions"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__message_is_follower
+msgid "Is Follower"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__write_uid
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention_frais__write_uid
+#: model:ir.model.fields,field_description:suivi_machines.field_suivi_machines_planifier_ramassage__write_uid
+msgid "Last Updated by"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__write_date
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention_frais__write_date
+#: model:ir.model.fields,field_description:suivi_machines.field_suivi_machines_planifier_ramassage__write_date
+msgid "Last Updated on"
+msgstr ""
+
+#. module: suivi_machines
+#. odoo-python
+#: code:addons/suivi_machines/models/vente_numero_serie.py:0
+msgid "Le n° de série %(lot)s n'appartient pas au produit %(prod)s."
+msgstr ""
+
+#. module: suivi_machines
+#. odoo-python
+#: code:addons/suivi_machines/models/vente_numero_serie.py:0
+msgid "Le n° de série %s est déjà sur une autre ligne de cette soumission."
+msgstr ""
+
+#. module: suivi_machines
+#. odoo-python
+#: code:addons/suivi_machines/models/ramassage.py:0
+msgid "Le ramassage se planifie depuis une livraison terminée."
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,help:suivi_machines.field_product_category__suivi_machine
+#: model:ir.model.fields,help:suivi_machines.field_product_product__est_categorie_machine
+#: model:ir.model.fields,help:suivi_machines.field_product_template__est_categorie_machine
+#: model:ir.model.fields,help:suivi_machines.field_sale_order_line__est_machine
+#: model:ir.model.fields,help:suivi_machines.field_stock_lot__est_machine
+#: model:ir.model.fields,help:suivi_machines.field_stock_move__est_machine
+msgid ""
+"Les numéros de série des produits de cette catégorie apparaissent dans "
+"Inventaire > Machines."
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.actions.act_window,help:suivi_machines.action_machines
+msgid ""
+"Les numéros de série des produits de la catégorie « Machines &amp; "
+"équipements » apparaissent ici."
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_suivi_machines_planifier_ramassage__picking_id
+msgid "Livraison"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,help:suivi_machines.field_stock_picking__technicien_requis
+msgid ""
+"Livraison chez un client ou ramassage : le technicien assigné est "
+"obligatoire pour valider."
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_order_form_machine_lot
+msgid "Livraison à faire"
+msgstr ""
+
+#. module: suivi_machines
+#. odoo-python
+#: code:addons/suivi_machines/models/vente_numero_serie.py:0
+msgid "Livraison à faire - %s"
+msgstr ""
+
+#. module: suivi_machines
+#. odoo-python
+#: code:addons/suivi_machines/models/vente_numero_serie.py:0
+msgid "Livraison à faire : %s."
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_sale_order__nb_livraisons_a_faire
+msgid "Livraisons à faire"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_stock_picking__livre_machines
+msgid "Livre des machines"
+msgstr ""
+
+#. module: suivi_machines
+#. odoo-python
+#: code:addons/suivi_machines/models/frise_machine.py:0
+msgid "Livrée"
+msgstr ""
+
+#. module: suivi_machines
+#. odoo-python
+#: code:addons/suivi_machines/models/frise_machine.py:0
+msgid "Livrée · %s"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields.selection,name:suivi_machines.selection__sale_order__type_commande__location
+msgid "Location"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model,name:suivi_machines.model_stock_lot
+msgid "Lot/Serial"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_historique_search
+msgid "Machine"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_historique__lot_id
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__lot_id
+msgid "Machine (n° de série)"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__lot_remplacement_id
+msgid "Machine de remplacement"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,help:suivi_machines.field_machine_intervention__lot_remplacement_id
+msgid "Machine installée à la place de celle-ci."
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,help:suivi_machines.field_stock_move__machine_lot_id
+msgid ""
+"Machine précise à livrer (choisie sur le bon de vente ou au moment de la "
+"livraison) : elle est réservée à la place de celle choisie automatiquement."
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,help:suivi_machines.field_sale_order_line__machine_lot_id
+msgid "Machine précise à livrer : elle sera réservée sur le bon de livraison."
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_product_product__machine_total
+#: model:ir.model.fields,field_description:suivi_machines.field_product_template__machine_total
+#: model:ir.model.fields,field_description:suivi_machines.field_sale_order__machine_ids
+#: model:ir.ui.menu,name:suivi_machines.menu_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.product_template_form_machine
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_lot_graph_machine
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_lot_pivot_machine
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_lot_search_machine
+msgid "Machines"
+msgstr ""
+
+#. module: suivi_machines
+#. odoo-python
+#: code:addons/suivi_machines/models/vente_numero_serie.py:0
+msgid "Machines de %s"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_suivi_machines_planifier_ramassage__machines_livrees_ids
+msgid "Machines livrées"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_suivi_machines_planifier_ramassage__lot_ids
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_planifier_ramassage_form
+msgid "Machines à reprendre"
+msgstr ""
+
+#. module: suivi_machines
+#: model:product.template,name:suivi_machines.produit_frais_reparation_product_template
+msgid "Main-d'œuvre réparation"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_intervention_form
+msgid "Marquer comme faite"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,help:suivi_machines.field_machine_intervention__activity_type_icon
+msgid "Material Symbols icon e.g. checklist"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__message_has_error
+msgid "Message Delivery error"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__message_ids
+msgid "Messages"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_stock_lot__date_mise_service
+msgid "Mise en service"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields.selection,name:suivi_machines.selection__machine_historique__type__mouvement
+msgid "Mouvement d'inventaire"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_historique_search
+msgid "Mouvements d'inventaire"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__my_activity_date_deadline
+msgid "My Activity Deadline"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_stock_lot__nb_interventions
+msgid "Nb interventions"
+msgstr ""
+
+#. module: suivi_machines
+#. odoo-python
+#: code:addons/suivi_machines/models/vente_numero_serie.py:0
+msgid "New"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__activity_date_deadline
+msgid "Next Activity Deadline"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__activity_summary
+msgid "Next Activity Summary"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__activity_type_id
+msgid "Next Activity Type"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields.selection,name:suivi_machines.selection__stock_lot__machine_etat__actif
+msgid "Normal"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_lot_form_machine
+msgid "Nouvelle intervention"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__message_needaction_counter
+msgid "Number of Actions"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__message_has_error_counter
+msgid "Number of errors"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,help:suivi_machines.field_machine_intervention__message_needaction_counter
+msgid "Number of messages requiring action"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,help:suivi_machines.field_machine_intervention__message_has_error_counter
+msgid "Number of messages with delivery error"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__name
+msgid "Numéro"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_sale_order_line__machine_lot_id
+#: model:ir.model.fields,field_description:suivi_machines.field_stock_move__machine_lot_id
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_lot_list_machine
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_lot_search_machine
+msgid "N° de série"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_picking_form_machine
+msgid "N° de série (machine)"
+msgstr ""
+
+#. module: suivi_machines
+#. odoo-python
+#: code:addons/suivi_machines/models/vente_numero_serie.py:0
+msgid "N° de série livrés : %s."
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_historique__user_id
+msgid "Par"
+msgstr ""
+
+#. module: suivi_machines
+#. odoo-python
+#: code:addons/suivi_machines/models/ramassage.py:0
+#: model:ir.model,name:suivi_machines.model_suivi_machines_planifier_ramassage
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_picking_form_machine
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_planifier_ramassage_form
+msgid "Planifier le ramassage"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields.selection,name:suivi_machines.selection__machine_intervention__state__planifie
+msgid "Planifiée"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_intervention_search
+msgid "Planifiées"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_lot_search_machine
+msgid "Plus de 3 bris"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,help:suivi_machines.field_suivi_machines_planifier_ramassage__avec_accessoires
+msgid "Pompes, etc. livrées avec les machines (même quantité)."
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_stock_lot__prochain_entretien_fixe
+msgid "Premier entretien prévu"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention_frais__prix_unitaire
+msgid "Prix unitaire"
+msgstr ""
+
+#. module: suivi_machines
+#. odoo-python
+#: code:addons/suivi_machines/models/frise_machine.py:0
+#: model:ir.model.fields,field_description:suivi_machines.field_stock_lot__date_prochain_entretien
+#: model:ir.model.fields,field_description:suivi_machines.field_stock_picking__prochain_entretien
+msgid "Prochain entretien"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model,name:suivi_machines.model_product_template
+msgid "Product"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model,name:suivi_machines.model_product_category
+msgid "Product Category"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_historique__product_id
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__product_id
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_intervention_search
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_lot_search_machine
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_template_kanban_machine
+msgid "Produit"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention_frais__product_id
+msgid "Produit / service"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention_frais__quantite
+msgid "Quantité"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields.selection,name:suivi_machines.selection__machine_historique__type__ramassage
+#: model:ir.model.fields.selection,name:suivi_machines.selection__machine_intervention__type__ramassage
+msgid "Ramassage"
+msgstr ""
+
+#. module: suivi_machines
+#. odoo-python
+#: code:addons/suivi_machines/models/ramassage.py:0
+msgid "Ramassage planifié : %s"
+msgstr ""
+
+#. module: suivi_machines
+#. odoo-python
+#: code:addons/suivi_machines/models/frise_machine.py:0
+msgid "Ramassée"
+msgstr ""
+
+#. module: suivi_machines
+#. odoo-python
+#: code:addons/suivi_machines/models/frise_machine.py:0
+msgid "Ramassée · %s"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_intervention_form
+msgid "Remettre en planifiée"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields.selection,name:suivi_machines.selection__machine_historique__type__remplacement
+#: model:ir.model.fields.selection,name:suivi_machines.selection__machine_intervention__type__remplacement
+msgid "Remplacement"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_intervention_search
+msgid "Remplacements"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_suivi_machines_planifier_ramassage__avec_accessoires
+msgid "Reprendre aussi les accessoires"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,help:suivi_machines.field_sale_order__date_debut_location
+msgid ""
+"Reprise de l'application Location si elle est installée, sinon à saisir."
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__activity_user_id
+msgid "Responsible User"
+msgstr ""
+
+#. module: suivi_machines
+#. odoo-python
+#: code:addons/suivi_machines/models/ramassage.py:0
+msgid "Retour de %s"
+msgstr ""
+
+#. module: suivi_machines
+#. odoo-python
+#: code:addons/suivi_machines/models/stock_picking.py:0
+msgid "Retour de la machine (%s)"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__route
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_intervention_search
+msgid "Route"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_historique__reference
+msgid "Référence"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields.selection,name:suivi_machines.selection__machine_historique__type__reparation
+#: model:ir.model.fields.selection,name:suivi_machines.selection__machine_intervention__type__reparation
+msgid "Réparation"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_product_product__machine_probleme
+#: model:ir.model.fields,field_description:suivi_machines.field_product_template__machine_probleme
+msgid "Réparation / à remplacer"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__message_has_sms_error
+msgid "SMS Delivery error"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model,name:suivi_machines.model_sale_order
+msgid "Sales Order"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model,name:suivi_machines.model_sale_order_line
+msgid "Sales Order Line"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields.selection,name:suivi_machines.selection__stock_lot__machine_statut__sans_emplacement
+msgid "Sans emplacement"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_lot_search_machine
+msgid "Sans entretien depuis 6 mois"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_lot_form_machine
+msgid "Santé de la machine"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention_frais__sequence
+msgid "Sequence"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention_frais__sous_total
+msgid "Sous-total"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,help:suivi_machines.field_machine_intervention__activity_state
+msgid ""
+"Status based on activities\n"
+"Overdue: Due date is already passed\n"
+"Today: Activity date is today\n"
+"Planned: Future activities."
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_historique__state
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__state
+#: model:ir.model.fields,field_description:suivi_machines.field_stock_lot__machine_statut
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_lot_search_machine
+msgid "Statut"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model,name:suivi_machines.model_stock_move
+msgid "Stock Move"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model,name:suivi_machines.model_stock_rule
+msgid "Stock Rule"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_product_category__suivi_machine
+#: model:ir.model.fields,field_description:suivi_machines.field_product_product__est_categorie_machine
+#: model:ir.model.fields,field_description:suivi_machines.field_product_template__est_categorie_machine
+#: model:ir.model.fields,field_description:suivi_machines.field_sale_order_line__est_machine
+#: model:ir.model.fields,field_description:suivi_machines.field_stock_move__est_machine
+#: model:ir.module.module,shortdesc:base.module_suivi_machines
+msgid "Suivi des machines"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__user_id
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_intervention_search
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_picking_search_machine
+msgid "Technicien"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_stock_picking__livreur_id
+#: model:ir.model.fields,field_description:suivi_machines.field_suivi_machines_planifier_ramassage__livreur_id
+msgid "Technicien assigné"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,help:suivi_machines.field_stock_picking__livreur_id
+msgid "Technicien qui fait la livraison (ou le ramassage) de la machine."
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_stock_picking__technicien_requis
+msgid "Technicien requis"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_intervention_form
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_intervention_list
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_lot_list_machine
+msgid "Total"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__montant_frais
+msgid "Total des frais"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields.selection,name:suivi_machines.selection__stock_picking__frequence_entretien__12
+msgid "Tous les 12 mois"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields.selection,name:suivi_machines.selection__stock_picking__frequence_entretien__24
+msgid "Tous les 24 mois"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields.selection,name:suivi_machines.selection__stock_picking__frequence_entretien__3
+msgid "Tous les 3 mois"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields.selection,name:suivi_machines.selection__stock_picking__frequence_entretien__6
+msgid "Tous les 6 mois"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.actions.act_window,name:suivi_machines.action_machines
+#: model:ir.ui.menu,name:suivi_machines.menu_machines_toutes
+msgid "Toutes les machines"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model,name:suivi_machines.model_stock_picking
+msgid "Transfer"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_historique__type
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__type
+#: model:ir.model.fields,field_description:suivi_machines.field_sale_order__type_commande
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_historique_search
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_intervention_search
+msgid "Type"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,help:suivi_machines.field_machine_intervention__activity_exception_decoration
+msgid "Type of the exception activity on record."
+msgstr ""
+
+#. module: suivi_machines
+#. odoo-python
+#: code:addons/suivi_machines/models/vente_numero_serie.py:0
+msgid "Une ligne avec un n° de série (%s) doit avoir une quantité de 1."
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields.selection,name:suivi_machines.selection__stock_lot__machine_statut__vendue
+msgid "Vendue"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_product_product__machine_vendue
+#: model:ir.model.fields,field_description:suivi_machines.field_product_template__machine_vendue
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_lot_search_machine
+msgid "Vendues"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields.selection,name:suivi_machines.selection__sale_order__type_commande__vente
+msgid "Vente"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,help:suivi_machines.field_sale_order__type_commande
+msgid ""
+"Vente : la machine livrée devient « Vendue ». Location : elle devient « En "
+"location » chez le client."
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_stock_lot__frise_html
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_lot_form_machine
+msgid "Vie de la machine"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.ui.menu,name:suivi_machines.menu_machines_vue_ensemble
+msgid "Vue d'ensemble"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.actions.act_window,name:suivi_machines.action_vue_ensemble_machines
+msgid "Vue d'ensemble des machines"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_lot_kanban_machine
+msgid "bris"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_template_kanban_machine
+msgid "entretien(s) en retard"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_template_kanban_machine
+msgid "machines"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_template_kanban_machine
+msgid "réparation / à remplacer"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_template_kanban_machine
+msgid ""
+"·\n"
+"                                En location :"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_template_kanban_machine
+msgid ""
+"·\n"
+"                                Vendues :"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields.selection,name:suivi_machines.selection__machine_intervention__etat_facturation__a_facturer
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_intervention_search
+msgid "À facturer"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields.selection,name:suivi_machines.selection__stock_lot__machine_etat__a_remplacer
+#: model:ir.model.fields.selection,name:suivi_machines.selection__stock_lot__machine_statut__a_remplacer
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_lot_search_machine
+msgid "À remplacer"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_stock_lot__age_machine
+msgid "Âge"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,help:suivi_machines.field_stock_picking__echange_picking_id
+msgid ""
+"Échange de machine : l'autre transfert (ramassage ou livraison). Valider "
+"l'un valide les deux."
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_stock_picking__echange_picking_id
+msgid "Échange lié"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_stock_lot__machine_etat
+msgid "État de la machine"
+msgstr ""

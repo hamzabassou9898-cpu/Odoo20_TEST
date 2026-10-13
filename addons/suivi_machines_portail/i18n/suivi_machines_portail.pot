@@ -1,0 +1,1221 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* suivi_machines_portail
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 20.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-13 17:54+0000\n"
+"PO-Revision-Date: 2026-10-13 17:54+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: \n"
+
+#. module: suivi_machines_portail
+#. odoo-python
+#: code:addons/suivi_machines_portail/models/note_technicien.py:0
+msgid "%s pièce(s) jointe(s)"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.actions.report,print_report_name:suivi_machines_portail.action_rapport_bon_intervention
+msgid "'Bon %s' % object.name"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.view_note_technicien_form
+msgid "(aucun texte)"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.appel_de_service_merci
+msgid "(n°"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_ma_tache
+msgid ". Le bureau l'a reçu."
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_ma_tache
+msgid "<i class=\"oi me-1\" data-icon=\"arrow_back\"/>Ma journée"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_ma_tache
+msgid "<i class=\"oi me-1\" data-icon=\"check\"/>Bon"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_ma_tache
+msgid "<i class=\"oi me-1\" data-icon=\"download\"/>Voir le bon (PDF)"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_ma_tache
+msgid "<i class=\"oi me-1\" data-icon=\"phone\"/>Appeler"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_ma_tache
+msgid "<i class=\"oi me-1\" data-icon=\"send\"/>Envoyer au bureau"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_ma_journee
+msgid ""
+"<i class=\"oi oi-2x d-block mb-2 text-muted\" data-icon=\"coffee\"/>Rien de "
+"prévu ce jour-là."
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_ma_tache
+msgid "<span class=\"form-check-label\">EN FONCTION</span>"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_ma_tache
+msgid "<span class=\"form-check-label\">PLEINE</span>"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_ma_journee
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_ma_tache
+msgid "<span class=\"fw-bold\">Accessoires : </span>"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_ma_journee
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_ma_tache
+msgid "<span class=\"fw-bold\">Machines : </span>"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.rapport_bon_intervention
+msgid "<span class=\"text-muted\">Rév. 01/26</span>"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_ma_tache
+msgid "<strong>Équipements :</strong>"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_res_partner__a_acces_portail
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_res_users__a_acces_portail
+msgid "Accès portail"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model,name:suivi_machines_portail.model_mail_activity
+msgid "Activity"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_note_technicien__activity_id
+msgid "Activité"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.rapport_bon_intervention
+msgid "Adresse"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_ma_tache
+msgid "Ajouter une note"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_remplacer_techniciens_ligne__ancien_id
+msgid "Ancien compte"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.view_remplacer_techniciens_form
+msgid "Annuler"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.appel_de_service_merci
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.appel_de_service_page
+msgid "Appel de service"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.actions.act_window,help:suivi_machines_portail.action_bons_intervention
+msgid "Aucun bon signé pour l'instant"
+msgstr ""
+
+#. module: suivi_machines_portail
+#. odoo-python
+#: code:addons/suivi_machines_portail/models/appel_web.py:0
+msgid ""
+"Aucune machine n'est enregistrée à votre dossier : choisissez un autre type "
+"de demande ou appelez-nous."
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.actions.act_window,help:suivi_machines_portail.action_notes_technicien
+msgid "Aucune note à lire"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_ma_journee
+msgid "Aujourd'hui"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.rapport_bon_intervention
+msgid "Bon"
+msgstr ""
+
+#. module: suivi_machines_portail
+#. odoo-python
+#: code:addons/suivi_machines_portail/models/bon_intervention.py:0
+msgid "Bon %s signé par le technicien %s."
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.actions.report,name:suivi_machines_portail.action_rapport_bon_intervention
+msgid "Bon d'intervention"
+msgstr ""
+
+#. module: suivi_machines_portail
+#. odoo-python
+#: code:addons/suivi_machines_portail/models/bon_intervention.py:0
+msgid "Bon d'intervention %s signé"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model,name:suivi_machines_portail.model_suivi_bon_intervention
+msgid "Bon d'intervention signé"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.actions.act_window,name:suivi_machines_portail.action_bons_intervention
+#: model:ir.ui.menu,name:suivi_machines_portail.menu_bons_intervention
+msgid "Bons d'intervention signés"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_helpdesk_ticket__bon_intervention_ids
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_machine_intervention__bon_intervention_ids
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_stock_picking__bon_intervention_ids
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_bon_intervention_mixin__bon_intervention_ids
+msgid "Bons signés"
+msgstr ""
+
+#. module: suivi_machines_portail
+#. odoo-python
+#: code:addons/suivi_machines_portail/models/bon_intervention.py:0
+msgid "Ce bon n'attend pas la signature du technicien."
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_ma_tache
+msgid ""
+"Ce qui a été fait, pièces changées, photos… La note s'ajoute au ticket et le"
+" bureau est prévenu."
+msgstr ""
+
+#. module: suivi_machines_portail
+#. odoo-python
+#: code:addons/suivi_machines_portail/controllers/portail.py:0
+msgid "Cette tâche est déjà terminée."
+msgstr ""
+
+#. module: suivi_machines_portail
+#. odoo-python
+#: code:addons/suivi_machines_portail/models/remplacer.py:0
+msgid "Choisissez au moins un nouveau technicien."
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_bon_intervention__partner_id
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_ma_tache
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.rapport_bon_intervention
+msgid "Client"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_ma_tache
+msgid "Cochez d'abord l'état des équipements."
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model,name:suivi_machines_portail.model_res_partner
+msgid "Contact"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_bon_intervention__create_uid
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_note_technicien__create_uid
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_remplacer_techniciens__create_uid
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_remplacer_techniciens_ligne__create_uid
+msgid "Created by"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_bon_intervention__create_date
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_note_technicien__create_date
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_remplacer_techniciens__create_date
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_remplacer_techniciens_ligne__create_date
+msgid "Created on"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.rapport_bon_intervention
+msgid "DATE DE L'ENTRETIEN"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.rapport_bon_intervention
+msgid "DATE DE LIVRAISON"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.rapport_bon_intervention
+msgid "DATE DE REPRISE DES ÉQUIPEMENTS"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_note_technicien__date
+msgid "Date"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_ma_tache
+msgid "Date de l'entretien"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_ma_tache
+msgid "Date de livraison"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_ma_tache
+msgid "Date de reprise des équipements"
+msgstr ""
+
+#. module: suivi_machines_portail
+#. odoo-python
+#: code:addons/suivi_machines_portail/models/appel_web.py:0
+msgid "Demande reçue par le formulaire web"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_helpdesk_ticket__display_name
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_machine_intervention__display_name
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_mail_activity__display_name
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_pilotage_indicateur__display_name
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_portail_tache__display_name
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_portal_entry__display_name
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_res_partner__display_name
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_res_users__display_name
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_stock_picking__display_name
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_bon_intervention__display_name
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_bon_intervention_mixin__display_name
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_note_technicien__display_name
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_remplacer_techniciens__display_name
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_remplacer_techniciens_ligne__display_name
+msgid "Display Name"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_note_technicien__document
+msgid "Document"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model,name:suivi_machines_portail.model_suivi_bon_intervention_mixin
+msgid "Documents avec bons d'intervention signés"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_ma_journee
+msgid "Détails <i class=\"oi\" data-icon=\"chevron_right\"/>"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.rapport_bon_intervention
+msgid "EN FONCTION"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_helpdesk_ticket__reprise_en_fonction
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_machine_intervention__reprise_en_fonction
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_stock_picking__reprise_en_fonction
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_bon_intervention__en_fonction
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_bon_intervention_mixin__reprise_en_fonction
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_ma_tache
+msgid "En fonction"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_tache_suivi
+msgid "En retard"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_bon_intervention__texte
+msgid "Engagement signé"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.view_bon_intervention_form
+msgid "Engagement signé par le client"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_ma_tache
+msgid "Enregistrer l'état"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields,help:suivi_machines_portail.field_suivi_bon_intervention__doit_signer_technicien
+msgid ""
+"Entretien / réparation : le technicien signe aussi le bon (comme sur le "
+"formulaire papier)."
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields.selection,name:suivi_machines_portail.selection__suivi_bon_intervention__type_bon__entretien
+msgid "Entretien sur les équipements"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.appel_de_service_page
+msgid "Envoyer"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_tache_suivi
+msgid "Fait"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_bon_intervention__type_bon
+msgid "Formulaire"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_helpdesk_ticket__id
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_machine_intervention__id
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_mail_activity__id
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_pilotage_indicateur__id
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_portail_tache__id
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_portal_entry__id
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_res_partner__id
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_res_users__id
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_stock_picking__id
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_bon_intervention__id
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_bon_intervention_mixin__id
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_note_technicien__id
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_remplacer_techniciens__id
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_remplacer_techniciens_ligne__id
+msgid "ID"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model,name:suivi_machines_portail.model_pilotage_indicateur
+msgid "Indicateur de pilotage"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.appel_de_service_page
+msgid ""
+"Inscrit sur vos factures. Avec votre code client, nous retrouvons votre dossier\n"
+"                                        (entreprise, adresse, machines) : pas besoin de remplir l'entreprise, l'adresse et la ville."
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_bon_intervention__intervention_id
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_note_technicien__intervention_id
+msgid "Intervention"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model,name:suivi_machines_portail.model_machine_intervention
+msgid "Intervention sur une machine"
+msgstr ""
+
+#. module: suivi_machines_portail
+#. odoo-python
+#: code:addons/suivi_machines_portail/models/bon_intervention.py:0
+msgid ""
+"J'ai reçu en bon état les articles mentionnés ci-dessus, ainsi que le "
+"congélateur pour lesquels je suis responsable. Je m'engage à remettre dans "
+"le même état de propreté qu'ils m'ont été livrés. Je comprends également que"
+" %(societe)s pourra me facturer tous items manquants ou en mauvais état lors"
+" de la remise des équipements. Dans le cas où les items ne sont pas remis "
+"lors de la reprise des équipements, le client devra les retourner à SES "
+"FRAIS."
+msgstr ""
+
+#. module: suivi_machines_portail
+#. odoo-python
+#: code:addons/suivi_machines_portail/models/bon_intervention.py:0
+msgid ""
+"Je confirme que %(societe)s a effectué %(travail)s sur les équipements en "
+"place. Je confirme également que les équipements que j'ai en ma possession "
+"sont tels qu'indiqué ci-dessus."
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_ma_journee
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.view_note_technicien_search
+msgid "Jour"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_ma_journee
+msgid "Jour précédent"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_ma_journee
+msgid "Jour suivant"
+msgstr ""
+
+#. module: suivi_machines_portail
+#. odoo-python
+#: code:addons/suivi_machines_portail/models/appel_web.py:0
+msgid "L'adresse courriel n'est pas valide."
+msgstr ""
+
+#. module: suivi_machines_portail
+#. odoo-python
+#: code:addons/suivi_machines_portail/models/bon_intervention.py:0
+msgid ""
+"La propreté du congélateur et des accessoires lors de la reprise de "
+"possession à la fin du contrat était :"
+msgstr ""
+
+#. module: suivi_machines_portail
+#. odoo-python
+#: code:addons/suivi_machines_portail/controllers/portail.py:0
+#: code:addons/suivi_machines_portail/models/bon_intervention.py:0
+msgid "La signature est vide."
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_bon_intervention__write_uid
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_note_technicien__write_uid
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_remplacer_techniciens__write_uid
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_remplacer_techniciens_ligne__write_uid
+msgid "Last Updated by"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_bon_intervention__write_date
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_note_technicien__write_date
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_remplacer_techniciens__write_date
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_remplacer_techniciens_ligne__write_date
+msgid "Last Updated on"
+msgstr ""
+
+#. module: suivi_machines_portail
+#. odoo-python
+#: code:addons/suivi_machines_portail/models/bon_intervention.py:0
+msgid "Le client a signé le bon %s : validez le transfert."
+msgstr ""
+
+#. module: suivi_machines_portail
+#. odoo-python
+#: code:addons/suivi_machines_portail/controllers/portail.py:0
+msgid "Le client doit d'abord signer le bon."
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.actions.act_window,help:suivi_machines_portail.action_bons_intervention
+msgid ""
+"Le client signe sur le téléphone du technicien à la fin du travail (portail "
+"« Ma journée »)."
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields,help:suivi_machines_portail.field_res_partner__a_acces_portail
+#: model:ir.model.fields,help:suivi_machines_portail.field_res_users__a_acces_portail
+msgid "Le contact a un utilisateur portail (ex. un technicien)."
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.actions.act_window,help:suivi_machines_portail.action_notes_technicien
+msgid ""
+"Les notes et photos envoyées par les techniciens depuis leur portail "
+"arrivent ici."
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.module.module,summary:base.module_suivi_machines_portail
+msgid ""
+"Les techniciens deviennent des utilisateurs portail (gratuits) : leur "
+"journée sur le portail web (livraisons, ramassages, entretiens, réparations)"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.view_remplacer_techniciens_form
+msgid ""
+"Les tâches <b>à faire</b> de chaque ancien compte passent au technicien portail choisi :\n"
+"                    livraisons et ramassages pas encore faits, tickets ouverts, interventions planifiées.\n"
+"                    L'historique (déjà fait) ne change pas. Laissez « Technicien portail » vide pour ne rien changer."
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields.selection,name:suivi_machines_portail.selection__suivi_bon_intervention__type_bon__livraison
+msgid "Livraison des équipements"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.view_note_technicien_search
+msgid "Livraisons / ramassages"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_note_technicien__lu
+#: model:ir.model.fields.selection,name:suivi_machines_portail.selection__suivi_note_technicien__statut_lecture__lue
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.view_note_technicien_form
+msgid "Lue"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.view_note_technicien_search
+msgid "Lues"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:portal.entry,name:suivi_machines_portail.portal_entry_ma_journee
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_breadcrumbs_journee
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_ma_journee
+msgid "Ma journée"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_bon_intervention__lot_id
+msgid "Machine"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.view_note_technicien_form
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.view_note_technicien_list
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.view_note_technicien_suivi_list
+msgid "Marquer comme lue"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_ma_tache
+msgid "Matériel"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.appel_de_service_merci
+msgid "Merci !"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:portal.entry,description:suivi_machines_portail.portal_entry_ma_journee
+msgid "Mes livraisons, ramassages, entretiens et réparations du jour"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_ma_tache
+msgid "Mes notes envoyées"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.appel_de_service_page
+msgid "Message"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields.selection,name:suivi_machines_portail.selection__helpdesk_ticket__reprise_proprete__moyen
+#: model:ir.model.fields.selection,name:suivi_machines_portail.selection__machine_intervention__reprise_proprete__moyen
+#: model:ir.model.fields.selection,name:suivi_machines_portail.selection__stock_picking__reprise_proprete__moyen
+#: model:ir.model.fields.selection,name:suivi_machines_portail.selection__suivi_bon_intervention__proprete__moyen
+#: model:ir.model.fields.selection,name:suivi_machines_portail.selection__suivi_bon_intervention_mixin__reprise_proprete__moyen
+msgid "Moyen"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.rapport_bon_intervention
+msgid "NOM EN LETTRES MOULÉES"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_note_technicien__note
+msgid "Note"
+msgstr ""
+
+#. module: suivi_machines_portail
+#. odoo-python
+#: code:addons/suivi_machines_portail/models/note_technicien.py:0
+msgid "Note de %(tech)s à lire"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model,name:suivi_machines_portail.model_suivi_note_technicien
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.view_note_technicien_form
+msgid "Note du technicien"
+msgstr ""
+
+#. module: suivi_machines_portail
+#. odoo-python
+#: code:addons/suivi_machines_portail/models/note_technicien.py:0
+msgid "Note du technicien (portail)"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_ma_tache
+msgid "Note envoyée au bureau. Merci !"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:pilotage.indicateur,name:suivi_machines_portail.indicateur_notes_a_lire
+msgid "Notes de techniciens à lire"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.actions.act_window,name:suivi_machines_portail.action_notes_technicien
+#: model:ir.ui.menu,name:suivi_machines_portail.menu_notes_technicien
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.view_note_technicien_search
+msgid "Notes des techniciens"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_helpdesk_ticket__note_technicien_ids
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_machine_intervention__note_technicien_ids
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_stock_picking__note_technicien_ids
+msgid "Notes du technicien"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:pilotage.indicateur,description:suivi_machines_portail.indicateur_notes_a_lire
+msgid "Notes et photos envoyées depuis le portail"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.appel_de_service_merci
+msgid "Notre équipe vous contactera rapidement pour planifier la visite."
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.appel_de_service_merci
+msgid "Nouvelle demande"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_bon_intervention__name
+msgid "Numéro"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.appel_de_service_page
+msgid "Obligatoire sans code client"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.view_note_technicien_suivi_list
+msgid "Ouvrir"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.view_note_technicien_form
+msgid "Ouvrir le document"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_bon_intervention__pdf_id
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.view_bon_intervention_list
+msgid "PDF"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.rapport_bon_intervention
+msgid "PLEINE"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_ma_tache
+msgid "Photos et documents (20 Mo max. par fichier)"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_note_technicien__attachment_ids
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.view_note_technicien_form
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.view_note_technicien_list
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.view_note_technicien_suivi_list
+msgid "Pièces jointes"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_helpdesk_ticket__reprise_pleine
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_machine_intervention__reprise_pleine
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_stock_picking__reprise_pleine
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_bon_intervention__pleine
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_bon_intervention_mixin__reprise_pleine
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_ma_tache
+msgid "Pleine"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model,name:suivi_machines_portail.model_portal_entry
+msgid "Portal Entry"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_ma_tache
+msgid "Problème signalé"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_helpdesk_ticket__reprise_proprete
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_machine_intervention__reprise_proprete
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_stock_picking__reprise_proprete
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_bon_intervention__proprete
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_bon_intervention_mixin__reprise_proprete
+msgid "Propreté à la reprise"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model,name:suivi_machines_portail.model_suivi_remplacer_techniciens_ligne
+msgid "Remplacement d'un technicien"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_remplacer_techniciens__ligne_ids
+msgid "Remplacements"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.actions.act_window,name:suivi_machines_portail.action_remplacer_techniciens
+#: model:ir.model,name:suivi_machines_portail.model_suivi_remplacer_techniciens
+#: model:ir.ui.menu,name:suivi_machines_portail.menu_remplacer_techniciens
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.view_remplacer_techniciens_form
+msgid "Remplacer des techniciens"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields.selection,name:suivi_machines_portail.selection__suivi_bon_intervention__type_bon__reprise
+msgid "Reprise des équipements"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_note_technicien__responsable_id
+msgid "Responsable"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_helpdesk_ticket__recu_par_web
+msgid "Reçu par le formulaire web"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_ma_tache
+msgid "Référence :"
+msgstr ""
+
+#. module: suivi_machines_portail
+#. odoo-python
+#: code:addons/suivi_machines_portail/models/appel_web.py:0
+msgid "Réparation « Autre » : décrivez le problème dans la section Message."
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.rapport_bon_intervention
+msgid "SIGNATURE DU CLIENT"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.rapport_bon_intervention
+msgid "SIGNATURE DU CLIENT OU DU COMMIS"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.rapport_bon_intervention
+msgid "SIGNATURE DU TECHNICIEN"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields.selection,name:suivi_machines_portail.selection__helpdesk_ticket__reprise_proprete__sale
+#: model:ir.model.fields.selection,name:suivi_machines_portail.selection__machine_intervention__reprise_proprete__sale
+#: model:ir.model.fields.selection,name:suivi_machines_portail.selection__stock_picking__reprise_proprete__sale
+#: model:ir.model.fields.selection,name:suivi_machines_portail.selection__suivi_bon_intervention__proprete__sale
+#: model:ir.model.fields.selection,name:suivi_machines_portail.selection__suivi_bon_intervention_mixin__reprise_proprete__sale
+msgid "Sale"
+msgstr ""
+
+#. module: suivi_machines_portail
+#. odoo-python
+#: code:addons/suivi_machines_portail/controllers/portail.py:0
+msgid "Seul le technicien du bon peut le signer."
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_bon_intervention__signature
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_ma_tache
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.view_bon_intervention_form
+msgid "Signature du client"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_bon_intervention__signature_technicien
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_ma_tache
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.view_bon_intervention_form
+msgid "Signature du technicien"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_bon_intervention__doit_signer_technicien
+msgid "Signature du technicien attendue"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.rapport_bon_intervention
+msgid "Signature électronique (technicien connecté au portail)"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_bon_intervention__date
+msgid "Signé le"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_bon_intervention__signe_par
+msgid "Signé par"
+msgstr ""
+
+#. module: suivi_machines_portail
+#. odoo-python
+#: code:addons/suivi_machines_portail/models/bon_intervention.py:0
+msgid "Signé par %(nom)s sur le téléphone de %(tech)s."
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_bon_intervention__technicien_signe_le
+msgid "Signé par le technicien le"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.appel_de_service_page
+msgid "Site web"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_note_technicien__statut_lecture
+msgid "Statut"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.module.module,shortdesc:base.module_suivi_machines_portail
+msgid "Suivi des machines - Portail des techniciens"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.appel_de_service_page
+msgid "Sélectionner une option"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_portail_tache__technicien_id
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_bon_intervention__technicien_id
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_note_technicien__technicien_id
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.view_note_technicien_search
+msgid "Technicien"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_res_partner__est_technicien
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_res_users__est_technicien
+msgid "Technicien (portail)"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_stock_picking__livreur_id
+msgid "Technicien assigné"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_remplacer_techniciens_ligne__nouveau_id
+msgid "Technicien portail"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields,help:suivi_machines_portail.field_res_partner__est_technicien
+#: model:ir.model.fields,help:suivi_machines_portail.field_res_users__est_technicien
+msgid ""
+"Technicien qui consulte sa journée sur le portail web (utilisateur portail "
+"gratuit)."
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields,help:suivi_machines_portail.field_stock_picking__livreur_id
+msgid "Technicien qui fait la livraison (ou le ramassage) de la machine."
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_helpdesk_ticket__technicien_terrain_id
+msgid "Technicien terrain (ancien)"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_ma_tache
+msgid "Terminer : signature du client"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_bon_intervention__ticket_id
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_note_technicien__ticket_id
+msgid "Ticket"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields,help:suivi_machines_portail.field_helpdesk_ticket__recu_par_web
+msgid ""
+"Ticket créé par le client lui-même avec le formulaire « Appel de service » "
+"du site web."
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.helpdesk_ticket_view_form_recu_par_web
+msgid ""
+"Ticket envoyé <strong>par le client</strong> avec le formulaire web « Appel de service ».\n"
+"                    <span invisible=\"partner_id\">Code client absent ou inconnu : choisissez le client (code client).</span>"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.view_note_technicien_search
+msgid "Tickets"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model,name:suivi_machines_portail.model_stock_picking
+msgid "Transfer"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_bon_intervention__picking_id
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_note_technicien__picking_id
+msgid "Transfert"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.view_remplacer_techniciens_form
+msgid "Transférer les tâches"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.view_remplacer_techniciens_form
+msgid "Transférer les tâches à faire vers les techniciens portail choisis ?"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_bon_intervention__type_tache
+msgid "Travail"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_bon_intervention__travail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.rapport_bon_intervention
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.view_bon_intervention_form
+msgid "Travail fait"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields.selection,name:suivi_machines_portail.selection__helpdesk_ticket__reprise_proprete__tres_propre
+#: model:ir.model.fields.selection,name:suivi_machines_portail.selection__machine_intervention__reprise_proprete__tres_propre
+#: model:ir.model.fields.selection,name:suivi_machines_portail.selection__stock_picking__reprise_proprete__tres_propre
+#: model:ir.model.fields.selection,name:suivi_machines_portail.selection__suivi_bon_intervention__proprete__tres_propre
+#: model:ir.model.fields.selection,name:suivi_machines_portail.selection__suivi_bon_intervention_mixin__reprise_proprete__tres_propre
+msgid "Très propre"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.appel_de_service_page
+msgid "Type de demande<span class=\"o_appel_requis\">*</span>"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_ma_tache
+msgid "Type de réparation"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.appel_de_service_page
+msgid "Type de réparation<span class=\"o_appel_requis\">*</span>"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_bon_intervention__titre
+msgid "Tâche"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model,name:suivi_machines_portail.model_portail_tache
+msgid "Tâche de technicien"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_ma_tache
+msgid "Tâche déjà terminée."
+msgstr ""
+
+#. module: suivi_machines_portail
+#. odoo-python
+#: code:addons/suivi_machines_portail/controllers/portail.py:0
+msgid "Tâche introuvable."
+msgstr ""
+
+#. module: suivi_machines_portail
+#. odoo-python
+#: code:addons/suivi_machines_portail/models/remplacer.py:0
+msgid "Tâches transférées"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_remplacer_techniciens_ligne__nb_taches
+msgid "Tâches à faire"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.view_bon_intervention_form
+msgid "Télécharger le PDF"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_ma_tache
+msgid "Un fichier dépasse 20 Mo : rien n'a été envoyé."
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model,name:suivi_machines_portail.model_res_users
+msgid "User"
+msgstr ""
+
+#. module: suivi_machines_portail
+#. odoo-python
+#: code:addons/suivi_machines_portail/models/bon_intervention.py:0
+msgid "Valider le transfert (bon signé)"
+msgstr ""
+
+#. module: suivi_machines_portail
+#. odoo-python
+#: code:addons/suivi_machines_portail/models/appel_web.py:0
+msgid "Veuillez choisir le type de demande."
+msgstr ""
+
+#. module: suivi_machines_portail
+#. odoo-python
+#: code:addons/suivi_machines_portail/models/appel_web.py:0
+msgid "Veuillez choisir le type de réparation."
+msgstr ""
+
+#. module: suivi_machines_portail
+#. odoo-python
+#: code:addons/suivi_machines_portail/models/appel_web.py:0
+msgid "Veuillez remplir : %s."
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.appel_de_service_merci
+msgid "Votre demande est bien reçue"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_remplacer_techniciens_ligne__wizard_id
+msgid "Wizard"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_ma_journee
+msgid "en retard"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_ma_tache
+msgid ""
+"ex. Machine nettoyée, joint de la vis remplacé, le client demande un rappel "
+"lundi."
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_ma_journee
+msgid "faite"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_ma_tache
+msgid "fichiers au plus par envoi : rien n'a été envoyé."
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_ma_journee
+msgid "s"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_ma_tache
+msgid "signé par"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model,name:suivi_machines_portail.model_helpdesk_ticket
+msgid "ticket"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_ma_journee
+msgid "tâche"
+msgstr ""
+
+#. module: suivi_machines_portail
+#. odoo-python
+#: code:addons/suivi_machines_portail/models/bon_intervention.py:0
+msgid "un entretien"
+msgstr ""
+
+#. module: suivi_machines_portail
+#. odoo-python
+#: code:addons/suivi_machines_portail/models/bon_intervention.py:0
+msgid "une réparation"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields.selection,name:suivi_machines_portail.selection__suivi_note_technicien__statut_lecture__a_lire
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.view_note_technicien_search
+msgid "À lire"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_ma_tache
+msgid "À signer ci-dessous."
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_ma_tache
+msgid ""
+"Écrivez d'abord ce qui a été fait (note ci-dessus), puis faites signer\n"
+"                                le client : le bon est envoyé au bureau et la tâche est terminée."
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_ma_tache
+msgid "Écrivez une note ou joignez un fichier."
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model:ir.model.fields,field_description:suivi_machines_portail.field_suivi_bon_intervention__equipements
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.rapport_bon_intervention
+msgid "Équipements"
+msgstr ""
+
+#. module: suivi_machines_portail
+#: model_terms:ir.ui.view,arch_db:suivi_machines_portail.portal_ma_tache
+msgid "Étiquettes"
+msgstr ""

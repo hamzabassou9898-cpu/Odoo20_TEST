@@ -3,9 +3,10 @@
     "name": "Suivi des machines",
     "summary": "Dossier de chaque machine (numéro de série) : interventions, "
                "historique, santé et tableau de bord",
-    "version": "20.0.1.23.0",
+    "version": "20.0.1.24.0",
     "category": "Inventory/Inventory",
-    "author": "Hamza Bassou",
+    "author": "Volcan",
+    "website": "https://volcan.ca/",
     "license": "LGPL-3",
     "depends": ["stock", "sale_stock", "mail"],
     "data": [

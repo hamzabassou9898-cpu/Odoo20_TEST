@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 {
-    "name": "Phase 2 - Portail web des techniciens",
+    "name": "Suivi des machines - Portail des techniciens",
     "summary": "Les techniciens deviennent des utilisateurs portail (gratuits) : leur journée sur le portail web "
                "(livraisons, ramassages, entretiens, réparations)",
-    "version": "20.0.1.19.0",
+    "version": "20.0.1.20.0",
     "category": "Productivity",
-    "author": "Hamza Bassou",
+    "author": "Volcan",
+    "website": "https://volcan.ca/",
     "license": "LGPL-3",
     "depends": ["portal", "suivi_machines_pilotage"],
     "data": [

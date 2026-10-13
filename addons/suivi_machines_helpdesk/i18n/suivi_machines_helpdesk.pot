@@ -1,0 +1,1266 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* suivi_machines_helpdesk
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 20.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-13 17:54+0000\n"
+"PO-Revision-Date: 2026-10-13 17:54+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: \n"
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/entretien.py:0
+msgid " (en retard)"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/reprise.py:0
+msgid " +%s"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/reprise.py:0
+msgid " et des accessoires : %s"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/entretien.py:0
+msgid ""
+"%(nb)s sans date d'entretien (aucun entretien ni installation connus) : "
+"%(liste)s"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/res_partner.py:0
+msgid "%s appels en 3 mois"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/entretien.py:0
+msgid "%s machine(s) suivie(s)."
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/type_ticket.py:0
+msgid "%s n'a aucun contrat de location confirmé."
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/type_ticket.py:0
+msgid ""
+"%s n'a aucune machine en inventaire : impossible de créer un ticket « "
+"Machine à remplacer ». Choisissez un autre type (ex. Passer une commande) ou"
+" vérifiez le client."
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/entretien.py:0
+msgid "%s ticket(s) d'entretien créé(s)."
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.helpdesk_ticket_view_form_machine
+msgid "(prévu le"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/reprise.py:0
+msgid "- %(serie)s : %(statut)s, emplacement %(empl)s"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.helpdesk_ticket_view_form_machine
+msgid "1. Identification du client"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.helpdesk_ticket_view_form_machine
+msgid "2. Parc machines du client"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.helpdesk_ticket_view_form_machine
+msgid ": l'entretien de cette machine arrive à échéance"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.helpdesk_ticket_view_form_machine
+msgid ": la location"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/entretien.py:0
+msgid "<p>Entretien de la machine %(serie)s prévu le %(date)s%(retard)s.</p>"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/reprise.py:0
+msgid ""
+"<p>Fin de la location le %(date)s (contrat %(contrat)s) : reprise à "
+"planifier de %(nb)s machine(s) : %(series)s.</p>"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.helpdesk_ticket_view_form_machine
+msgid "<span class=\"o_stat_text\">Fiche de machine</span>"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__adresse_commerce
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.helpdesk_ticket_view_form_machine
+msgid "Adresse commerciale"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,help:suivi_machines_helpdesk.field_stock_picking__route
+msgid "Adresse de livraison du client, pour planifier la tournée."
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.helpdesk_ticket_view_form_machine
+msgid "Ajuster le contrat"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields.selection,name:suivi_machines_helpdesk.selection__helpdesk_ticket__type_demande__ajustement
+msgid "Ajuster un contrat"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.view_valider_entretien_form
+msgid "Annuler"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_res_partner__sante_nb_appels
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_res_users__sante_nb_appels
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.view_partner_form_contrat_location
+msgid "Appels (12 mois)"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__tickets_precedents_ids
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_res_partner__appel_client_ids
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_res_users__appel_client_ids
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_stock_lot__ticket_ids
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.helpdesk_ticket_view_form_machine
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.view_lot_form_machine_tickets
+msgid "Appels de service"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/helpdesk_ticket.py:0
+msgid "Appels de service - %s"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/echange_machine.py:0
+msgid "Assignez le technicien qui fera l'échange (Assigné à)."
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.helpdesk_ticket_view_form_creation_rapide
+msgid "Assigné à"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/helpdesk_ticket.py:0
+msgid "Aucun client n'a le code %s."
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/reprise.py:0
+msgid ""
+"Aucun numéro de série sur le contrat ni sur sa livraison (choisissez-le sur "
+"la ligne ou dans la livraison)."
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/reprise.py:0
+msgid ""
+"Aucune livraison terminée des machines de ce contrat : utilisez le bouton "
+"Retour du contrat (application Location)."
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/reprise.py:0
+msgid "Aucune machine de ce contrat n'est actuellement chez le client."
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.helpdesk_ticket_view_form_machine
+msgid ""
+"Aucune machine en location chez ce client : rien à ramasser.\n"
+"                    Vérifiez le client (code client) ou le contrat de location."
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/planification_auto.py:0
+msgid ""
+"Aucune étape « Résolu » : créez-la dans la configuration de l'assistance."
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields.selection,name:suivi_machines_helpdesk.selection__helpdesk_ticket__type_reparation__autre
+msgid "Autre (inscrire les détails dans la section Message)"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/helpdesk_ticket.py:0
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.helpdesk_ticket_view_form_machine
+msgid "Bon de vente"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__vente_ids
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.helpdesk_ticket_view_form_machine
+msgid "Bons de vente"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/helpdesk_ticket.py:0
+msgid "Bons de vente - %s"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/reprise.py:0
+msgid "Ce bon n'est pas une location (Type = Vente)."
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.helpdesk_ticket_view_form_creation_rapide
+msgid ""
+"Ce client a <strong>0 machine</strong> : impossible de faire « Machine à "
+"remplacer »."
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.helpdesk_ticket_view_form_machine
+msgid ""
+"Ce client a <strong>0 machine</strong> en inventaire : impossible de créer un ticket\n"
+"                    « Machine à remplacer ». Choisissez un autre type ou vérifiez le client."
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,help:suivi_machines_helpdesk.field_helpdesk_ticket__type_demande
+msgid "Ce qu'il faut faire chez le client : aide à planifier le ticket."
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_suivi_machines_valider_entretien__note
+msgid "Ce qui a été fait"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_res_partner__sante_chiffre
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_res_users__sante_chiffre
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.view_partner_form_contrat_location
+msgid "Chiffre d'affaires total"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,help:suivi_machines_helpdesk.field_res_partner__contrat_location_id
+#: model:ir.model.fields,help:suivi_machines_helpdesk.field_res_users__contrat_location_id
+msgid ""
+"Choisi automatiquement : le contrat confirmé dont des machines sont chez le "
+"client, sinon le plus récent."
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.helpdesk_ticket_view_form_machine
+msgid "Choisir parmi les machines du client"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/echange_machine.py:0
+msgid "Choisissez la machine de remplacement (en entrepôt)."
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/echange_machine.py:0
+msgid "Choisissez la machine à remplacer (numéro de série chez le client)."
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.helpdesk_ticket_view_form_creation_rapide
+msgid "Client"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields.selection,name:suivi_machines_helpdesk.selection__res_partner__sante_niveau__fidele
+msgid "Client fidèle"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__code_client
+msgid "Code client"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/helpdesk_ticket.py:0
+msgid "Code client inconnu"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__commerce_id
+msgid "Commerce"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__commercial_partner_id
+msgid "Commercial Entity"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/reprise.py:0
+msgid "Confirmez d'abord le contrat de location."
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model,name:suivi_machines_helpdesk.model_res_partner
+msgid "Contact"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__contrat_client_id
+msgid "Contrat de location"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__commande_reprise_id
+msgid "Contrat de location (reprise)"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_res_partner__contrat_location_id
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_res_users__contrat_location_id
+msgid "Contrat de location actuel"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/type_ticket.py:0
+msgid "Contrats de location"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields.selection,name:suivi_machines_helpdesk.selection__helpdesk_ticket__type_reparation__coule
+msgid "Coule"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_suivi_machines_valider_entretien__create_uid
+msgid "Created by"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_suivi_machines_valider_entretien__create_date
+msgid "Created on"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.helpdesk_ticket_view_form_machine
+msgid ""
+"Créer le ramassage de l'ancienne machine et la livraison de la nouvelle "
+"(validés ensemble) ?"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.view_order_form_ticket
+msgid "Créer le ticket de reprise"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__origine_auto
+msgid "Créé automatiquement"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.helpdesk_ticket_view_form_machine
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.view_partner_form_contrat_location
+msgid "Date"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__machine_date_installation
+msgid "Date d'installation"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/reprise.py:0
+msgid "Date de fin de location absente."
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_suivi_machines_valider_entretien__date_entretien
+msgid "Date de l'entretien"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__date_planifiee
+msgid "Date prévue"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__machine_dernier_entretien
+msgid "Dernier entretien"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__display_name
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_machine_intervention__display_name
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_res_partner__display_name
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_sale_order__display_name
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_stock_lot__display_name
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_stock_move__display_name
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_stock_picking__display_name
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_suivi_machines_valider_entretien__display_name
+msgid "Display Name"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__contrat_client_debut
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_res_partner__contrat_location_debut
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_res_users__contrat_location_debut
+msgid "Début du contrat"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__machine_emplacement_id
+msgid "Emplacement"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/entretien.py:0
+msgid "En entrepôt (%s)"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields.selection,name:suivi_machines_helpdesk.selection__helpdesk_ticket__type_demande__entretien
+msgid "Entretien"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/entretien.py:0
+msgid "Entretien - %(machine)s - %(ou)s"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__date_entretien_prevu
+msgid "Entretien prévu le"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/entretien.py:0
+msgid ""
+"Entretien validé le %(date)s par %(tech)s. Prochain entretien : %(prochain)s"
+" (%(freq)s)."
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields.selection,name:suivi_machines_helpdesk.selection__helpdesk_ticket__origine_auto__entretien
+msgid "Entretien à échéance"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,help:suivi_machines_helpdesk.field_helpdesk_ticket__statut_entretien
+msgid ""
+"Entretiens et réparations. À planifier : aucun technicien. Planifié : "
+"assigné à un technicien (ou intervention planifiée) — il apparaît dans sa "
+"journée. Fait : ticket résolu."
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__est_reprise
+msgid "Est Reprise"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields.selection,name:suivi_machines_helpdesk.selection__helpdesk_ticket__statut_entretien__fait
+msgid "Fait"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields.selection,name:suivi_machines_helpdesk.selection__helpdesk_ticket__type_reparation__bruit
+msgid "Fait du bruit"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields.selection,name:suivi_machines_helpdesk.selection__helpdesk_ticket__origine_auto__reprise
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.view_partner_form_contrat_location
+msgid "Fin de location"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__date_fin_reprise
+msgid "Fin de location (reprise)"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__contrat_client_fin
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_res_partner__contrat_location_fin
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_res_users__contrat_location_fin
+msgid "Fin du contrat"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_suivi_machines_valider_entretien__frequence
+msgid "Fréquence des entretiens"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields.selection,name:suivi_machines_helpdesk.selection__helpdesk_ticket__type_reparation__gele_trop
+msgid "Gèle trop"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_res_partner__historique_achat_ids
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_res_users__historique_achat_ids
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.view_partner_form_contrat_location
+msgid "Historique d'achat"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.helpdesk_ticket_view_form_machine
+msgid "Historique d'intervention"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__machine_historique_ids
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.helpdesk_ticket_view_form_machine
+msgid "Historique de la machine"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.view_partner_form_contrat_location
+msgid "Historique des appels"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.helpdesk_ticket_view_form_machine
+msgid "Historique des appels de service"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__id
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_machine_intervention__id
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_res_partner__id
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_sale_order__id
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_stock_lot__id
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_stock_move__id
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_stock_picking__id
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_suivi_machines_valider_entretien__id
+msgid "ID"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_res_partner__sante_impayes
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_res_users__sante_impayes
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.view_partner_form_contrat_location
+msgid "Impayés"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/entretien.py:0
+msgid "Indiquez d'abord la machine (numéro de série) du ticket."
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,help:suivi_machines_helpdesk.field_helpdesk_ticket__machine_numero
+msgid ""
+"Internal reference number in case it differs from the manufacturer's "
+"lot/serial number"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model,name:suivi_machines_helpdesk.model_machine_intervention
+msgid "Intervention sur une machine"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__machine_intervention_ids
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.helpdesk_ticket_view_form_machine
+msgid "Interventions"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/helpdesk_ticket.py:0
+msgid "Interventions - %s"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__intervention_ticket_ids
+msgid "Interventions du ticket"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__nb_machines_client
+msgid "Inventaire chez le client"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/echange_machine.py:0
+msgid "L'échange est déjà créé : %s."
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/echange_machine.py:0
+msgid "L'échange se fait depuis un ticket « Machine à remplacer »."
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/entretien.py:0
+msgid "La date de l'entretien ne peut pas être dans le futur."
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/entretien.py:0
+msgid ""
+"La machine %s n'est chez aucun client : entretien non planifié, ticket "
+"fermé."
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/echange_machine.py:0
+msgid "La machine de remplacement %s n'est pas en entrepôt."
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_suivi_machines_valider_entretien__write_uid
+msgid "Last Updated by"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_suivi_machines_valider_entretien__write_date
+msgid "Last Updated on"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,help:suivi_machines_helpdesk.field_helpdesk_ticket__type_reparation
+msgid ""
+"Le problème de la machine. Obligatoire pour un ticket de réparation ; « "
+"Autre » : décrire le problème dans la description."
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/helpdesk_ticket.py:0
+msgid "Livraison"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__echange_livraison_id
+msgid "Livraison (échange)"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__livraison_ids
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.helpdesk_ticket_view_form_machine
+msgid "Livraisons"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/helpdesk_ticket.py:0
+msgid "Livraisons - %s"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields.selection,name:suivi_machines_helpdesk.selection__helpdesk_ticket__contrat_client_type__location
+#: model:ir.model.fields.selection,name:suivi_machines_helpdesk.selection__res_partner__contrat_location_type__location
+msgid "Location"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model,name:suivi_machines_helpdesk.model_stock_lot
+msgid "Lot/Serial"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_suivi_machines_valider_entretien__lot_id
+msgid "Machine"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__machine_numero
+msgid "Machine actuelle"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__lot_remplacement_id
+msgid "Machine de remplacement"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,help:suivi_machines_helpdesk.field_helpdesk_ticket__lot_remplacement_id
+msgid "Machine en entrepôt qui sera livrée à la place de celle du ticket."
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.helpdesk_ticket_view_form_machine
+msgid "Machine en entrepôt à livrer à la place"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields.selection,name:suivi_machines_helpdesk.selection__helpdesk_ticket__type_demande__remplacement
+msgid "Machine à remplacer"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__machines_client_ids
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_res_partner__machine_client_ids
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_res_users__machine_client_ids
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.helpdesk_ticket_view_form_machine
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.view_partner_form_contrat_location
+msgid "Machines chez le client"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_res_partner__sante_nb_machines
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_res_users__sante_nb_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.view_partner_form_contrat_location
+msgid "Machines chez lui"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__machines_reprise_ids
+msgid "Machines à reprendre"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.helpdesk_ticket_view_form_machine
+msgid "Marquer comme fait"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.helpdesk_ticket_view_form_machine
+msgid ""
+"Marquer la réparation comme faite ? L'intervention passe « Faite » et le "
+"ticket « Résolu »."
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__machine_modele_id
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.helpdesk_ticket_view_form_machine
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.view_partner_form_contrat_location
+msgid "Modèle"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.view_partner_form_contrat_location
+msgid "Montant (HT)"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__nb_tickets_precedents
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_stock_lot__nb_tickets
+msgid "Nb appels de service"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__nb_ventes
+msgid "Nb bons de vente"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__nb_interventions_ticket
+msgid "Nb interventions du ticket"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__nb_livraisons
+msgid "Nb livraisons"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_sale_order__nb_tickets_reprise
+msgid "Nb tickets de reprise"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields.selection,name:suivi_machines_helpdesk.selection__helpdesk_ticket__type_reparation__ne_gele_pas
+msgid "Ne gèle pas"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields.selection,name:suivi_machines_helpdesk.selection__helpdesk_ticket__type_reparation__ne_tourne_pas
+msgid "Ne tourne pas"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.view_valider_entretien_form
+msgid "Nettoyage, pièces changées, état de la machine..."
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.helpdesk_ticket_view_form_machine
+msgid "Nom de la bannière"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.helpdesk_ticket_view_form_machine
+msgid "Notes internes"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,help:suivi_machines_helpdesk.field_helpdesk_ticket__code_client
+msgid ""
+"Numéro de client (ex. MON134) : remplit le client et ses machines. Rempli "
+"tout seul quand le client est choisi."
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.helpdesk_ticket_view_form_machine
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.view_partner_form_contrat_location
+msgid "Numéro de machine"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__lot_id
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.helpdesk_ticket_view_form_machine
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.view_partner_form_contrat_location
+msgid "Numéro de série"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.view_partner_form_contrat_location
+msgid "N° de bon / contrat de location"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields.selection,name:suivi_machines_helpdesk.selection__helpdesk_ticket__type_demande__commande
+msgid "Passer une commande"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__statut_entretien
+msgid "Planification"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/entretien.py:0
+msgid "Planifier entretien"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/entretien.py:0
+msgid "Planifier l'entretien de la machine %(serie)s (%(ou)s)."
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/reprise.py:0
+msgid ""
+"Planifier le ramassage de %(nb)s machine(s) (%(series)s) chez %(client)s."
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/reprise.py:0
+msgid "Planifier ramassage de machine"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields.selection,name:suivi_machines_helpdesk.selection__helpdesk_ticket__statut_entretien__planifie
+msgid "Planifié"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.helpdesk_ticket_view_form_machine
+msgid ""
+"Pour planifier : indiquez la <strong>Date prévue</strong> et le <strong>Numéro de série</strong>.\n"
+"                    À l'enregistrement, l'intervention est créée toute seule (<strong>Planifiée</strong>)."
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.helpdesk_ticket_view_form_machine
+msgid ""
+"Pour planifier l'entretien : indiquez le <strong>technicien</strong> (Assigné à), la\n"
+"                    <strong>Date prévue</strong> et le <strong>Numéro de série</strong>. À l'enregistrement,\n"
+"                    l'intervention d'entretien est créée toute seule (<strong>Planifiée</strong>)."
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_res_partner__sante_raison
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_res_users__sante_raison
+msgid "Pourquoi"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__machine_prochain_entretien
+msgid "Prochain entretien"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/entretien.py:0
+msgid "Prochaine échéance : %(serie)s (%(client)s) le %(date)s."
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields.selection,name:suivi_machines_helpdesk.selection__helpdesk_ticket__type_demande__ramassage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.helpdesk_ticket_view_form_machine
+msgid "Ramassage"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__echange_retour_id
+msgid "Ramassage (échange)"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/reprise.py:0
+msgid ""
+"Ramassage de %(nb)s machine(s) (%(series)s)%(acc)s, créé depuis le ticket "
+"%(ticket)s."
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,help:suivi_machines_helpdesk.field_helpdesk_ticket__date_planifiee
+msgid "Rendez-vous du technicien chez le client (Portail techniciens)."
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/reprise.py:0
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.view_order_form_ticket
+msgid "Reprise"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/reprise.py:0
+msgid "Reprise - %(machines)s - %(client)s"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/reprise.py:0
+msgid "Reprise - %s"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_stock_picking__route
+msgid "Route"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields.selection,name:suivi_machines_helpdesk.selection__helpdesk_ticket__type_demande__reparation
+msgid "Réparation"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/planification_auto.py:0
+msgid "Réparation marquée comme faite par %s."
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.helpdesk_ticket_view_form_machine
+msgid "Réparation, entretien, ramassage…"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model,name:suivi_machines_helpdesk.model_sale_order
+msgid "Sales Order"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/entretien.py:0
+msgid "Sans emplacement"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_res_partner__sante_devise_id
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_res_users__sante_devise_id
+msgid "Sante Devise"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_res_partner__sante_niveau
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_res_users__sante_niveau
+msgid "Santé du client"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__machine_statut
+msgid "Statut"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model,name:suivi_machines_helpdesk.model_stock_move
+msgid "Stock Move"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.module.module,shortdesc:base.module_suivi_machines_helpdesk
+msgid "Suivi des machines - Assistance"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.actions.server,name:suivi_machines_helpdesk.cron_tickets_entretien_ir_actions_server
+msgid "Suivi des machines : tickets d'entretien (en retard / cette semaine)"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.actions.server,name:suivi_machines_helpdesk.cron_tickets_reprise_ir_actions_server
+msgid "Suivi des machines : tickets de reprise (fin de location)"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__technicien_id
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_suivi_machines_valider_entretien__technicien_id
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.helpdesk_ticket_view_form_machine
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.view_partner_form_contrat_location
+msgid "Technicien"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,help:suivi_machines_helpdesk.field_helpdesk_ticket__technicien_id
+#: model:ir.model.fields,help:suivi_machines_helpdesk.field_stock_picking__technicien_id
+msgid "Technicien de la dernière intervention du ticket."
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_stock_picking__technicien_id
+msgid "Technicien du ticket"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.helpdesk_ticket_view_form_machine
+msgid ""
+"Ticket créé <strong>automatiquement par Odoo</strong> (action planifiée)"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,help:suivi_machines_helpdesk.field_helpdesk_ticket__origine_auto
+msgid "Ticket créé par une action planifiée d'Odoo (et non par une personne)."
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_machine_intervention__ticket_id
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_sale_order__ticket_assistance_id
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_stock_picking__ticket_assistance_id
+msgid "Ticket d'assistance"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.module.module,summary:base.module_suivi_machines_helpdesk
+msgid ""
+"Ticket d'assistance relié au code client et au dossier de la machine (série,"
+" location, entretien, historique, interventions)"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__est_entretien
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_suivi_machines_valider_entretien__ticket_id
+msgid "Ticket d'entretien"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_sale_order__ticket_reprise_ids
+msgid "Tickets de reprise"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.helpdesk_ticket_view_form_creation_rapide
+msgid "Titre du ticket"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.view_partner_form_contrat_location
+msgid "Total"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields.selection,name:suivi_machines_helpdesk.selection__suivi_machines_valider_entretien__frequence__12
+msgid "Tous les 12 mois"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields.selection,name:suivi_machines_helpdesk.selection__suivi_machines_valider_entretien__frequence__24
+msgid "Tous les 24 mois"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields.selection,name:suivi_machines_helpdesk.selection__suivi_machines_valider_entretien__frequence__3
+msgid "Tous les 3 mois"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields.selection,name:suivi_machines_helpdesk.selection__suivi_machines_valider_entretien__frequence__6
+msgid "Tous les 6 mois"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model,name:suivi_machines_helpdesk.model_stock_picking
+msgid "Transfer"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__contrat_client_type
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_res_partner__contrat_location_type
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_res_users__contrat_location_type
+msgid "Type de contrat"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__type_reparation
+msgid "Type de réparation"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__type_demande
+msgid "Type de ticket"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/entretien.py:0
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.view_valider_entretien_form
+msgid "Valider l'entretien"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model,name:suivi_machines_helpdesk.model_suivi_machines_valider_entretien
+msgid "Valider un entretien"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields.selection,name:suivi_machines_helpdesk.selection__helpdesk_ticket__contrat_client_type__vente
+#: model:ir.model.fields.selection,name:suivi_machines_helpdesk.selection__res_partner__contrat_location_type__vente
+msgid "Vente"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/entretien.py:0
+msgid "Vérification des entretiens"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.actions.server,name:suivi_machines_helpdesk.action_verifier_entretiens
+#: model:ir.ui.menu,name:suivi_machines_helpdesk.menu_verifier_entretiens
+msgid "Vérifier les entretiens"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.helpdesk_ticket_view_form_machine
+msgid "ex. MON134"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.helpdesk_ticket_view_form_creation_rapide
+msgid "ex. Machine ne refroidit pas"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/res_partner.py:0
+msgid "factures impayées depuis plus de 60 jours"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/res_partner.py:0
+msgid "factures à payer"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/type_ticket.py:0
+msgid "id"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.helpdesk_ticket_view_form_machine
+msgid "se termine, les machines sont à reprendre."
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model,name:suivi_machines_helpdesk.model_helpdesk_ticket
+msgid "ticket"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields.selection,name:suivi_machines_helpdesk.selection__helpdesk_ticket__statut_entretien__a_planifier
+msgid "À planifier"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields.selection,name:suivi_machines_helpdesk.selection__res_partner__sante_niveau__risque
+msgid "À risque"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields.selection,name:suivi_machines_helpdesk.selection__res_partner__sante_niveau__surveiller
+msgid "À surveiller"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/echange_machine.py:0
+msgid ""
+"Échange créé : ramassage %(retour)s (%(ancienne)s revient en inventaire) et "
+"livraison %(livraison)s (%(nouvelle)s), technicien %(tech)s. Valider l'un "
+"valide les deux."
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/echange_machine.py:0
+msgid "Échange de machine terminé : %s chez le client, %s en entrepôt."
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.helpdesk_ticket_view_form_machine
+msgid "Échanger la machine"
+msgstr ""

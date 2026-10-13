@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 {
-    "name": "Suivi Sage",
+    "name": "Suivi des machines - Sage",
     "summary": "Statut de transfert vers Sage sur toutes les factures et avoirs (clients et fournisseurs)",
-    "version": "20.0.1.0.0",
+    "version": "20.0.1.1.0",
     "category": "Accounting",
-    "author": "Hamza Bassou",
+    "author": "Volcan",
+    "website": "https://volcan.ca/",
     "license": "LGPL-3",
     "depends": ["account", "suivi_machines"],
     "data": [

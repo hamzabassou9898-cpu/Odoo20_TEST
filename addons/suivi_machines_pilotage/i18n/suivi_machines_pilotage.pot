@@ -1,0 +1,1751 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* suivi_machines_pilotage
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 20.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-13 17:54+0000\n"
+"PO-Revision-Date: 2026-10-13 17:54+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: \n"
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_lot_list
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_lot_search
+msgid "# machine"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-python
+#: code:addons/suivi_machines_pilotage/models/donnees_test.py:0
+msgid "%(nb)s tickets (étiquette TEST) répartis entre %(techs)s."
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-python
+#: code:addons/suivi_machines_pilotage/models/stock_picking.py:0
+msgid "%(qte)g × %(produit)s (n° à préciser)"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-python
+#: code:addons/suivi_machines_pilotage/models/donnees_test.py:0
+msgid "%s tickets supprimés."
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_appels_search
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_intervention_search
+msgid "3 derniers mois"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-javascript
+#: code:addons/suivi_machines_pilotage/static/src/tableau_moderne/tableau_moderne.xml:0
+msgid "30 jours"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_lot_search
+msgid "30 prochains jours"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-javascript
+#: code:addons/suivi_machines_pilotage/static/src/tableau_moderne/tableau_moderne.xml:0
+msgid "7 jours"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_transfert_search
+msgid "7 prochains jours"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_portail_livreurs_search
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_portail_techniciens_search
+msgid "7 prochains jours (et retards)"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-javascript
+#: code:addons/suivi_machines_pilotage/static/src/tableau_moderne/tableau_moderne.xml:0
+msgid "8 semaines"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_lot_search
+msgid "90 prochains jours (et retards)"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:mail.template,body_html:suivi_machines_pilotage.mail_rappel_veille
+msgid ""
+"<div style=\"font-family: Arial, sans-serif; font-size: 14px; color: #1f2937;\">\n"
+"    <p>Bonjour <t t-out=\"object.partner_id.name or ''\"/>,</p>\n"
+"    <p>\n"
+"        Notre technicien <strong t-out=\"object.technicien_id.name or ''\"/> passera\n"
+"        <strong>demain, <t t-out=\"format_datetime(object.date, tz='America/Toronto', dt_format='EEEE d MMMM')\"/>,\n"
+"        vers <t t-out=\"format_datetime(object.date, tz='America/Toronto', dt_format='H:mm')\"/></strong>\n"
+"        pour : <strong t-out=\"dict(object._fields['type_tache']._description_selection(object.env)).get(object.type_tache, '')\"/>\n"
+"        <t t-if=\"object.lot_id\"> (machine <t t-out=\"object.lot_id.ref or object.lot_id.name\"/>)</t>.\n"
+"    </p>\n"
+"    <p>Merci de libérer l'accès à la machine.</p>\n"
+"    <p>Un empêchement ? Répondez simplement à ce courriel ou appelez-nous pour changer la date.</p>\n"
+"    <p>Merci,<br/><t t-out=\"object.env.company.name\"/></p>\n"
+"</div>\n"
+"        "
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_portail_livreurs_kanban
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_portail_techniciens_kanban
+msgid "<span class=\"fw-bold\">Accessoires : </span>"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_portail_livreurs_kanban
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_portail_techniciens_kanban
+msgid "<span class=\"fw-bold\">Machines : </span>"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_portail_tache__accessoires
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_stock_picking__accessoires_tournee
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_livraisons_faites_list
+msgid "Accessoires"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-javascript
+#: code:addons/suivi_machines_pilotage/static/src/tableau_moderne/tableau_moderne.xml:0
+msgid "Actualiser"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_portail_tache__route
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_livraisons_faites_list
+msgid "Adresse"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields.selection,name:suivi_machines_pilotage.selection__helpdesk_ticket__type_ticket__appel
+msgid "Appel de service"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-python
+#: code:addons/suivi_machines_pilotage/models/tableau_moderne.py:0
+msgid "Appels : %s"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:pilotage.indicateur,name:suivi_machines_pilotage.indicateur_appels_mois
+msgid "Appels ce mois"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-python
+#: code:addons/suivi_machines_pilotage/models/tableau_moderne.py:0
+msgid "Appels de la semaine du %s"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.actions.act_window,name:suivi_machines_pilotage.action_pilotage_appels
+#: model:ir.model.fields.selection,name:suivi_machines_pilotage.selection__pilotage_indicateur__section__appels
+#: model:ir.ui.menu,name:suivi_machines_pilotage.menu_pilotage_appels
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_appels_pivot
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_appels_search
+msgid "Appels de service"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:pilotage.indicateur,name:suivi_machines_pilotage.indicateur_appels_ouverts
+msgid "Appels de service ouverts"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-javascript
+#: code:addons/suivi_machines_pilotage/static/src/tableau_moderne/tableau_moderne.xml:0
+msgid "Appels par problème"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-javascript
+#: code:addons/suivi_machines_pilotage/static/src/tableau_moderne/tableau_moderne.xml:0
+msgid "Appels reçus"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:pilotage.indicateur,description:suivi_machines_pilotage.indicateur_appels_mois
+msgid "Appels reçus depuis le 1er du mois"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:pilotage.indicateur,name:suivi_machines_pilotage.indicateur_appels_sans_machine
+msgid "Appels sans machine"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:pilotage.indicateur,description:suivi_machines_pilotage.indicateur_entretiens_ouverts
+msgid "Assignés à un technicien, pas encore validés"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-javascript
+#: code:addons/suivi_machines_pilotage/static/src/tableau_moderne/tableau_moderne.xml:0
+msgid "Aucun appel étiqueté."
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.actions.act_window,help:suivi_machines_pilotage.action_pilotage_entretiens
+msgid "Aucun entretien à venir"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:pilotage.indicateur,description:suivi_machines_pilotage.indicateur_entretiens_a_planifier
+msgid "Aucun technicien assigné pour l'instant"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.actions.act_window,help:suivi_machines_pilotage.action_pilotage_planifier_ramassage
+msgid "Aucune livraison de machine terminée"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.actions.act_window,help:suivi_machines_pilotage.action_pilotage_transferts
+msgid "Aucune livraison ni ramassage de machine"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-python
+#: code:addons/suivi_machines_pilotage/models/donnees_test.py:0
+msgid "Aucune machine (n° de série) ni client trouvé pour créer des tickets."
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.actions.act_window,help:suivi_machines_pilotage.action_portail_livreurs
+msgid "Aucune tournée"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.actions.act_window,help:suivi_machines_pilotage.action_portail_techniciens
+msgid "Aucune tâche"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-javascript
+#: code:addons/suivi_machines_pilotage/static/src/tableau_moderne/tableau_moderne.xml:0
+msgid "Aucune tâche sur la période."
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-javascript
+#: code:addons/suivi_machines_pilotage/static/src/tableau_moderne/tableau_moderne.xml:0
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_transfert_search
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_portail_livreurs_search
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_portail_techniciens_search
+msgid "Aujourd'hui"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-python
+#: code:addons/suivi_machines_pilotage/models/indicateur.py:0
+#: model:ir.model.fields.selection,name:suivi_machines_pilotage.selection__portail_tache__type_tache__autre
+#: model:ir.model.fields.selection,name:suivi_machines_pilotage.selection__stock_picking__type_tournee__autre
+msgid "Autre"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields.selection,name:suivi_machines_pilotage.selection__pilotage_indicateur__couleur__info
+msgid "Bleu clair"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:pilotage.indicateur,description:suivi_machines_pilotage.indicateur_facturer_sage
+msgid "Bon de commande créé, pas encore facturé"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-javascript
+#: code:addons/suivi_machines_pilotage/static/src/tableau_moderne/tableau_moderne.xml:0
+msgid "Bonjour"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields.selection,name:suivi_machines_pilotage.selection__pilotage_indicateur__section__qualite
+#: model:ir.ui.menu,name:suivi_machines_pilotage.menu_pilotage_bris
+msgid "Bris & réparations"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.actions.act_window,name:suivi_machines_pilotage.action_pilotage_bris
+msgid "Bris et réparations"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_appels_search
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_intervention_search
+msgid "Ce mois"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_intervention_search
+msgid "Cette année"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-javascript
+#: code:addons/suivi_machines_pilotage/static/src/planning/planning.xml:0
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_lot_search
+msgid "Cette semaine"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-python
+#: code:addons/suivi_machines_pilotage/models/planning.py:0
+msgid "Cette tâche est déjà faite."
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-python
+#: code:addons/suivi_machines_pilotage/models/planning.py:0
+msgid "Cette tâche n'existe plus : actualisez le planning."
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_lot_search
+msgid "Chez un client"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_portail_tache__partner_id
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_appels_list
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_appels_search
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_intervention_search
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_livraisons_faites_list
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_location_list
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_location_search
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_lot_list
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_lot_search
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_transfert_list
+msgid "Client"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.ui.menu,name:suivi_machines_pilotage.menu_pilotage_sage_clients
+msgid "Clients : à enregistrer dans Sage"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-javascript
+#: code:addons/suivi_machines_pilotage/static/src/planning/planning.xml:0
+msgid "Cliquez sur une tâche pour l'ouvrir."
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_pilotage_indicateur__code
+msgid "Code"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_location_list
+msgid "Contrat"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.actions.act_window,name:suivi_machines_pilotage.action_pilotage_locations
+#: model:ir.ui.menu,name:suivi_machines_pilotage.menu_pilotage_contrats
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_location_calendar
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_location_search
+msgid "Contrats de location"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:pilotage.indicateur,description:suivi_machines_pilotage.indicateur_locations_actives
+msgid "Contrats de location actifs"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_pilotage_indicateur__couleur
+msgid "Couleur"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields,help:suivi_machines_pilotage.field_helpdesk_ticket__rappel_veille_le
+#: model:ir.model.fields,help:suivi_machines_pilotage.field_machine_intervention__rappel_veille_le
+#: model:ir.model.fields,help:suivi_machines_pilotage.field_stock_picking__rappel_veille_le
+#: model:ir.model.fields,help:suivi_machines_pilotage.field_suivi_rappel_veille_mixin__rappel_veille_le
+msgid "Courriel de rappel envoyé au client la veille de la visite."
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_produits_list
+msgid "Coût"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_pilotage_donnees_test__create_uid
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_pilotage_indicateur__create_uid
+msgid "Created by"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_pilotage_donnees_test__create_date
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_pilotage_indicateur__create_date
+msgid "Created on"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_donnees_test_form
+msgid ""
+"Crée des tickets d'entretien et de réparation sur vos vraies machines, chez vos vrais clients,\n"
+"                    répartis entre vos techniciens. Ils portent l'étiquette <b>TEST</b> et se suppriment d'un clic."
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:pilotage.indicateur,description:suivi_machines_pilotage.indicateur_entretien_semaine
+msgid "Dans les 7 prochains jours"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_intervention_search
+msgid "Date"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:pilotage.indicateur,description:suivi_machines_pilotage.indicateur_entretien_retard
+msgid "Date d'entretien ou de réparation dépassée"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_location_search
+msgid "Date de fin dépassée"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:pilotage.indicateur,description:suivi_machines_pilotage.indicateur_locations_depassees
+msgid "Date de fin passée, machine à reprendre"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_stock_picking__date_tournee
+msgid "Date de la tournée"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_portail_tache__date
+msgid "Date prévue"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_portail_livreurs_search
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_portail_techniciens_search
+msgid "Demain"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-python
+#: code:addons/suivi_machines_pilotage/models/tableau_moderne.py:0
+msgid "Dernier : %(titre)s — %(client)s"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_lot_list
+msgid "Dernier entretien"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_pilotage_indicateur__description
+msgid "Description"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_helpdesk_ticket__display_name
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_machine_intervention__display_name
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_pilotage_donnees_test__display_name
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_pilotage_indicateur__display_name
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_portail_tache__display_name
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_product_template__display_name
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_stock_picking__display_name
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_suivi_rappel_veille_mixin__display_name
+msgid "Display Name"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_livraisons_faites_list
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_transfert_list
+msgid "Document"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_location_list
+msgid "Début"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_pilotage_indicateur__sous_titre
+msgid "Détail"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_lot_list
+msgid "Emplacement"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_location_search
+msgid "En cours"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_lot_search
+msgid "En entrepôt"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-javascript
+#: code:addons/suivi_machines_pilotage/static/src/planning/planning.xml:0
+#: code:addons/suivi_machines_pilotage/static/src/tableau_moderne/tableau_moderne.xml:0
+#: model:ir.model.fields.selection,name:suivi_machines_pilotage.selection__portail_tache__etat_suivi__en_retard
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_lot_search
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_portail_techniciens_kanban
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_portail_techniciens_search
+msgid "En retard"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields,help:suivi_machines_pilotage.field_portail_tache__etat_suivi
+msgid "En retard : la journée prévue est passée et la tâche n'est pas faite."
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_produits_list
+msgid "En stock"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-javascript
+#. odoo-python
+#: code:addons/suivi_machines_pilotage/models/indicateur.py:0
+#: code:addons/suivi_machines_pilotage/static/src/planning/planning.xml:0
+#: model:ir.model.fields.selection,name:suivi_machines_pilotage.selection__helpdesk_ticket__type_ticket__entretien
+#: model:ir.model.fields.selection,name:suivi_machines_pilotage.selection__portail_tache__type_tache__entretien
+msgid "Entretien"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_lot_list
+msgid "Entretien prévu"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_appels_search
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_lot_calendar
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_lot_search
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_portail_techniciens_search
+msgid "Entretiens"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields.selection,name:suivi_machines_pilotage.selection__pilotage_indicateur__section__entretiens
+#: model:ir.ui.menu,name:suivi_machines_pilotage.menu_pilotage_entretiens
+msgid "Entretiens & réparations"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:pilotage.indicateur,name:suivi_machines_pilotage.indicateur_entretien_semaine
+msgid "Entretiens & réparations cette semaine"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:pilotage.indicateur,name:suivi_machines_pilotage.indicateur_entretien_mois
+msgid "Entretiens & réparations dans 30 jours"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:pilotage.indicateur,name:suivi_machines_pilotage.indicateur_entretien_retard
+msgid "Entretiens & réparations en retard"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:pilotage.indicateur,name:suivi_machines_pilotage.indicateur_entretiens_faits
+msgid "Entretiens & réparations faits ce mois"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:pilotage.indicateur,name:suivi_machines_pilotage.indicateur_entretiens_ouverts
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_appels_search
+msgid "Entretiens & réparations à faire"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.actions.act_window,name:suivi_machines_pilotage.action_pilotage_entretiens_retard
+#: model:ir.ui.menu,name:suivi_machines_pilotage.menu_pilotage_entretiens_retard
+msgid "Entretiens en retard"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.actions.act_window,name:suivi_machines_pilotage.action_pilotage_entretiens_faits
+#: model:ir.ui.menu,name:suivi_machines_pilotage.menu_pilotage_entretiens_faits
+msgid "Entretiens faits"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_lot_graph
+msgid "Entretiens par mois"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_appels_search
+msgid "Entretiens planifiés à faire"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:pilotage.indicateur,name:suivi_machines_pilotage.indicateur_entretiens_a_planifier
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_appels_search
+msgid "Entretiens à planifier"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.actions.act_window,name:suivi_machines_pilotage.action_pilotage_entretiens
+#: model:ir.ui.menu,name:suivi_machines_pilotage.menu_pilotage_entretiens_avenir
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_lot_pivot
+msgid "Entretiens à venir"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields.selection,name:suivi_machines_pilotage.selection__pilotage_indicateur__section__facturation
+#: model:ir.ui.menu,name:suivi_machines_pilotage.menu_pilotage_facturation_racine
+msgid "Facturation"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.actions.act_window,name:suivi_machines_pilotage.action_pilotage_facturation
+msgid "Facturation des interventions"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:pilotage.indicateur,name:suivi_machines_pilotage.indicateur_sage_clients
+msgid "Factures clients à enregistrer dans Sage"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:pilotage.indicateur,description:suivi_machines_pilotage.indicateur_sage_clients
+msgid "Factures et avoirs clients comptabilisés"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:pilotage.indicateur,description:suivi_machines_pilotage.indicateur_sage_fournisseurs
+msgid "Factures et avoirs fournisseurs comptabilisés"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:pilotage.indicateur,name:suivi_machines_pilotage.indicateur_sage_fournisseurs
+msgid "Factures fournisseurs à enregistrer dans Sage"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-javascript
+#: code:addons/suivi_machines_pilotage/static/src/tableau_moderne/tableau_moderne.xml:0
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_portail_techniciens_kanban
+msgid "Fait"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_transfert_list
+msgid "Fait le"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields.selection,name:suivi_machines_pilotage.selection__portail_tache__etat_suivi__fait
+msgid "Faite"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_portail_livreurs_search
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_portail_techniciens_search
+msgid "Faites"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_donnees_test_form
+msgid "Fermer"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_location_list
+msgid "Fin"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:pilotage.indicateur,description:suivi_machines_pilotage.indicateur_reprises_30j
+msgid "Fin de location à venir"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_location_graph
+msgid "Fins de location par mois"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.ui.menu,name:suivi_machines_pilotage.menu_pilotage_sage_fournisseurs
+msgid "Fournisseurs : à enregistrer dans Sage"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:pilotage.indicateur,description:suivi_machines_pilotage.indicateur_a_facturer
+msgid "Frais sans bon de commande"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-javascript
+#: code:addons/suivi_machines_pilotage/static/src/planning/planning.xml:0
+msgid ""
+"Glissez une tâche sur un technicien ou un autre jour : le ticket, le "
+"transfert ou l'intervention est mis à jour."
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_donnees_test_form
+msgid "Générer les tickets de test"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_helpdesk_ticket__id
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_machine_intervention__id
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_pilotage_donnees_test__id
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_pilotage_indicateur__id
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_portail_tache__id
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_product_template__id
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_stock_picking__id
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_suivi_rappel_veille_mixin__id
+msgid "ID"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_pilotage_indicateur__name
+msgid "Indicateur"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model,name:suivi_machines_pilotage.model_pilotage_indicateur
+msgid "Indicateur de pilotage"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields.selection,name:suivi_machines_pilotage.selection__portail_tache__type_tache__installation
+msgid "Installation"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_portail_tache__intervention_id
+msgid "Intervention"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model,name:suivi_machines_pilotage.model_machine_intervention
+msgid "Intervention sur une machine"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_intervention_pivot
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_intervention_search
+msgid "Interventions"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_intervention_graph
+msgid "Interventions par mois"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:pilotage.indicateur,description:suivi_machines_pilotage.indicateur_entretiens_faits
+msgid "Interventions terminées depuis le 1er du mois"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.ui.menu,name:suivi_machines_pilotage.menu_pilotage_facturation
+#: model:pilotage.indicateur,name:suivi_machines_pilotage.indicateur_a_facturer
+msgid "Interventions à facturer"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_transfert_search
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_portail_livreurs_search
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_portail_techniciens_search
+msgid "Jour"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_pilotage_donnees_test__write_uid
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_pilotage_indicateur__write_uid
+msgid "Last Updated by"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_pilotage_donnees_test__write_date
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_pilotage_indicateur__write_date
+msgid "Last Updated on"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.actions.act_window,help:suivi_machines_pilotage.action_pilotage_entretiens
+msgid ""
+"Les dates viennent du dernier entretien ou de l'installation de chaque "
+"machine."
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.actions.act_window,help:suivi_machines_pilotage.action_portail_livreurs
+msgid ""
+"Les livraisons et ramassages de machines apparaissent ici, une colonne par livreur.\n"
+"               Glissez une carte dans la colonne d'un livreur pour la lui assigner."
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.actions.act_window,help:suivi_machines_pilotage.action_pilotage_planifier_ramassage
+msgid ""
+"Les machines livrées chez les clients apparaissent ici : « Planifier le "
+"ramassage » crée le bon de retour."
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-javascript
+#: code:addons/suivi_machines_pilotage/static/src/planning/planning.xml:0
+#: model:ir.model.fields.selection,name:suivi_machines_pilotage.selection__portail_tache__type_tache__livraison
+#: model:ir.model.fields.selection,name:suivi_machines_pilotage.selection__stock_picking__type_tournee__livraison
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_livraisons_faites_list
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_portail_livreurs_kanban
+msgid "Livraison"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_portail_livreurs_search
+msgid "Livraison / ramassage"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_portail_livreurs_search
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_portail_techniciens_search
+msgid "Livraisons"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields.selection,name:suivi_machines_pilotage.selection__pilotage_indicateur__section__livraisons
+msgid "Livraisons & ramassages"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.ui.menu,name:suivi_machines_pilotage.menu_pilotage_transferts_semaine
+msgid "Livraisons & ramassages de la semaine"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-python
+#: code:addons/suivi_machines_pilotage/models/tableau_moderne.py:0
+msgid "Livraisons & ramassages à faire"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:pilotage.indicateur,name:suivi_machines_pilotage.indicateur_livraisons_a_faire
+msgid "Livraisons de machines à faire"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.actions.act_window,name:suivi_machines_pilotage.action_pilotage_transferts
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_transfert_calendar
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_transfert_search
+msgid "Livraisons et ramassages"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:pilotage.indicateur,name:suivi_machines_pilotage.indicateur_livraisons_faites
+msgid "Livraisons faites ce mois"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:pilotage.indicateur,description:suivi_machines_pilotage.indicateur_sans_livreur
+msgid "Livraisons ou ramassages sans technicien assigné"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_transfert_search
+msgid "Livraisons à faire"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_livraisons_faites_list
+msgid "Livré le"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_transfert_search
+msgid "Livrées ce mois"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields.selection,name:suivi_machines_pilotage.selection__pilotage_indicateur__section__locations
+#: model:ir.ui.menu,name:suivi_machines_pilotage.menu_pilotage_locations
+msgid "Locations"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:pilotage.indicateur,name:suivi_machines_pilotage.indicateur_locations_depassees
+msgid "Locations dépassées"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:pilotage.indicateur,name:suivi_machines_pilotage.indicateur_locations_actives
+msgid "Locations en cours"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_portail_tache__lot_id
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_appels_list
+msgid "Machine"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_portail_tache__machines
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_stock_picking__machines_tournee
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_livraisons_faites_list
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_location_list
+msgid "Machines"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-python
+#: code:addons/suivi_machines_pilotage/models/tableau_moderne.py:0
+msgid "Machines chez les clients"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:pilotage.indicateur,description:suivi_machines_pilotage.indicateur_livraisons_faites
+msgid "Machines livrées depuis le 1er du mois"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:pilotage.indicateur,description:suivi_machines_pilotage.indicateur_livraisons_a_faire
+msgid "Machines à livrer chez les clients"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.actions.act_window,name:suivi_machines_pilotage.action_pilotage_machines_probleme
+#: model:ir.ui.menu,name:suivi_machines_pilotage.menu_pilotage_probleme
+msgid "Machines à problème"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:pilotage.indicateur,description:suivi_machines_pilotage.indicateur_reprises_ouvertes
+msgid "Machines à reprendre en fin de location"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:pilotage.indicateur,description:suivi_machines_pilotage.indicateur_ramassages_a_faire
+msgid "Machines à récupérer chez les clients"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_portail_livreurs_search
+msgid "Mes tournées"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_portail_techniciens_search
+msgid "Mes tâches"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-python
+#: code:addons/suivi_machines_pilotage/models/portail_tache.py:0
+msgid ""
+"Modifiez la tâche depuis son document (transfert, ticket ou intervention)."
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_intervention_search
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_lot_list
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_lot_search
+msgid "Modèle"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_appels_search
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_intervention_search
+msgid "Mois"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_location_search
+msgid "Mois de fin"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_lot_search
+msgid "Mois de l'entretien"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-python
+#: code:addons/suivi_machines_pilotage/models/tableau_moderne.py:0
+msgid "Nos contacts"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_appels_search
+msgid "Nouveaux (à prendre en charge)"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:pilotage.indicateur,name:suivi_machines_pilotage.indicateur_tickets_nouveaux
+msgid "Nouveaux tickets"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:pilotage.indicateur,description:suivi_machines_pilotage.indicateur_appels_sans_machine
+msgid "Numéro de série à préciser"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_lot_list
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_lot_search
+msgid "N° de série"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields.selection,name:suivi_machines_pilotage.selection__pilotage_indicateur__couleur__warning
+msgid "Orange"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_appels_search
+msgid "Origine (appel, entretien, reprise)"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_helpdesk_ticket__type_ticket
+msgid "Origine du ticket"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.ui.menu,name:suivi_machines_pilotage.menu_pilotage_outils
+msgid "Outils"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_appels_search
+msgid "Ouverts"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_portail_techniciens_form
+msgid "Ouvrir le document"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-javascript
+#: code:addons/suivi_machines_pilotage/static/src/tableau_moderne/tableau_moderne.xml:0
+msgid "Parc & activité"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.ui.menu,name:suivi_machines_pilotage.menu_pilotage_parc
+msgid "Parc machines"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:pilotage.indicateur,description:suivi_machines_pilotage.indicateur_appels_ouverts
+msgid "Pas encore assignés à un technicien (hors reprises)"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.ui.menu,name:suivi_machines_pilotage.menu_pilotage_root
+msgid "Pilotage"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:res.groups,name:suivi_machines_pilotage.group_pilotage
+msgid "Pilotage (tableau de bord des machines)"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.actions.server,name:suivi_machines_pilotage.cron_rappel_veille_ir_actions_server
+msgid "Pilotage : rappel au client la veille de la visite"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_livraisons_faites_list
+msgid "Planifier le ramassage"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.actions.act_window,name:suivi_machines_pilotage.action_pilotage_planifier_ramassage
+#: model:ir.ui.menu,name:suivi_machines_pilotage.menu_pilotage_planifier_ramassage
+msgid "Planifier un ramassage"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-javascript
+#: code:addons/suivi_machines_pilotage/static/src/planning/planning.xml:0
+#: model:ir.actions.client,name:suivi_machines_pilotage.action_pilotage_planning
+#: model:ir.ui.menu,name:suivi_machines_pilotage.menu_pilotage_planning
+msgid "Planning"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.actions.act_window,name:suivi_machines_pilotage.action_portail_livreurs
+msgid "Portail livreurs"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.actions.act_window,name:suivi_machines_pilotage.action_portail_techniciens
+#: model:ir.ui.menu,name:suivi_machines_pilotage.menu_portail_livreurs
+msgid "Portail techniciens"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-javascript
+#: code:addons/suivi_machines_pilotage/static/src/tableau_moderne/tableau_moderne.xml:0
+msgid "Portail →"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields,help:suivi_machines_pilotage.field_product_product__prix_vente
+#: model:ir.model.fields,help:suivi_machines_pilotage.field_product_template__prix_vente
+msgid "Price at which the product is sold to customers."
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_product_product__prix_vente
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_product_template__prix_vente
+msgid "Prix de vente"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_appels_list
+msgid "Problème"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-javascript
+#: code:addons/suivi_machines_pilotage/static/src/tableau_moderne/tableau_moderne.xml:0
+msgid "Prochaines tâches"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model,name:suivi_machines_pilotage.model_product_template
+msgid "Product"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_produits_list
+msgid "Produits"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.actions.act_window,name:suivi_machines_pilotage.action_pilotage_produits_categorie
+#: model:ir.ui.menu,name:suivi_machines_pilotage.menu_pilotage_produits_categorie
+msgid "Produits par catégorie"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_transfert_list
+msgid "Prévu le"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_portail_tache__date_affichage
+msgid "Quand"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-javascript
+#: code:addons/suivi_machines_pilotage/static/src/planning/planning.xml:0
+#: model:ir.model.fields.selection,name:suivi_machines_pilotage.selection__portail_tache__type_tache__ramassage
+#: model:ir.model.fields.selection,name:suivi_machines_pilotage.selection__stock_picking__type_tournee__ramassage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_portail_livreurs_kanban
+msgid "Ramassage"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_portail_livreurs_search
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_portail_techniciens_search
+msgid "Ramassages"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:pilotage.indicateur,name:suivi_machines_pilotage.indicateur_ramassages_a_faire
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_transfert_search
+msgid "Ramassages à faire"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:mail.template,subject:suivi_machines_pilotage.mail_rappel_veille
+msgid "Rappel : visite de notre technicien demain"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:mail.template,name:suivi_machines_pilotage.mail_rappel_veille
+msgid "Rappel : visite du technicien demain"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_helpdesk_ticket__rappel_veille_le
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_machine_intervention__rappel_veille_le
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_stock_picking__rappel_veille_le
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_suivi_rappel_veille_mixin__rappel_veille_le
+msgid "Rappel envoyé le"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-python
+#: code:addons/suivi_machines_pilotage/models/rappel.py:0
+msgid "Rappel envoyé à %(client)s (%(courriel)s) pour la visite de demain."
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model,name:suivi_machines_pilotage.model_suivi_rappel_veille_mixin
+msgid "Rappel la veille de la visite"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_location_list
+msgid "Reprise"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields.selection,name:suivi_machines_pilotage.selection__helpdesk_ticket__type_ticket__reprise
+msgid "Reprise de machine"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:pilotage.indicateur,name:suivi_machines_pilotage.indicateur_reprises_30j
+msgid "Reprises dans 30 jours"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_appels_search
+msgid "Reprises de machine"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_appels_list
+msgid "Reçu le"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-javascript
+#: code:addons/suivi_machines_pilotage/static/src/tableau_moderne/tableau_moderne.xml:0
+msgid "Rien d'urgent. Bravo !"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-javascript
+#: code:addons/suivi_machines_pilotage/static/src/tableau_moderne/tableau_moderne.xml:0
+msgid "Rien de prévu sur la période."
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields.selection,name:suivi_machines_pilotage.selection__pilotage_indicateur__couleur__danger
+msgid "Rouge"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_intervention_search
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_transfert_list
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_transfert_search
+msgid "Route"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_portail_tache__reference
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_transfert_list
+msgid "Référence"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-javascript
+#. odoo-python
+#: code:addons/suivi_machines_pilotage/models/indicateur.py:0
+#: code:addons/suivi_machines_pilotage/static/src/planning/planning.xml:0
+#: model:ir.model.fields.selection,name:suivi_machines_pilotage.selection__portail_tache__type_tache__reparation
+msgid "Réparation"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_portail_techniciens_search
+msgid "Réparations"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_appels_search
+msgid "Réparations planifiées à faire"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-python
+#: code:addons/suivi_machines_pilotage/models/indicateur.py:0
+msgid "Réparations — %s"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_pilotage_donnees_test__jours
+msgid "Répartis sur (jours)"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_pilotage_indicateur__repartition
+msgid "Répartition"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_transfert_search
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_portail_livreurs_search
+msgid "Sans livreur"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_appels_search
+msgid "Sans machine"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-python
+#: code:addons/suivi_machines_pilotage/models/planning.py:0
+#: model:pilotage.indicateur,name:suivi_machines_pilotage.indicateur_sans_livreur
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_portail_techniciens_search
+msgid "Sans technicien"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_location_search
+msgid "Se terminent dans 30 jours"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_pilotage_indicateur__section
+msgid "Section"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_lot_search
+msgid "Semaine de l'entretien"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-python
+#: code:addons/suivi_machines_pilotage/models/planning.py:0
+msgid "Semaine du %s"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-javascript
+#: code:addons/suivi_machines_pilotage/static/src/planning/planning.xml:0
+msgid "Semaine précédente"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-javascript
+#: code:addons/suivi_machines_pilotage/static/src/planning/planning.xml:0
+msgid "Semaine suivante"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_pilotage_indicateur__sequence
+msgid "Sequence"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-python
+#: code:addons/suivi_machines_pilotage/models/portail_tache.py:0
+msgid "Seul le pilotage peut réassigner ou déplacer une tâche."
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_portail_tache__company_id
+msgid "Société"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_portail_tache__statut
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_appels_list
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_appels_search
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_lot_search
+msgid "Statut"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_portail_tache__etat_suivi
+msgid "Suivi"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.module.module,shortdesc:base.module_suivi_machines_pilotage
+msgid "Suivi des machines - Pilotage"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.actions.act_window,help:suivi_machines_pilotage.action_portail_techniciens
+msgid ""
+"Suivi des techniciens : livraisons, ramassages, entretiens et réparations, une colonne par\n"
+"               technicien (vert : fait, rouge : en retard). Glissez une carte dans la colonne d'un technicien\n"
+"               pour la lui assigner."
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_donnees_test_form
+msgid "Supprimer les tickets de test"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_donnees_test_form
+msgid "Supprimer tous les tickets portant l'étiquette TEST ?"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.actions.act_window,name:suivi_machines_pilotage.action_pilotage_tableau_bord
+#: model:ir.ui.menu,name:suivi_machines_pilotage.menu_pilotage_tableau_racine
+msgid "Tableau de bord"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.module.module,summary:base.module_suivi_machines_pilotage
+msgid ""
+"Tableau de bord du suivi des machines : entretiens, locations, reprises, "
+"bris, facturation"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-javascript
+#: code:addons/suivi_machines_pilotage/static/src/planning/planning.xml:0
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_portail_tache__technicien_id
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_appels_list
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_appels_search
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_intervention_search
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_transfert_search
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_portail_livreurs_search
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_portail_techniciens_search
+msgid "Technicien"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-javascript
+#: code:addons/suivi_machines_pilotage/static/src/tableau_moderne/tableau_moderne.xml:0
+msgid "Techniciens"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_portail_tache__ticket_id
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_appels_list
+msgid "Ticket"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:pilotage.indicateur,description:suivi_machines_pilotage.indicateur_tickets_nouveaux
+msgid "Tickets arrivés, pas encore pris en charge"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.actions.act_window,name:suivi_machines_pilotage.action_pilotage_tickets_entretien
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_pilotage_donnees_test__nb_entretiens
+#: model:ir.ui.menu,name:suivi_machines_pilotage.menu_pilotage_tickets_entretien
+msgid "Tickets d'entretien"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.actions.act_window,name:suivi_machines_pilotage.action_pilotage_tickets_reprise
+#: model:ir.ui.menu,name:suivi_machines_pilotage.menu_pilotage_reprises
+msgid "Tickets de reprise"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:pilotage.indicateur,name:suivi_machines_pilotage.indicateur_reprises_ouvertes
+msgid "Tickets de reprise ouverts"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_pilotage_donnees_test__nb_reparations
+msgid "Tickets de réparation"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.actions.act_window,name:suivi_machines_pilotage.action_donnees_test
+#: model:ir.ui.menu,name:suivi_machines_pilotage.menu_pilotage_donnees_test
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_donnees_test_form
+msgid "Tickets de test"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model,name:suivi_machines_pilotage.model_pilotage_donnees_test
+msgid "Tickets de test (entretiens et réparations)"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-python
+#: code:addons/suivi_machines_pilotage/models/donnees_test.py:0
+msgid "Tickets de test créés"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_pilotage_donnees_test__nb_existants
+msgid "Tickets de test existants"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-python
+#: code:addons/suivi_machines_pilotage/models/donnees_test.py:0
+msgid "Tickets de test supprimés"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_appels_graph
+msgid "Tickets par type"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_location_list
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_lot_list
+msgid "Total"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-python
+#: code:addons/suivi_machines_pilotage/models/indicateur.py:0
+msgid "Total : %s"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_portail_livreurs_search
+msgid "Tournées"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_lot_list
+msgid "Tous les (mois)"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-javascript
+#: code:addons/suivi_machines_pilotage/static/src/tableau_moderne/tableau_moderne.xml:0
+msgid "Tout voir →"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-javascript
+#: code:addons/suivi_machines_pilotage/static/src/tableau_moderne/tableau_moderne.xml:0
+#: model:ir.ui.menu,name:suivi_machines_pilotage.menu_pilotage_tableau
+msgid "Toutes les cartes"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.ui.menu,name:suivi_machines_pilotage.menu_pilotage_toutes
+msgid "Toutes les machines"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model,name:suivi_machines_pilotage.model_stock_picking
+msgid "Transfer"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_portail_tache__picking_id
+msgid "Transfert"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_portail_tache__type_tache
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_intervention_search
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_transfert_list
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_transfert_search
+msgid "Type"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_appels_list
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_appels_search
+msgid "Type de problème"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_appels_search
+msgid "Type de ticket"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_stock_picking__type_tournee
+msgid "Type de tournée"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_portail_techniciens_search
+msgid "Type de tâche"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_portail_tache__titre
+msgid "Tâche"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model,name:suivi_machines_pilotage.model_portail_tache
+msgid "Tâche de technicien"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-javascript
+#: code:addons/suivi_machines_pilotage/static/src/tableau_moderne/tableau_moderne.xml:0
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_portail_techniciens_search
+msgid "Tâches"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-python
+#: code:addons/suivi_machines_pilotage/models/tableau_moderne.py:0
+msgid "Tâches de %s"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_portail_techniciens_calendar
+msgid "Tâches des techniciens"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.constraint,message:suivi_machines_pilotage.constraint_pilotage_indicateur_code_unique
+msgid "Un seul indicateur par code."
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_pilotage_indicateur__valeur
+msgid "Valeur"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-python
+#: code:addons/suivi_machines_pilotage/models/tableau_moderne.py:0
+msgid "Ventes du mois"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields.selection,name:suivi_machines_pilotage.selection__pilotage_indicateur__couleur__success
+msgid "Vert"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields.selection,name:suivi_machines_pilotage.selection__pilotage_indicateur__couleur__primary
+msgid "Violet"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.actions.client,name:suivi_machines_pilotage.action_pilotage_vue_ensemble
+#: model:ir.ui.menu,name:suivi_machines_pilotage.menu_pilotage_tableau_moderne
+#: model:ir.ui.menu,name:suivi_machines_pilotage.menu_pilotage_vue_ensemble
+msgid "Vue d'ensemble"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-javascript
+#: code:addons/suivi_machines_pilotage/static/src/tableau_moderne/tableau_moderne.xml:0
+msgid "ce mois"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-javascript
+#: code:addons/suivi_machines_pilotage/static/src/tableau_moderne/tableau_moderne.xml:0
+msgid "cette semaine"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-python
+#: code:addons/suivi_machines_pilotage/models/tableau_moderne.py:0
+msgid "client à préciser"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-python
+#: code:addons/suivi_machines_pilotage/models/tableau_moderne.py:0
+msgid "est_machine"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-javascript
+#: code:addons/suivi_machines_pilotage/static/src/tableau_moderne/tableau_moderne.xml:0
+msgid "fait"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model,name:suivi_machines_pilotage.model_helpdesk_ticket
+msgid "ticket"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-javascript
+#: code:addons/suivi_machines_pilotage/static/src/tableau_moderne/tableau_moderne.xml:0
+msgid "· ce qui demande votre attention"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-javascript
+#: code:addons/suivi_machines_pilotage/static/src/tableau_moderne/tableau_moderne.xml:0
+msgid "· mis à jour à"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_intervention_search
+msgid "À facturer"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:pilotage.indicateur,name:suivi_machines_pilotage.indicateur_facturer_sage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_intervention_search
+msgid "À facturer dans Sage"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-javascript
+#. odoo-python
+#: code:addons/suivi_machines_pilotage/models/portail_tache.py:0
+#: code:addons/suivi_machines_pilotage/static/src/tableau_moderne/tableau_moderne.xml:0
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_portail_tache__a_faire
+#: model:ir.model.fields.selection,name:suivi_machines_pilotage.selection__portail_tache__etat_suivi__a_faire
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_portail_livreurs_search
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_portail_techniciens_search
+msgid "À faire"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields,help:suivi_machines_pilotage.field_pilotage_donnees_test__jours
+msgid "À partir d'hier (pour voir des retards)."
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_appels_search
+msgid "À planifier (sans technicien)"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:pilotage.indicateur,description:suivi_machines_pilotage.indicateur_entretien_mois
+msgid "À planifier ce mois-ci"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-javascript
+#: code:addons/suivi_machines_pilotage/static/src/tableau_moderne/tableau_moderne.xml:0
+msgid "À traiter maintenant"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields,field_description:suivi_machines_pilotage.field_portail_tache__tag_ids
+msgid "Étiquettes"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.model.fields,help:suivi_machines_pilotage.field_portail_tache__tag_ids
+msgid "Étiquettes du ticket (entretien en retard, problème signalé...)."
+msgstr ""

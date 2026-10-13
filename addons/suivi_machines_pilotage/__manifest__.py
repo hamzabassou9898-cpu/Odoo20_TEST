@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 {
-    "name": "Pilotage",
+    "name": "Suivi des machines - Pilotage",
     "summary": "Tableau de bord du suivi des machines : entretiens, locations, reprises, bris, facturation",
-    "version": "20.0.1.27.0",
+    "version": "20.0.1.28.0",
     "category": "Productivity",
-    "author": "Hamza Bassou",
+    "author": "Volcan",
+    "website": "https://volcan.ca/",
     "license": "LGPL-3",
     "depends": ["suivi_machines_helpdesk", "suivi_sage"],
     "data": [

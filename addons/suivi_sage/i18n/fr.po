@@ -1,0 +1,146 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* suivi_sage
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 20.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-13 17:54+0000\n"
+"PO-Revision-Date: 2026-10-13 17:54+0000\n"
+"Last-Translator: Volcan\n"
+"Language-Team: Volcan\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#. module: suivi_sage
+#: model_terms:ir.ui.view,arch_db:suivi_sage.view_move_form_sage
+msgid "(pièce"
+msgstr "(pièce"
+
+#. module: suivi_sage
+#: model_terms:ir.ui.view,arch_db:suivi_sage.view_move_form_sage
+msgid "Annuler le transfert Sage"
+msgstr "Annuler le transfert Sage"
+
+#. module: suivi_sage
+#: model_terms:ir.ui.view,arch_db:suivi_sage.view_move_form_sage
+msgid "Cette pièce n'est pas encore enregistrée dans <strong>Sage</strong>."
+msgstr "Cette pièce n'est pas encore enregistrée dans <strong>Sage</strong>."
+
+#. module: suivi_sage
+#: model:ir.actions.act_window,name:suivi_sage.action_sage_clients
+msgid "Clients : à enregistrer dans Sage"
+msgstr "Clients : à enregistrer dans Sage"
+
+#. module: suivi_sage
+#: model:ir.model.fields,field_description:suivi_sage.field_account_bank_statement_line__sage_date
+#: model:ir.model.fields,field_description:suivi_sage.field_account_move__sage_date
+msgid "Date d'enregistrement Sage"
+msgstr "Date d'enregistrement Sage"
+
+#. module: suivi_sage
+#: model:ir.model.fields,field_description:suivi_sage.field_account_move__display_name
+#: model:ir.model.fields,field_description:suivi_sage.field_machine_intervention__display_name
+msgid "Display Name"
+msgstr "Display Name"
+
+#. module: suivi_sage
+#: model:ir.model.fields,field_description:suivi_sage.field_account_bank_statement_line__sage_transfere
+#: model:ir.model.fields,field_description:suivi_sage.field_account_move__sage_transfere
+#: model:ir.model.fields.selection,name:suivi_sage.selection__account_move__statut_sage__transfere
+#: model_terms:ir.ui.view,arch_db:suivi_sage.view_account_invoice_filter_sage
+#: model_terms:ir.ui.view,arch_db:suivi_sage.view_invoice_tree_sage
+#: model_terms:ir.ui.view,arch_db:suivi_sage.view_move_form_sage
+msgid "Enregistré dans Sage"
+msgstr "Enregistré dans Sage"
+
+#. module: suivi_sage
+#: model_terms:ir.ui.view,arch_db:suivi_sage.view_move_form_sage
+msgid "Enregistrée dans <strong>Sage</strong>"
+msgstr "Enregistrée dans <strong>Sage</strong>"
+
+#. module: suivi_sage
+#: model:ir.actions.act_window,name:suivi_sage.action_sage_fournisseurs
+msgid "Fournisseurs : à enregistrer dans Sage"
+msgstr "Fournisseurs : à enregistrer dans Sage"
+
+#. module: suivi_sage
+#: model:ir.model.fields,field_description:suivi_sage.field_account_move__id
+#: model:ir.model.fields,field_description:suivi_sage.field_machine_intervention__id
+msgid "ID"
+msgstr "ID"
+
+#. module: suivi_sage
+#: model:ir.model,name:suivi_sage.model_machine_intervention
+msgid "Intervention sur une machine"
+msgstr "Intervention sur une machine"
+
+#. module: suivi_sage
+#: model:ir.model,name:suivi_sage.model_account_move
+msgid "Journal Entry"
+msgstr "Journal Entry"
+
+#. module: suivi_sage
+#: model:ir.actions.server,name:suivi_sage.action_server_transfere_sage
+msgid "Marquer enregistré dans Sage"
+msgstr "Marquer enregistré dans Sage"
+
+#. module: suivi_sage
+#: model:ir.model.fields.selection,name:suivi_sage.selection__account_move__statut_sage__non_concerne
+msgid "Non concerné"
+msgstr "Non concerné"
+
+#. module: suivi_sage
+#: model:ir.model.fields,field_description:suivi_sage.field_account_bank_statement_line__sage_reference
+#: model:ir.model.fields,field_description:suivi_sage.field_account_move__sage_reference
+msgid "N° de pièce Sage"
+msgstr "N° de pièce Sage"
+
+#. module: suivi_sage
+#: model_terms:ir.ui.view,arch_db:suivi_sage.view_move_form_sage
+msgid "Sage"
+msgstr "Sage"
+
+#. module: suivi_sage
+#: model:ir.model.fields,field_description:suivi_sage.field_account_bank_statement_line__statut_sage
+#: model:ir.model.fields,field_description:suivi_sage.field_account_move__statut_sage
+#: model_terms:ir.ui.view,arch_db:suivi_sage.view_account_invoice_filter_sage
+#: model_terms:ir.ui.view,arch_db:suivi_sage.view_invoice_tree_sage
+msgid "Statut Sage"
+msgstr "Statut Sage"
+
+#. module: suivi_sage
+#: model:ir.module.module,summary:base.module_suivi_sage
+msgid ""
+"Statut de transfert vers Sage sur toutes les factures et avoirs (clients et "
+"fournisseurs)"
+msgstr ""
+"Statut de transfert vers Sage sur toutes les factures et avoirs (clients et "
+"fournisseurs)"
+
+#. module: suivi_sage
+#: model:ir.module.module,shortdesc:base.module_suivi_sage
+msgid "Suivi des machines - Sage"
+msgstr "Suivi des machines - Sage"
+
+#. module: suivi_sage
+#: model_terms:ir.ui.view,arch_db:suivi_sage.view_move_form_sage
+msgid "le"
+msgstr "le"
+
+#. module: suivi_sage
+#: model_terms:ir.ui.view,arch_db:suivi_sage.view_move_form_sage
+msgid "n° de la pièce dans Sage"
+msgstr "n° de la pièce dans Sage"
+
+#. module: suivi_sage
+#: model:ir.model.fields.selection,name:suivi_sage.selection__account_move__statut_sage__a_transferer
+#: model:ir.ui.menu,name:suivi_sage.menu_sage_clients
+#: model:ir.ui.menu,name:suivi_sage.menu_sage_fournisseurs
+#: model_terms:ir.ui.view,arch_db:suivi_sage.view_account_invoice_filter_sage
+msgid "À enregistrer dans Sage"
+msgstr "À enregistrer dans Sage"
