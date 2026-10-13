@@ -69,6 +69,36 @@ class SaleOrder(models.Model):
             order.machine_ids = lots
             order.nb_machines = len(lots)
 
+    nb_livraisons_a_faire = fields.Integer("Livraisons à faire", compute="_compute_nb_livraisons_a_faire")
+
+    @api.depends("picking_ids.state")
+    def _compute_nb_livraisons_a_faire(self):
+        for order in self:
+            order.nb_livraisons_a_faire = len(order._livraisons_a_faire())
+
+    def _livraisons_a_faire(self):
+        self.ensure_one()
+        return self.picking_ids.filtered(lambda p: p.state not in ("done", "cancel")
+                                         and p.picking_type_code == "outgoing")
+
+    def action_ajuster_contrat(self):
+        """Ajuster le contrat de location : machines ou accessoires en plus, nouvelle date de fin."""
+        self.ensure_one()
+        return {"type": "ir.actions.act_window", "name": self.env._("Ajuster le contrat %s", self.name),
+                "res_model": "suivi.machines.ajuster.contrat", "view_mode": "form", "views": [(False, "form")],
+                "target": "new", "context": {"default_commande_id": self.id}}
+
+    def action_livraison_a_faire(self):
+        """Ajustement du contrat (machine ou accessoire ajouté) : la livraison des ajouts, prête à planifier."""
+        self.ensure_one()
+        pickings = self._livraisons_a_faire()
+        action = {"type": "ir.actions.act_window", "name": self.env._("Livraison à faire - %s", self.name),
+                  "res_model": "stock.picking", "target": "current"}
+        if len(pickings) == 1:
+            return dict(action, res_id=pickings.id, view_mode="form", views=[(False, "form")])
+        return dict(action, domain=[("id", "in", pickings.ids)], view_mode="list,form",
+                    views=[(False, "list"), (False, "form")])
+
     def action_fiches_machines(self):
         """Une machine : sa fiche. Plusieurs : la liste des machines de la commande."""
         self.ensure_one()
@@ -145,6 +175,21 @@ class SaleOrderLine(models.Model):
         "stock.lot", "N° de série", copy=False, index="btree_not_null",
         domain="[('product_id', '=', product_id), ('location_id.usage', '=', 'internal')]",
         help="Machine précise à livrer : elle sera réservée sur le bon de livraison.")
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        lignes = super().create(vals_list)
+        # Ajustement d'un contrat deja confirme : trace dans le contrat, avec la livraison creee par Odoo
+        ajouts = lignes.filtered(lambda l: l.order_id.state == "sale" and not l.display_type)
+        for commande in ajouts.order_id:
+            noms = ", ".join("%s × %s" % (l.product_uom_qty, l.product_id.display_name)
+                             for l in ajouts.filtered(lambda l: l.order_id == commande))
+            livraisons = ajouts.filtered(lambda l: l.order_id == commande).move_ids.picking_id
+            message = self.env._("Contrat ajusté : ajout de %s.", noms)
+            if livraisons:
+                message += " " + self.env._("Livraison à faire : %s.", ", ".join(livraisons.mapped("name")))
+            commande.message_post(body=message)
+        return lignes
 
     def action_fiche_machine(self):
         """Ouvre la fiche de la machine (n° de serie) dans Suivi des machines."""

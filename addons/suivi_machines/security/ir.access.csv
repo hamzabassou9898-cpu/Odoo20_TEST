@@ -6,3 +6,5 @@ access_machine_intervention_frais_user,Frais d'intervention : utilisateurs inven
 access_machine_intervention_frais_vente,Frais d'intervention : ventes,machine.intervention.frais,sales_team.group_sale_salesman,crud,
 access_machine_intervention_frais_employe,Frais d'intervention : lecture,machine.intervention.frais,base.group_user,r,
 access_planifier_ramassage_user,Planifier le ramassage,suivi.machines.planifier.ramassage,stock.group_stock_user,crud,
+access_ajuster_contrat_vente,Ajuster un contrat de location,suivi.machines.ajuster.contrat,sales_team.group_sale_salesman,crud,
+access_ajuster_contrat_ligne_vente,Ajout à un contrat de location,suivi.machines.ajuster.contrat.ligne,sales_team.group_sale_salesman,crud,
