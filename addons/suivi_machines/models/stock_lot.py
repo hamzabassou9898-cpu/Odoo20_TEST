@@ -35,6 +35,10 @@ class StockLot(models.Model):
     date_installation = fields.Date("Date d'installation", compute="_compute_machine", store=True)
     date_dernier_entretien = fields.Date("Dernier entretien", compute="_compute_machine", store=True)
     intervalle_entretien = fields.Integer("Entretien aux (mois)", default=12)
+    prochain_entretien_fixe = fields.Date(
+        "Premier entretien prévu", copy=False, tracking=True,
+        help="Choisi à la livraison chez le client. Une fois cet entretien fait, le suivant est calculé "
+             "avec la fréquence (dernier entretien + fréquence).")
     date_prochain_entretien = fields.Date("Prochain entretien", compute="_compute_machine", store=True)
     nb_interventions = fields.Integer("Nb interventions", compute="_compute_machine", store=True)
     nb_bris = fields.Integer("Bris", compute="_compute_machine", store=True)
@@ -47,7 +51,7 @@ class StockLot(models.Model):
     def _expand_statuts(self, statuts, domain):
         return [k for k, _ in STATUTS if k != "sans_emplacement"]
 
-    @api.depends("location_id", "machine_etat", "intervalle_entretien",
+    @api.depends("location_id", "machine_etat", "intervalle_entretien", "prochain_entretien_fixe",
                  "intervention_ids.state", "intervention_ids.type",
                  "intervention_ids.date", "intervention_ids.partner_id")
     def _compute_machine(self):
@@ -95,6 +99,11 @@ class StockLot(models.Model):
             depart = lot.date_dernier_entretien or lot.date_installation
             lot.date_prochain_entretien = (
                 depart + relativedelta(months=lot.intervalle_entretien or 12) if depart else False)
+            # Date choisie a la livraison : valable tant qu'aucun entretien n'a ete fait depuis l'installation
+            dernier = lot.date_dernier_entretien
+            if lot.prochain_entretien_fixe and (
+                    not dernier or (lot.date_installation and dernier < lot.date_installation)):
+                lot.date_prochain_entretien = lot.prochain_entretien_fixe
 
             if lot.machine_etat != "actif":
                 lot.machine_statut = lot.machine_etat

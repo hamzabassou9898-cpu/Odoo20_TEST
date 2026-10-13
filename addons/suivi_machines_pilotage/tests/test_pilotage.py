@@ -492,6 +492,8 @@ class TestPortailLivreurs(TransactionCase):
         pk.action_assign()
         pk.move_ids.picked = True
         pk.livreur_id = pk.livreur_id or self.env.user  # technicien obligatoire pour valider
+        pk.prochain_entretien = pk.prochain_entretien or fields.Date.today() + relativedelta(months=12)  # entretien obligatoire a la livraison
+        pk.frequence_entretien = pk.frequence_entretien or "12"
         pk.button_validate()
         action = env["ir.actions.act_window"]._for_xml_id("suivi_machines_pilotage.action_pilotage_planifier_ramassage")
         self.assertIn(pk, env["stock.picking"].search(eval(action["domain"])))

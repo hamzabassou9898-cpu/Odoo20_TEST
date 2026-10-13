@@ -15,6 +15,12 @@
             <!-- Livraison / ramassage : pas de validation sans technicien (bandeau rouge) -->
             <xpath expr="//sheet" position="before">
                 <field name="technicien_requis" invisible="1"/>
+                <field name="livre_machines" invisible="1"/>
+                <div class="alert alert-danger mb-0 py-2" role="alert"
+                     invisible="not livre_machines or state in ('done', 'cancel') or (prochain_entretien and frequence_entretien)">
+                    Indiquez le <strong>Prochain entretien</strong> et la <strong>Fréquence des entretiens</strong> des
+                    machines livrées : Odoo les garde sur la fiche de chaque machine et prévient le bureau un mois avant.
+                </div>
                 <div class="alert alert-danger mb-0 py-2" role="alert" invisible="not technicien_requis or livreur_id">
                     Choisissez le <strong>Technicien assigné</strong> : il est obligatoire pour valider cette
                     livraison ou ce ramassage.
@@ -22,6 +28,10 @@
             </xpath>
             <field name="origin" position="before">
                 <field name="livreur_id" widget="many2one_avatar_user"
+                       readonly="state in ('done', 'cancel')"/>
+                <field name="prochain_entretien" invisible="not livre_machines"
+                       readonly="state in ('done', 'cancel')"/>
+                <field name="frequence_entretien" invisible="not livre_machines"
                        readonly="state in ('done', 'cancel')"/>
             </field>
             <xpath expr="//field[@name='move_ids']/list/column[field[@name='product_id']]" position="after">

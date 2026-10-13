@@ -2,6 +2,10 @@
 from odoo import api, fields, models
 from odoo.exceptions import UserError
 
+# Frequence des entretiens (mois)
+FREQUENCES_ENTRETIEN = [("3", "Tous les 3 mois"), ("6", "Tous les 6 mois"), ("12", "Tous les 12 mois"),
+                        ("24", "Tous les 24 mois")]
+
 
 class StockPicking(models.Model):
     _inherit = "stock.picking"
@@ -9,6 +13,21 @@ class StockPicking(models.Model):
     livreur_id = fields.Many2one("res.users", "Technicien assigné", index="btree_not_null", tracking=True,
                                  domain="[('share', '=', False)]",
                                  help="Technicien qui fait la livraison (ou le ramassage) de la machine.")
+    # Livraison de machines chez le client : premier entretien et frequence (gardes sur la machine)
+    livre_machines = fields.Boolean("Livre des machines", compute="_compute_livre_machines")
+    prochain_entretien = fields.Date(
+        "Prochain entretien", copy=False,
+        help="Date du premier entretien des machines livrées. Odoo la garde sur la fiche de chaque machine "
+             "et prévient le bureau un mois avant.")
+    frequence_entretien = fields.Selection(
+        FREQUENCES_ENTRETIEN, "Fréquence des entretiens", copy=False,
+        help="Ensuite, Odoo calcule chaque entretien : dernier entretien + fréquence.")
+
+    @api.depends("move_ids.product_id", "location_dest_id")
+    def _compute_livre_machines(self):
+        for picking in self:
+            picking.livre_machines = any(m.est_machine and m._vers_client() for m in picking.move_ids)
+
     technicien_requis = fields.Boolean(
         "Technicien requis", compute="_compute_technicien_requis",
         help="Livraison chez un client ou ramassage : le technicien assigné est obligatoire pour valider.")
@@ -33,7 +52,25 @@ class StockPicking(models.Model):
             raise UserError(self.env._(
                 "Choisissez le technicien assigné avant de valider : %s.",
                 ", ".join(sans_technicien.mapped("name"))))
+        sans_entretien = self.filtered(lambda p: p.livre_machines and p.state not in ("done", "cancel")
+                                       and not (p.prochain_entretien and p.frequence_entretien))
+        if sans_entretien:
+            raise UserError(self.env._(
+                "Indiquez le prochain entretien et sa fréquence (3, 6, 12 mois…) avant de valider : %s.",
+                ", ".join(sans_entretien.mapped("name"))))
         return super().button_validate()
+
+    def _action_done(self):
+        res = super()._action_done()
+        self._enregistrer_entretien_machines()
+        return res
+
+    def _enregistrer_entretien_machines(self):
+        """Machines livrees chez le client : premier entretien et frequence sur leur fiche."""
+        for picking in self.filtered(lambda p: p.state == "done" and p.prochain_entretien and p.frequence_entretien):
+            lots = picking.move_ids.filtered(lambda m: m.est_machine and m._vers_client()).move_line_ids.lot_id
+            lots.write({"prochain_entretien_fixe": picking.prochain_entretien,
+                        "intervalle_entretien": int(picking.frequence_entretien)})
 
 
 class StockMove(models.Model):

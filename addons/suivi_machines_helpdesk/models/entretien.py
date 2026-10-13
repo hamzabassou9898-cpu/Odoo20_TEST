@@ -51,11 +51,13 @@ class HelpdeskTicket(models.Model):
     @api.model
     def _cron_tickets_entretien(self):
         """Chaque jour : ticket « Entretien » pour chaque machine chez un client dont l'entretien
-        est du dans les X jours (7 par defaut) ou en retard ; etiquettes mises a jour."""
+        est du dans les X jours (30 par defaut : un mois avant) ou en retard ; etiquettes mises a jour."""
         icp = self.env["ir.config_parameter"].sudo()
-        jours = _param_int(icp, PARAM_JOURS_ENTRETIEN, 7)
+        # Ticket et activite « Planifier entretien » un mois avant (parametre modifiable)
+        jours = _param_int(icp, PARAM_JOURS_ENTRETIEN, 30)
         aujourdhui = fields.Date.context_today(self)
         limite = aujourdhui + timedelta(days=jours)
+        fin_semaine = aujourdhui + timedelta(days=7)   # etiquette « cette semaine » : les 7 derniers jours
         retard, semaine = self._etiquettes_entretien()
         reglages = self.env["sale.order"]._reglages_reprise()
         equipe = reglages["equipe"]
@@ -70,6 +72,8 @@ class HelpdeskTicket(models.Model):
                 ticket.tag_ids = [(3, retard.id), (3, semaine.id)]   # entretien fait
             elif ticket.date_entretien_prevu and ticket.date_entretien_prevu < aujourdhui:
                 ticket.tag_ids = [(3, semaine.id), (4, retard.id)]
+            elif ticket.date_entretien_prevu and ticket.date_entretien_prevu <= fin_semaine:
+                ticket.tag_ids = [(4, semaine.id)]
 
         # Machine revenue en entrepot : son ticket automatique pas encore planifie n'a plus lieu d'etre
         sans_client = ouverts.filtered(
@@ -100,7 +104,8 @@ class HelpdeskTicket(models.Model):
                 "est_entretien": True,
                 "origine_auto": "entretien",
                 "date_entretien_prevu": lot.date_prochain_entretien,
-                "tag_ids": [(4, (retard if en_retard else semaine).id)],
+                "tag_ids": [(4, retard.id)] if en_retard else (
+                    [(4, semaine.id)] if lot.date_prochain_entretien <= fin_semaine else []),
                 "description": self.env._(
                     "<p>Entretien de la machine %(serie)s prévu le %(date)s%(retard)s.</p>",
                     serie=lot.name, date=fields.Date.to_string(lot.date_prochain_entretien),

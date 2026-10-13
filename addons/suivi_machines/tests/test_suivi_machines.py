@@ -40,6 +40,8 @@ class TestSuiviMachines(TransactionCase):
                 "location_id": picking.location_id.id, "location_dest_id": picking.location_dest_id.id})]})
         picking.move_ids.picked = True
         picking.livreur_id = picking.livreur_id or self.env.user  # technicien obligatoire pour valider
+        picking.prochain_entretien = picking.prochain_entretien or fields.Date.today() + relativedelta(months=12)  # entretien obligatoire a la livraison
+        picking.frequence_entretien = picking.frequence_entretien or "12"
         res = picking.button_validate()
         self.assertTrue(res is True or isinstance(res, dict) and picking.state == "done", res)
         self.assertEqual(picking.state, "done")
@@ -312,6 +314,8 @@ class TestSuiviMachines(TransactionCase):
         livraison.action_assign()
         livraison.move_ids.picked = True
         livraison.livreur_id = livraison.livreur_id or self.env.user  # technicien obligatoire pour valider
+        livraison.prochain_entretien = livraison.prochain_entretien or fields.Date.today() + relativedelta(months=12)  # entretien obligatoire a la livraison
+        livraison.frequence_entretien = livraison.frequence_entretien or "12"
         livraison.button_validate()
         self.assertEqual(livraison.state, "done")
         return livraison, pompe
@@ -342,6 +346,8 @@ class TestSuiviMachines(TransactionCase):
         # Validation du retour : machines en entrepot + interventions de ramassage avec le technicien
         retour.move_ids.picked = True
         retour.livreur_id = retour.livreur_id or self.env.user  # technicien obligatoire pour valider
+        retour.prochain_entretien = retour.prochain_entretien or fields.Date.today() + relativedelta(months=12)  # entretien obligatoire a la livraison
+        retour.frequence_entretien = retour.frequence_entretien or "12"
         retour.button_validate()
         self.assertEqual(retour.state, "done")
         self.assertEqual((self.lot_a.machine_statut, self.lot_b.machine_statut), ("entrepot", "entrepot"))
@@ -409,6 +415,8 @@ class TestSuiviMachines(TransactionCase):
         pk.action_assign()
         pk.move_ids.picked = True
         pk.livreur_id = pk.livreur_id or self.env.user  # technicien obligatoire pour valider
+        pk.prochain_entretien = pk.prochain_entretien or fields.Date.today() + relativedelta(months=12)  # entretien obligatoire a la livraison
+        pk.frequence_entretien = pk.frequence_entretien or "12"
         pk.with_context(skip_sms=True).button_validate()
         self.env["machine.intervention"].create({"lot_id": self.lot_b.id, "type": "entretien", "state": "fait",
                                                  "partner_id": self.client.id})
@@ -445,6 +453,8 @@ class TestSuiviMachines(TransactionCase):
             picking.button_validate()
         self.assertNotEqual(picking.state, "done")
         picking.livreur_id = self.env.user
+        picking.write({"prochain_entretien": fields.Date.today() + relativedelta(months=12),
+                       "frequence_entretien": "12"})
         picking.button_validate()
         self.assertEqual(picking.state, "done")
         self.assertFalse(picking.technicien_requis)
@@ -529,3 +539,28 @@ class TestSuiviMachines(TransactionCase):
         from odoo.exceptions import UserError as ErreurUtilisateur
         with self.assertRaises(ErreurUtilisateur):
             f.save().action_ajuster()
+
+    def test_entretien_choisi_a_la_livraison(self):
+        """Livraison de machines chez le client : prochain entretien et fréquence obligatoires,
+        gardés sur la fiche de la machine ; ensuite : dernier entretien + fréquence."""
+        so = self._commande(self.lot_a, "location")
+        picking = so.picking_ids
+        picking.action_assign()
+        picking.move_ids.picked = True
+        picking.livreur_id = self.env.user
+        self.assertTrue(picking.livre_machines)
+        with self.assertRaisesRegex(UserError, "prochain entretien"):
+            picking.button_validate()
+        dans_3_mois = fields.Date.today() + relativedelta(months=3)
+        picking.write({"prochain_entretien": dans_3_mois, "frequence_entretien": "6"})
+        picking.button_validate()
+        self.assertEqual(picking.state, "done")
+        self.assertEqual((self.lot_a.date_prochain_entretien, self.lot_a.intervalle_entretien), (dans_3_mois, 6))
+        # Entretien fait : le suivant = dernier entretien + 6 mois
+        self.env["machine.intervention"].create({"lot_id": self.lot_a.id, "type": "entretien", "state": "fait",
+                                                 "date": fields.Datetime.now() + relativedelta(days=1)})
+        self.assertEqual(self.lot_a.date_prochain_entretien,
+                         fields.Date.today() + relativedelta(days=1) + relativedelta(months=6))
+        # Transfert sans machine vers le client : pas concerné
+        self.assertFalse(self.env["stock.picking"].new({"location_id": self.stock.id,
+                                                        "location_dest_id": self.stock.id}).livre_machines)

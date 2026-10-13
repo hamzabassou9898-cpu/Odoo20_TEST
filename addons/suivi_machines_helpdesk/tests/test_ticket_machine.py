@@ -291,6 +291,8 @@ class TestTicketMachine(TransactionCase):
         pk.action_assign()
         pk.move_ids.picked = True
         pk.livreur_id = pk.livreur_id or self.env.user  # technicien obligatoire pour valider
+        pk.prochain_entretien = pk.prochain_entretien or fields.Date.today() + relativedelta(months=12)  # entretien obligatoire a la livraison
+        pk.frequence_entretien = pk.frequence_entretien or "12"
         pk.with_context(skip_sms=True).button_validate()
         (vente | vieux).action_confirm()
         self.commerce.invalidate_recordset()
@@ -417,6 +419,8 @@ class TestTicketMachine(TransactionCase):
         pk.action_assign()
         pk.move_ids.picked = True
         pk.livreur_id = pk.livreur_id or self.env.user  # technicien obligatoire pour valider
+        pk.prochain_entretien = pk.prochain_entretien or fields.Date.today() + relativedelta(months=12)  # entretien obligatoire a la livraison
+        pk.frequence_entretien = pk.frequence_entretien or "12"
         pk.with_context(skip_sms=True).button_validate()
         self.assertEqual(set(lots.mapped("machine_statut")), {"chez_client"})
         # Formulaire : code client + type Ramassage -> contrat et machines remplis tout seuls
@@ -476,6 +480,8 @@ class TestTicketMachine(TransactionCase):
         pk.action_assign()
         pk.move_ids.picked = True
         pk.livreur_id = pk.livreur_id or self.env.user  # technicien obligatoire pour valider
+        pk.prochain_entretien = pk.prochain_entretien or fields.Date.today() + relativedelta(months=12)  # entretien obligatoire a la livraison
+        pk.frequence_entretien = pk.frequence_entretien or "12"
         pk.with_context(skip_sms=True).button_validate()
         self.assertEqual(lot.machine_statut, "chez_client")
         SO = self.env["sale.order"]
@@ -524,6 +530,8 @@ class TestTicketMachine(TransactionCase):
         pk.action_assign()
         pk.move_ids.picked = True
         pk.livreur_id = pk.livreur_id or self.env.user  # technicien obligatoire pour valider
+        pk.prochain_entretien = pk.prochain_entretien or fields.Date.today() + relativedelta(months=12)  # entretien obligatoire a la livraison
+        pk.frequence_entretien = pk.frequence_entretien or "12"
         pk.with_context(skip_sms=True).button_validate()
         action = so.action_creer_tickets_reprise()
         ticket = self.env["helpdesk.ticket"].browse(action["res_id"])
@@ -545,6 +553,8 @@ class TestTicketMachine(TransactionCase):
         pk.action_assign()
         pk.move_ids.picked = True
         pk.livreur_id = pk.livreur_id or self.env.user  # technicien obligatoire pour valider
+        pk.prochain_entretien = pk.prochain_entretien or fields.Date.today() + relativedelta(months=12)  # entretien obligatoire a la livraison
+        pk.frequence_entretien = pk.frequence_entretien or "12"
         pk.with_context(skip_sms=True).button_validate()
         ticket = self.env["helpdesk.ticket"].browse(so.action_creer_tickets_reprise()["res_id"])
         return lot, so, ticket
@@ -566,6 +576,8 @@ class TestTicketMachine(TransactionCase):
         retour.livreur_id = livreur
         retour.move_ids.picked = True
         retour.livreur_id = retour.livreur_id or self.env.user  # technicien obligatoire pour valider
+        retour.prochain_entretien = retour.prochain_entretien or fields.Date.today() + relativedelta(months=12)  # entretien obligatoire a la livraison
+        retour.frequence_entretien = retour.frequence_entretien or "12"
         retour.with_context(skip_sms=True).button_validate()
         self.assertEqual(retour.state, "done")
         self.assertEqual(lot.machine_statut, "entrepot")
@@ -595,6 +607,8 @@ class TestTicketMachine(TransactionCase):
         pk.action_assign()
         pk.move_ids.picked = True
         pk.livreur_id = pk.livreur_id or self.env.user  # technicien obligatoire pour valider
+        pk.prochain_entretien = pk.prochain_entretien or fields.Date.today() + relativedelta(months=12)  # entretien obligatoire a la livraison
+        pk.frequence_entretien = pk.frequence_entretien or "12"
         pk.with_context(skip_sms=True).button_validate()
         self.assertEqual(set(lots.mapped("machine_statut")), {"chez_client"})
         ticket = self.env["sale.order"]._cron_tickets_reprise()
@@ -614,6 +628,8 @@ class TestTicketMachine(TransactionCase):
         self.assertEqual(ticket.action_ramassage()["res_id"], retour.id, "même bon de retour")
         retour.move_ids.picked = True
         retour.livreur_id = retour.livreur_id or self.env.user  # technicien obligatoire pour valider
+        retour.prochain_entretien = retour.prochain_entretien or fields.Date.today() + relativedelta(months=12)  # entretien obligatoire a la livraison
+        retour.frequence_entretien = retour.frequence_entretien or "12"
         retour.with_context(skip_sms=True).button_validate()
         self.assertEqual(retour.state, "done")
         self.assertEqual(set(lots.mapped("machine_statut")), {"entrepot"})
@@ -1026,3 +1042,19 @@ class TestTicketMachine(TransactionCase):
         self.assertLess(pages.index("appels_client"), pages.index("historique_achat"))
         for bouton in arch.xpath("//div[@name='button_box']/button[@name='action_schedule_meeting']"):
             self.assertEqual(bouton.get("invisible"), "1", "réunions masquées")
+
+    def test_activite_un_mois_avant_entretien(self):
+        """Entretien dans 3 semaines : ticket + activité « Planifier entretien » pour le bureau (un mois avant),
+        sans l'étiquette « cette semaine » ; dans 2 mois : rien encore."""
+        lot = self.lots[1]   # installee, pas encore d'entretien
+        T = self.env["helpdesk.ticket"]
+        lot.prochain_entretien_fixe = fields.Date.today() + relativedelta(weeks=3)
+        self.assertEqual(lot.date_prochain_entretien, fields.Date.today() + relativedelta(weeks=3))
+        ticket = T._cron_tickets_entretien().filtered(lambda t: t.lot_id == lot)
+        self.assertEqual(len(ticket), 1, "créé un mois avant")
+        self.assertFalse(ticket.tag_ids & self.env.ref("suivi_machines_helpdesk.tag_entretien_semaine"))
+        self.assertTrue(ticket.activity_ids.filtered(lambda a: "entretien" in (a.summary or "").lower()))
+        self.assertEqual(ticket.activity_ids[:1].date_deadline, lot.date_prochain_entretien)
+        autre = self.lots[2]
+        autre.prochain_entretien_fixe = fields.Date.today() + relativedelta(months=2)
+        self.assertFalse(T._cron_tickets_entretien().filtered(lambda t: t.lot_id == autre), "trop tôt")

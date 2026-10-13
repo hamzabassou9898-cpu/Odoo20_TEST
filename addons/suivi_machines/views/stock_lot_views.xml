@@ -51,6 +51,7 @@
                         <field name="date_prochain_entretien"
                                decoration-danger="date_prochain_entretien and date_prochain_entretien &lt; context_today().strftime('%Y-%m-%d')"/>
                         <field name="intervalle_entretien"/>
+                        <field name="prochain_entretien_fixe" invisible="not prochain_entretien_fixe"/>
                         <field name="nb_interventions"/>
                         <field name="nb_bris" decoration-danger="nb_bris &gt; 3"/>
                     </group>

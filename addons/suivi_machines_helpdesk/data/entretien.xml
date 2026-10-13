@@ -10,7 +10,7 @@
     </record>
     <record id="param_jours_avant_entretien" model="ir.config_parameter">
         <field name="key">suivi_machines_helpdesk.jours_avant_entretien</field>
-        <field name="value">7</field>
+        <field name="value">30</field>
     </record>
     <record id="cron_tickets_entretien" model="ir.cron">
         <field name="name">Suivi des machines : tickets d'entretien (en retard / cette semaine)</field>
