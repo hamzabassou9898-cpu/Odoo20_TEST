@@ -29,6 +29,11 @@ class ResPartner(models.Model):
 
     # Sante du client (un coup d'oeil sur la fiche)
     sante_devise_id = fields.Many2one("res.currency", compute="_compute_sante")
+    # Onglets de la fiche client (comme dans le ticket)
+    machine_client_ids = fields.Many2many("stock.lot", string="Machines chez le client",
+                                          compute="_compute_onglets_client", groups="helpdesk.group_helpdesk_user")
+    appel_client_ids = fields.Many2many("helpdesk.ticket", string="Appels de service",
+                                        compute="_compute_onglets_client", groups="helpdesk.group_helpdesk_user")
     sante_nb_machines = fields.Integer("Machines chez lui", compute="_compute_sante",
                                        groups="sales_team.group_sale_salesman")
     sante_nb_appels = fields.Integer("Appels (12 mois)", compute="_compute_sante",
@@ -84,14 +89,17 @@ class ResPartner(models.Model):
                 "sante_raison": ", ".join(raisons).capitalize() if raisons else False,
             })
 
-    def action_machines_chez_client(self):
-        """Fiche client : les machines en inventaire chez le client (fenetre agrandissable)."""
-        self.ensure_one()
-        client = self.commercial_partner_id
-        return {"type": "ir.actions.act_window", "name": self.env._("Machines chez %s", client.display_name),
-                "res_model": "stock.lot", "view_mode": "list,form", "views": [(False, "list"), (False, "form")],
-                "target": "new", "domain": [("est_machine", "=", True), ("machine_client_id", "child_of", client.id)],
-                "context": {"create": False}}
+    def _compute_onglets_client(self):
+        Lot, Ticket = self.env["stock.lot"], self.env["helpdesk.ticket"]
+        for partner in self:
+            client = partner.commercial_partner_id
+            if not client.id:
+                partner.update({"machine_client_ids": False, "appel_client_ids": False})
+                continue
+            partner.machine_client_ids = Lot.search([("est_machine", "=", True),
+                                                     ("machine_client_id", "child_of", client.id)])
+            partner.appel_client_ids = Ticket.search([("partner_id", "child_of", client.id)],
+                                                     order="create_date desc, id desc")
 
     # Boutons intelligents inutiles pour Monroy, retires de la fiche client (si le module est installe)
     BOUTONS_MASQUES = ("action_schedule_meeting", "action_open_partner_ledger", "open_partner_ledger",

@@ -740,10 +740,18 @@ class TestTicketMachine(TransactionCase):
             "date": fields.Datetime.now() - relativedelta(months=13)})
         self.assertFalse(lot.machine_client_id)
         tickets = self.env["helpdesk.ticket"]._cron_tickets_entretien().filtered(lambda t: t.lot_id == lot)
-        self.assertEqual(len(tickets), 1, "machine en entrepôt en retard : ticket aussi")
-        self.assertEqual(tickets.name, "Entretien - S1 - En entrepôt (%s)" % stock.display_name)
-        self.assertEqual(tickets.machine_emplacement_id, stock)
-        self.assertEqual(tickets.tag_ids, self.env.ref("suivi_machines_helpdesk.tag_entretien_retard"))
+        self.assertFalse(tickets, "machine en entrepôt : pas de ticket d'entretien (seulement chez un client)")
+        # Ancien ticket automatique d'une machine revenue en entrepot, pas planifie : ferme
+        annule = self.env["helpdesk.stage"].create({"name": "Annulé"})
+        vieux = self.env["helpdesk.ticket"].create({
+            "name": "Entretien - S1", "lot_id": lot.id, "est_entretien": True, "origine_auto": "entretien",
+            "date_entretien_prevu": lot.date_prochain_entretien})
+        planifie = self.env["helpdesk.ticket"].create({
+            "name": "Entretien - S1 planifié", "lot_id": lot.id, "est_entretien": True, "origine_auto": "entretien",
+            "user_id": self.env.user.id})
+        self.env["helpdesk.ticket"]._cron_tickets_entretien()
+        self.assertEqual(vieux.stage_id, annule)
+        self.assertNotEqual(planifie.stage_id, annule, "déjà planifié par Josef : on n'y touche pas")
         hs = self.env["stock.lot"].create({"name": "ENT-HS", "product_id": self.produit.id,
                                            "machine_etat": "hors_service"})
         self.env["machine.intervention"].create({
@@ -1001,14 +1009,20 @@ class TestTicketMachine(TransactionCase):
         self.assertEqual(len(so.order_line), len(lignes_avant) + 1)
 
     def test_fiche_client_machines_et_boutons(self):
-        """Fiche client : « Machines chez lui » ouvre la liste des machines ; boutons inutiles masqués."""
+        """Fiche client : onglets Machines chez le client, Historique des appels, Historique d'achat
+        (comme dans le ticket) ; boutons inutiles masqués."""
         from lxml import etree
-        action = self.commerce.action_machines_chez_client()
-        self.assertEqual((action["res_model"], action["target"]), ("stock.lot", "new"))
-        machines = self.env["stock.lot"].search(action["domain"])
-        self.assertEqual(machines, self.lots[:2], "les 2 machines du commerce, pas celle de l'autre client")
-        self.assertEqual(self.commerce.sante_nb_machines, len(machines))
+        self.assertEqual(self.commerce.machine_client_ids, self.lots[:2], "les machines du commerce seulement")
+        self.assertEqual(self.commerce.sante_nb_machines, 2)
+        ticket = self.env["helpdesk.ticket"].create({"name": "Appel fiche", "partner_id": self.commerce.id,
+                                                     "type_demande": "commande"})
+        (self.commerce | self.autre_client).invalidate_recordset(["appel_client_ids"])  # calcul a l'affichage
+        self.assertIn(ticket, self.commerce.appel_client_ids)
+        self.assertNotIn(ticket, self.autre_client.appel_client_ids)
         arch = etree.fromstring(self.env["res.partner"].get_views([(False, "form")])["views"]["form"]["arch"])
-        self.assertTrue(arch.xpath("//button[@name='action_machines_chez_client']"))
+        vue = etree.fromstring(self.env.ref("suivi_machines_helpdesk.view_partner_form_contrat_location").arch_db.encode())
+        pages = [p.get("name") for p in vue.xpath("//page")]
+        self.assertLess(pages.index("machines_client"), pages.index("appels_client"))
+        self.assertLess(pages.index("appels_client"), pages.index("historique_achat"))
         for bouton in arch.xpath("//div[@name='button_box']/button[@name='action_schedule_meeting']"):
             self.assertEqual(bouton.get("invisible"), "1", "réunions masquées")

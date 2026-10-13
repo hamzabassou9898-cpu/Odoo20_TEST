@@ -28,12 +28,10 @@
                                decoration-danger="sante_niveau == 'risque'"/>
                         <field name="sante_raison" class="small text-muted" invisible="not sante_raison"/>
                     </div>
-                    <!-- Cliquable : la liste des machines chez le client -->
-                    <button name="action_machines_chez_client" type="object" title="Voir les machines chez le client"
-                            class="btn btn-light border rounded px-3 py-2 text-start">
+                    <div class="border rounded px-3 py-2">
                         <div class="fs-4 fw-bold"><field name="sante_nb_machines"/></div>
-                        <div class="small text-muted">Machines chez lui ›</div>
-                    </button>
+                        <div class="small text-muted">Machines chez lui</div>
+                    </div>
                     <div class="border rounded px-3 py-2">
                         <div class="fs-4 fw-bold"><field name="sante_nb_appels"/></div>
                         <div class="small text-muted">Appels (12 mois)</div>
@@ -49,6 +47,34 @@
                 </div>
             </xpath>
             <xpath expr="//notebook" position="inside">
+                <!-- Comme dans le ticket : machines chez le client, appels de service, historique d'achat -->
+                <page string="Machines chez le client" name="machines_client" groups="helpdesk.group_helpdesk_user"
+                      invisible="not machine_client_ids">
+                    <field name="machine_client_ids" readonly="1" nolabel="1">
+                        <list create="false" edit="false" delete="false">
+                            <field name="name" string="Numéro de série"/>
+                            <field name="ref" string="Numéro de machine"/>
+                            <field name="product_id" string="Modèle"/>
+                            <field name="machine_statut" widget="badge"/>
+                            <field name="date_installation"/>
+                            <field name="date_dernier_entretien"/>
+                            <field name="date_prochain_entretien"/>
+                        </list>
+                    </field>
+                </page>
+                <page string="Historique des appels" name="appels_client" groups="helpdesk.group_helpdesk_user"
+                      invisible="not appel_client_ids">
+                    <field name="appel_client_ids" readonly="1" nolabel="1">
+                        <list create="false" edit="false" delete="false">
+                            <field name="create_date" string="Date"/>
+                            <field name="name"/>
+                            <field name="type_demande" widget="badge"/>
+                            <field name="lot_id" string="Numéro de série"/>
+                            <field name="user_id" string="Technicien"/>
+                            <field name="stage_id"/>
+                        </list>
+                    </field>
+                </page>
                 <page string="Historique d'achat" name="historique_achat" groups="sales_team.group_sale_salesman"
                       invisible="not historique_achat_ids">
                     <field name="historique_achat_ids" readonly="1" nolabel="1">

@@ -71,9 +71,16 @@ class HelpdeskTicket(models.Model):
             elif ticket.date_entretien_prevu and ticket.date_entretien_prevu < aujourdhui:
                 ticket.tag_ids = [(3, semaine.id), (4, retard.id)]
 
+        # Machine revenue en entrepot : son ticket automatique pas encore planifie n'a plus lieu d'etre
+        sans_client = ouverts.filtered(
+            lambda t: t.origine_auto == "entretien" and not t.lot_id.machine_client_id
+            and t.statut_entretien == "a_planifier" and not t._est_ferme())
+        sans_client._fermer_entretien_sans_client()
+
         # 2) Nouveaux tickets
-        # Toutes les machines (chez un client ou en entrepot), sauf hors service
+        # Seulement les machines chez un client (pas en entrepot), sauf hors service
         lots = self.env["stock.lot"].search([("est_machine", "=", True), ("machine_statut", "!=", "hors_service"),
+                                             ("machine_client_id", "!=", False),
                                              ("date_prochain_entretien", "!=", False),
                                              ("date_prochain_entretien", "<=", limite)])
         crees = Ticket
@@ -114,6 +121,19 @@ class HelpdeskTicket(models.Model):
                     user_id=reglages["responsable"].id)
             crees |= ticket
         return crees
+
+    def _fermer_entretien_sans_client(self):
+        """Ticket d'entretien automatique d'une machine qui n'est chez aucun client : annule (etape
+        « Annule ») ou archive, avec une note."""
+        annule = self._etape_contenant("annul")
+        for ticket in self:
+            ticket.message_post(body=self.env._(
+                "La machine %s n'est chez aucun client : entretien non planifié, ticket fermé.",
+                ticket.lot_id.display_name))
+            if annule:
+                ticket.stage_id = annule
+            elif "active" in ticket._fields:
+                ticket.active = False
 
     @api.model
     def _action_verifier_entretiens(self):
