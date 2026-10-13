@@ -159,7 +159,9 @@ class TestTicketMachine(TransactionCase):
     def test_code_inconnu(self):
         f = self._form()
         f.partner_id = self.autre_client
-        f.code_client = "INCONNU"
+        # Avertissement attendu (« Code client inconnu ») : capture pour ne pas salir le journal des tests
+        with self.assertLogs("odoo.tests.form.onchange", "WARNING"):
+            f.code_client = "INCONNU"
         self.assertEqual(f.partner_id, self.autre_client, "un code inconnu ne change pas le client")
 
     def test_code_sans_joker(self):

@@ -196,7 +196,8 @@ class TestPortailTechnicien(HttpCase):
         self.assertTrue(rep.url.endswith("/my/journee"))
         self.assertFalse(self.autre.note_technicien_ids)
         # Sans jeton CSRF : refuse
-        rep = self.url_open(url + "/note", data={"note": "sans jeton"})
+        with self.assertLogs("odoo.http", "WARNING"):     # refus attendu, journalise par Odoo
+            rep = self.url_open(url + "/note", data={"note": "sans jeton"})
         self.assertNotEqual(rep.status_code, 200)
 
 
