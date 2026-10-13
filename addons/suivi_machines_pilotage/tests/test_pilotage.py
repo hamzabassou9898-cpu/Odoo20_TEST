@@ -345,14 +345,19 @@ class TestPilotage(TransactionCase):
         self.assertTrue(all(a["nombre"] > 0 for a in d["alertes"]), "seulement ce qui est à traiter")
         # Tout est cliquable : chaque element ouvre une liste (sans le message HTML brut)
         tag = self.env["helpdesk.tag"].create({"name": "Fait du bruit"})
-        tech = self.env["res.users"].create({"name": "Tech vue", "login": "tech_vue"})
+        tech = self.env["res.users"].create({"name": "Tech vue", "login": "tech_vue",
+                                             "group_ids": [(6, 0, self.env.ref("base.group_portal").ids)]})
+        if "est_technicien" in tech.partner_id._fields:   # module Portail : techniciens portail seulement
+            tech.partner_id.est_technicien = True
         self.env["helpdesk.ticket"].create({"name": "Bruit", "code_client": "PIL1", "tag_ids": [(6, 0, tag.ids)],
                                             "user_id": tech.id, "date_planifiee": fields.Datetime.now()})
         d = Ind.donnees_tableau_moderne("semaine")
         codes = ([k["code"] for k in d["kpis"]] + [a["code"] for a in d["alertes"]]
                  + [t["code"] for t in d["techniciens"]] + [p["code"] for p in d["problemes"]]
                  + [s["code"] for s in d["semaines"]] + [r["code"] for r in d["tournees"]]
-                 + [m["code"] for m in d["parc"]])
+                 + [m["code"] for m in d["parc"]]
+                 + [x["code"] for cle in ("statuts", "disponibles", "categories", "mouvements")
+                    for x in d["stock"][cle]] + ["rupture", "mouvements"])
         self.assertIn("probleme:Fait du bruit", codes)
         self.assertIn("technicien:%s" % tech.id, codes)
         self.assertTrue(any(c.startswith("tache:") for c in codes))
@@ -546,3 +551,56 @@ class TestDonneesTest(TransactionCase):
         self.assertEqual(len(env["portail.tache"].search([("ticket_id", "in", tickets.ids)])), 7)
         env["pilotage.donnees.test"].create({}).action_supprimer()
         self.assertFalse(env["helpdesk.ticket"].search([("tag_ids", "in", test.ids)]))
+
+
+class TestTableauStock(TransactionCase):
+    """Vue d'ensemble : la partie Stock & inventaire."""
+
+    def test_stock_et_inventaire(self):
+        env = self.env(context=dict(self.env.context, tracking_disable=True))
+        Ind = env["pilotage.indicateur"]
+        stock = env.ref("stock.stock_location_stock")
+        categ = env["product.category"].create({"name": "Machines (stock)", "suivi_machine": True})
+        produit = env["product.product"].create({"name": "Machine stock", "categ_id": categ.id,
+                                                 "is_storable": True, "tracking": "serial"})
+        lots = env["stock.lot"].create([{"name": "STK-%s" % i, "product_id": produit.id} for i in range(3)])
+        for lot in lots:
+            env["stock.quant"]._update_available_quantity(produit, stock, 1, lot_id=lot)
+        accessoire = env["product.product"].create({"name": "Pompe (stock)", "is_storable": True, "sale_ok": True})
+        d = Ind.donnees_tableau_moderne("jour")["stock"]
+        dispo = {x["code"]: x["nombre"] for x in d["disponibles"]}
+        self.assertEqual(dispo.get("dispo:%s" % produit.id), 3, "3 machines du modèle en entrepôt")
+        statuts = {x["code"]: x["nombre"] for x in d["statuts"]}
+        self.assertGreaterEqual(statuts.get("statut:entrepot", 0), 3)
+        self.assertIn("categorie:%s" % categ.id, [x["code"] for x in d["categories"]])
+        self.assertGreaterEqual(d["rupture"], 1, "accessoire sans stock")
+        self.assertIn(accessoire, env["product.product"].search(Ind._domaine_rupture()))
+        env["stock.quant"]._update_available_quantity(accessoire, stock, 4)
+        self.assertNotIn(accessoire, Ind._produits_en_rupture(), "accessoire reçu : plus en rupture")
+        if not accessoire.categ_id:
+            categories = {x["code"]: x["nom"] for x in Ind.donnees_tableau_moderne("jour")["stock"]["categories"]}
+            self.assertEqual(categories.get("categorie:0"), "Sans catégorie")
+            self.assertIn(accessoire, env["product.product"].search(Ind.action_par_code("categorie:0")["domain"]))
+        # Ouvre les bonnes listes
+        machines = env["stock.lot"].search(Ind.action_par_code("dispo:%s" % produit.id)["domain"])
+        self.assertEqual(machines, lots)
+        self.assertEqual(Ind.action_par_code("statut:entrepot")["res_model"], "stock.lot")
+        self.assertEqual(Ind.action_par_code("categorie:%s" % categ.id)["res_model"], "product.product")
+        # Mouvement de stock : livraison faite -> dans « Derniers mouvements », ouvre le transfert
+        client = env["res.partner"].create({"name": "Client stock"})
+        clients = env.ref("stock.stock_location_customers")
+        pk = env["stock.picking"].create({
+            "picking_type_id": env.ref("stock.picking_type_out").id, "partner_id": client.id,
+            "location_id": stock.id, "location_dest_id": clients.id,
+            "move_ids": [(0, 0, {"product_id": produit.id, "product_uom_qty": 1, "machine_lot_id": lots[0].id,
+                                 "location_id": stock.id, "location_dest_id": clients.id})]})
+        pk.action_confirm()
+        pk.action_assign()
+        pk.move_ids.picked = True
+        pk.write({"livreur_id": env.user.id, "prochain_entretien": fields.Date.today() + relativedelta(months=12),
+                  "frequence_entretien": "12"})
+        pk.button_validate()
+        d = Ind.donnees_tableau_moderne("jour")["stock"]
+        mouvement = d["mouvements"][0]
+        self.assertEqual((mouvement["serie"], mouvement["entree"]), ("STK-0", False))
+        self.assertEqual(Ind.action_par_code(mouvement["code"])["res_id"], pk.id)

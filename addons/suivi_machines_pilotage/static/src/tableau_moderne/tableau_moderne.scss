@@ -22,6 +22,14 @@
     .o_pm_primary { background: #f5eef4; color: #714B67; } .o_pm_secondary { background: #eef0f4; color: #4b5563; }
     .o_pm_grid { display: grid; grid-template-columns: 1.35fr 1fr 1fr; gap: 14px; }
     .o_pm_grid2 { grid-template-columns: 1.35fr 2fr; margin-top: 14px; }
+    .o_pm_grid3 { margin-top: 14px; }
+    .o_pm_mvt { display: flex; align-items: center; gap: 10px; padding: 7px 4px; border-bottom: 1px solid #f1f1f4; }
+    .o_pm_mvt:last-child { border-bottom: 0; }
+    .o_pm_mvt_txt { flex: 1; min-width: 0; display: flex; flex-direction: column;
+        b, small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } b { font-size: 13px; } }
+    .o_pm_mvt_q { text-align: right; font-weight: 700; font-size: 13px; small { font-weight: 400; font-size: 11px; } }
+    .o_pm_sens { flex: none; width: 26px; height: 26px; border-radius: 8px; display: inline-grid; place-items: center;
+        &.in { background: #dcfce7; color: #15803d; } &.out { background: #e0e7ff; color: #4338ca; } }
     .o_pm_card { padding: 16px 18px;
         h3 { font-size: 15px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
             small { font-weight: 500; color: #6b7280; font-size: 12px; } } }
@@ -42,7 +50,7 @@
     .o_pm_nom { width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .o_pm_bar { flex: 1; height: 9px; background: #eef0f4; border-radius: 6px; overflow: hidden; display: flex;
         i { display: block; height: 100%; } }
-    .o_pm_g { background: #22c55e; } .o_pm_r { background: #ef4444; } .o_pm_gy { background: #cbd5e1; } .o_pm_violet { background: #714B67; }
+    .o_pm_g { background: #22c55e; } .o_pm_r { background: #ef4444; } .o_pm_gy { background: #cbd5e1; } .o_pm_violet { background: #714B67; } .o_pm_b { background: #3b82f6; }
     .o_pm_c { width: 44px; text-align: right; color: #6b7280; font-size: 12px; }
     .o_pm_leg { display: flex; gap: 14px; font-size: 12px; color: #6b7280;
         span::before { content: ""; display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
@@ -65,7 +73,8 @@
     .o_pm_cl { flex: 1; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .o_pm_parc { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
     @media (max-width: 1100px) {
-        .o_pm_grid, .o_pm_grid2 { grid-template-columns: 1fr; }
+        .o_pm_grid, .o_pm_grid2, .o_pm_grid3 { grid-template-columns: 1fr; }
         .o_pm_parc { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
 }
+.o_pm_grid3 .o_pm_hb .o_pm_lab { width: 170px; }

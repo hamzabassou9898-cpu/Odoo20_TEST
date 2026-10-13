@@ -75,3 +75,13 @@ class PortalEntry(models.Model):
         if carte and carte in self and self.env.user.est_technicien:
             visibles |= carte
         return visibles
+
+
+class PilotageIndicateur(models.Model):
+    _inherit = "pilotage.indicateur"
+
+    @api.model
+    def _techniciens_du_tableau(self, taches):
+        """Tableau de bord : seulement les techniciens portail (comme le Portail techniciens)."""
+        return super()._techniciens_du_tableau(taches).filtered(
+            lambda u: u.share and u.partner_id.est_technicien)

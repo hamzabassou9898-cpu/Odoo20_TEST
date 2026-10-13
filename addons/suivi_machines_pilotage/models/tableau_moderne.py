@@ -131,10 +131,12 @@ class PilotageIndicateur(models.Model):
                                     [("est_machine", "=", True), ("machine_statut", "=", "entrepot"),
                                      ("product_id", "=", produit.id)])
         if prefixe == "categorie" and valeur.isdigit():
-            categorie = self.env["product.category"].browse(int(valeur))
-            return {"type": "ir.actions.act_window", "name": self.env._("Stock : %s", categorie.display_name),
+            categorie = self.env["product.category"].browse(int(valeur)).exists()
+            return {"type": "ir.actions.act_window",
+                    "name": self.env._("Stock : %s", categorie.display_name or self.env._("Sans catégorie")),
                     "res_model": "product.product", "views": [(False, "list"), (False, "form")],
-                    "domain": [("categ_id", "child_of", categorie.id), ("is_storable", "=", True)],
+                    "domain": [("categ_id", "child_of", categorie.id) if categorie else ("categ_id", "=", False),
+                               ("is_storable", "=", True)],
                     "context": {"create": False}}
         if code == "rupture":
             return {"type": "ir.actions.act_window", "name": self.env._("Produits en rupture de stock"),
@@ -155,9 +157,18 @@ class PilotageIndicateur(models.Model):
     # ------------------------------------------------------------ stock & inventaire
     @api.model
     def _domaine_rupture(self):
-        """Produits stockes vendus ou loues (hors machines suivies) sans stock disponible."""
-        return [("is_storable", "=", True), ("sale_ok", "=", True), ("categ_id.suivi_machine", "=", False),
-                ("qty_available", "<=", 0)]
+        """Produits stockes vendus ou loues (hors machines suivies) sans stock en entrepot."""
+        return [("id", "in", self._produits_en_rupture().ids)]
+
+    @api.model
+    def _produits_en_rupture(self):
+        # Un produit jamais recu n'a aucun quant : on part des produits et on retire ceux qui ont du stock
+        produits = self.env["product.product"].search(
+            [("is_storable", "=", True), ("sale_ok", "=", True),
+             "|", ("categ_id", "=", False), ("categ_id.suivi_machine", "=", False)])
+        en_stock = self.env["stock.quant"]._read_group(
+            self._emplacements_stock() + [("product_id", "in", produits.ids)], ["product_id"], ["quantity:sum"])
+        return produits - self.env["product.product"].union(*[p for p, qte in en_stock if qte > 0])
 
     @api.model
     def _emplacements_stock(self):
@@ -189,7 +200,8 @@ class PilotageIndicateur(models.Model):
         for produit, quantite in par_produit:
             if quantite:
                 par_categorie[produit.categ_id] = par_categorie.get(produit.categ_id, 0) + quantite
-        categories = [{"code": "categorie:%s" % categ.id, "nom": categ.display_name, "nombre": round(qte)}
+        categories = [{"code": "categorie:%s" % (categ.id or 0),
+                       "nom": categ.display_name or self.env._("Sans catégorie"), "nombre": round(qte)}
                       for categ, qte in sorted(par_categorie.items(), key=lambda x: -x[1])[:6]]
         # Derniers mouvements de stock (faits)
         lignes = self.env["stock.move.line"].search([("state", "=", "done")], order="date desc, id desc", limit=7)
@@ -207,7 +219,7 @@ class PilotageIndicateur(models.Model):
         return {"statuts": statuts, "max_statut": max([x["nombre"] for x in statuts] or [1]),
                 "disponibles": disponibles, "max_dispo": max([x["nombre"] for x in disponibles] or [1]),
                 "categories": categories, "max_categorie": max([x["nombre"] for x in categories] or [1]) or 1,
-                "rupture": self.env["product.product"].search_count(self._domaine_rupture()),
+                "rupture": len(self._produits_en_rupture()),
                 "mouvements": mouvements}
 
     @api.model

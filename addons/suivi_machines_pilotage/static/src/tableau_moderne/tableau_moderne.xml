@@ -113,6 +113,50 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Stock & inventaire -->
+            <div class="o_pm_grid o_pm_grid3" t-if="d.stock">
+                <div class="o_pm_card">
+                    <h3>Parc machines <small>par statut</small></h3>
+                    <div t-if="!d.stock.statuts.length" class="o_pm_vide">Aucune machine.</div>
+                    <div t-foreach="d.stock.statuts" t-as="x" t-key="x.code" class="o_pm_hb o_pm_survol" t-on-click="() => this.ouvrir(x.code)" t-att-title="'Voir : ' + x.nom">
+                        <span class="o_pm_lab" t-out="x.nom"/>
+                        <div class="o_pm_bar"><i t-attf-class="o_pm_{{ x.couleur }}" t-att-style="'width:' + this.largeur(x.nombre, d.stock.max_statut)"/></div>
+                        <span class="o_pm_num" t-out="x.nombre"/>
+                    </div>
+                </div>
+                <div class="o_pm_card">
+                    <h3>Disponibles en entrepôt <small>par modèle</small></h3>
+                    <div t-if="!d.stock.disponibles.length" class="o_pm_vide">Aucune machine en entrepôt.</div>
+                    <div t-foreach="d.stock.disponibles" t-as="x" t-key="x.code" class="o_pm_hb o_pm_survol" t-on-click="() => this.ouvrir(x.code)" t-att-title="'Voir les machines : ' + x.nom">
+                        <span class="o_pm_lab" t-out="x.nom"/>
+                        <div class="o_pm_bar"><i class="o_pm_g" t-att-style="'width:' + this.largeur(x.nombre, d.stock.max_dispo)"/></div>
+                        <span class="o_pm_num" t-out="x.nombre"/>
+                    </div>
+                    <h3 class="mt-3">Stock par catégorie
+                        <a class="o_pm_more" t-if="d.stock.rupture" t-on-click="() => this.ouvrir('rupture')"><t t-out="d.stock.rupture"/> en rupture →</a></h3>
+                    <div t-if="!d.stock.categories.length" class="o_pm_vide">Aucun stock.</div>
+                    <div t-foreach="d.stock.categories" t-as="x" t-key="x.code" class="o_pm_hb o_pm_survol" t-on-click="() => this.ouvrir(x.code)" t-att-title="'Voir les produits : ' + x.nom">
+                        <span class="o_pm_lab" t-out="x.nom"/>
+                        <div class="o_pm_bar"><i class="o_pm_violet" t-att-style="'width:' + this.largeur(x.nombre, d.stock.max_categorie)"/></div>
+                        <span class="o_pm_num" t-out="x.nombre"/>
+                    </div>
+                </div>
+                <div class="o_pm_card">
+                    <h3>Derniers mouvements de stock
+                        <a class="o_pm_more" t-on-click="() => this.ouvrir('mouvements')">Tout voir →</a></h3>
+                    <div t-if="!d.stock.mouvements.length" class="o_pm_vide">Aucun mouvement.</div>
+                    <div t-foreach="d.stock.mouvements" t-as="m" t-key="m.id" class="o_pm_mvt o_pm_survol" t-on-click="() => this.ouvrir(m.code)">
+                        <span t-attf-class="o_pm_sens {{ m.entree ? 'in' : 'out' }}" t-att-title="m.entree ? 'Entrée en stock' : 'Sortie'">
+                            <i class="oi" t-att-data-icon="m.entree ? 'south_west' : 'north_east'"/></span>
+                        <div class="o_pm_mvt_txt">
+                            <b><t t-out="m.produit"/><t t-if="m.serie"> · <t t-out="m.serie"/></t></b>
+                            <small class="text-muted"><t t-out="m.de"/> → <t t-out="m.vers"/><t t-if="m.reference"> · <t t-out="m.reference"/></t></small>
+                        </div>
+                        <span class="o_pm_mvt_q"><t t-out="m.quantite"/><small class="d-block text-muted" t-out="m.quand"/></span>
+                    </div>
+                </div>
+            </div>
         </div>
         </div>
     </div>
