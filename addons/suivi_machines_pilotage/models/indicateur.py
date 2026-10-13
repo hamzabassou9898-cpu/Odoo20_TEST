@@ -79,9 +79,11 @@ class PilotageIndicateur(models.Model):
                                                    ("statut_entretien", "!=", "planifie")] + ouverts),
             "entretiens_a_planifier": ("helpdesk.ticket", [("est_entretien", "=", True),
                                                            ("statut_entretien", "=", "a_planifier")]),
-            # Ticket qui vient d'arriver : etape « Nouveau » (ou pas encore d'etape)
-            "tickets_nouveaux": ("helpdesk.ticket", ["|", ("stage_id", "=", False),
-                                                     ("stage_id.name", "ilike", "nouveau")]),
+            # Ticket qui vient d'arriver : etape « Nouveau » (ou pas d'etape), personne ne l'a encore pris en
+            # charge (aucun technicien assigne, rien de planifie)
+            "tickets_nouveaux": ("helpdesk.ticket", ["|", ("stage_id", "=", False), ("stage_id.name", "ilike", "nouveau"),
+                                                     ("user_id", "=", False),
+                                                     ("statut_entretien", "not in", ["planifie", "fait"])]),
             # Planifie = assigne a un technicien (ou intervention planifiee) : dans sa journee
             # Entretiens + reparations + machines a remplacer assignes a un technicien, pas encore valides
             "entretiens_ouverts": ("helpdesk.ticket", [("statut_entretien", "=", "planifie")]),

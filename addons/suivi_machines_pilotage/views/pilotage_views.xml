@@ -515,7 +515,8 @@
                 <field name="lot_id"/>
                 <field name="tag_ids"/>
                 <filter name="nouveaux" string="Nouveaux (à prendre en charge)"
-                        domain="['|', ('stage_id', '=', False), ('stage_id.name', 'ilike', 'nouveau')]"/>
+                        domain="['|', ('stage_id', '=', False), ('stage_id.name', 'ilike', 'nouveau'),
+                                 ('user_id', '=', False), ('statut_entretien', 'not in', ['planifie', 'fait'])]"/>
                 <separator/>
                 <filter name="type_appel" string="Appels de service" domain="[('type_ticket', '=', 'appel')]"/>
                 <filter name="type_entretien" string="Entretiens" domain="[('type_ticket', '=', 'entretien')]"/>

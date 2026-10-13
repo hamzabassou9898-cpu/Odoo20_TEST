@@ -409,6 +409,16 @@ class TestPilotage(TransactionCase):
         # Pris en charge (etape suivante) : il quitte la liste
         ticket.stage_id = en_cours
         self.assertEqual(Ind._compte("tickets_nouveaux"), avant)
+        # Encore « Nouveau » mais assigne a un technicien (planifie) : pris en charge aussi
+        ticket.stage_id = nouveau
+        self.assertEqual(Ind._compte("tickets_nouveaux"), avant + 1)
+        ticket.write({"type_demande": "reparation", "type_reparation": "coule",
+                      "user_id": self.env.ref("base.user_admin").id})
+        self.assertEqual(ticket.statut_entretien, "planifie")
+        self.assertEqual(Ind._compte("tickets_nouveaux"), avant)
+        filtre = self.env.ref("suivi_machines_pilotage.view_pilotage_appels_search", raise_if_not_found=False)
+        if filtre:
+            self.assertIn("user_id", filtre.arch_db)
 
     def test_menu_reserve_au_groupe(self):
         menu = self.env.ref("suivi_machines_pilotage.menu_pilotage_root")
