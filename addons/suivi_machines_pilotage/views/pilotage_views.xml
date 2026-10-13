@@ -526,6 +526,8 @@
                         domain="[('est_entretien', '=', True), ('statut_entretien', '=', 'a_planifier')]"/>
                 <filter name="entretiens_planifies" string="Entretiens planifiés à faire"
                         domain="[('est_entretien', '=', True), ('statut_entretien', '=', 'planifie')]"/>
+                <filter name="planifies_a_faire" string="Entretiens &amp; réparations à faire"
+                        domain="[('statut_entretien', '=', 'planifie')]"/>
                 <filter name="reparations_planifiees" string="Réparations planifiées à faire"
                         domain="[('est_entretien', '=', False), ('statut_entretien', '=', 'planifie')]"/>
                 <separator/>

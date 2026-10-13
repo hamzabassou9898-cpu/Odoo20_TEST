@@ -28,6 +28,8 @@ class PilotageIndicateur(models.Model):
     description = fields.Char("Description", translate=True)
     valeur = fields.Integer("Valeur", compute="_compute_valeur")
     sous_titre = fields.Char("Détail", compute="_compute_valeur")
+    # Detail par type (etiquettes dans la carte) : [[libelle, nombre, couleur], ...]
+    repartition = fields.Json("Répartition", compute="_compute_valeur")
 
     _code_unique = models.Constraint("UNIQUE(code)", "Un seul indicateur par code.")
 
@@ -81,8 +83,8 @@ class PilotageIndicateur(models.Model):
             "tickets_nouveaux": ("helpdesk.ticket", ["|", ("stage_id", "=", False),
                                                      ("stage_id.name", "ilike", "nouveau")]),
             # Planifie = assigne a un technicien (ou intervention planifiee) : dans sa journee
-            "entretiens_ouverts": ("helpdesk.ticket", [("est_entretien", "=", True),
-                                                       ("statut_entretien", "=", "planifie")]),
+            # Entretiens + reparations + machines a remplacer assignes a un technicien, pas encore valides
+            "entretiens_ouverts": ("helpdesk.ticket", [("statut_entretien", "=", "planifie")]),
             # Reparation / machine a remplacer assignee a un technicien, pas encore resolue
             "reparations_planifiees": ("helpdesk.ticket", [("est_entretien", "=", False),
                                                            ("statut_entretien", "=", "planifie")]),
@@ -108,16 +110,31 @@ class PilotageIndicateur(models.Model):
             "facturer_sage": ("machine.intervention", [("etat_facturation", "=", "bon_cree")]),
         }
 
+    @api.model
+    def _repartition_par_type(self, domaine):
+        """Nombre de tickets par type (Entretien, Reparation, Machine a remplacer) pour la carte."""
+        Ticket = self.env["helpdesk.ticket"]
+        libelles = dict(Ticket._fields["type_demande"]._description_selection(self.env))
+        couleurs = {"entretien": "info", "reparation": "danger", "remplacement": "warning"}
+        groupes = Ticket._read_group(domaine, ["type_demande"], ["__count"])
+        ordre = ["entretien", "reparation", "remplacement"]
+        groupes = sorted(groupes, key=lambda g: ordre.index(g[0]) if g[0] in ordre else len(ordre))
+        return [[libelles.get(type_, self.env._("Autre")), nombre, couleurs.get(type_, "secondary")]
+                for type_, nombre in groupes]
+
     def _compute_valeur(self):
         domaines = self._domaines()
         for ind in self:
             model, domaine = domaines.get(ind.code, (None, None))
+            ind.repartition = False
             if not model:
                 ind.valeur, ind.sous_titre = 0, False
                 continue
             Model = self.env[model]
             ind.valeur = Model.search_count(domaine)
             ind.sous_titre = ind.description
+            if ind.code == "entretiens_ouverts" and ind.valeur:
+                ind.repartition = self._repartition_par_type(domaine)
             devise = self.env.company.currency_id
             if model == "machine.intervention" and ind.code in ("a_facturer", "facturer_sage"):
                 total = sum(Model.search(domaine).mapped("montant_frais"))
@@ -138,8 +155,8 @@ class PilotageIndicateur(models.Model):
         "appels_ouverts": ("suivi_machines_pilotage.action_pilotage_appels", ("a_traiter", "ouverts")),
         "entretiens_a_planifier": ("suivi_machines_pilotage.action_pilotage_appels", ("entretiens_a_planifier",)),
         "tickets_nouveaux": ("suivi_machines_pilotage.action_pilotage_appels", ("nouveaux",)),
-        "entretiens_ouverts": ("suivi_machines_pilotage.action_pilotage_appels", ("entretiens_planifies",)),
-        "reparations_planifiees": ("suivi_machines_pilotage.action_pilotage_appels", ("reparations_planifiees",)),
+        "entretiens_ouverts": ("suivi_machines_pilotage.action_pilotage_appels",
+                               ("planifies_a_faire", "grp_type_demande")),
         "reprises_ouvertes": ("suivi_machines_pilotage.action_pilotage_appels", ("type_reprise", "ouverts")),
         "appels_mois": ("suivi_machines_pilotage.action_pilotage_appels", ("type_appel", "ce_mois")),
         "appels_sans_machine": ("suivi_machines_pilotage.action_pilotage_appels", ("type_appel", "ouverts",
@@ -158,15 +175,21 @@ class PilotageIndicateur(models.Model):
 
     def action_ouvrir(self):
         self.ensure_one()
-        xmlid, filtre = self._ACTIONS.get(self.code, (None, None))
+        return self._action_pour_code(self.code, self.name)
+
+    @api.model
+    def _action_pour_code(self, code, nom=None):
+        """Liste filtree d'un code (avec ou sans carte affichee)."""
+        xmlid, filtre = self._ACTIONS.get(code, (None, None))
         if not xmlid:
             return False
         action = self.env["ir.actions.act_window"]._for_xml_id(xmlid)
         contexte = {}
-        for nom in ((filtre,) if isinstance(filtre, str) else filtre or ()):
-            contexte["search_default_" + nom] = 1
+        for filtre_nom in ((filtre,) if isinstance(filtre, str) else filtre or ()):
+            contexte["search_default_" + filtre_nom] = 1
         action["context"] = contexte
-        action["display_name"] = action["name"] = self.name
+        if nom:
+            action["display_name"] = action["name"] = nom
         # Le message « aucun enregistrement » (HTML) s'afficherait en texte brut depuis un bouton
         action.pop("help", None)
         return action

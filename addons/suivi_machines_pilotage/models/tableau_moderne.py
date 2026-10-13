@@ -65,7 +65,8 @@ class PilotageIndicateur(models.Model):
         action = self._action_detail(code)
         if action is None:
             indicateur = self.search([("code", "=", code)], limit=1)
-            action = indicateur.action_ouvrir() if indicateur else False
+            # Carte retiree du tableau (ex. Machines a probleme) : la liste s'ouvre quand meme
+            action = indicateur.action_ouvrir() if indicateur else self._action_pour_code(code)
         if action:
             action.pop("help", None)
         return action
@@ -161,7 +162,7 @@ class PilotageIndicateur(models.Model):
              "icone": "build", "couleur": "danger",
              "tendance": "%+d vs sem. dern." % ecart, "tendance_couleur": "danger" if ecart > 0 else "success"},
             {"code": "entretiens_ouverts", "valeur": c.get("entretiens_ouverts", 0),
-             "libelle": "Entretiens planifiés à faire", "icone": "schedule", "couleur": "info",
+             "libelle": "Entretiens & réparations à faire", "icone": "schedule", "couleur": "info",
              "tendance": "%s en retard" % c.get("entretien_retard", 0),
              "tendance_couleur": "danger" if c.get("entretien_retard") else "secondary"},
             {"code": "tournees_a_faire",

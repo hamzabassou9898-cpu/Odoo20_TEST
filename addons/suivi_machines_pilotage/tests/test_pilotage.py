@@ -30,7 +30,6 @@ class TestPilotage(TransactionCase):
 
     def test_compteurs(self):
         self.assertGreaterEqual(self._ind("entretien_retard").valeur, 1)
-        self.assertGreaterEqual(self._ind("bris_mois").valeur, 1)
         facturer = self._ind("a_facturer")
         self.assertGreaterEqual(facturer.valeur, 1)
         self.assertIn("Total", facturer.sous_titre)
@@ -108,14 +107,13 @@ class TestPilotage(TransactionCase):
                                   "user_id": tech.id})
         tous = sans_tech | assignee | remplacer | commande
         domaines = self.env["pilotage.indicateur"]._domaines()
-        model, domaine = domaines["reparations_planifiees"]
+        model, domaine = domaines["entretiens_ouverts"]
 
         def dans(code):
             return tous & self.env["helpdesk.ticket"].search(domaines[code][1])
 
-        self.assertEqual(dans("reparations_planifiees"), assignee | remplacer)
+        self.assertEqual(dans("entretiens_ouverts"), assignee | remplacer, "un seul bloc : réparations comprises")
         self.assertEqual(dans("appels_ouverts"), sans_tech | commande, "pas encore planifiés")
-        self.assertFalse(dans("entretiens_ouverts"))
         # Ticket ouvert -> Nouvelle intervention de reparation : il glisse vers « Réparations planifiées »
         f = Form(self.env["machine.intervention"].with_context(**sans_tech.action_nouvelle_intervention()["context"]))
         f.type = "reparation"
@@ -124,16 +122,29 @@ class TestPilotage(TransactionCase):
         f.save()
         self.assertEqual((sans_tech.user_id, sans_tech.statut_entretien), (tech, "planifie"))
         domaines = self.env["pilotage.indicateur"]._domaines()
-        self.assertEqual(dans("reparations_planifiees"), sans_tech | assignee | remplacer)
+        self.assertEqual(dans("entretiens_ouverts"), sans_tech | assignee | remplacer)
         self.assertEqual(dans("appels_ouverts"), commande)
-        ind = self._ind("reparations_planifiees")
-        self.assertEqual(ind.section, "entretiens")
-        cartes = self.env["pilotage.indicateur"].search([("section", "=", "entretiens")])
-        self.assertEqual(cartes[:2].mapped("code"), ["entretiens_ouverts", "reparations_planifiees"],
-                         "juste sous Entretiens planifiés à faire")
+        # Une seule carte « Entretiens & réparations à faire », divisée par type (étiquettes)
+        self.assertFalse(self.env.ref("suivi_machines_pilotage.indicateur_reparations_planifiees",
+                                      raise_if_not_found=False))
+        entretien = Ticket.create({"name": "Entretien", "partner_id": self.client.id, "est_entretien": True,
+                                   "user_id": tech.id})
+        ind = self._ind("entretiens_ouverts")
+        self.assertEqual(ind.name, "Entretiens & réparations à faire")
+        ind.invalidate_recordset()
+        repartition = {libelle: (nombre, couleur) for libelle, nombre, couleur in ind.repartition}
+        self.assertGreaterEqual(repartition["Réparation"][0], 2)
+        self.assertGreaterEqual(repartition["Machine à remplacer"][0], 1)
+        self.assertGreaterEqual(repartition["Entretien"][0], 1)
+        self.assertEqual(ind.valeur, sum(n for n, _c in repartition.values()))
+        self.assertEqual(list(repartition)[0], "Entretien", "ordre : entretien, réparation, remplacement")
+        self.assertIn(entretien, self.env[model].search(domaine))
         action = ind.action_ouvrir()
-        self.assertEqual(action["context"], {"search_default_reparations_planifiees": 1})
+        self.assertEqual(action["context"], {"search_default_planifies_a_faire": 1,
+                                             "search_default_grp_type_demande": 1})
         self.assertNotIn("help", action)
+        arch = self.env["pilotage.indicateur"].get_views([(False, "kanban")])["views"]["kanban"]["arch"]
+        self.assertIn("repartition", arch)
         # Resolue : elle quitte la carte
         assignee.stage_id = self.env["helpdesk.stage"].create({"name": "Résolu"})
         self.assertNotIn(assignee, self.env[model].search(domaine))
@@ -187,8 +198,9 @@ class TestPilotage(TransactionCase):
         """Une seule section « Entretiens & réparations » (plus de colonne « Bris & réparations »)."""
         Ind = self.env["pilotage.indicateur"]
         self.assertFalse(Ind.search([("section", "=", "qualite")]))
-        self.assertEqual(self._ind("bris_mois").section, "entretiens")
-        self.assertEqual(self._ind("machines_probleme").section, "entretiens")
+        for code in ("bris_mois", "machines_probleme"):
+            self.assertFalse(self.env.ref("suivi_machines_pilotage.indicateur_" + code, raise_if_not_found=False),
+                             "carte retirée")
         self.assertNotIn("qualite", Ind._expand_sections(None, []))
         self.assertEqual(self.env.ref("suivi_machines_pilotage.menu_pilotage_bris").parent_id,
                          self.env.ref("suivi_machines_pilotage.menu_pilotage_entretiens"))

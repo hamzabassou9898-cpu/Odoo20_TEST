@@ -11,6 +11,7 @@
                     action="action_ouvrir" type="object">
                 <field name="couleur"/>
                 <field name="valeur"/>
+                <field name="repartition"/>
                 <templates>
                     <t t-name="card">
                         <div t-attf-class="border-start border-4 border-{{record.couleur.raw_value}} ps-3 py-1">
@@ -22,6 +23,14 @@
                             </div>
                             <div class="small text-muted">
                                 <field name="sous_titre"/>
+                            </div>
+                            <!-- Detail par type : une etiquette par type de ticket -->
+                            <div t-if="record.repartition.raw_value" class="d-flex flex-wrap gap-1 mt-1">
+                                <t t-foreach="record.repartition.raw_value" t-as="r" t-key="r_index">
+                                    <span t-attf-class="badge rounded-pill text-bg-{{r[2]}}">
+                                        <t t-out="r[0]"/> : <t t-out="r[1]"/>
+                                    </span>
+                                </t>
                             </div>
                         </div>
                     </t>
