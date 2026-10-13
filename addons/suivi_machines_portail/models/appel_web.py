@@ -16,10 +16,10 @@ CHAMPS_FORMULAIRE = [
     ("nom", "Nom", True),
     ("courriel", "Courriel", True),
     ("entreprise", "Entreprise", True),
+    ("code_client", "Code client", False),
     ("telephone", "Téléphone", True),
     ("adresse", "Adresse", True),
     ("ville", "Ville", True),
-    ("code_client", "Code client", False),
 ]
 LONGUEUR_CHAMP = 200
 LONGUEUR_MESSAGE = 5000

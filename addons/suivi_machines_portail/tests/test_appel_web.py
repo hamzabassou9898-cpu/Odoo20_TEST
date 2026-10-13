@@ -45,6 +45,9 @@ class TestAppelWeb(HttpCase):
             self.assertIn(texte, page.text)
         self.assertRegex(page.text, r'<input type="radio" name="type_demande"[^>]*value="reparation"')
         self.assertIn('<textarea id="appel_message" name="message"', page.text)
+        # Code client juste apres Entreprise
+        ordre = [page.text.index('name="%s"' % nom) for nom in ("entreprise", "code_client", "telephone")]
+        self.assertEqual(ordre, sorted(ordre))
 
     def test_reparation_avec_code_client(self):
         reponse = self._envoyer(code_client="web100", type_demande="reparation", type_reparation="ne_gele_pas",
