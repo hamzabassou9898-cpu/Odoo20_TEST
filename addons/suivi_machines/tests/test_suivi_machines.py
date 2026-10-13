@@ -261,10 +261,11 @@ class TestSuiviMachines(TransactionCase):
             ligne.machine_lot_id = self.lot_b
         f.save()
         self.assertEqual(picking.move_ids.move_line_ids.lot_id, self.lot_b, "la machine choisie est réservée")
+        self.assertEqual(so.order_line.machine_lot_id, self.lot_b, "repris sur le bon de vente dès l'enregistrement")
         # changement d'avis : l'autre machine
         picking.move_ids.machine_lot_id = self.lot_a
         self.assertEqual(picking.move_ids.move_line_ids.lot_id, self.lot_a)
-        self.assertFalse(so.order_line.machine_lot_id, "pas de n° de série au bon de vente")
+        self.assertEqual(so.order_line.machine_lot_id, self.lot_a, "changement d'avis : suivi sur le bon de vente")
         self._valider(picking)
         self.assertEqual(picking.livreur_id, livreur)
         self.assertEqual(so.order_line.machine_lot_id, self.lot_a, "n° de série livré repris sur le bon de vente")

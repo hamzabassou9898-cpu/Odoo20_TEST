@@ -321,7 +321,16 @@ class StockMove(models.Model):
         a_reserver._do_unreserve()
         res = super().write(vals)
         a_reserver._action_assign()
+        self._reporter_numero_serie_choisi()
         return res
+
+    def _reporter_numero_serie_choisi(self):
+        """N° de serie choisi sur la livraison (des l'enregistrement) : repris sur la ligne du bon de vente
+        ou du contrat de location (une machine par ligne)."""
+        for move in self.filtered(lambda m: m.machine_lot_id and m.sale_line_id and m.state != "cancel"):
+            ligne = move.sale_line_id
+            if ligne.product_uom_qty == 1 and ligne.machine_lot_id != move.machine_lot_id:
+                ligne.machine_lot_id = move.machine_lot_id
 
     def _update_reserved_quantity_vals(self, need, location_id, lot_id=None, package_id=None,
                                        owner_id=None, strict=True):
