@@ -7,4 +7,12 @@
         <field name="padding">4</field>
         <field name="company_id" eval="False"/>
     </record>
+    <!-- Contrats de location : numerotation propre (LOC00001), distincte des ventes (S00001) -->
+    <record id="seq_contrat_location" model="ir.sequence">
+        <field name="name">Contrat de location</field>
+        <field name="code">suivi_machines.contrat_location</field>
+        <field name="prefix">LOC</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
 </odoo>

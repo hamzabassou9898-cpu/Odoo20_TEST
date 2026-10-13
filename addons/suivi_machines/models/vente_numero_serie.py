@@ -75,15 +75,40 @@ class SaleOrder(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        nouveau = self.env._("New")
         for vals in vals_list:
             if vals.get("is_rental_order"):
                 vals["type_commande"] = "location"
+            location = (vals.get("type_commande") or self._default_type_commande()) == "location"
+            # Contrat de location : son propre numero (LOC00001), pas celui des ventes
+            if location and vals.get("name", nouveau) == nouveau:
+                vals["name"] = self._numero_contrat(vals.get("company_id")) or nouveau
         return super().create(vals_list)
+
+    @api.model
+    def _numero_contrat(self, company_id=None):
+        return self.env["ir.sequence"].with_company(company_id or self.env.company.id).next_by_code(
+            "suivi_machines.contrat_location")
+
+    def _renumeroter_selon_type(self):
+        """Soumission (pas encore confirmee) passee de Vente a Location ou l'inverse : bon numero."""
+        for order in self.filtered(lambda o: o.state in ("draft", "sent")):
+            est_contrat = (order.name or "").startswith("LOC")
+            if order.type_commande == "location" and not est_contrat:
+                numero = order._numero_contrat(order.company_id.id)
+            elif order.type_commande == "vente" and est_contrat:
+                numero = self.env["ir.sequence"].with_company(order.company_id).next_by_code("sale.order")
+            else:
+                continue
+            if numero:
+                order.name = numero
 
     def write(self, vals):
         if vals.get("is_rental_order"):
             vals = dict(vals, type_commande="location")
         res = super().write(vals)
+        if "type_commande" in vals and "name" not in vals:
+            self._renumeroter_selon_type()
         if "type_commande" in vals:
             # Recalculer le statut des machines deja livrees par cette commande
             lots = self.order_line.move_ids.move_line_ids.lot_id.filtered("est_machine")

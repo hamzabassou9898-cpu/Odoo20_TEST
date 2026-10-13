@@ -111,6 +111,44 @@ class PilotageIndicateur(models.Model):
         }
 
     @api.model
+    def _parts_reparation(self):
+        """Partie « Réparations » des cartes d'entretien (machines) : code -> (modele, domaine)."""
+        b = self._bornes()
+        debut = fields.Datetime.to_datetime(b["aujourdhui"])
+        jour = timedelta(days=1)
+        reparations = [("est_entretien", "=", False), ("statut_entretien", "in", ("a_planifier", "planifie")),
+                       ("date_planifiee", "!=", False)]
+        return {
+            "entretien_retard": ("helpdesk.ticket", reparations + [("date_planifiee", "<", debut)]),
+            "entretien_semaine": ("helpdesk.ticket", reparations + [
+                ("date_planifiee", ">=", debut),
+                ("date_planifiee", "<", fields.Datetime.to_datetime(b["semaine"]) + jour)]),
+            "entretien_mois": ("helpdesk.ticket", reparations + [
+                ("date_planifiee", ">=", debut),
+                ("date_planifiee", "<", fields.Datetime.to_datetime(b["mois"]) + jour)]),
+            "entretiens_faits": ("machine.intervention", [
+                ("type", "in", ("bris", "reparation", "remplacement")), ("state", "=", "fait"),
+                ("date", ">=", fields.Datetime.to_datetime(b["debut_mois"]))]),
+        }
+
+    @api.model
+    def _compte_reparations(self, code):
+        model, domaine = self._parts_reparation().get(code, (None, None))
+        return self.env[model].search_count(domaine) if model else 0
+
+    def action_ouvrir_reparations(self):
+        """Etiquette « Réparation » d'une carte d'entretien : la liste des réparations correspondantes."""
+        self.ensure_one()
+        model, domaine = self._parts_reparation().get(self.code, (None, None))
+        if not model:
+            return False
+        xmlid = ("suivi_machines_pilotage.action_pilotage_appels" if model == "helpdesk.ticket"
+                 else "suivi_machines_pilotage.action_pilotage_entretiens_faits")
+        action = self._action_xml(xmlid, self.env._("Réparations — %s", self.name), {}, domaine)
+        action.pop("help", None)
+        return action
+
+    @api.model
     def _repartition_par_type(self, domaine):
         """Nombre de tickets par type (Entretien, Reparation, Machine a remplacer) pour la carte."""
         Ticket = self.env["helpdesk.ticket"]
@@ -135,6 +173,13 @@ class PilotageIndicateur(models.Model):
             ind.sous_titre = ind.description
             if ind.code == "entretiens_ouverts" and ind.valeur:
                 ind.repartition = self._repartition_par_type(domaine)
+            elif ind.code in self._parts_reparation():
+                # Carte regroupee : machines a entretenir + reparations (une etiquette chacune)
+                entretiens, reparations = ind.valeur, self._compte_reparations(ind.code)
+                ind.valeur = entretiens + reparations
+                if ind.valeur:
+                    ind.repartition = [[self.env._("Entretien"), entretiens, "info", ""],
+                                       [self.env._("Réparation"), reparations, "danger", "reparations"]]
             devise = self.env.company.currency_id
             if model == "machine.intervention" and ind.code in ("a_facturer", "facturer_sage"):
                 total = sum(Model.search(domaine).mapped("montant_frais"))

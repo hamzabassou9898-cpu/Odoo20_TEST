@@ -366,3 +366,27 @@ class TestSuiviMachines(TransactionCase):
         fin = fields.Datetime.now() + relativedelta(days=10)
         so.date_fin_location = fin
         self.assertEqual(so.date_fin_location, fin.replace(microsecond=0))
+
+    def test_numero_contrat_de_location(self):
+        """Contrat de location : numero propre LOC00001 ; une vente garde S00001."""
+        location = self._commande(self.lot_b, "location")
+        vente = self._commande(self.lot_b, "vente")
+        self.assertTrue(location.name.startswith("LOC"), location.name)
+        self.assertFalse(vente.name.startswith("LOC"), vente.name)
+        suivant = self._commande(self.lot_b, "location")
+        self.assertGreater(suivant.name, location.name, "numéros qui se suivent")
+        # Soumission (brouillon) passee de Vente a Location (et retour) : le numero suit le type
+        soumission = self.env["sale.order"].create({"partner_id": self.client.id, "type_commande": "vente"})
+        self.assertFalse(soumission.name.startswith("LOC"))
+        soumission.type_commande = "location"
+        self.assertTrue(soumission.name.startswith("LOC"))
+        soumission.type_commande = "vente"
+        self.assertFalse(soumission.name.startswith("LOC"))
+        # Application Location (Enterprise) : commande creee depuis l'application
+        depuis_app = self.env["sale.order"].with_context(in_rental_app=True).create({"partner_id": self.client.id})
+        self.assertEqual(depuis_app.type_commande, "location")
+        self.assertTrue(depuis_app.name.startswith("LOC"))
+        # Contrat confirme : son numero ne change plus
+        nom = location.name
+        location.type_commande = "vente"
+        self.assertEqual(location.name, nom)

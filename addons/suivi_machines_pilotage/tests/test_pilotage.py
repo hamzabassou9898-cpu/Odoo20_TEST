@@ -166,6 +166,43 @@ class TestPilotage(TransactionCase):
         categories = [getattr(categ, "id", categ) for categ, _nb in Produit.read_group([], ["categ_id"], ["__count"])]
         self.assertIn(self.produit.categ_id.id, categories)
 
+    def test_cartes_entretiens_et_reparations(self):
+        """En retard / cette semaine / 30 jours / faits ce mois : entretiens + réparations, une étiquette chacun."""
+        Ticket = self.env["helpdesk.ticket"]
+        maintenant = fields.Datetime.now()
+        retard = Ticket.create({"name": "Fuit", "code_client": "PIL1", "type_demande": "reparation",
+                                "date_planifiee": maintenant - relativedelta(days=2)})
+        semaine = Ticket.create({"name": "Bruit", "code_client": "PIL1", "type_demande": "reparation",
+                                 "date_planifiee": maintenant + relativedelta(days=3)})
+        self.env["machine.intervention"].create({"lot_id": self.lot.id, "type": "reparation", "state": "fait"})
+        for code, ticket, nom in (("entretien_retard", retard, "Entretiens & réparations en retard"),
+                                  ("entretien_semaine", semaine, "Entretiens & réparations cette semaine"),
+                                  ("entretien_mois", semaine, "Entretiens & réparations dans 30 jours")):
+            ind = self._ind(code)
+            ind.invalidate_recordset()
+            self.assertEqual(ind.name, nom)
+            parts = {libelle: (nombre, lien) for libelle, nombre, _c, lien in ind.repartition}
+            self.assertEqual(ind.valeur, parts["Entretien"][0] + parts["Réparation"][0])
+            self.assertGreaterEqual(parts["Réparation"][0], 1, code)
+            self.assertEqual(parts["Réparation"][1], "reparations", "étiquette cliquable")
+            action = ind.action_ouvrir_reparations()
+            self.assertIn(ticket, Ticket.search(action["domain"]), code)
+            self.assertNotIn("help", action)
+            # Clic sur la carte : la liste des machines a entretenir (comme avant)
+            self.assertEqual(ind.action_ouvrir()["res_model"], "stock.lot")
+        self.assertNotIn(semaine, Ticket.search(self._ind("entretien_retard").action_ouvrir_reparations()["domain"]))
+        faits = self._ind("entretiens_faits")
+        faits.invalidate_recordset()
+        self.assertEqual(faits.name, "Entretiens & réparations faits ce mois")
+        parts = {libelle: nombre for libelle, nombre, _c, _l in faits.repartition}
+        self.assertGreaterEqual(parts["Réparation"], 1)
+        self.assertEqual(faits.action_ouvrir_reparations()["res_model"], "machine.intervention")
+        # Resolue : la reparation quitte « en retard »
+        retard.stage_id = self.env["helpdesk.stage"].create({"name": "Résolu"})
+        self.assertNotIn(retard, Ticket.search(self._ind("entretien_retard").action_ouvrir_reparations()["domain"]))
+        arch = self.env["pilotage.indicateur"].get_views([(False, "kanban")])["views"]["kanban"]["arch"]
+        self.assertIn("action_ouvrir_reparations", arch)
+
     def test_entretien_planifie_via_intervention(self):
         """Josef planifie l'entretien depuis Interventions : le ticket ouvert de la machine devient « Planifié »."""
         Ticket = self.env["helpdesk.ticket"]

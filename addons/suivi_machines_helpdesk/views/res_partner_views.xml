@@ -22,7 +22,7 @@
                     <field name="historique_achat_ids" readonly="1" nolabel="1">
                         <list create="false" edit="false" delete="false" default_order="date_order desc">
                             <field name="date_order" string="Date"/>
-                            <field name="name" string="Numéro"/>
+                            <field name="name" string="N° de bon / contrat de location"/>
                             <field name="type_commande" widget="badge" decoration-info="type_commande == 'location'"
                                    decoration-success="type_commande == 'vente'"/>
                             <field name="date_fin_location" string="Fin de location"/>

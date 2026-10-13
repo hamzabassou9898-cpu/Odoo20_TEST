@@ -35,7 +35,8 @@ class PilotageIndicateur(models.Model):
         if code not in domaines:
             return 0
         model, domaine = domaines[code]
-        return self.env[model].search_count(domaine)
+        # Cartes d'entretien regroupees : les reparations comptent aussi
+        return self.env[model].search_count(domaine) + self._compte_reparations(code)
 
     @api.model
     def _debut_mois(self, decalage=0):
@@ -186,7 +187,7 @@ class PilotageIndicateur(models.Model):
              "Lire"),
             ("entretiens_a_planifier", "warning", "Entretiens à planifier",
              "Assigner un technicien : l'entretien ira dans sa journée", "Planifier"),
-            ("entretien_retard", "warning", "Entretiens en retard", "Machines dont l'entretien est dépassé",
+            ("entretien_retard", "warning", "Entretiens & réparations en retard", "Date d'entretien ou de réparation dépassée",
              "Planifier"),
             ("appels_sans_machine", "warning", "Appels sans machine", "Numéro de série à préciser", "Compléter"),
             ("reprises_ouvertes", "info", "Tickets de reprise ouverts", "Fin de location : machines à récupérer",
@@ -261,7 +262,7 @@ class PilotageIndicateur(models.Model):
                                                                            ("chez_client", "livree", "vendue"))]),
              "libelle": "Machines chez les clients"},
             {"code": "livraisons_faites", "valeur": c.get("livraisons_faites", 0), "libelle": "Livraisons faites"},
-            {"code": "entretiens_faits", "valeur": c.get("entretiens_faits", 0), "libelle": "Entretiens faits"},
+            {"code": "entretiens_faits", "valeur": c.get("entretiens_faits", 0), "libelle": "Entretiens & réparations faits"},
             {"code": "appels_mois", "valeur": c.get("appels_mois", 0), "libelle": "Appels reçus"},
             {"code": "machines_probleme", "valeur": c.get("machines_probleme", 0), "libelle": "Machines à problème",
              "alerte": bool(c.get("machines_probleme"))},

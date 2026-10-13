@@ -27,7 +27,12 @@
                             <!-- Detail par type : une etiquette par type de ticket -->
                             <div t-if="record.repartition.raw_value" class="d-flex flex-wrap gap-1 mt-1">
                                 <t t-foreach="record.repartition.raw_value" t-as="r" t-key="r_index">
-                                    <span t-attf-class="badge rounded-pill text-bg-{{r[2]}}">
+                                    <!-- « Réparation » : clic = la liste des réparations de la carte -->
+                                    <button t-if="r[3] == 'reparations'" name="action_ouvrir_reparations" type="object"
+                                            t-attf-class="badge rounded-pill border-0 text-bg-{{r[2]}}">
+                                        <t t-out="r[0]"/> : <t t-out="r[1]"/>
+                                    </button>
+                                    <span t-else="" t-attf-class="badge rounded-pill text-bg-{{r[2]}}">
                                         <t t-out="r[0]"/> : <t t-out="r[1]"/>
                                     </span>
                                 </t>
