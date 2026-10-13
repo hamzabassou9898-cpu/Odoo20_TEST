@@ -179,6 +179,14 @@
                                     </div>
                                     <div class="fw-bold" t-field="bon.date" t-options="{'widget': 'date'}"/>
                                 </div>
+                                <div class="col-12" t-if="bon.type_bon == 'reprise'">
+                                    <div class="small text-muted" t-out="bon.texte"/>
+                                    <div class="d-flex flex-wrap gap-3 fw-bold small text-uppercase">
+                                        <span t-foreach="proprietes" t-as="p"><t t-out="p[1]"/> <t t-out="'☒' if bon.proprete == p[0] else '☐'"/></span>
+                                        <span>Pleine <t t-out="'☒' if bon.pleine else '☐'"/></span>
+                                        <span>En fonction <t t-out="'☒' if bon.en_fonction else '☐'"/></span>
+                                    </div>
+                                </div>
                                 <div class="col-sm-6">
                                     <div class="small text-muted text-uppercase">Signature du client</div>
                                     <img t-if="bon.signature" t-att-src="image_data_uri(bon.signature)" alt="Signature du client"

@@ -527,3 +527,36 @@ class TestPortailTechnicien(HttpCase):
         self.assertIn(self.tech_a.id, colonnes)
         self.assertIn(self.tech_b.id, colonnes)
         self.assertNotIn(self.env.ref("base.user_admin").id, colonnes)
+
+    def test_reprise_depuis_un_ticket(self):
+        """Ramassage venant d'un ticket : cases Très propre / Moyen / Sale / Pleine / En fonction avec la
+        phrase du formulaire papier, puis dans le bon signé (PDF)."""
+        self.env["helpdesk.stage"].search([("name", "=ilike", "résolu")], limit=1) \
+            or self.env["helpdesk.stage"].create({"name": "Résolu"})
+        ticket = self.env["helpdesk.ticket"].create({
+            "name": "Reprendre la machine", "partner_id": self.client.id, "type_demande": "ramassage",
+            "user_id": self.tech_a.id, "date_planifiee": fields.Datetime.now()})
+        tache = self._tache(ticket)
+        self.assertEqual(tache.type_tache, "ramassage")
+        self.authenticate("tech_portail_a", "tech_portail_a_mdp_123")
+        url = "/my/journee/tache/%s" % tache.id
+        page = self.url_open(url).text
+        self.assertIn("La propreté du congélateur et des accessoires", page)
+        for case in ("Très propre", "Moyen", "Sale", "PLEINE", "EN FONCTION"):
+            self.assertIn(case, page)
+        self.assertIn("Cochez d", page, "signature après les cases")
+        self.url_open(url + "/reprise", data={"csrf_token": self._csrf(url), "proprete": "moyen", "pleine": "1"})
+        self.env.invalidate_all()
+        self.assertEqual((ticket.reprise_proprete, ticket.reprise_pleine, ticket.reprise_en_fonction),
+                         ("moyen", True, False))
+        rep = self.make_jsonrpc_request(url + "/signer", {"name": "Client", "signature": self.SIGNATURE})
+        self.assertTrue(rep.get("force_refresh"), rep)
+        bon = ticket.bon_intervention_ids
+        self.assertEqual((bon.type_bon, bon.proprete, bon.pleine, bon.en_fonction), ("reprise", "moyen", True, False))
+        self.assertIn("La propreté du congélateur", bon.texte)
+        page = self.url_open(url).text
+        self.assertIn("Moyen ☒", page)
+        html = self.env["ir.actions.report"]._render_qweb_html(
+            "suivi_machines_portail.rapport_bon_intervention", bon.ids)[0].decode()
+        self.assertIn("REPRISE DES ÉQUIPEMENTS", html.upper())
+        self.assertIn("☒", html)

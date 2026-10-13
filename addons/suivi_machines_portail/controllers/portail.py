@@ -110,7 +110,7 @@ class PortailTechnicien(CustomerPortal):
         """Section du formulaire Monroy a signer (livraison, entretien/reparation, reprise)."""
         type_bon = type_bon_de(tache.type_tache)
         source = tache._source().sudo()
-        reprise = type_bon == "reprise" and source._name == "stock.picking"
+        reprise = type_bon == "reprise"
         return {
             "type_bon": type_bon,
             "titre_bon": dict(TYPES_BON)[type_bon],
@@ -129,7 +129,7 @@ class PortailTechnicien(CustomerPortal):
         if not tache:
             return request.redirect("/my/journee")
         source = tache._source().sudo()
-        if source._name == "stock.picking" and proprete in dict(PROPRETES):
+        if type_bon_de(tache.type_tache) == "reprise" and proprete in dict(PROPRETES):
             source.write({"reprise_proprete": proprete, "reprise_pleine": bool(pleine),
                           "reprise_en_fonction": bool(en_fonction)})
         return request.redirect("/my/journee/tache/%s#bon_intervention" % tache_id)

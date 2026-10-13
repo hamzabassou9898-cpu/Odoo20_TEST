@@ -139,7 +139,7 @@ class BonIntervention(models.Model):
         type_bon = type_bon_de(tache.type_tache)
         equipements = [ligne for ligne in (tache.machines, tache.accessoires) if ligne]
         etat = {}
-        if type_bon == "reprise" and source._name == "stock.picking":
+        if type_bon == "reprise":
             etat = {"proprete": source.reprise_proprete, "pleine": source.reprise_pleine,
                     "en_fonction": source.reprise_en_fonction}
         bon = self.sudo().create({
@@ -217,6 +217,10 @@ class BonMixin(models.AbstractModel):
 
     bon_intervention_ids = fields.One2many("suivi.bon.intervention", compute="_compute_bons",
                                            string="Bons signés")
+    # Reprise (ramassage) : cases du formulaire papier, cochees au portail avant la signature
+    reprise_proprete = fields.Selection(PROPRETES, "Propreté à la reprise", copy=False)
+    reprise_pleine = fields.Boolean("Pleine", copy=False)
+    reprise_en_fonction = fields.Boolean("En fonction", copy=False)
 
     def _compute_bons(self):
         champ = {"helpdesk.ticket": "ticket_id", "stock.picking": "picking_id",
@@ -233,10 +237,6 @@ class HelpdeskTicket(models.Model):
 class StockPicking(models.Model):
     _name = "stock.picking"
     _inherit = ["stock.picking", "suivi.bon.intervention.mixin"]
-
-    reprise_proprete = fields.Selection(PROPRETES, "Propreté à la reprise", copy=False)
-    reprise_pleine = fields.Boolean("Pleine", copy=False)
-    reprise_en_fonction = fields.Boolean("En fonction", copy=False)
 
 
 class MachineIntervention(models.Model):
