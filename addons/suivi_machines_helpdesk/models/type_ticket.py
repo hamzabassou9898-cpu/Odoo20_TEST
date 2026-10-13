@@ -50,6 +50,19 @@ class HelpdeskTicket(models.Model):
         ORIGINES_AUTO, "Créé automatiquement", readonly=True, copy=False,
         help="Ticket créé par une action planifiée d'Odoo (et non par une personne).")
 
+    machines_choix_ids = fields.Many2many(
+        "stock.lot", string="Machines proposées", compute="_compute_machines_choix",
+        help="Numéros de série proposés : les machines du client ; pour un ramassage, seulement celles qui "
+             "sont en location chez lui (celles qu'on peut reprendre).")
+
+    @api.depends("partner_id", "type_demande")
+    def _compute_machines_choix(self):
+        for ticket in self:
+            machines = ticket.machines_client_ids
+            if ticket.type_demande == "ramassage":
+                machines = machines.filtered(lambda l: l.machine_statut == "chez_client")
+            ticket.machines_choix_ids = machines
+
     @api.depends("est_entretien", "commande_reprise_id")
     def _compute_type_demande(self):
         for ticket in self:

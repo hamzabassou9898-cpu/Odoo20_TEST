@@ -120,10 +120,100 @@ class PilotageIndicateur(models.Model):
                                     self.env._("Appels de la semaine du %s", debut.strftime("%d/%m")),
                                     {"search_default_type_appel": 1},
                                     [("create_date", ">=", debut), ("create_date", "<", debut + timedelta(weeks=1))])
+        if prefixe == "statut" and valeur:
+            libelle = dict(self.env["stock.lot"]._fields["machine_statut"]._description_selection(self.env)).get(valeur)
+            return self._action_xml("suivi_machines.action_machines", self.env._("Machines : %s", libelle or valeur),
+                                    {}, [("est_machine", "=", True), ("machine_statut", "=", valeur)])
+        if prefixe == "dispo" and valeur.isdigit():
+            produit = self.env["product.product"].browse(int(valeur))
+            return self._action_xml("suivi_machines.action_machines",
+                                    self.env._("Disponibles en entrepôt : %s", produit.display_name), {},
+                                    [("est_machine", "=", True), ("machine_statut", "=", "entrepot"),
+                                     ("product_id", "=", produit.id)])
+        if prefixe == "categorie" and valeur.isdigit():
+            categorie = self.env["product.category"].browse(int(valeur))
+            return {"type": "ir.actions.act_window", "name": self.env._("Stock : %s", categorie.display_name),
+                    "res_model": "product.product", "views": [(False, "list"), (False, "form")],
+                    "domain": [("categ_id", "child_of", categorie.id), ("is_storable", "=", True)],
+                    "context": {"create": False}}
+        if code == "rupture":
+            return {"type": "ir.actions.act_window", "name": self.env._("Produits en rupture de stock"),
+                    "res_model": "product.product", "views": [(False, "list"), (False, "form")],
+                    "domain": self._domaine_rupture(), "context": {"create": False}}
+        if prefixe == "transfert" and valeur.isdigit():
+            return {"type": "ir.actions.act_window", "res_model": "stock.picking", "res_id": int(valeur),
+                    "views": [(False, "form")], "target": "current"}
+        if code == "mouvements":
+            return {"type": "ir.actions.act_window", "name": self.env._("Mouvements de stock"),
+                    "res_model": "stock.move.line", "views": [(False, "list"), (False, "form")],
+                    "domain": [("state", "=", "done")], "context": {"create": False}}
         if prefixe == "tache" and valeur.isdigit():
             tache = self.env["portail.tache"].browse(int(valeur)).exists()
             return tache.action_ouvrir() if tache else False
         return None
+
+    # ------------------------------------------------------------ stock & inventaire
+    @api.model
+    def _domaine_rupture(self):
+        """Produits stockes vendus ou loues (hors machines suivies) sans stock disponible."""
+        return [("is_storable", "=", True), ("sale_ok", "=", True), ("categ_id.suivi_machine", "=", False),
+                ("qty_available", "<=", 0)]
+
+    @api.model
+    def _emplacements_stock(self):
+        """Stock reel : emplacements internes, sans l'emplacement « Location » (machines chez les clients)."""
+        domaine = [("location_id.usage", "=", "internal")]
+        societe = self.env.company
+        if "rental_loc_id" in societe._fields and societe.rental_loc_id:
+            domaine.append(("location_id", "!=", societe.rental_loc_id.id))
+        return domaine
+
+    @api.model
+    def _donnees_stock(self):
+        Lot = self.env["stock.lot"]
+        libelles = dict(Lot._fields["machine_statut"]._description_selection(self.env))
+        couleurs = {"entrepot": "g", "chez_client": "violet", "vendue": "b", "livree": "b",
+                    "en_reparation": "r", "a_remplacer": "r", "hors_service": "gy", "sans_emplacement": "gy"}
+        par_statut = dict(Lot._read_group([("est_machine", "=", True)], ["machine_statut"], ["__count"]))
+        statuts = [{"code": "statut:%s" % cle, "nom": libelles.get(cle, cle), "nombre": par_statut.get(cle, 0),
+                    "couleur": couleurs.get(cle, "gy")}
+                   for cle in libelles if par_statut.get(cle)]
+        dispo = Lot._read_group([("est_machine", "=", True), ("machine_statut", "=", "entrepot")],
+                                ["product_id"], ["__count"], order="__count desc", limit=6)
+        disponibles = [{"code": "dispo:%s" % produit.id, "nom": produit.display_name, "nombre": n}
+                       for produit, n in dispo]
+        # Stock par categorie (quantites en main, tous produits stockes)
+        par_produit = self.env["stock.quant"]._read_group(self._emplacements_stock(), ["product_id"],
+                                                          ["quantity:sum"])
+        par_categorie = {}
+        for produit, quantite in par_produit:
+            if quantite:
+                par_categorie[produit.categ_id] = par_categorie.get(produit.categ_id, 0) + quantite
+        categories = [{"code": "categorie:%s" % categ.id, "nom": categ.display_name, "nombre": round(qte)}
+                      for categ, qte in sorted(par_categorie.items(), key=lambda x: -x[1])[:6]]
+        # Derniers mouvements de stock (faits)
+        lignes = self.env["stock.move.line"].search([("state", "=", "done")], order="date desc, id desc", limit=7)
+        fuseau = self._fuseau().zone
+        env_tz = self.env(context=dict(self.env.context, tz=fuseau))
+        mouvements = [{
+            "id": ml.id, "code": "transfert:%s" % ml.picking_id.id if ml.picking_id else "mouvements",
+            "quand": format_datetime(env_tz, ml.date, dt_format="d MMM '·' HH 'h' mm"),
+            "produit": ml.product_id.display_name, "serie": ml.lot_id.name or "",
+            "quantite": "%g" % ml.quantity,
+            "de": ml.location_id.name or "", "vers": ml.location_dest_id.name or "",
+            "entree": ml.location_dest_id.usage == "internal" and ml.location_id.usage != "internal",
+            "reference": ml.picking_id.name or ml.reference or "",
+        } for ml in lignes]
+        return {"statuts": statuts, "max_statut": max([x["nombre"] for x in statuts] or [1]),
+                "disponibles": disponibles, "max_dispo": max([x["nombre"] for x in disponibles] or [1]),
+                "categories": categories, "max_categorie": max([x["nombre"] for x in categories] or [1]) or 1,
+                "rupture": self.env["product.product"].search_count(self._domaine_rupture()),
+                "mouvements": mouvements}
+
+    @api.model
+    def _techniciens_du_tableau(self, taches):
+        """Techniciens affiches dans le bloc « Techniciens » (le portail des techniciens filtre plus finement)."""
+        return taches.technicien_id
 
     # ------------------------------------------------------------ donnees de la vue d'ensemble
     @api.model
@@ -212,6 +302,7 @@ class PilotageIndicateur(models.Model):
         Tache = self.env["portail.tache"]
         domaine_periode = ["|", "&", ("date", ">=", debut), ("date", "<", fin), ("etat_suivi", "=", "en_retard")]
         taches = Tache.search([("technicien_id", "!=", False)] + domaine_periode, order="date, id")
+        taches = taches.filtered(lambda t: t.technicien_id in self._techniciens_du_tableau(taches))
         techniciens = []
         for i, tech in enumerate(taches.technicien_id.sorted(lambda u: (u.name or "").lower())):
             siennes = taches.filtered(lambda t: t.technicien_id == tech)
@@ -264,8 +355,9 @@ class PilotageIndicateur(models.Model):
             {"code": "livraisons_faites", "valeur": c.get("livraisons_faites", 0), "libelle": "Livraisons faites"},
             {"code": "entretiens_faits", "valeur": c.get("entretiens_faits", 0), "libelle": "Entretiens & réparations faits"},
             {"code": "appels_mois", "valeur": c.get("appels_mois", 0), "libelle": "Appels reçus"},
-            {"code": "machines_probleme", "valeur": c.get("machines_probleme", 0), "libelle": "Machines à problème",
-             "alerte": bool(c.get("machines_probleme"))},
+            {"code": "statut:entrepot", "valeur": Lot.search_count([("est_machine", "=", True),
+                                                                     ("machine_statut", "=", "entrepot")]),
+             "libelle": "Machines disponibles en entrepôt"},
         ]
 
         prenom = (self.env.user.name or "").split()[0] if self.env.user.name else ""
@@ -278,5 +370,5 @@ class PilotageIndicateur(models.Model):
                             "pourcentage": round(100 * faits / total) if total else 0},
             "problemes": problemes, "max_probleme": max([p["nombre"] for p in problemes] or [1]),
             "semaines": semaines, "max_semaine": max([s["nombre"] for s in semaines] or [1]) or 1,
-            "tournees": tournees, "parc": parc,
+            "tournees": tournees, "parc": parc, "stock": self._donnees_stock(),
         }

@@ -139,17 +139,18 @@
                     </group>
                     <group string="2. Parc machines du client">
                         <field name="machines_client_ids" invisible="1"/>
+                        <field name="machines_choix_ids" invisible="1"/>
                         <field name="nb_machines_client"/>
                         <field name="machine_numero" invisible="not lot_id"/>
                         <field name="machine_modele_id" invisible="not lot_id"/>
                         <field name="machine_emplacement_id" invisible="not lot_id" options="{'no_open': True}"/>
                         <field name="lot_id" options="{'no_create': True}"
-                               domain="[('id', 'in', machines_client_ids)]"
+                               domain="[('id', 'in', machines_choix_ids)]"
                                placeholder="Choisir parmi les machines du client"/>
                         <field name="machine_dernier_entretien" invisible="not lot_id"/>
                         <field name="lot_remplacement_id" invisible="type_demande != 'remplacement'"
                                readonly="echange_livraison_id" options="{'no_create': True}"
-                               placeholder="Machine en entrepôt à livrer à la place"/>
+                               placeholder="Machine en entrepôt, même modèle"/>
                         <field name="echange_retour_id" invisible="not echange_retour_id"/>
                         <field name="echange_livraison_id" invisible="not echange_livraison_id"/>
                         <field name="commande_reprise_id" invisible="not commande_reprise_id"/>

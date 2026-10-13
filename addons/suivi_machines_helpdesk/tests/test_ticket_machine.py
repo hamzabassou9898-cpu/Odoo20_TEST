@@ -1011,6 +1011,11 @@ class TestTicketMachine(TransactionCase):
         stock = self.env.ref("stock.stock_location_stock")
         nouvelle = self.env["stock.lot"].create({"name": "ECH-2", "product_id": self.produit.id})
         self.env["stock.quant"]._update_available_quantity(self.produit, stock, 1, lot_id=nouvelle)
+        # Cas reel : du stock du meme produit SANS n° de serie, et la machine choisie sur une etagere
+        etagere = self.env["stock.location"].create({"name": "Étagère A", "location_id": stock.id})
+        self.env["stock.quant"]._update_available_quantity(self.produit, stock, 1)
+        self.env["stock.quant"]._update_available_quantity(self.produit, stock, -1, lot_id=nouvelle)
+        self.env["stock.quant"]._update_available_quantity(self.produit, etagere, 1, lot_id=nouvelle)
         self.assertEqual((lot.machine_statut, nouvelle.machine_statut), ("chez_client", "entrepot"))
         tech = self.env["res.users"].create({"name": "Tech échange", "login": "tech_echange"})
         ticket = self.env["helpdesk.ticket"].create({
@@ -1028,6 +1033,9 @@ class TestTicketMachine(TransactionCase):
         self.assertEqual((retour.livreur_id, livraison.livreur_id), (tech, tech))
         self.assertEqual(retour.move_ids.move_line_ids.lot_id, lot, "l'ancienne machine revient")
         self.assertEqual(livraison.move_ids.move_line_ids.lot_id, nouvelle, "la nouvelle part")
+        self.assertEqual(livraison.move_ids.move_line_ids.location_id, etagere, "prise là où elle est")
+        # Echange deja cree, ligne de livraison abimee (sans n° de serie) : reparee a la validation
+        livraison.move_ids.move_line_ids.lot_id = False
         self.assertTrue(livraison.prochain_entretien and livraison.frequence_entretien, "entretien repris")
         with self.assertRaises(UserError):
             ticket.action_echanger_machine()   # pas deux fois
@@ -1076,3 +1084,41 @@ class TestTicketMachine(TransactionCase):
                              "stage_id": nouveau.id, "user_id": tech.id})
         self.assertEqual(commande.stage_id, nouveau, "pas d'étape propre : on ne touche pas")
 
+
+    def test_echange_machine_pas_en_stock(self):
+        lot, so, _reprise = self._location_livree("ECH-3")
+        absente = self.env["stock.lot"].create({"name": "ECH-4", "product_id": self.produit.id})
+        ticket = self.env["helpdesk.ticket"].create({
+            "name": "Échange impossible", "partner_id": self.commerce.id, "type_demande": "remplacement",
+            "lot_id": lot.id, "user_id": self.env.user.id, "lot_remplacement_id": absente.id})
+        with self.assertRaisesRegex(UserError, "entrepôt"):
+            ticket.action_echanger_machine()
+        self.assertFalse(ticket.echange_livraison_id)
+
+    def test_choix_des_machines(self):
+        """Ramassage : seulement les machines en location chez le client ; remplacement : même modèle."""
+        from lxml import etree
+        lot_loue, so, _reprise = self._location_livree("CHX-1")
+        vendue = self.lots[0]
+        ticket = self.env["helpdesk.ticket"].create({"name": "Reprise", "partner_id": self.commerce.id,
+                                                     "type_demande": "reparation"})
+        self.assertIn(lot_loue, ticket.machines_choix_ids)
+        ticket.type_demande = "ramassage"
+        self.assertEqual(ticket.machines_choix_ids.mapped("machine_statut"), ["chez_client"] * len(ticket.machines_choix_ids))
+        self.assertIn(lot_loue, ticket.machines_choix_ids)
+        arch = etree.fromstring(self.env["helpdesk.ticket"].get_views([(False, "form")])["views"]["form"]["arch"])
+        self.assertEqual(arch.xpath("//field[@name='lot_id']")[0].get("domain"), "[('id', 'in', machines_choix_ids)]")
+        self.assertIn("('product_id', '=', machine_modele_id)",
+                      self.env["helpdesk.ticket"]._fields["lot_remplacement_id"].domain)
+        # Autre modele refuse
+        autre_produit = self.env["product.product"].create({
+            "name": "Autre modèle", "categ_id": self.produit.categ_id.id, "is_storable": True, "tracking": "serial"})
+        autre = self.env["stock.lot"].create({"name": "CHX-2", "product_id": autre_produit.id})
+        self.env["stock.quant"]._update_available_quantity(autre_produit, self.env.ref("stock.stock_location_stock"),
+                                                           1, lot_id=autre)
+        remp = self.env["helpdesk.ticket"].create({
+            "name": "Remplacer", "partner_id": self.commerce.id, "type_demande": "remplacement",
+            "lot_id": lot_loue.id, "user_id": self.env.user.id, "lot_remplacement_id": autre.id})
+        with self.assertRaisesRegex(UserError, "même modèle"):
+            remp.action_echanger_machine()
+        self.assertNotIn(vendue, ticket.machines_choix_ids.filtered(lambda l: l.machine_statut != "chez_client"))

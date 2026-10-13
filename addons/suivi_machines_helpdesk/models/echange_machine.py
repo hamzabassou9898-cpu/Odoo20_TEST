@@ -8,7 +8,7 @@ valide les deux ; l'intervention de remplacement est alors faite et le ticket re
 """
 from markupsafe import Markup
 
-from odoo import fields, models
+from odoo import api, fields, models
 from odoo.exceptions import UserError
 from odoo.addons.suivi_machines.models.stock_picking import FREQUENCES_ENTRETIEN
 
@@ -18,8 +18,8 @@ class HelpdeskTicket(models.Model):
 
     lot_remplacement_id = fields.Many2one(
         "stock.lot", "Machine de remplacement", tracking=True, copy=False,
-        domain="[('est_machine', '=', True), ('machine_statut', '=', 'entrepot')]",
-        help="Machine en entrepôt qui sera livrée à la place de celle du ticket.")
+        domain="[('est_machine', '=', True), ('machine_statut', '=', 'entrepot'), ('product_id', '=', machine_modele_id)]",
+        help="Machine en entrepôt du même modèle, livrée à la place de celle du ticket.")
     echange_retour_id = fields.Many2one("stock.picking", "Ramassage (échange)", copy=False, readonly=True)
     echange_livraison_id = fields.Many2one("stock.picking", "Livraison (échange)", copy=False, readonly=True)
 
@@ -33,6 +33,9 @@ class HelpdeskTicket(models.Model):
             raise UserError(self.env._("Choisissez la machine à remplacer (numéro de série chez le client)."))
         if not self.lot_remplacement_id:
             raise UserError(self.env._("Choisissez la machine de remplacement (en entrepôt)."))
+        if self.lot_remplacement_id.product_id != self.lot_id.product_id:
+            raise UserError(self.env._("La machine de remplacement doit être du même modèle (%s).",
+                                       self.lot_id.product_id.display_name))
         if self.lot_remplacement_id.machine_statut != "entrepot":
             raise UserError(self.env._("La machine de remplacement %s n'est pas en entrepôt.",
                                        self.lot_remplacement_id.display_name))
@@ -56,6 +59,7 @@ class HelpdeskTicket(models.Model):
         client = self.commerce_id or self.partner_id or ancienne.machine_client_id
         chez_client = ancienne.location_id
         entrepot = self.env["stock.warehouse"].search([("company_id", "=", self.env.company.id)], limit=1)
+        self._echange_quant_disponible(nouvelle, entrepot.lot_stock_id)
         ligne_vente = self._echange_derniere_livraison().move_id.sale_line_id
         # Meme produit : l'echange reste dans le meme contrat (livre - retourne = toujours 1 machine)
         ligne = ligne_vente if ligne_vente and ligne_vente.product_id == nouvelle.product_id else ligne_vente.browse()
@@ -82,16 +86,8 @@ class HelpdeskTicket(models.Model):
         retour.echange_picking_id = livraison
         (retour | livraison).action_confirm()
         (retour | livraison).action_assign()
-        # Retour depuis le client : Odoo ne reserve pas, on indique le n° de serie qui revient
-        for move in retour.move_ids:
-            if move.move_line_ids:
-                move.move_line_ids.write({"lot_id": ancienne.id, "quantity": 1})
-            else:
-                self.env["stock.move.line"].create({
-                    "move_id": move.id, "picking_id": retour.id, "product_id": ancienne.product_id.id,
-                    "lot_id": ancienne.id, "quantity": 1, "location_id": chez_client.id,
-                    "location_dest_id": entrepot.lot_stock_id.id})
         self.write({"echange_retour_id": retour.id, "echange_livraison_id": livraison.id})
+        self._echange_placer_numeros()
         self.message_post(body=Markup("<p>%s</p>") % self.env._(
             "Échange créé : ramassage %(retour)s (%(ancienne)s revient en inventaire) et livraison %(livraison)s "
             "(%(nouvelle)s), technicien %(tech)s. Valider l'un valide les deux.",
@@ -99,6 +95,42 @@ class HelpdeskTicket(models.Model):
             nouvelle=nouvelle.display_name, tech=technicien.name))
         return {"type": "ir.actions.act_window", "res_model": "stock.picking", "res_id": livraison.id,
                 "view_mode": "form", "views": [(False, "form")], "target": "current"}
+
+    @api.model
+    def _echange_quant_disponible(self, lot, entrepot):
+        """Emplacement ou se trouve la machine de remplacement (en stock, n° de serie exact)."""
+        quant = self.env["stock.quant"].sudo().search(
+            [("lot_id", "=", lot.id), ("location_id", "child_of", entrepot.id), ("quantity", ">", 0)], limit=1)
+        if not quant:
+            raise UserError(self.env._(
+                "La machine de remplacement %s n'est pas en stock dans l'entrepôt : vérifiez son n° de série.",
+                lot.display_name))
+        return quant
+
+    def _echange_placer_numeros(self):
+        """Chaque transfert de l'echange porte le n° de serie exact de SA machine : l'ancienne qui revient du
+        client, la nouvelle prise a son emplacement en stock (Odoo pourrait sinon reserver une autre unite,
+        ex. du stock sans n° de serie, et la validation serait refusee)."""
+        for ticket in self.sudo():
+            retour, livraison = ticket.echange_retour_id, ticket.echange_livraison_id
+            if retour and retour.state not in ("done", "cancel"):
+                ticket._echange_placer(retour, ticket.lot_id, retour.location_id)
+            if livraison and livraison.state not in ("done", "cancel"):
+                quant = ticket._echange_quant_disponible(ticket.lot_remplacement_id, livraison.location_id)
+                ticket._echange_placer(livraison, ticket.lot_remplacement_id, quant.location_id)
+
+    def _echange_placer(self, picking, lot, source):
+        for move in picking.move_ids.filtered(
+                lambda m: m.product_id == lot.product_id and m.state not in ("done", "cancel")):
+            lignes = move.move_line_ids
+            if lignes:
+                lignes[1:].unlink()
+                lignes[:1].write({"lot_id": lot.id, "quantity": 1, "location_id": source.id})
+            else:
+                self.env["stock.move.line"].create({
+                    "move_id": move.id, "picking_id": picking.id, "product_id": lot.product_id.id,
+                    "lot_id": lot.id, "quantity": 1, "location_id": source.id,
+                    "location_dest_id": move.location_dest_id.id})
 
     def _terminer_echange(self):
         """Echange valide : intervention de remplacement faite (avec la nouvelle machine), ticket resolu."""
@@ -117,6 +149,13 @@ class HelpdeskTicket(models.Model):
 
 class StockPicking(models.Model):
     _inherit = "stock.picking"
+
+    def button_validate(self):
+        # Echange de machine : les bons n° de serie sur les deux transferts avant de valider
+        self.env["helpdesk.ticket"].sudo().search([
+            "|", ("echange_livraison_id", "in", (self | self.echange_picking_id).ids),
+            ("echange_retour_id", "in", (self | self.echange_picking_id).ids)])._echange_placer_numeros()
+        return super().button_validate()
 
     def _action_done(self):
         res = super()._action_done()
