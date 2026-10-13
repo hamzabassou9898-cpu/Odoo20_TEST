@@ -81,13 +81,6 @@ class SaleOrder(models.Model):
         return self.picking_ids.filtered(lambda p: p.state not in ("done", "cancel")
                                          and p.picking_type_code == "outgoing")
 
-    def action_ajuster_contrat(self):
-        """Ajuster le contrat de location : machines ou accessoires en plus, nouvelle date de fin."""
-        self.ensure_one()
-        return {"type": "ir.actions.act_window", "name": self.env._("Ajuster le contrat %s", self.name),
-                "res_model": "suivi.machines.ajuster.contrat", "view_mode": "form", "views": [(False, "form")],
-                "target": "new", "context": {"default_commande_id": self.id}}
-
     def action_livraison_a_faire(self):
         """Ajustement du contrat (machine ou accessoire ajouté) : la livraison des ajouts, prête à planifier."""
         self.ensure_one()

@@ -14,22 +14,14 @@
                     </div>
                 </button>
             </div>
-            <!-- Ajuster un contrat (upgrade) : ajouter une ligne, la livraison suit -->
+            <!-- Ligne ajoutee a un contrat confirme : sa livraison -->
             <xpath expr="//header" position="inside">
-                <button name="action_ajuster_contrat" type="object" string="Ajuster le contrat"
-                        class="btn-primary" invisible="type_commande != 'location' or state != 'sale'"/>
                 <button name="action_livraison_a_faire" type="object" string="Livraison à faire"
                         class="btn-primary" invisible="state != 'sale' or not nb_livraisons_a_faire"
                         groups="stock.group_stock_user"/>
             </xpath>
             <xpath expr="//sheet" position="before">
                 <field name="nb_livraisons_a_faire" invisible="1"/>
-                <div class="alert alert-info mb-0 py-2" role="status"
-                     invisible="type_commande != 'location' or state != 'sale'">
-                    Machine ou accessoire en plus, nouvelle date de fin : bouton <strong>Ajuster le contrat</strong>.
-                    La livraison des ajouts est créée toute seule (bouton <strong>Livraison à faire</strong>) ;
-                    le n° de série se choisit à la livraison.
-                </div>
             </xpath>
             <field name="partner_id" position="after">
                 <field name="type_commande" widget="radio" options="{'horizontal': true}"/>
@@ -46,36 +38,4 @@
         </field>
     </record>
 
-    <record id="view_ajuster_contrat_form" model="ir.ui.view">
-        <field name="name">suivi.machines.ajuster.contrat.form</field>
-        <field name="model">suivi.machines.ajuster.contrat</field>
-        <field name="arch" type="xml">
-            <form>
-                <group>
-                    <group>
-                        <field name="commande_id"/>
-                        <field name="partner_id"/>
-                    </group>
-                    <group>
-                        <field name="date_fin_actuelle"/>
-                        <field name="nouvelle_date_fin"/>
-                    </group>
-                </group>
-                <field name="currency_id" invisible="1"/>
-                <field name="ligne_ids">
-                    <list editable="bottom">
-                        <field name="currency_id" column_invisible="1"/>
-                        <field name="product_id" options="{'no_create': True}"/>
-                        <field name="quantite"/>
-                        <field name="prix_unitaire"/>
-                    </list>
-                </field>
-                <div class="text-muted small">Le n° de série de chaque machine se choisit à la livraison.</div>
-                <footer>
-                    <button name="action_ajuster" type="object" string="Ajuster et livrer" class="btn-primary"/>
-                    <button string="Annuler" special="cancel" class="btn-secondary"/>
-                </footer>
-            </form>
-        </field>
-    </record>
 </odoo>

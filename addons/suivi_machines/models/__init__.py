@@ -9,4 +9,3 @@ from . import machine_intervention_frais
 from . import stock_picking
 from . import ramassage
 from . import frise_machine
-from . import ajuster_contrat

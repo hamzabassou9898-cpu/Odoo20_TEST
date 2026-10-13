@@ -505,42 +505,6 @@ class TestSuiviMachines(TransactionCase):
         self.assertEqual(self.lot_b.machine_statut, "chez_client")
         self.assertEqual(contrat.machine_ids, self.lot_a | self.lot_b, "les deux machines dans le même contrat")
 
-    def test_bouton_ajuster_le_contrat(self):
-        """« Ajuster le contrat » : machine et accessoire en plus + nouvelle fin, dans le même contrat ;
-        la livraison des ajouts s'ouvre, le n° de série se choisit à la livraison."""
-        accessoire = self.env["product.product"].create({"name": "Pompe (test)", "type": "consu",
-                                                         "is_storable": True, "list_price": 12})
-        self.env["stock.quant"]._update_available_quantity(accessoire, self.stock, 5)
-        contrat = self._commande(self.lot_a, "location")
-        self._valider(contrat.picking_ids)
-        nb_lignes = len(contrat.order_line)
-        action = contrat.action_ajuster_contrat()
-        self.assertEqual(action["res_model"], "suivi.machines.ajuster.contrat")
-        f = Form(self.env[action["res_model"]].with_context(**action["context"]))
-        with f.ligne_ids.new() as ligne:
-            ligne.product_id = self.produit
-            self.assertEqual(ligne.prix_unitaire, 100, "prix du produit proposé")
-            ligne.prix_unitaire = 80
-        with f.ligne_ids.new() as ligne:
-            ligne.product_id = accessoire
-            ligne.quantite = 2
-        nouvelle_fin = contrat.date_fin_location + relativedelta(months=6)
-        f.nouvelle_date_fin = nouvelle_fin
-        resultat = f.save().action_ajuster()
-        self.assertEqual(len(contrat.order_line), nb_lignes + 2, "ajouts dans le même contrat")
-        self.assertEqual(contrat.date_fin_location, nouvelle_fin)
-        livraison = contrat._livraisons_a_faire()
-        self.assertEqual(resultat["res_model"], "stock.picking")
-        self.assertEqual(resultat["res_id"], livraison.id, "la livraison des ajouts s'ouvre")
-        self.assertEqual(set(livraison.move_ids.mapped("product_uom_qty")), {1, 2})
-        self.assertEqual(contrat.order_line.filtered(lambda l: l.product_id == self.produit and l.price_unit == 80)
-                         .product_uom_qty, 1)
-        # Rien a ajouter : refuse
-        f = Form(self.env[action["res_model"]].with_context(**action["context"]))
-        from odoo.exceptions import UserError as ErreurUtilisateur
-        with self.assertRaises(ErreurUtilisateur):
-            f.save().action_ajuster()
-
     def test_entretien_choisi_a_la_livraison(self):
         """Livraison de machines chez le client : prochain entretien et fréquence obligatoires,
         gardés sur la fiche de la machine ; ensuite : dernier entretien + fréquence."""
