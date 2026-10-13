@@ -45,6 +45,17 @@ class PortailTache(models.Model):
 
     _depends = {"helpdesk.ticket": ["technicien_terrain_id"]}
 
+    # Portail techniciens : une colonne par technicien portail, meme sans tache
+    technicien_id = fields.Many2one(group_expand="_group_expand_techniciens_portail")
+
+    @api.model
+    def _domaine_techniciens_portail(self):
+        return [("share", "=", True), ("partner_id.est_technicien", "=", True)]
+
+    @api.model
+    def _group_expand_techniciens_portail(self, techniciens, domain):
+        return techniciens | self.env["res.users"].search(self._domaine_techniciens_portail())
+
     def _sql_technicien_ticket(self):
         return SQL("COALESCE(t.user_id, t.technicien_terrain_id, t.technicien_id)")
 

@@ -492,3 +492,20 @@ class TestPortailTechnicien(HttpCase):
         self.assertIn("Tech portail B", noms)
         self.assertEqual(noms[-1], "Sans technicien")
 
+
+    def test_portail_techniciens_seulement_techniciens(self):
+        """Pilotage > Portail techniciens : colonnes des techniciens portail seulement."""
+        action = self.env.ref("suivi_machines_pilotage.action_portail_techniciens")
+        domaine = eval(action.domain)  # noqa: S307 - domaine statique du module
+        Tache = self.env["portail.tache"]
+        interne = self.env["helpdesk.ticket"].create({
+            "name": "Ticket de l'admin", "partner_id": self.client.id, "user_id": self.env.ref("base.user_admin").id,
+            "date_planifiee": fields.Datetime.now()})
+        visibles = Tache.search(domaine)
+        self.assertIn(self._tache(self.ticket), visibles)
+        self.assertNotIn(self._tache(interne), visibles, "tâche d'un utilisateur interne : pas ici")
+        groupes = Tache.with_context(read_group_expand=True).formatted_read_group(domaine, ["technicien_id"], ["__count"])
+        colonnes = {g["technicien_id"][0] for g in groupes if g["technicien_id"]}
+        self.assertIn(self.tech_a.id, colonnes)
+        self.assertIn(self.tech_b.id, colonnes)
+        self.assertNotIn(self.env.ref("base.user_admin").id, colonnes)

@@ -9,4 +9,11 @@
         <field name="category">common_category</field>
         <field name="sequence" eval="1"/>
     </record>
+
+    <!-- Pilotage > Portail techniciens : seulement les techniciens portail (et les taches sans technicien) -->
+    <record id="suivi_machines_pilotage.action_portail_techniciens" model="ir.actions.act_window">
+        <field name="domain">['|', ('technicien_id', '=', False),
+                              '&amp;', ('technicien_id.share', '=', True),
+                                       ('technicien_id.partner_id.est_technicien', '=', True)]</field>
+    </record>
 </odoo>
