@@ -2,7 +2,7 @@
 from dateutil.relativedelta import relativedelta
 
 from odoo import fields
-from odoo.exceptions import ValidationError
+from odoo.exceptions import UserError, ValidationError
 from odoo.tests import Form, TransactionCase, tagged
 
 
@@ -35,6 +35,7 @@ class TestSuiviMachines(TransactionCase):
                 "product_id": self.produit.id, "lot_id": lot.id, "quantity": 1,
                 "location_id": picking.location_id.id, "location_dest_id": picking.location_dest_id.id})]})
         picking.move_ids.picked = True
+        picking.livreur_id = picking.livreur_id or self.env.user  # technicien obligatoire pour valider
         res = picking.button_validate()
         self.assertTrue(res is True or isinstance(res, dict) and picking.state == "done", res)
         self.assertEqual(picking.state, "done")
@@ -301,6 +302,7 @@ class TestSuiviMachines(TransactionCase):
         livraison = so.picking_ids
         livraison.action_assign()
         livraison.move_ids.picked = True
+        livraison.livreur_id = livraison.livreur_id or self.env.user  # technicien obligatoire pour valider
         livraison.button_validate()
         self.assertEqual(livraison.state, "done")
         return livraison, pompe
@@ -330,6 +332,7 @@ class TestSuiviMachines(TransactionCase):
         self.assertEqual(livraison.action_planifier_ramassage()["res_id"], retour.id)
         # Validation du retour : machines en entrepot + interventions de ramassage avec le technicien
         retour.move_ids.picked = True
+        retour.livreur_id = retour.livreur_id or self.env.user  # technicien obligatoire pour valider
         retour.button_validate()
         self.assertEqual(retour.state, "done")
         self.assertEqual((self.lot_a.machine_statut, self.lot_b.machine_statut), ("entrepot", "entrepot"))
@@ -396,6 +399,7 @@ class TestSuiviMachines(TransactionCase):
         pk = so.picking_ids
         pk.action_assign()
         pk.move_ids.picked = True
+        pk.livreur_id = pk.livreur_id or self.env.user  # technicien obligatoire pour valider
         pk.with_context(skip_sms=True).button_validate()
         self.env["machine.intervention"].create({"lot_id": self.lot_b.id, "type": "entretien", "state": "fait",
                                                  "partner_id": self.client.id})
@@ -415,3 +419,29 @@ class TestSuiviMachines(TransactionCase):
         arch = self.env["stock.lot"].get_views([(False, "form")])["views"]["form"]["arch"]
         self.assertIn("frise_html", arch)
 
+
+    def test_technicien_obligatoire_pour_valider(self):
+        """Livraison chez le client : pas de validation sans technicien assigné (bandeau rouge)."""
+        from lxml import etree
+        picking = self.env["stock.picking"].create({
+            "picking_type_id": self.env.ref("stock.picking_type_out").id, "partner_id": self.client.id,
+            "location_id": self.stock.id, "location_dest_id": self.clients_loc.id,
+            "move_ids": [(0, 0, {"product_id": self.produit.id, "product_uom_qty": 1,
+                                 "location_id": self.stock.id, "location_dest_id": self.clients_loc.id})]})
+        picking.action_confirm()
+        picking.action_assign()
+        picking.move_ids.picked = True
+        self.assertTrue(picking.technicien_requis)
+        with self.assertRaisesRegex(UserError, "technicien assigné"):
+            picking.button_validate()
+        self.assertNotEqual(picking.state, "done")
+        picking.livreur_id = self.env.user
+        picking.button_validate()
+        self.assertEqual(picking.state, "done")
+        self.assertFalse(picking.technicien_requis)
+        # Transfert interne : pas concerne
+        interne = self.env["stock.picking"].new({"location_id": self.stock.id, "location_dest_id": self.stock.id})
+        self.assertFalse(interne._est_tournee_client())
+        arch = etree.fromstring(self.env["stock.picking"].get_views([(False, "form")])["views"]["form"]["arch"])
+        bandeau = arch.xpath("//div[contains(@class, 'alert-danger')][contains(., 'Technicien assigné')]")
+        self.assertEqual(bandeau[0].get("invisible"), "not technicien_requis or livreur_id")

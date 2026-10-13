@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from odoo import fields, models
+from odoo import api, fields, models
+from odoo.exceptions import UserError
 
 
 class StockPicking(models.Model):
@@ -8,6 +9,31 @@ class StockPicking(models.Model):
     livreur_id = fields.Many2one("res.users", "Technicien assigné", index="btree_not_null", tracking=True,
                                  domain="[('share', '=', False)]",
                                  help="Technicien qui fait la livraison (ou le ramassage) de la machine.")
+    technicien_requis = fields.Boolean(
+        "Technicien requis", compute="_compute_technicien_requis",
+        help="Livraison chez un client ou ramassage : le technicien assigné est obligatoire pour valider.")
+
+    @api.depends("location_id.usage", "location_dest_id.usage", "state")
+    def _compute_technicien_requis(self):
+        for picking in self:
+            picking.technicien_requis = picking._est_tournee_client() and picking.state not in ("done", "cancel")
+
+    def _est_tournee_client(self):
+        """Livraison chez le client ou ramassage chez lui (location comprise)."""
+        self.ensure_one()
+        societe = self.company_id or self.env.company
+        loc_location = societe.rental_loc_id if "rental_loc_id" in societe._fields else False
+        emplacements = self.location_id | self.location_dest_id
+        return "customer" in emplacements.mapped("usage") or bool(loc_location and loc_location in emplacements)
+
+    def button_validate(self):
+        sans_technicien = self.filtered(lambda p: p._est_tournee_client() and not p.livreur_id
+                                        and p.state not in ("done", "cancel"))
+        if sans_technicien:
+            raise UserError(self.env._(
+                "Choisissez le technicien assigné avant de valider : %s.",
+                ", ".join(sans_technicien.mapped("name"))))
+        return super().button_validate()
 
 
 class StockMove(models.Model):

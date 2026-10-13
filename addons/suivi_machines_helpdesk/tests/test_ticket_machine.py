@@ -286,6 +286,7 @@ class TestTicketMachine(TransactionCase):
         pk = actuel.picking_ids
         pk.action_assign()
         pk.move_ids.picked = True
+        pk.livreur_id = pk.livreur_id or self.env.user  # technicien obligatoire pour valider
         pk.with_context(skip_sms=True).button_validate()
         (vente | vieux).action_confirm()
         self.commerce.invalidate_recordset()
@@ -411,6 +412,7 @@ class TestTicketMachine(TransactionCase):
         pk = so.picking_ids
         pk.action_assign()
         pk.move_ids.picked = True
+        pk.livreur_id = pk.livreur_id or self.env.user  # technicien obligatoire pour valider
         pk.with_context(skip_sms=True).button_validate()
         self.assertEqual(set(lots.mapped("machine_statut")), {"chez_client"})
         # Formulaire : code client + type Ramassage -> contrat et machines remplis tout seuls
@@ -469,6 +471,7 @@ class TestTicketMachine(TransactionCase):
         pk = so.picking_ids
         pk.action_assign()
         pk.move_ids.picked = True
+        pk.livreur_id = pk.livreur_id or self.env.user  # technicien obligatoire pour valider
         pk.with_context(skip_sms=True).button_validate()
         self.assertEqual(lot.machine_statut, "chez_client")
         SO = self.env["sale.order"]
@@ -516,6 +519,7 @@ class TestTicketMachine(TransactionCase):
         pk = so.picking_ids
         pk.action_assign()
         pk.move_ids.picked = True
+        pk.livreur_id = pk.livreur_id or self.env.user  # technicien obligatoire pour valider
         pk.with_context(skip_sms=True).button_validate()
         action = so.action_creer_tickets_reprise()
         ticket = self.env["helpdesk.ticket"].browse(action["res_id"])
@@ -536,6 +540,7 @@ class TestTicketMachine(TransactionCase):
         pk = so.picking_ids
         pk.action_assign()
         pk.move_ids.picked = True
+        pk.livreur_id = pk.livreur_id or self.env.user  # technicien obligatoire pour valider
         pk.with_context(skip_sms=True).button_validate()
         ticket = self.env["helpdesk.ticket"].browse(so.action_creer_tickets_reprise()["res_id"])
         return lot, so, ticket
@@ -556,6 +561,7 @@ class TestTicketMachine(TransactionCase):
         livreur = self.env["res.users"].create({"name": "Livreur R", "login": "livreur_r"})
         retour.livreur_id = livreur
         retour.move_ids.picked = True
+        retour.livreur_id = retour.livreur_id or self.env.user  # technicien obligatoire pour valider
         retour.with_context(skip_sms=True).button_validate()
         self.assertEqual(retour.state, "done")
         self.assertEqual(lot.machine_statut, "entrepot")
@@ -584,6 +590,7 @@ class TestTicketMachine(TransactionCase):
         pk = so.picking_ids
         pk.action_assign()
         pk.move_ids.picked = True
+        pk.livreur_id = pk.livreur_id or self.env.user  # technicien obligatoire pour valider
         pk.with_context(skip_sms=True).button_validate()
         self.assertEqual(set(lots.mapped("machine_statut")), {"chez_client"})
         ticket = self.env["sale.order"]._cron_tickets_reprise()
@@ -602,6 +609,7 @@ class TestTicketMachine(TransactionCase):
         self.assertEqual((mv_pompe.product_uom_qty, mv_pompe.quantity), (3, 3), "les 3 pompes sont reprises")
         self.assertEqual(ticket.action_ramassage()["res_id"], retour.id, "même bon de retour")
         retour.move_ids.picked = True
+        retour.livreur_id = retour.livreur_id or self.env.user  # technicien obligatoire pour valider
         retour.with_context(skip_sms=True).button_validate()
         self.assertEqual(retour.state, "done")
         self.assertEqual(set(lots.mapped("machine_statut")), {"entrepot"})

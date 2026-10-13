@@ -12,6 +12,14 @@
                         class="btn-primary" invisible="state != 'done' or picking_type_code != 'outgoing'"
                         help="Créer le bon de retour des machines (et accessoires) de cette livraison"/>
             </xpath>
+            <!-- Livraison / ramassage : pas de validation sans technicien (bandeau rouge) -->
+            <xpath expr="//sheet" position="before">
+                <field name="technicien_requis" invisible="1"/>
+                <div class="alert alert-danger mb-0 py-2" role="alert" invisible="not technicien_requis or livreur_id">
+                    Choisissez le <strong>Technicien assigné</strong> : il est obligatoire pour valider cette
+                    livraison ou ce ramassage.
+                </div>
+            </xpath>
             <field name="origin" position="before">
                 <field name="livreur_id" widget="many2one_avatar_user"
                        readonly="state in ('done', 'cancel')"/>
