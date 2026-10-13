@@ -926,3 +926,35 @@ class TestTicketMachine(TransactionCase):
         from lxml import etree
         arch = etree.fromstring(self.env["helpdesk.ticket"].get_views([(False, "form")])["views"]["form"]["arch"])
         self.assertTrue(arch.xpath("//div[contains(@class, 'alert-warning')][contains(., 'Date prévue')]"))
+
+    def test_entretien_planifie_tout_seul(self):
+        """Entretien : technicien + date prévue + machine -> intervention d'entretien planifiée à
+        l'enregistrement ; « Marquer comme fait » ouvre la validation (prochain entretien)."""
+        tech = self.env["res.users"].create({"name": "Tech entretien", "login": "tech_entretien"})
+        quand = fields.Datetime.now() + relativedelta(days=1)
+        ticket = self.env["helpdesk.ticket"].create({
+            "name": "Entretien M0", "partner_id": self.commerce.id, "type_demande": "entretien",
+            "lot_id": self.lots[0].id, "date_planifiee": quand})
+        self.assertTrue(ticket.est_entretien)
+        self.assertFalse(ticket.intervention_ticket_ids, "date d'Odoo seule, sans technicien : pas encore planifié")
+        ticket.user_id = tech
+        interv = ticket.intervention_ticket_ids
+        self.assertEqual((len(interv), interv.state, interv.type, interv.user_id, interv.date),
+                         (1, "planifie", "entretien", tech, quand))
+        self.assertEqual(ticket.statut_entretien, "planifie")
+        # Marquer comme fait = validation de l'entretien, qui termine l'intervention planifiee (pas de doublon)
+        action = ticket.action_marquer_fait()
+        self.assertEqual(action["res_model"], "suivi.machines.valider.entretien")
+        f = Form(self.env[action["res_model"]].with_context(**action["context"]))
+        f.date_entretien = fields.Date.context_today(ticket)
+        f.save().action_valider()
+        self.assertEqual(ticket.intervention_ticket_ids, interv)
+        self.assertEqual(interv.state, "fait")
+        self.assertTrue(self.lots[0].date_prochain_entretien)
+        # En-tete : un seul bouton de fin pour chaque type, plus « Valider l'entretien »
+        from lxml import etree
+        arch = etree.fromstring(self.env["helpdesk.ticket"].get_views([(False, "form")])["views"]["form"]["arch"])
+        noms = [b.get("name") for b in arch.xpath("//header/button")]
+        self.assertNotIn("action_valider_entretien", noms)
+        self.assertEqual(noms.count("action_marquer_fait"), 2)
+        self.assertTrue(arch.xpath("//div[contains(@class, 'alert-warning')][contains(., 'Pour planifier l')]"))

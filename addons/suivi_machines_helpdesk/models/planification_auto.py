@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
-"""Reparation / machine a remplacer : l'intervention se planifie toute seule.
+"""Reparation, machine a remplacer, entretien : l'intervention se planifie toute seule.
 
-Ticket enregistre avec une date prevue et une machine -> intervention « Planifiee » (meme date, meme
-technicien, meme machine), visible dans la liste des interventions planifiees et dans la journee du
-technicien. Le bouton « Marquer comme fait » termine l'intervention et resout le ticket.
+Ticket enregistre avec une date prevue et une machine (entretien : et un technicien, car Odoo met deja une
+date prevue aux tickets d'entretien qu'il cree) -> intervention « Planifiee » (meme date, meme technicien,
+meme machine), visible dans la liste des interventions planifiees et dans la journee du technicien.
+Le bouton « Marquer comme fait » termine l'intervention et resout le ticket (entretien : validation avec
+le prochain entretien).
 """
 from markupsafe import Markup
 
@@ -11,7 +13,7 @@ from odoo import api, models
 from odoo.exceptions import UserError
 
 # Type de ticket -> type d'intervention creee automatiquement
-TYPES_INTERVENTION_AUTO = {"reparation": "reparation", "remplacement": "remplacement"}
+TYPES_INTERVENTION_AUTO = {"reparation": "reparation", "remplacement": "remplacement", "entretien": "entretien"}
 CHAMPS_DECLENCHEURS = {"type_demande", "type_reparation", "date_planifiee", "lot_id", "user_id", "stage_id"}
 
 
@@ -35,6 +37,13 @@ class HelpdeskTicket(models.Model):
             "description": description,
         }
 
+    def _pret_a_planifier(self):
+        """Date prevue et machine ; pour un entretien, aussi le technicien (la date seule vient d'Odoo)."""
+        self.ensure_one()
+        if not (self.date_planifiee and self.lot_id):
+            return False
+        return self.type_demande != "entretien" or bool(self._technicien_assigne())
+
     def _planifier_intervention_auto(self):
         """Cree (ou met a jour) l'intervention planifiee des reparations datees ; annule celle d'un ticket
         qui n'est plus une reparation."""
@@ -56,7 +65,7 @@ class HelpdeskTicket(models.Model):
                 else:
                     auto.action_fait()
                 continue
-            if not (ticket.date_planifiee and ticket.lot_id):
+            if not ticket._pret_a_planifier():
                 continue
             if not interventions:
                 Interv.create(ticket._valeurs_intervention_auto())
@@ -80,7 +89,10 @@ class HelpdeskTicket(models.Model):
         return res
 
     def action_marquer_fait(self):
-        """Reparation faite : interventions planifiees faites, ticket resolu (le bon signe reste dans le fil)."""
+        """Reparation faite : interventions planifiees faites, ticket resolu (le bon signe reste dans le fil).
+        Entretien : la fenetre « Valider l'entretien » (date, frequence, prochain entretien)."""
+        if len(self) == 1 and self.est_entretien:
+            return self.action_valider_entretien()
         for ticket in self:
             ticket.sudo().intervention_ticket_ids.filtered(lambda i: i.state == "planifie").with_context(
                 synchro_intervention=True).action_fait()

@@ -32,17 +32,18 @@
             <xpath expr="//header" position="inside">
                 <field name="est_reprise" invisible="1"/>
                 <field name="est_entretien" invisible="1"/>
-                <button name="action_valider_entretien" type="object" string="Valider l'entretien"
-                        class="btn-primary" invisible="not est_entretien"/>
                 <!-- Ticket de reprise : seulement Ramassage et Prolonger -->
                 <button name="action_ramassage" type="object" string="Ramassage"
                         class="btn-primary" invisible="not est_reprise" groups="stock.group_stock_user"/>
                 <button name="action_prolonger_location" type="object" string="Prolonger la location"
                         class="btn-secondary" invisible="not est_reprise"/>
-                <!-- Reparation : l'intervention est planifiee toute seule (date + machine) ; on la termine ici -->
+                <!-- Reparation / entretien : l'intervention est planifiee toute seule ; on la termine ici -->
                 <button name="action_marquer_fait" type="object" string="Marquer comme fait" class="btn-primary"
-                        invisible="not id or type_demande not in ('reparation', 'remplacement') or statut_entretien != 'planifie'"
+                        invisible="not id or est_entretien or type_demande not in ('reparation', 'remplacement') or statut_entretien == 'fait'"
                         confirm="Marquer la réparation comme faite ? L'intervention passe « Faite » et le ticket « Résolu »."/>
+                <!-- Entretien : meme bouton, il ouvre la validation (date, prochain entretien) -->
+                <button name="action_marquer_fait" type="object" string="Marquer comme fait" class="btn-primary"
+                        invisible="not id or not est_entretien or statut_entretien == 'fait'"/>
                 <!-- Ajuster un contrat : ouvre le contrat de location du client -->
                 <button name="action_ajuster_contrat" type="object" string="Ajuster le contrat" class="btn-primary"
                         invisible="type_demande != 'ajustement' or not partner_id"/>
@@ -64,7 +65,7 @@
                     Ticket créé <strong>automatiquement par Odoo</strong> (action planifiée)
                     <span invisible="origine_auto != 'entretien'">
                         : l'entretien de cette machine arrive à échéance<span invisible="not date_entretien_prevu">
-                        (prévu le <field name="date_entretien_prevu" readonly="1" class="d-inline"/>)</span>.
+                        (prévu le <field name="date_entretien_prevu" readonly="1" class="d-inline-block w-auto"/>)</span>.
                     </span>
                     <span invisible="origine_auto != 'reprise'">
                         : la location <field name="commande_reprise_id" readonly="1" class="d-inline"/>
@@ -76,6 +77,13 @@
                      invisible="type_demande not in ('reparation', 'remplacement') or statut_entretien == 'fait' or (date_planifiee and lot_id)">
                     Pour planifier : indiquez la <strong>Date prévue</strong> et le <strong>Numéro de série</strong>.
                     À l'enregistrement, l'intervention est créée toute seule (<strong>Planifiée</strong>).
+                </div>
+                <!-- Entretien : il faut aussi le technicien (la date prevue est deja mise par Odoo) -->
+                <div class="alert alert-warning mb-0 py-2" role="alert"
+                     invisible="type_demande != 'entretien' or statut_entretien == 'fait' or (date_planifiee and lot_id and user_id)">
+                    Pour planifier l'entretien : indiquez le <strong>technicien</strong> (Assigné à), la
+                    <strong>Date prévue</strong> et le <strong>Numéro de série</strong>. À l'enregistrement,
+                    l'intervention d'entretien est créée toute seule (<strong>Planifiée</strong>).
                 </div>
                 <!-- Machine a remplacer : impossible si le client n'a aucune machine -->
                 <div class="alert alert-warning mb-0 py-2" role="alert"
