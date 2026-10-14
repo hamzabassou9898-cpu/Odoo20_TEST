@@ -278,9 +278,30 @@ class PilotageIndicateur(models.Model):
 
     def action_ouvrir(self):
         self.ensure_one()
+        if self.code in ("entretien_retard", "entretien_semaine", "entretien_mois"):
+            action = self._action_entretiens_et_reparations()
+            if action:
+                return action
         action = self._action_pour_code(self.code, self.name)
         if action and self.code == "livraisons_faites":
             action["domain"] = []   # toutes les livraisons et tous les ramassages, pas seulement les machines
+        return action
+
+    def _action_entretiens_et_reparations(self):
+        """Carte d'echeance (en retard, semaine, 30 jours) avec des reparations / machines a remplacer :
+        une seule liste de tickets (reparations + tickets d'entretien des machines comptees). Sans
+        reparation, False : la liste des machines a entretenir s'ouvre comme avant."""
+        _modele, domaine_tickets = self._parts_reparation()[self.code]
+        Ticket = self.env["helpdesk.ticket"]
+        if not Ticket.search_count(domaine_tickets):
+            return False
+        lots = self.env["stock.lot"].search(self._domaines()[self.code][1])
+        if lots:
+            entretiens = [("est_entretien", "=", True), ("lot_id", "in", lots.ids),
+                          ("statut_entretien", "in", ("a_planifier", "planifie"))]
+            domaine_tickets = list(Domain.OR([domaine_tickets, entretiens]))
+        action = self._action_xml("suivi_machines_pilotage.action_pilotage_appels", self.name, {}, domaine_tickets)
+        action.pop("help", None)
         return action
 
     @api.model
