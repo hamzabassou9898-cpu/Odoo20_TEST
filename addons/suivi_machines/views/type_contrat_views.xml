@@ -9,6 +9,10 @@
                 <field name="name"/>
                 <field name="type_commande"/>
                 <field name="forfait_montant"/>
+                <field name="couvre_reparations"/>
+                <field name="frais_appel_inutile"/>
+                <field name="frais_deplacement"/>
+                <field name="taux_horaire"/>
                 <field name="forfait_produit_id" optional="hide"/>
                 <field name="note" optional="show"/>
                 <field name="active" column_invisible="1"/>

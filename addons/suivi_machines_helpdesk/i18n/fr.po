@@ -3,8 +3,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 20.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-14 13:37+0000\n"
-"PO-Revision-Date: 2026-10-14 13:37+0000\n"
+"POT-Creation-Date: 2026-10-14 13:51+0000\n"
+"PO-Revision-Date: 2026-10-14 13:51+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: fr\n"
@@ -40,6 +40,28 @@ msgid ""
 msgstr ""
 "%(nb)s sans date d'entretien (aucun entretien ni installation connus) : "
 "%(liste)s"
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/res_partner.py:0
+msgid ""
+"%(type)s : chaque appel se facture — déplacement %(deplacement)s + %(taux)s "
+"de l'heure + pièces."
+msgstr ""
+"%(type)s : chaque appel se facture — déplacement %(deplacement)s + %(taux)s "
+"de l'heure + pièces."
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/res_partner.py:0
+msgid "%(type)s : entretien et réparations usuelles couverts par le contrat."
+msgstr "%(type)s : entretien et réparations usuelles couverts par le contrat."
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/helpdesk_ticket.py:0
+msgid "%s : entretien et réparations usuelles couverts par le contrat."
+msgstr "%s : entretien et réparations usuelles couverts par le contrat."
 
 #. module: suivi_machines_helpdesk
 #. odoo-python
@@ -163,6 +185,7 @@ msgid "Appels (12 mois)"
 msgstr "Appels (12 mois)"
 
 #. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__contrat_couverture
 #: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__tickets_precedents_ids
 #: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_res_partner__appel_client_ids
 #: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_res_users__appel_client_ids
@@ -401,6 +424,12 @@ msgstr "Contrat de location actuel"
 
 #. module: suivi_machines_helpdesk
 #. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/res_partner.py:0
+msgid "Contrat du client"
+msgstr "Contrat du client"
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
 #: code:addons/suivi_machines_helpdesk/models/type_ticket.py:0
 msgid "Contrats de location"
 msgstr "Contrats de location"
@@ -409,6 +438,16 @@ msgstr "Contrats de location"
 #: model:ir.model.fields.selection,name:suivi_machines_helpdesk.selection__helpdesk_ticket__type_reparation__coule
 msgid "Coule"
 msgstr "Coule"
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields.selection,name:suivi_machines_helpdesk.selection__helpdesk_ticket__contrat_couverture__couvert
+msgid "Couvert par le contrat"
+msgstr "Couvert par le contrat"
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__contrat_couverture_texte
+msgid "Couverture du contrat"
+msgstr "Couverture du contrat"
 
 #. module: suivi_machines_helpdesk
 #: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_suivi_machines_valider_entretien__create_uid
@@ -552,6 +591,11 @@ msgstr "Est Reprise"
 #: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.helpdesk_ticket_view_form_machine
 msgid "Facturer les frais"
 msgstr "Facturer les frais"
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields.selection,name:suivi_machines_helpdesk.selection__helpdesk_ticket__contrat_couverture__facture
+msgid "Facturé au client"
+msgstr "Facturé au client"
 
 #. module: suivi_machines_helpdesk
 #: model:ir.model.fields.selection,name:suivi_machines_helpdesk.selection__helpdesk_ticket__statut_entretien__fait
@@ -845,6 +889,12 @@ msgstr "Machines proposées"
 #: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__machines_reprise_ids
 msgid "Machines à reprendre"
 msgstr "Machines à reprendre"
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/helpdesk_ticket.py:0
+msgid "Main-d'œuvre (taux horaire, %s)"
+msgstr "Main-d'œuvre (taux horaire, %s)"
 
 #. module: suivi_machines_helpdesk
 #: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.helpdesk_ticket_view_form_machine
@@ -1331,6 +1381,14 @@ msgstr "se termine, les machines sont à reprendre."
 #: model:ir.model,name:suivi_machines_helpdesk.model_helpdesk_ticket
 msgid "ticket"
 msgstr "ticket"
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/res_partner.py:0
+msgid ""
+"À facturer seulement : appel de service inutile (%(montant)s) ou dommages."
+msgstr ""
+"À facturer seulement : appel de service inutile (%(montant)s) ou dommages."
 
 #. module: suivi_machines_helpdesk
 #: model:ir.model.fields.selection,name:suivi_machines_helpdesk.selection__helpdesk_ticket__statut_entretien__a_planifier

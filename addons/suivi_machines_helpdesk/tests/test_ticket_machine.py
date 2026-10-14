@@ -1119,6 +1119,45 @@ class TestTicketMachine(TransactionCase):
         arch_ticket = self.env["helpdesk.ticket"].get_views([(False, "form")])["views"]["form"]["arch"]
         self.assertIn("action_facturer_frais", arch_ticket)
 
+    def test_tickets_selon_le_type_de_contrat(self):
+        """Convention : réparations couvertes (seul l'appel inutile se facture) ; propriétaire : déplacement
+        + taux horaire ; le ticket l'affiche."""
+        Commande, Ticket = self.env["sale.order"], self.env["helpdesk.ticket"]
+        convention = self.env.ref("suivi_machines.type_contrat_convention")
+        proprietaire = self.env.ref("suivi_machines.type_contrat_proprietaire")
+        self.assertEqual((convention.couvre_reparations, convention.frais_appel_inutile), (True, 125))
+        self.assertEqual((proprietaire.couvre_reparations, proprietaire.frais_deplacement,
+                          proprietaire.taux_horaire), (False, 125, 105))
+        resultats = {}
+        for type_contrat in (convention, proprietaire):
+            client = self.env["res.partner"].create({"name": "Client %s" % type_contrat.name,
+                                                     "is_company": True})
+            Commande.create({"partner_id": client.id, "type_contrat_id": type_contrat.id,
+                             "date_debut_location": PERIODE_TEST[0], "date_fin_location": PERIODE_TEST[1],
+                             "order_line": [(0, 0, {"product_id": self.produit.id, "product_uom_qty": 1})]
+                             }).action_confirm()
+            ticket = Ticket.create({"name": "Fuite", "partner_id": client.id, "type_demande": "reparation"})
+            self.assertEqual(ticket.contrat_client_modele_id, type_contrat)
+            commande = Commande.browse(ticket.action_facturer_frais()["res_id"])
+            resultats[type_contrat] = (ticket, commande)
+        ticket, commande = resultats[convention]
+        self.assertEqual(ticket.contrat_couverture, "couvert")
+        note = ticket.message_ids.filtered(lambda m: "Contrat du client" in (m.body or ""))
+        self.assertEqual(len(note), 1, "note automatique dans le ticket")
+        self.assertIn("Convention slush", note.body)
+        self.assertIn("couverts par le contrat", ticket.contrat_couverture_texte)
+        produits = commande.order_line.filtered(lambda l: not l.display_type)
+        self.assertEqual(produits.product_id, self.env.ref("suivi_machines.produit_appel_inutile"))
+        self.assertEqual((produits.product_uom_qty, produits.price_unit), (0, 125), "à mettre à 1 s'il s'applique")
+        self.assertEqual(commande.amount_untaxed, 0, "réparation couverte : rien à payer")
+        ticket, commande = resultats[proprietaire]
+        self.assertEqual(ticket.contrat_couverture, "facture")
+        self.assertIn("105", ticket.contrat_couverture_texte)
+        self.assertEqual(commande.order_line.mapped("price_unit"), [125, 105], "déplacement + 1 h")
+        self.assertEqual(commande.amount_untaxed, 230)
+        arch = Ticket.get_views([(False, "form")])["views"]["form"]["arch"]
+        self.assertIn("contrat_couverture_texte", arch)
+
     def test_echange_machine_installee_sans_stock(self):
         """Machine installée chez le client sans mouvement de stock (saisie à la main) : l'échange part
         de l'emplacement Clients au lieu de planter sur un emplacement vide."""

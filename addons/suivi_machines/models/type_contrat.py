@@ -31,6 +31,18 @@ class SuiviTypeContrat(models.Model):
         "product.product", "Produit du forfait", domain="[('type', '=', 'service')]",
         default=lambda s: s.env.ref("suivi_machines.produit_forfait_entretien", raise_if_not_found=False),
         help="Service utilisé sur le bon de vente du forfait annuel.")
+    # Appels de service (clause 7.3) : ce qui est couvert et ce qui se facture
+    couvre_reparations = fields.Boolean(
+        "Entretien et réparations couverts", default=True,
+        help="Coché : l'entretien et les réparations usuelles sont couverts par le contrat (location, "
+             "convention). Seuls l'appel de service inutile et les dommages se facturent. Décoché "
+             "(propriétaire) : chaque appel se facture (déplacement + taux horaire + pièces).")
+    frais_appel_inutile = fields.Float("Appel de service inutile", digits="Product Price",
+                                       help="Clause 7.3 : montant facturé pour un appel de service inutile.")
+    frais_deplacement = fields.Float("Frais de déplacement", digits="Product Price",
+                                     help="Contrat propriétaire : frais de déplacement de chaque appel.")
+    taux_horaire = fields.Float("Taux horaire", digits="Product Price",
+                                help="Contrat propriétaire : main-d'œuvre par heure.")
     note = fields.Text("Note")
 
 

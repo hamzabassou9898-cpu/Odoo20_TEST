@@ -9,12 +9,21 @@
             <field name="list_price">0</field>
         </record>
 
+        <record id="produit_appel_inutile" model="product.product">
+            <field name="name">Appel de service inutile</field>
+            <field name="type">service</field>
+            <field name="default_code">FRAIS-APPEL</field>
+            <field name="list_price">0</field>
+        </record>
+
         <record id="type_contrat_location" model="suivi.type.contrat">
             <field name="name">Location / entreprise</field>
             <field name="sequence">1</field>
             <field name="type_commande">location</field>
             <field name="forfait_montant">0</field>
             <field name="forfait_produit_id" ref="produit_forfait_entretien"/>
+            <field name="couvre_reparations" eval="True"/>
+            <field name="frais_appel_inutile">125</field>
             <field name="note">Monroy loue le congélateur. Entretien et réparations usuelles compris (0 $ par année).</field>
         </record>
         <record id="type_contrat_convention" model="suivi.type.contrat">
@@ -23,6 +32,8 @@
             <field name="type_commande">location</field>
             <field name="forfait_montant">359.99</field>
             <field name="forfait_produit_id" ref="produit_forfait_entretien"/>
+            <field name="couvre_reparations" eval="True"/>
+            <field name="frais_appel_inutile">125</field>
             <field name="note">Droit d'utilisation du congélateur. Forfait annuel d'entretien par machine (clause 8.2).</field>
         </record>
         <record id="type_contrat_popcorn" model="suivi.type.contrat">
@@ -31,6 +42,8 @@
             <field name="type_commande">location</field>
             <field name="forfait_montant">279.50</field>
             <field name="forfait_produit_id" ref="produit_forfait_entretien"/>
+            <field name="couvre_reparations" eval="True"/>
+            <field name="frais_appel_inutile">70</field>
             <field name="note">Droit d'utilisation (produits HARLAN'S). Forfait annuel d'entretien par équipement (clause 8.2).</field>
         </record>
         <record id="type_contrat_proprietaire" model="suivi.type.contrat">
@@ -39,6 +52,9 @@
             <field name="type_commande">vente</field>
             <field name="forfait_montant">0</field>
             <field name="forfait_produit_id" ref="produit_forfait_entretien"/>
+            <field name="couvre_reparations" eval="False"/>
+            <field name="frais_deplacement">125</field>
+            <field name="taux_horaire">105</field>
             <field name="note">La machine appartient au client. Pas de forfait : chaque appel de service est facturé.</field>
         </record>
     </data>

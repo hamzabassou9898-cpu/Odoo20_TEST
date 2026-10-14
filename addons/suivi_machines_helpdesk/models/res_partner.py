@@ -2,6 +2,8 @@
 """Fiche client : contrat de location actuel (choisi automatiquement), historique d'achat, sante du client."""
 from datetime import timedelta
 
+from markupsafe import Markup
+
 from odoo import api, fields, models
 
 NIVEAUX_SANTE = [("fidele", "Client fidèle"), ("surveiller", "À surveiller"), ("risque", "À risque")]
@@ -130,7 +132,8 @@ class ResPartner(models.Model):
             partner.historique_achat_ids = commandes
             locations = commandes.filtered(lambda c: c.type_commande == "location")
             # Contrat actuel : machines encore chez le client, sinon le plus recent
-            contrat = locations.filtered(lambda c: c._machines_a_reprendre())[:1] or locations[:1]
+            contrat = locations.filtered(lambda c: c._machines_a_reprendre())[:1] or locations[:1] \
+                or commandes.filtered("type_contrat_id")[:1]   # contrat proprietaire (machine au client)
             partner.update({"contrat_location_id": contrat, "contrat_location_type": contrat.type_commande,
                             "contrat_location_debut": contrat.date_debut_location,
                             "contrat_location_fin": contrat.date_fin_location})
@@ -148,17 +151,60 @@ class HelpdeskTicket(models.Model):
     contrat_client_modele_id = fields.Many2one("suivi.type.contrat", "Contrat", compute="_compute_contrat_client",
                                                groups="sales_team.group_sale_salesman",
                                                help="Location, convention, popcorn ou propriétaire.")
+    # Ce que couvre le contrat du client (visible par tous : bandeau du ticket)
+    contrat_couverture = fields.Selection(
+        [("couvert", "Couvert par le contrat"), ("facture", "Facturé au client")], "Appels de service",
+        compute="_compute_contrat_client")
+    contrat_couverture_texte = fields.Char("Couverture du contrat", compute="_compute_contrat_client")
     contrat_client_debut = fields.Datetime("Début du contrat", compute="_compute_contrat_client",
                                            groups="sales_team.group_sale_salesman")
     contrat_client_fin = fields.Datetime("Fin du contrat", compute="_compute_contrat_client",
                                          groups="sales_team.group_sale_salesman")
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        tickets = super().create(vals_list)
+        tickets._noter_contrat()
+        return tickets
+
+    def write(self, vals):
+        res = super().write(vals)
+        if "partner_id" in vals:
+            self._noter_contrat()
+        return res
+
+    def _noter_contrat(self):
+        """Note automatique dans le fil du ticket : le contrat du client et ce qu'il couvre / facture."""
+        for ticket in self.filtered("contrat_couverture_texte"):
+            ticket.with_context(mail_create_nosubscribe=True).message_post(
+                body=Markup("<p><b>%s</b></p><p>%s</p>") % (
+                    self.env._("Contrat du client"), ticket.contrat_couverture_texte),
+                message_type="comment", subtype_xmlid="mail.mt_note")
+
+    def _couverture_du_contrat(self, type_contrat):
+        """Bandeau du ticket : ce que le contrat du client couvre et ce qui se facture."""
+        devise = self.env.company.currency_id
+        if not type_contrat:
+            return {"contrat_couverture": False, "contrat_couverture_texte": False}
+        if type_contrat.couvre_reparations:
+            texte = self.env._("%(type)s : entretien et réparations usuelles couverts par le contrat.",
+                               type=type_contrat.name)
+            if type_contrat.frais_appel_inutile:
+                texte += " " + self.env._("À facturer seulement : appel de service inutile (%(montant)s) "
+                                          "ou dommages.", montant=devise.format(type_contrat.frais_appel_inutile))
+            return {"contrat_couverture": "couvert", "contrat_couverture_texte": texte}
+        return {"contrat_couverture": "facture", "contrat_couverture_texte": self.env._(
+            "%(type)s : chaque appel se facture — déplacement %(deplacement)s + %(taux)s de l'heure + pièces.",
+            type=type_contrat.name, deplacement=devise.format(type_contrat.frais_deplacement),
+            taux=devise.format(type_contrat.taux_horaire))}
+
     @api.depends("partner_id")
     def _compute_contrat_client(self):
         for ticket in self:
-            client = ticket.commerce_id or ticket.partner_id
-            contrat = client.contrat_location_id if client else self.env["sale.order"]
+            client = (ticket.commerce_id or ticket.partner_id).sudo()
+            contrat = client.contrat_location_id if client else self.env["sale.order"].sudo()
             ticket.update({"contrat_client_id": contrat, "contrat_client_type": contrat.type_commande,
                            "contrat_client_modele_id": contrat.type_contrat_id,
+                           **ticket._couverture_du_contrat(contrat.type_contrat_id),
                            "contrat_client_debut": contrat.date_debut_location,
                            "contrat_client_fin": contrat.date_fin_location})

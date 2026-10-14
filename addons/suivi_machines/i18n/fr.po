@@ -3,8 +3,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 20.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-14 13:44+0000\n"
-"PO-Revision-Date: 2026-10-14 13:44+0000\n"
+"POT-Creation-Date: 2026-10-14 13:51+0000\n"
+"PO-Revision-Date: 2026-10-14 13:51+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: fr\n"
@@ -129,6 +129,12 @@ msgid "Annulée"
 msgstr "Annulée"
 
 #. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_suivi_type_contrat__frais_appel_inutile
+#: model:product.template,name:suivi_machines.produit_appel_inutile_product_template
+msgid "Appel de service inutile"
+msgstr "Appel de service inutile"
+
+#. module: suivi_machines
 #: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__message_attachment_count
 msgid "Attachment Count"
 msgstr "Attachment Count"
@@ -249,6 +255,11 @@ msgid "Choisissez le technicien assigné avant de valider : %s."
 msgstr "Choisissez le technicien assigné avant de valider : %s."
 
 #. module: suivi_machines
+#: model:ir.model.fields,help:suivi_machines.field_suivi_type_contrat__frais_appel_inutile
+msgid "Clause 7.3 : montant facturé pour un appel de service inutile."
+msgstr "Clause 7.3 : montant facturé pour un appel de service inutile."
+
+#. module: suivi_machines
 #: model:ir.model.fields,field_description:suivi_machines.field_machine_historique__partner_id
 #: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__partner_id
 #: model:ir.model.fields,field_description:suivi_machines.field_suivi_machines_planifier_ramassage__partner_id
@@ -282,6 +293,19 @@ msgstr ""
 "Cochez « Suivi des machines » sur la catégorie de produits des machines."
 
 #. module: suivi_machines
+#: model:ir.model.fields,help:suivi_machines.field_suivi_type_contrat__couvre_reparations
+msgid ""
+"Coché : l'entretien et les réparations usuelles sont couverts par le contrat"
+" (location, convention). Seuls l'appel de service inutile et les dommages se"
+" facturent. Décoché (propriétaire) : chaque appel se facture (déplacement + "
+"taux horaire + pièces)."
+msgstr ""
+"Coché : l'entretien et les réparations usuelles sont couverts par le contrat"
+" (location, convention). Seuls l'appel de service inutile et les dommages se"
+" facturent. Décoché (propriétaire) : chaque appel se facture (déplacement + "
+"taux horaire + pièces)."
+
+#. module: suivi_machines
 #: model:ir.model.fields,field_description:suivi_machines.field_stock_lot__commande_count
 #: model_terms:ir.ui.view,arch_db:suivi_machines.view_lot_form_machine
 msgid "Commandes"
@@ -313,6 +337,16 @@ msgstr "Contrat ajusté : ajout de %s."
 #: model:ir.model.fields,help:suivi_machines.field_sale_order__forfait_contrat_id
 msgid "Contrat dont ce bon de vente facture le forfait annuel d'entretien."
 msgstr "Contrat dont ce bon de vente facture le forfait annuel d'entretien."
+
+#. module: suivi_machines
+#: model:ir.model.fields,help:suivi_machines.field_suivi_type_contrat__frais_deplacement
+msgid "Contrat propriétaire : frais de déplacement de chaque appel."
+msgstr "Contrat propriétaire : frais de déplacement de chaque appel."
+
+#. module: suivi_machines
+#: model:ir.model.fields,help:suivi_machines.field_suivi_type_contrat__taux_horaire
+msgid "Contrat propriétaire : main-d'œuvre par heure."
+msgstr "Contrat propriétaire : main-d'œuvre par heure."
 
 #. module: suivi_machines
 #: model:ir.actions.server,name:suivi_machines.cron_forfaits_annuels_ir_actions_server
@@ -534,6 +568,11 @@ msgid "Entretien en retard"
 msgstr "Entretien en retard"
 
 #. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_suivi_type_contrat__couvre_reparations
+msgid "Entretien et réparations couverts"
+msgstr "Entretien et réparations couverts"
+
+#. module: suivi_machines
 #: model:ir.model.fields,field_description:suivi_machines.field_stock_lot__frise_nb_entretiens
 #: model_terms:ir.ui.view,arch_db:suivi_machines.view_intervention_search
 #: model_terms:ir.ui.view,arch_db:suivi_machines.view_lot_form_machine
@@ -690,6 +729,7 @@ msgid "Frais d'une intervention"
 msgstr "Frais d'une intervention"
 
 #. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_suivi_type_contrat__frais_deplacement
 #: model:product.template,name:suivi_machines.produit_frais_deplacement_product_template
 msgid "Frais de déplacement"
 msgstr "Frais de déplacement"
@@ -1494,6 +1534,11 @@ msgstr "Stock Rule"
 #: model:ir.module.module,shortdesc:base.module_suivi_machines
 msgid "Suivi des machines"
 msgstr "Suivi des machines"
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_suivi_type_contrat__taux_horaire
+msgid "Taux horaire"
+msgstr "Taux horaire"
 
 #. module: suivi_machines
 #: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__user_id

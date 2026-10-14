@@ -227,7 +227,7 @@ class HelpdeskTicket(models.Model):
 
     def action_facturer_frais(self):
         """Bon de vente des frais (main-d'oeuvre, livraison, deplacement, pieces) fait DEPUIS LE TICKET :
-        reprend les frais saisis dans ses interventions, sinon propose main-d'oeuvre + livraison a completer.
+        reprend les frais saisis dans ses interventions, sinon les frais prevus par le contrat du client.
         Un bon encore en brouillon est rouvert (pas de doublon)."""
         self.ensure_one()
         commande = self.vente_ids.filtered(lambda o: o.state == "draft")[:1]
@@ -238,10 +238,7 @@ class HelpdeskTicket(models.Model):
                               "product_uom_qty": f.quantite, "price_unit": f.prix_unitaire})
                       for f in interventions.frais_ids]
             if not lignes:
-                for xmlid in ("suivi_machines.produit_frais_reparation", "suivi_machines.produit_frais_livraison"):
-                    produit = self.env.ref(xmlid, raise_if_not_found=False)
-                    if produit and produit.active:
-                        lignes.append((0, 0, {"product_id": produit.id, "product_uom_qty": 1}))
+                lignes = self._lignes_frais_selon_contrat()
             commande = self.env["sale.order"].create({
                 "partner_id": (self.commerce_id or self.partner_id).id, "ticket_assistance_id": self.id,
                 "origin": self.name, "type_commande": "vente", "order_line": lignes})
@@ -249,6 +246,39 @@ class HelpdeskTicket(models.Model):
             self.message_post(body=self.env._("Bon de vente %s créé pour les frais du ticket.", commande.name))
         return {"type": "ir.actions.act_window", "res_model": "sale.order", "res_id": commande.id,
                 "view_mode": "form", "views": [(False, "form")], "target": "current"}
+
+    def _lignes_frais_selon_contrat(self):
+        """Frais proposes selon le contrat du client (clause 7.3) :
+        - couvert (location, conventions) : seulement l'appel de service inutile, a 0 (quantite a mettre
+          a 1 s'il s'applique) ; l'entretien et les reparations usuelles ne se facturent pas ;
+        - proprietaire : deplacement + main-d'oeuvre a son taux horaire (+ pieces a ajouter) ;
+        - sans contrat : main-d'oeuvre + livraison a completer."""
+        self.ensure_one()
+        type_contrat = (self.commerce_id or self.partner_id).sudo().contrat_location_id.type_contrat_id
+
+        def ligne(xmlid, quantite=1, prix=None, nom=None):
+            produit = self.env.ref(xmlid, raise_if_not_found=False)
+            if not produit or not produit.active:
+                return []
+            valeurs = {"product_id": produit.id, "product_uom_qty": quantite}
+            if prix is not None:
+                valeurs["price_unit"] = prix
+            if nom:
+                valeurs["name"] = nom
+            return [(0, 0, valeurs)]
+
+        if type_contrat and type_contrat.couvre_reparations:
+            note = [(0, 0, {"display_type": "line_note", "name": self.env._(
+                "%s : entretien et réparations usuelles couverts par le contrat.", type_contrat.name)})]
+            appel = ligne("suivi_machines.produit_appel_inutile", 0, type_contrat.frais_appel_inutile) \
+                if type_contrat.frais_appel_inutile else []
+            return note + appel
+        if type_contrat:
+            return (ligne("suivi_machines.produit_frais_deplacement", 1, type_contrat.frais_deplacement)
+                    + ligne("suivi_machines.produit_frais_reparation", 1, type_contrat.taux_horaire,
+                            self.env._("Main-d'œuvre (taux horaire, %s)", type_contrat.name)))
+        return (ligne("suivi_machines.produit_frais_reparation")
+                + ligne("suivi_machines.produit_frais_livraison"))
 
     def action_voir_ventes(self):
         self.ensure_one()
