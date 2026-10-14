@@ -291,10 +291,13 @@ class TestPilotage(TransactionCase):
         self.assertEqual(faits.action_ouvrir_reparations()["res_model"], "machine.intervention")
         remplacements = self.env["machine.intervention"].search(faits.action_ouvrir_remplacements()["domain"])
         self.assertEqual(set(remplacements.mapped("type")), {"remplacement"})
-        # Clic sur la carte : la liste contient exactement ce que la carte compte, groupee par type
+        # Clic sur la carte : la liste contient exactement ce que la carte compte
         action = faits.action_ouvrir()
         self.assertEqual(self.env[action["res_model"]].search_count(action["domain"]), faits.valeur)
-        self.assertEqual(action["context"].get("group_by"), ["type"])
+        listes = self.env[action["res_model"]].search(action["domain"])
+        self.assertIn("remplacement", listes.mapped("type"), "machines à remplacer dans la liste")
+        self.assertTrue({"bris", "reparation"} & set(listes.mapped("type")), "réparations dans la liste")
+        self.assertFalse(action["context"], "aucun filtre qui cacherait une partie")
         # Resolue : la reparation quitte « en retard »
         retard.stage_id = self.env["helpdesk.stage"].create({"name": "Résolu"})
         self.assertNotIn(retard, Ticket.search(self._ind("entretien_retard").action_ouvrir_reparations()["domain"]))

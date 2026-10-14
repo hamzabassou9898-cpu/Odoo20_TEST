@@ -294,12 +294,12 @@ class PilotageIndicateur(models.Model):
         for filtre_nom in ((filtre,) if isinstance(filtre, str) else filtre or ()):
             contexte["search_default_" + filtre_nom] = 1
         # Carte regroupee sur un seul modele (ex. entretiens + reparations + machines a remplacer faits ce
-        # mois) : la liste montre exactement ce que la carte compte, avec un regroupement par type
+        # mois) : la liste montre exactement ce que la carte compte
         model, domaine = self._domaines().get(code, (None, None))
         model_parts, domaine_parts = self._parts_reparation().get(code, (None, None))
         if model and model == model_parts == action.get("res_model"):
             action["domain"] = list(Domain.OR([domaine, domaine_parts]))
-            contexte = {"group_by": ["type"]}
+            contexte = {}   # liste a plat : la colonne Type distingue entretien, reparation, remplacement
         action["context"] = contexte
         if nom:
             action["display_name"] = action["name"] = nom
