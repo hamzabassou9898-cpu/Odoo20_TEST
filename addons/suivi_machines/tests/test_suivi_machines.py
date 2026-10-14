@@ -809,6 +809,8 @@ class TestContratEnLigne(HttpCase):
         # Selon la base (Odoo.sh), un paiement en ligne peut etre exige apres la signature : pas ici
         so.write({"require_signature": True, "prepayment_percent": 0})
         so.action_quotation_sent()
+        envoye = self.env["ir.attachment"].search([("res_model", "=", "res.partner"), ("res_id", "=", client.id)])
+        self.assertEqual(len(envoye.filtered(lambda a: so.name in a.name)), 1, "devis envoyé rangé dans la fiche")
         jeton = so._portal_ensure_token()
         signature = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
         resultat = self.make_jsonrpc_request("/my/orders/%s/accept?access_token=%s" % (so.id, jeton),

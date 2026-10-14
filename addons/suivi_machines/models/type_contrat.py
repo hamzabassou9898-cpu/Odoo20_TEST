@@ -214,11 +214,12 @@ class SaleOrder(models.Model):
                         type=order.type_contrat_id.name, signataire=order.signed_by or client.name),
                     attachment_ids=pdf.ids, message_type="comment", subtype_xmlid="mail.mt_note")
 
-    def _nom_document_client(self):
+    def _nom_document_client(self, signe=None):
         self.ensure_one()
         if self.type_contrat_id:
             nom = self.env._("Contrat %(numero)s (%(type)s)", numero=self.name, type=self.type_contrat_id.name)
-            return nom + (self.env._(" signé") if self.signature else "") + ".pdf"
+            signe = bool(self.signature) if signe is None else signe
+            return nom + (self.env._(" signé") if signe else "") + ".pdf"
         if self.type_commande == "location":
             return self.env._("Contrat de location %s.pdf", self.name)
         return self.env._("Bon de vente %s.pdf", self.name)
@@ -242,37 +243,50 @@ class SaleOrder(models.Model):
             "sale.action_report_saleorder", self.ids)[0]
         client = self.partner_id.commercial_partner_id
         nom = self._nom_document_client()
+        # Meme document du devis envoye au contrat signe : renomme et mis a jour, pas de doublon
+        noms = list({nom, self._nom_document_client(signe=False)})
         Attachment = self.env["ir.attachment"].sudo()
         piece = Attachment.search([("res_model", "=", "res.partner"), ("res_id", "=", client.id),
-                                   ("name", "=", nom)], limit=1)
+                                   ("name", "in", noms)], limit=1)
         if piece:
-            piece.raw = pdf
+            piece.write({"name": nom, "raw": pdf})
         else:
             piece = Attachment.create({"name": nom, "raw": pdf, "mimetype": "application/pdf",
                                        "res_model": "res.partner", "res_id": client.id})
         if "documents.document" in self.env:
-            self._ranger_dans_documents(client, nom, pdf)
+            self._ranger_dans_documents(client, nom, pdf, noms)
         return piece
 
-    def _ranger_dans_documents(self, client, nom, pdf):
+    def _ranger_dans_documents(self, client, nom, pdf, noms=None):
         """Application Documents : dossier « Contrats et ventes clients », document relie au client (bouton
         Documents de sa fiche). Champs standards seulement : nom, fichier, client, dossier."""
         Document = self.env["documents.document"].sudo()
         nom_dossier = self.env._("Contrats et ventes clients")
+        # Visible par tout le bureau : proprietaire interne (le vendeur, sinon l'administrateur) et acces
+        # interne en modification. Sans cela, un contrat signe au portail appartient au client portail et
+        # le bouton Documents de la fiche reste a 0 pour Josef
+        acces = {}
+        if "owner_id" in Document._fields:
+            vendeur = self.user_id if self.user_id and not self.user_id.share else self.env.ref("base.user_admin")
+            acces["owner_id"] = vendeur.id
+        if "access_internal" in Document._fields:
+            acces["access_internal"] = "edit"
         if "documents.folder" in self.env:   # anciennes versions de Documents
             Dossier = self.env["documents.folder"].sudo()
             dossier = Dossier.search([("name", "=", nom_dossier)], limit=1) or Dossier.create({"name": nom_dossier})
         else:                                 # Documents 18+ : un dossier est un document de type « folder »
             dossier = Document.search([("type", "=", "folder"), ("name", "=", nom_dossier)], limit=1) \
-                or Document.create({"name": nom_dossier, "type": "folder"})
-        document = Document.search([("partner_id", "=", client.id), ("name", "=", nom),
+                or Document.create(dict(acces, name=nom_dossier, type="folder"))
+            if "access_internal" in Document._fields and dossier.access_internal != "edit":
+                dossier.access_internal = "edit"
+        document = Document.search([("partner_id", "=", client.id), ("name", "in", noms or [nom]),
                                     ("folder_id", "=", dossier.id)], limit=1)
         donnees = base64.b64encode(pdf)
         if document:
-            document.datas = donnees
+            document.write(dict(acces, name=nom, datas=donnees))
         else:
-            document = Document.create({"name": nom, "datas": donnees, "partner_id": client.id,
-                                        "folder_id": dossier.id})
+            document = Document.create(dict(acces, name=nom, datas=donnees, partner_id=client.id,
+                                            folder_id=dossier.id))
         return document
 
     @api.model
@@ -316,6 +330,9 @@ class SaleOrder(models.Model):
         if not self.env.context.get("synchro_forfait") and (
                 {"order_line", "type_contrat_id", "forfait_montant"} & set(vals)):
             self._synchroniser_forfait(prix=bool({"type_contrat_id", "forfait_montant"} & set(vals)))
+        if vals.get("state") == "sent":
+            # Devis envoye : son PDF est deja range dans le profil du client (mis a jour a la confirmation)
+            self._archiver_pdf_client()
         return res
 
     def action_confirm(self):
