@@ -695,6 +695,12 @@ class TestSuiviMachines(TransactionCase):
         pieces = self.env["ir.attachment"].search([("res_model", "=", "res.partner"), ("res_id", "=", self.client.id),
                                                    ("name", "ilike", so.name)])
         self.assertEqual(len(pieces), 1, "remplacé, pas de doublon")
+        # Rangé par un client du portail dans une autre langue : même nom de document (pas de doublon)
+        for lang, nom in (("en_US", "Rental EN"), ("fr_CA", "Location FR")):
+            self.env["res.lang"]._activate_lang(lang)
+            so.type_contrat_id.with_context(lang=lang).name = nom
+        self.assertEqual(so.with_context(lang="en_US")._nom_document_client(),
+                         so.with_context(lang="fr_CA")._nom_document_client())
         action = self.env.ref("suivi_machines.action_serveur_ranger_pdf_client")
         self.assertEqual(action.binding_model_id.model, "sale.order")
         self.assertIn(self.env.ref("sales_team.group_sale_salesman"), action.group_ids, "ventes seulement")

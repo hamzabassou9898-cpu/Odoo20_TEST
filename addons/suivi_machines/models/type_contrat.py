@@ -218,6 +218,9 @@ class SaleOrder(models.Model):
 
     def _nom_document_client(self, signe=None):
         self.ensure_one()
+        # Meme nom quelle que soit la langue de celui qui range le PDF (bureau en francais, client du
+        # portail en anglais...) : sinon le contrat signe ne remplace pas le devis et fait un doublon
+        self = self.with_context(lang=self.company_id.partner_id.lang or self.env.lang)
         if self.type_contrat_id:
             nom = self.env._("Contrat %(numero)s (%(type)s)", numero=self.name, type=self.type_contrat_id.name)
             signe = bool(self.signature) if signe is None else signe
