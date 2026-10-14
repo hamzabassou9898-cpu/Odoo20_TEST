@@ -70,6 +70,8 @@
               action="suivi_machines.action_vue_ensemble_machines" sequence="1"/>
     <menuitem id="menu_pilotage_toutes" name="Toutes les machines" parent="menu_pilotage_parc"
               action="suivi_machines.action_machines" sequence="2"/>
+    <menuitem id="menu_pilotage_livraisons" name="Livraisons" parent="menu_pilotage_parc"
+              action="stock.action_picking_tree_outgoing" sequence="3"/>
     <menuitem id="menu_pilotage_transferts_semaine" name="Livraisons &amp; ramassages de la semaine"
               parent="menu_pilotage_parc" action="action_pilotage_transferts" sequence="3"/>
     <menuitem id="menu_pilotage_produits_categorie" name="Produits par catégorie"

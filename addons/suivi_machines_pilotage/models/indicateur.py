@@ -4,6 +4,7 @@ from datetime import timedelta
 
 from odoo import api, fields, models
 from odoo.fields import Domain
+from odoo.tools.safe_eval import safe_eval
 
 SECTIONS = [("appels", "Appels de service"), ("entretiens", "Entretiens & réparations"),
             ("livraisons", "Livraisons & ramassages"), ("locations", "Locations"),
@@ -296,8 +297,23 @@ class PilotageIndicateur(models.Model):
             equipe = Equipe.browse(self.env["sale.order"]._reglages_reprise().get("equipe") or []).exists() \
                 or Equipe.search([], limit=1)
             if equipe and hasattr(equipe, "action_view_ticket"):
-                return equipe.action_view_ticket()
+                return self._sans_active_id(equipe.action_view_ticket(), equipe)
         return self.env["ir.actions.act_window"]._for_xml_id("suivi_machines_pilotage.action_pilotage_appels")
+
+    @api.model
+    def _sans_active_id(self, action, equipe):
+        """L'action de l'equipe attend l'equipe ouverte (active_id) : depuis un menu il n'y en a pas, on
+        evalue donc son contexte et son domaine ici, avec l'equipe."""
+        valeurs = {"active_id": equipe.id, "active_ids": equipe.ids, "uid": self.env.uid,
+                   "context": dict(self.env.context)}
+        for cle, defaut in (("context", {"default_team_id": equipe.id}),
+                            ("domain", [("team_id", "=", equipe.id)])):
+            if isinstance(action.get(cle), str):
+                try:
+                    action[cle] = safe_eval(action[cle], valeurs)
+                except Exception:  # noqa: BLE001 - expression inconnue : l'equipe suffit
+                    action[cle] = defaut
+        return action
 
     def _action_entretiens_et_reparations(self):
         """Carte d'echeance (en retard, semaine, 30 jours) avec des reparations / machines a remplacer :

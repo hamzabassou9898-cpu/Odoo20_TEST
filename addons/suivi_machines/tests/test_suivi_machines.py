@@ -660,6 +660,32 @@ class TestSuiviMachines(TransactionCase):
         arch = self.env["stock.picking"].get_views([(False, "form")])["views"]["form"]["arch"]
         self.assertIn("machines_sans_serie", arch)
 
+    def test_numero_de_serie_saisi_dans_le_bon_puis_enregistre(self):
+        """Comme Josef dans l'écran : choisir le n° de série de chaque machine, Enregistrer, puis Valider."""
+        so = self.env["sale.order"].create({
+            "partner_id": self.client.id,
+            "order_line": [(0, 0, {"product_id": self.produit.id, "product_uom_qty": 2})]})
+        so.action_confirm()
+        livraison = so.picking_ids
+        livraison.move_ids.move_line_ids.unlink()
+        self.assertTrue(all(livraison.move_ids.filtered("est_machine").mapped("serie_requise")),
+                        "n° de série obligatoire dans l'écran")
+        arch = self.env["stock.picking"].get_views([(False, "form")])["views"]["form"]["arch"]
+        self.assertIn('required="serie_requise"', arch, "case rouge obligatoire dans la ligne")
+        with Form(livraison) as f:
+            f.livreur_id = self.env.user
+            f.frequence_entretien = "12"
+            f.prochain_entretien = fields.Date.today() + relativedelta(months=12)
+            for i, lot in enumerate((self.lot_a, self.lot_b)):
+                with f.move_ids.edit(i) as ligne:
+                    ligne.machine_lot_id = lot
+        self.assertEqual(set(livraison.move_ids.machine_lot_id.ids), {self.lot_a.id, self.lot_b.id}, "enregistré")
+        self.assertEqual(livraison.move_ids.move_line_ids.lot_id, self.lot_a | self.lot_b, "réservé")
+        self.assertFalse(livraison.machines_sans_serie)
+        livraison.button_validate()
+        self.assertEqual(livraison.state, "done")
+        self.assertEqual(livraison.move_ids.move_line_ids.lot_id, self.lot_a | self.lot_b)
+
     def test_bon_de_vente_confirme_dans_le_profil_du_client(self):
         """Chaque bon de vente / location confirmé : son PDF va dans le profil du client (Documents)."""
         so = self._commande(self.lot_a)

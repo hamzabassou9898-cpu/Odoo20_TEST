@@ -297,6 +297,16 @@ class StockMove(models.Model):
         help="Machine précise à livrer (choisie sur le bon de vente ou au moment de la livraison) : "
              "elle est réservée à la place de celle choisie automatiquement.")
     est_machine = fields.Boolean(related="product_id.categ_id.suivi_machine")
+    serie_requise = fields.Boolean(
+        "N° de série requis", compute="_compute_serie_requise",
+        help="Machine livrée chez le client sans n° de série réservé : à choisir avant d'enregistrer.")
+
+    @api.depends("est_machine", "state", "location_dest_id", "move_line_ids.lot_id")
+    def _compute_serie_requise(self):
+        for move in self:
+            move.serie_requise = bool(
+                move.est_machine and move.state not in ("done", "cancel") and move.location_dest_id
+                and move._vers_client() and not move.move_line_ids.lot_id)
 
     @api.constrains("machine_lot_id", "product_id")
     def _check_machine_lot_move(self):

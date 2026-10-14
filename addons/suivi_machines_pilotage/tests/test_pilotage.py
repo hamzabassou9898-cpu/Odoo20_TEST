@@ -51,8 +51,15 @@ class TestPilotage(TransactionCase):
         actions = self.env.ref("suivi_machines_pilotage.menu_pilotage_parc").child_id.mapped("action")
         self.assertIn(self.env.ref("stock.stock_move_line_action"), actions)
         self.assertIn(self.env.ref("stock.action_view_inventory_tree"), actions)
+        self.assertIn(self.env.ref("stock.action_picking_tree_outgoing"), actions, "Livraisons")
         action = self.env.ref("suivi_machines_pilotage.action_pilotage_appels_assistance").run()
         self.assertEqual(action["res_model"], "helpdesk.ticket")
+        # Action d'equipe avec « active_id » (comme l'Assistance) : evaluee pour l'equipe, sans erreur
+        equipe = self.client   # seul son id compte ici
+        brute = {"context": "{'default_team_id': active_id}", "domain": "[('team_id', '=', active_id)]"}
+        pret = self.env["pilotage.indicateur"]._sans_active_id(dict(brute), equipe)
+        self.assertEqual(pret["context"], {"default_team_id": equipe.id})
+        self.assertEqual(pret["domain"], [("team_id", "=", equipe.id)])
 
     def test_planning_ouvre_le_ticket(self):
         """Planning : une tache d'intervention ouvre le ticket de la machine (jamais l'intervention quand un

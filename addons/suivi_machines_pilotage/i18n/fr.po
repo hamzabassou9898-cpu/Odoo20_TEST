@@ -170,6 +170,7 @@ msgstr "Appels de la semaine du %s"
 
 #. module: suivi_machines_pilotage
 #: model:ir.actions.act_window,name:suivi_machines_pilotage.action_pilotage_appels
+#: model:ir.actions.server,name:suivi_machines_pilotage.action_pilotage_appels_assistance
 #: model:ir.model.fields.selection,name:suivi_machines_pilotage.selection__pilotage_indicateur__section__appels
 #: model:ir.ui.menu,name:suivi_machines_pilotage.menu_pilotage_appels
 #: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_appels_pivot
@@ -776,6 +777,11 @@ msgid "Générer les tickets de test"
 msgstr "Générer les tickets de test"
 
 #. module: suivi_machines_pilotage
+#: model:ir.ui.menu,name:suivi_machines_pilotage.menu_pilotage_mouvements
+msgid "Historique des mouvements"
+msgstr "Historique des mouvements"
+
+#. module: suivi_machines_pilotage
 #: model:ir.model.fields,field_description:suivi_machines_pilotage.field_helpdesk_ticket__id
 #: model:ir.model.fields,field_description:suivi_machines_pilotage.field_machine_intervention__id
 #: model:ir.model.fields,field_description:suivi_machines_pilotage.field_pilotage_donnees_test__id
@@ -833,6 +839,16 @@ msgstr "Interventions terminées depuis le 1er du mois"
 #: model:pilotage.indicateur,name:suivi_machines_pilotage.indicateur_a_facturer
 msgid "Interventions à facturer"
 msgstr "Interventions à facturer"
+
+#. module: suivi_machines_pilotage
+#: model:ir.ui.menu,name:suivi_machines_pilotage.menu_pilotage_parc
+msgid "Inventaire"
+msgstr "Inventaire"
+
+#. module: suivi_machines_pilotage
+#: model:ir.ui.menu,name:suivi_machines_pilotage.menu_pilotage_inventaire_physique
+msgid "Inventaire physique (ajustement)"
+msgstr "Inventaire physique (ajustement)"
 
 #. module: suivi_machines_pilotage
 #: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_transfert_search
@@ -899,6 +915,7 @@ msgid "Livraison / ramassage"
 msgstr "Livraison / ramassage"
 
 #. module: suivi_machines_pilotage
+#: model:ir.ui.menu,name:suivi_machines_pilotage.menu_pilotage_livraisons
 #: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_portail_livreurs_search
 #: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_portail_techniciens_search
 msgid "Livraisons"
@@ -1097,6 +1114,12 @@ msgid "Nos contacts"
 msgstr "Nos contacts"
 
 #. module: suivi_machines_pilotage
+#: model:ir.actions.server,name:suivi_machines_pilotage.action_pilotage_nouveau_contrat
+#: model:ir.ui.menu,name:suivi_machines_pilotage.menu_pilotage_nouveau_contrat
+msgid "Nouveau contrat de location"
+msgstr "Nouveau contrat de location"
+
+#. module: suivi_machines_pilotage
 #: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_appels_search
 msgid "Nouveaux (à prendre en charge)"
 msgstr "Nouveaux (à prendre en charge)"
@@ -1162,7 +1185,7 @@ msgstr "Parc & activité"
 #. module: suivi_machines_pilotage
 #. odoo-javascript
 #: code:addons/suivi_machines_pilotage/static/src/tableau_moderne/tableau_moderne.xml:0
-#: model:ir.ui.menu,name:suivi_machines_pilotage.menu_pilotage_parc
+#: model:ir.ui.menu,name:suivi_machines_pilotage.menu_pilotage_vue_ensemble
 msgid "Parc machines"
 msgstr "Parc machines"
 
@@ -1797,7 +1820,6 @@ msgstr "Violet"
 #. module: suivi_machines_pilotage
 #: model:ir.actions.client,name:suivi_machines_pilotage.action_pilotage_vue_ensemble
 #: model:ir.ui.menu,name:suivi_machines_pilotage.menu_pilotage_tableau_moderne
-#: model:ir.ui.menu,name:suivi_machines_pilotage.menu_pilotage_vue_ensemble
 msgid "Vue d'ensemble"
 msgstr "Vue d'ensemble"
 
