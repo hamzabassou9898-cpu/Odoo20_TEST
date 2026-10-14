@@ -5,6 +5,8 @@ from markupsafe import Markup
 from odoo import api, fields, models
 from odoo.tools import plaintext2html
 
+from .bon_intervention import ticket_d_origine
+
 
 class SuiviNoteTechnicien(models.Model):
     _name = "suivi.note.technicien"
@@ -80,7 +82,7 @@ class SuiviNoteTechnicien(models.Model):
             or self.env.ref("base.user_admin")
 
     def _prevenir_responsable(self):
-        """Activite « A faire » sur le document : pastille de l'horloge + notification du responsable."""
+        """Activite « A faire » pour le responsable sur le ticket d'origine (pastille de l'horloge)."""
         for note in self.sudo():
             responsable = note._responsable()
             source = note._source()
@@ -88,10 +90,13 @@ class SuiviNoteTechnicien(models.Model):
             resume = self.env._("Note de %(tech)s à lire", tech=note.technicien_id.name)
             detail = (note.note or "") + ("\n" if note.note and pieces else "") + (
                 self.env._("%s pièce(s) jointe(s)", pieces) if pieces else "")
-            activite = source.activity_schedule(
+            # Activite sur le ticket d'origine (ou le transfert), jamais sur une intervention : la note
+            # reste dans le fil de l'intervention et dans « Notes de techniciens à lire »
+            document = ticket_d_origine(source) or (source if source._name == "stock.picking" else None)
+            activite = document.activity_schedule(
                 "mail.mail_activity_data_todo", user_id=responsable.id, summary=resume,
-                note=plaintext2html(detail) if detail else False)
-            note.write({"activity_id": activite.id, "responsable_id": responsable.id})
+                note=plaintext2html(detail) if detail else False) if document else False
+            note.write({"activity_id": activite.id if activite else False, "responsable_id": responsable.id})
 
     def action_marquer_lu(self):
         """Note lue : l'activite du responsable est faite."""

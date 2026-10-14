@@ -43,6 +43,23 @@ def texte_engagement(env, type_bon, type_tache=None):
         "équipements que j'ai en ma possession sont tels qu'indiqué ci-dessus.", societe=env.company.name, travail=travail)
 
 
+
+
+def ticket_d_origine(source, lot=None):
+    """Ticket d'assistance d'ou vient le travail : le ticket lui-meme, celui de l'intervention ou du
+    transfert, sinon le dernier ticket ouvert de la meme machine. Recordset vide s'il n'y en a pas."""
+    Ticket = source.env["helpdesk.ticket"].sudo()
+    if source._name == "helpdesk.ticket":
+        return source
+    for champ in ("ticket_id", "ticket_assistance_id"):
+        if champ in source._fields and source[champ]:
+            return source[champ]
+    lot = lot or (source.lot_id if "lot_id" in source._fields else None)
+    if not lot:
+        return Ticket
+    return Ticket.search(["|", ("lot_id", "=", lot.id), ("machines_reprise_ids", "in", lot.ids)],
+                         order="id desc").filtered(lambda t: not t._est_ferme())[:1]
+
 class BonIntervention(models.Model):
     _name = "suivi.bon.intervention"
     _description = "Bon d'intervention signé"
@@ -104,7 +121,7 @@ class BonIntervention(models.Model):
     def _prevenir_bureau(self):
         """Bon complet (client, et technicien pour un entretien / une reparation) : le responsable (Josef)
         est prevenu DANS Odoo, quelle que soit sa preference (courriel ou Odoo) et meme sans envoi de
-        courriel (base de test neutralisee) : activite a faire sur le ticket, message dans le ticket et
+        courriel (base de test neutralisee) : activite a faire sur le ticket d'origine, message dans le ticket et
         notification a l'ecran. Ni le client ni les abonnes du document ne sont prevenus."""
         responsable = self.env["sale.order"]._reglages_reprise()["responsable"]
         if not responsable:
@@ -121,8 +138,9 @@ class BonIntervention(models.Model):
             # Courriel / boite de reception Odoo selon la preference du responsable
             dossier.message_notify(partner_ids=responsable.partner_id.ids, author_id=bon.technicien_id.partner_id.id,
                                   subject=titre, body=Markup("<p>%s</p>") % texte)
-            # Toujours visible dans Odoo : une activite a faire (horloge) ...
-            if "activity_ids" in dossier._fields:
+            # Toujours visible dans Odoo : une activite a faire (horloge) sur le TICKET (jamais sur une
+            # intervention : pas utile au bureau) ...
+            if dossier._name == "helpdesk.ticket":
                 dossier.activity_schedule("mail.mail_activity_data_todo", user_id=responsable.id,
                                           summary=titre, note=Markup("<p>%s</p>") % texte)
             # ... et une notification a l'ecran s'il est connecte
@@ -130,19 +148,9 @@ class BonIntervention(models.Model):
                 "type": "success", "title": titre, "message": texte, "sticky": True})
 
     def _dossier_bureau(self):
-        """Ticket d'origine du travail : le ticket de la tache, celui de l'intervention / du transfert, sinon
-        le dernier ticket ouvert de la meme machine. Sans ticket : le document source."""
+        """Ticket d'origine du travail (voir ticket_d_origine), sinon le document source."""
         self.ensure_one()
-        source = self._source()
-        ticket = self.ticket_id
-        for champ in ("ticket_id", "ticket_assistance_id"):   # intervention / transfert lies a un ticket
-            if not ticket and source._name != "helpdesk.ticket" and champ in source._fields:
-                ticket = source[champ]
-        if not ticket and self.lot_id:
-            ticket = self.env["helpdesk.ticket"].sudo().search(
-                ["|", ("lot_id", "=", self.lot_id.id), ("machines_reprise_ids", "in", self.lot_id.ids)],
-                order="id desc").filtered(lambda t: not t._est_ferme())[:1]
-        return ticket or source
+        return self.ticket_id or ticket_d_origine(self._source(), self.lot_id) or self._source()
 
     def _poster(self, corps):
         """Message (note) dans le document source ET dans le ticket d'origine, avec le PDF du bon."""

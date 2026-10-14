@@ -469,6 +469,9 @@ class TestPortailTechnicien(HttpCase):
         bon = self.env["suivi.bon.intervention"]._creer_depuis_tache(tache, "Client", self.SIGNATURE)
         self.assertEqual(interv.state, "fait", "intervention faite")
         self.assertEqual(bon.intervention_id, interv)
+        if bon.doit_signer_technicien:
+            bon._signer_technicien(self.SIGNATURE)
+        self.assertFalse(interv.activity_ids, "pas d'activité sur une intervention (pas claire pour le bureau)")
         # Intervention sans ticket, mais un ticket ouvert sur la meme machine (ticket d'origine) :
         # le bon et son PDF vont dans les deux, et le bureau a son activite sur le ticket
         ticket = self.env["helpdesk.ticket"].create({"name": "Machine à remplacer", "partner_id": self.client.id,
@@ -487,6 +490,13 @@ class TestPortailTechnicien(HttpCase):
             if bon2.pdf_id:
                 self.assertIn(bon2.pdf_id, messages.attachment_ids, "PDF dans %s" % document._name)
         self.assertTrue(ticket.activity_ids.filtered(lambda a: bon2.name in (a.summary or "")), "activité du bureau")
+        self.assertFalse(interv2.activity_ids, "rien sur l'intervention")
+        # Note du technicien sur une intervention : activite sur le ticket d'origine, pas sur l'intervention
+        note = self.env["suivi.note.technicien"].sudo().create({
+            "technicien_id": self.tech_a.id, "note": "Joint changé", "intervention_id": interv2.id})
+        note._prevenir_responsable()
+        self.assertEqual((note.activity_id.res_model, note.activity_id.res_id), ("helpdesk.ticket", ticket.id))
+        self.assertFalse(interv2.activity_ids)
         type_out = self.env.ref("stock.picking_type_out")
         picking = self.env["stock.picking"].create({
             "picking_type_id": type_out.id, "partner_id": self.client.id, "livreur_id": self.tech_a.id,
