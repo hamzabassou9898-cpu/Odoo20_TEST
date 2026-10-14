@@ -3,8 +3,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 20.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-14 13:51+0000\n"
-"PO-Revision-Date: 2026-10-14 13:51+0000\n"
+"POT-Creation-Date: 2026-10-14 13:58+0000\n"
+"PO-Revision-Date: 2026-10-14 13:58+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: fr\n"
@@ -677,7 +677,6 @@ msgstr "Forfait annuel à confirmer et facturer"
 
 #. module: suivi_machines
 #: model:ir.model.fields,field_description:suivi_machines.field_sale_order__forfait_ids
-#: model:ir.model.fields,field_description:suivi_machines.field_sale_order__nb_forfaits
 #: model_terms:ir.ui.view,arch_db:suivi_machines.view_order_form_type_contrat
 msgid "Forfaits annuels"
 msgstr "Forfaits annuels"
@@ -1165,6 +1164,11 @@ msgstr "Mouvements d'inventaire"
 #: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__my_activity_date_deadline
 msgid "My Activity Deadline"
 msgstr "My Activity Deadline"
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_sale_order__nb_forfaits
+msgid "Nb forfaits annuels"
+msgstr "Nb forfaits annuels"
 
 #. module: suivi_machines
 #: model:ir.model.fields,field_description:suivi_machines.field_stock_lot__nb_interventions

@@ -620,3 +620,16 @@ class TestSuiviMachines(TransactionCase):
         so.write({"order_line": [(1, machines[0].id, {"product_uom_qty": 3})]})
         self.assertEqual(len(so.order_line.filtered("est_machine")), 4)
         self.assertEqual(sum(so.order_line.mapped("product_uom_qty")), 4)
+
+    def test_libelles_uniques(self):
+        """Odoo avertit (Test: Warning sur Odoo.sh) quand deux champs d'un modele ont le meme libelle :
+        aucun doublon cree par nos modules."""
+        doublons = []
+        for nom_modele, modele in self.env.registry.items():
+            libelles = {}
+            for champ in modele._fields.values():
+                libelles.setdefault(champ.string, []).append(champ)
+            for libelle, champs in libelles.items():
+                if len(champs) > 1 and any((c._module or "").startswith("suivi_") for c in champs):
+                    doublons.append("%s : %s (%s)" % (nom_modele, libelle, ", ".join(c.name for c in champs)))
+        self.assertFalse(doublons, "\n".join(doublons))

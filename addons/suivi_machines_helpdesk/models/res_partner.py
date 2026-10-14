@@ -153,9 +153,9 @@ class HelpdeskTicket(models.Model):
                                                help="Location, convention, popcorn ou propriétaire.")
     # Ce que couvre le contrat du client (visible par tous : bandeau du ticket)
     contrat_couverture = fields.Selection(
-        [("couvert", "Couvert par le contrat"), ("facture", "Facturé au client")], "Appels de service",
+        [("couvert", "Couvert par le contrat"), ("facture", "Facturé au client")], "Couverture du contrat",
         compute="_compute_contrat_client")
-    contrat_couverture_texte = fields.Char("Couverture du contrat", compute="_compute_contrat_client")
+    contrat_couverture_texte = fields.Char("Ce que couvre le contrat", compute="_compute_contrat_client")
     contrat_client_debut = fields.Datetime("Début du contrat", compute="_compute_contrat_client",
                                            groups="sales_team.group_sale_salesman")
     contrat_client_fin = fields.Datetime("Fin du contrat", compute="_compute_contrat_client",

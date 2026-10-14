@@ -3,8 +3,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 20.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-14 13:51+0000\n"
-"PO-Revision-Date: 2026-10-14 13:51+0000\n"
+"POT-Creation-Date: 2026-10-14 13:58+0000\n"
+"PO-Revision-Date: 2026-10-14 13:58+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: fr\n"
@@ -185,7 +185,6 @@ msgid "Appels (12 mois)"
 msgstr "Appels (12 mois)"
 
 #. module: suivi_machines_helpdesk
-#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__contrat_couverture
 #: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__tickets_precedents_ids
 #: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_res_partner__appel_client_ids
 #: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_res_users__appel_client_ids
@@ -321,6 +320,11 @@ msgid "Ce qu'il faut faire chez le client : aide à planifier le ticket."
 msgstr "Ce qu'il faut faire chez le client : aide à planifier le ticket."
 
 #. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__contrat_couverture_texte
+msgid "Ce que couvre le contrat"
+msgstr "Ce que couvre le contrat"
+
+#. module: suivi_machines_helpdesk
 #: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_suivi_machines_valider_entretien__note
 msgid "Ce qui a été fait"
 msgstr "Ce qui a été fait"
@@ -445,7 +449,7 @@ msgid "Couvert par le contrat"
 msgstr "Couvert par le contrat"
 
 #. module: suivi_machines_helpdesk
-#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__contrat_couverture_texte
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__contrat_couverture
 msgid "Couverture du contrat"
 msgstr "Couverture du contrat"
 

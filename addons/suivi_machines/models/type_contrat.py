@@ -62,7 +62,7 @@ class SaleOrder(models.Model):
         "sale.order", "Contrat (forfait)", copy=False, readonly=True, index="btree_not_null",
         help="Contrat dont ce bon de vente facture le forfait annuel d'entretien.")
     forfait_ids = fields.One2many("sale.order", "forfait_contrat_id", "Forfaits annuels")
-    nb_forfaits = fields.Integer("Forfaits annuels", compute="_compute_nb_forfaits")
+    nb_forfaits = fields.Integer("Nb forfaits annuels", compute="_compute_nb_forfaits")
 
     @api.depends("forfait_ids")
     def _compute_nb_forfaits(self):
