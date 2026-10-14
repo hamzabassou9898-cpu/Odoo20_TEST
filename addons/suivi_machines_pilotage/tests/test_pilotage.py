@@ -142,6 +142,9 @@ class TestPilotage(TransactionCase):
         self.assertGreaterEqual(repartition["Entretien"][0], 1)
         self.assertEqual(ind.valeur, sum(n for n, _c in repartition.values()))
         self.assertEqual(list(repartition)[0], "Entretien", "ordre : entretien, réparation, remplacement")
+        vide = self.env["pilotage.indicateur"]._repartition_par_type([("id", "=", 0)])
+        self.assertEqual([(l, n) for l, n, _c in vide],
+                         [("Entretien", 0), ("Réparation", 0), ("Machine à remplacer", 0)], "toujours les 3 types")
         self.assertIn(entretien, self.env[model].search(domaine))
         action = ind.action_ouvrir()
         self.assertEqual(action["context"], {"search_default_planifies_a_faire": 1,
@@ -178,7 +181,10 @@ class TestPilotage(TransactionCase):
                                 "date_planifiee": maintenant - relativedelta(days=2)})
         semaine = Ticket.create({"name": "Bruit", "code_client": "PIL1", "type_demande": "reparation",
                                  "date_planifiee": maintenant + relativedelta(days=3)})
+        remplacer = Ticket.create({"name": "Trop vieille", "code_client": "PIL1", "type_demande": "remplacement",
+                                   "date_planifiee": maintenant + relativedelta(days=3)})
         self.env["machine.intervention"].create({"lot_id": self.lot.id, "type": "reparation", "state": "fait"})
+        self.env["machine.intervention"].create({"lot_id": self.lot.id, "type": "remplacement", "state": "fait"})
         for code, ticket, nom in (("entretien_retard", retard, "Entretiens & réparations en retard"),
                                   ("entretien_semaine", semaine, "Entretiens & réparations cette semaine"),
                                   ("entretien_mois", semaine, "Entretiens & réparations dans 30 jours")):
@@ -186,7 +192,14 @@ class TestPilotage(TransactionCase):
             ind.invalidate_recordset()
             self.assertEqual(ind.name, nom)
             parts = {libelle: (nombre, lien) for libelle, nombre, _c, lien in ind.repartition}
-            self.assertEqual(ind.valeur, parts["Entretien"][0] + parts["Réparation"][0])
+            self.assertEqual(ind.valeur, parts["Entretien"][0] + parts["Réparation"][0]
+                             + parts["Machine à remplacer"][0])
+            self.assertEqual(parts["Machine à remplacer"][1], "remplacements", "étiquette cliquable")
+            self.assertNotIn(remplacer, Ticket.search(ind.action_ouvrir_reparations()["domain"]),
+                             "une machine à remplacer n'est pas une réparation")
+            if code != "entretien_retard":
+                self.assertGreaterEqual(parts["Machine à remplacer"][0], 1, code)
+                self.assertIn(remplacer, Ticket.search(ind.action_ouvrir_remplacements()["domain"]))
             self.assertGreaterEqual(parts["Réparation"][0], 1, code)
             self.assertEqual(parts["Réparation"][1], "reparations", "étiquette cliquable")
             action = ind.action_ouvrir_reparations()
@@ -200,12 +213,16 @@ class TestPilotage(TransactionCase):
         self.assertEqual(faits.name, "Entretiens & réparations faits ce mois")
         parts = {libelle: nombre for libelle, nombre, _c, _l in faits.repartition}
         self.assertGreaterEqual(parts["Réparation"], 1)
+        self.assertGreaterEqual(parts["Machine à remplacer"], 1)
         self.assertEqual(faits.action_ouvrir_reparations()["res_model"], "machine.intervention")
+        remplacements = self.env["machine.intervention"].search(faits.action_ouvrir_remplacements()["domain"])
+        self.assertEqual(set(remplacements.mapped("type")), {"remplacement"})
         # Resolue : la reparation quitte « en retard »
         retard.stage_id = self.env["helpdesk.stage"].create({"name": "Résolu"})
         self.assertNotIn(retard, Ticket.search(self._ind("entretien_retard").action_ouvrir_reparations()["domain"]))
         arch = self.env["pilotage.indicateur"].get_views([(False, "kanban")])["views"]["kanban"]["arch"]
         self.assertIn("action_ouvrir_reparations", arch)
+        self.assertIn("action_ouvrir_remplacements", arch)
 
     def _demain_14h(self):
         import pytz

@@ -111,13 +111,21 @@ class PilotageIndicateur(models.Model):
         }
 
     @api.model
-    def _parts_reparation(self):
-        """Partie « Réparations » des cartes d'entretien (machines) : code -> (modele, domaine)."""
+    def _parts_reparation(self, genre=None):
+        """Partie « Réparations » des cartes d'entretien (machines) : code -> (modele, domaine).
+        genre : None = réparations + machines à remplacer, « reparation » ou « remplacement » = l'un des deux."""
         b = self._bornes()
         debut = fields.Datetime.to_datetime(b["aujourdhui"])
         jour = timedelta(days=1)
         reparations = [("est_entretien", "=", False), ("statut_entretien", "in", ("a_planifier", "planifie")),
                        ("date_planifiee", "!=", False)]
+        types_faits = ("bris", "reparation", "remplacement")
+        if genre == "remplacement":
+            reparations.append(("type_demande", "=", "remplacement"))
+            types_faits = ("remplacement",)
+        elif genre == "reparation":
+            reparations.append(("type_demande", "!=", "remplacement"))
+            types_faits = ("bris", "reparation")
         return {
             "entretien_retard": ("helpdesk.ticket", reparations + [("date_planifiee", "<", debut)]),
             "entretien_semaine": ("helpdesk.ticket", reparations + [
@@ -127,26 +135,33 @@ class PilotageIndicateur(models.Model):
                 ("date_planifiee", ">=", debut),
                 ("date_planifiee", "<", fields.Datetime.to_datetime(b["mois"]) + jour)]),
             "entretiens_faits": ("machine.intervention", [
-                ("type", "in", ("bris", "reparation", "remplacement")), ("state", "=", "fait"),
+                ("type", "in", types_faits), ("state", "=", "fait"),
                 ("date", ">=", fields.Datetime.to_datetime(b["debut_mois"]))]),
         }
 
     @api.model
-    def _compte_reparations(self, code):
-        model, domaine = self._parts_reparation().get(code, (None, None))
+    def _compte_reparations(self, code, genre=None):
+        model, domaine = self._parts_reparation(genre).get(code, (None, None))
         return self.env[model].search_count(domaine) if model else 0
 
-    def action_ouvrir_reparations(self):
-        """Etiquette « Réparation » d'une carte d'entretien : la liste des réparations correspondantes."""
+    def _ouvrir_part(self, genre, titre):
         self.ensure_one()
-        model, domaine = self._parts_reparation().get(self.code, (None, None))
+        model, domaine = self._parts_reparation(genre).get(self.code, (None, None))
         if not model:
             return False
         xmlid = ("suivi_machines_pilotage.action_pilotage_appels" if model == "helpdesk.ticket"
                  else "suivi_machines_pilotage.action_pilotage_entretiens_faits")
-        action = self._action_xml(xmlid, self.env._("Réparations — %s", self.name), {}, domaine)
+        action = self._action_xml(xmlid, titre, {}, domaine)
         action.pop("help", None)
         return action
+
+    def action_ouvrir_reparations(self):
+        """Etiquette « Réparation » d'une carte d'entretien : la liste des réparations correspondantes."""
+        return self._ouvrir_part("reparation", self.env._("Réparations — %s", self.name))
+
+    def action_ouvrir_remplacements(self):
+        """Etiquette « Machine à remplacer » d'une carte d'entretien : les machines à remplacer correspondantes."""
+        return self._ouvrir_part("remplacement", self.env._("Machines à remplacer — %s", self.name))
 
     @api.model
     def _repartition_par_type(self, domaine):
@@ -154,11 +169,12 @@ class PilotageIndicateur(models.Model):
         Ticket = self.env["helpdesk.ticket"]
         libelles = dict(Ticket._fields["type_demande"]._description_selection(self.env))
         couleurs = {"entretien": "info", "reparation": "danger", "remplacement": "warning"}
-        groupes = Ticket._read_group(domaine, ["type_demande"], ["__count"])
+        nombres = dict(Ticket._read_group(domaine, ["type_demande"], ["__count"]))
+        # Les 3 types toujours affiches (meme a 0), puis les autres s'il y en a
         ordre = ["entretien", "reparation", "remplacement"]
-        groupes = sorted(groupes, key=lambda g: ordre.index(g[0]) if g[0] in ordre else len(ordre))
-        return [[libelles.get(type_, self.env._("Autre")), nombre, couleurs.get(type_, "secondary")]
-                for type_, nombre in groupes]
+        ordre += [t for t in nombres if t not in ordre]
+        return [[libelles.get(type_, self.env._("Autre")), nombres.get(type_, 0), couleurs.get(type_, "secondary")]
+                for type_ in ordre]
 
     def _compute_valeur(self):
         domaines = self._domaines()
@@ -175,11 +191,15 @@ class PilotageIndicateur(models.Model):
                 ind.repartition = self._repartition_par_type(domaine)
             elif ind.code in self._parts_reparation():
                 # Carte regroupee : machines a entretenir + reparations (une etiquette chacune)
-                entretiens, reparations = ind.valeur, self._compte_reparations(ind.code)
-                ind.valeur = entretiens + reparations
+                entretiens = ind.valeur
+                reparations = self._compte_reparations(ind.code, "reparation")
+                remplacements = self._compte_reparations(ind.code, "remplacement")
+                ind.valeur = entretiens + reparations + remplacements
                 if ind.valeur:
                     ind.repartition = [[self.env._("Entretien"), entretiens, "info", ""],
-                                       [self.env._("Réparation"), reparations, "danger", "reparations"]]
+                                       [self.env._("Réparation"), reparations, "danger", "reparations"],
+                                       [self.env._("Machine à remplacer"), remplacements, "warning",
+                                        "remplacements"]]
             devise = self.env.company.currency_id
             if model == "machine.intervention" and ind.code in ("a_facturer", "facturer_sage"):
                 total = sum(Model.search(domaine).mapped("montant_frais"))

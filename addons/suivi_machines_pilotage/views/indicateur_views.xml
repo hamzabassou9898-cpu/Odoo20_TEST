@@ -32,6 +32,11 @@
                                             t-attf-class="badge rounded-pill border-0 text-bg-{{r[2]}}">
                                         <t t-out="r[0]"/> : <t t-out="r[1]"/>
                                     </button>
+                                    <!-- « Machine à remplacer » : clic = les machines à remplacer de la carte -->
+                                    <button t-elif="r[3] == 'remplacements'" name="action_ouvrir_remplacements" type="object"
+                                            t-attf-class="badge rounded-pill border-0 text-bg-{{r[2]}}">
+                                        <t t-out="r[0]"/> : <t t-out="r[1]"/>
+                                    </button>
                                     <span t-else="" t-attf-class="badge rounded-pill text-bg-{{r[2]}}">
                                         <t t-out="r[0]"/> : <t t-out="r[1]"/>
                                     </span>
