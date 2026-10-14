@@ -3,8 +3,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 20.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-14 14:59+0000\n"
-"PO-Revision-Date: 2026-10-14 14:59+0000\n"
+"POT-Creation-Date: 2026-10-14 15:07+0000\n"
+"PO-Revision-Date: 2026-10-14 15:07+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: fr\n"
@@ -1893,6 +1893,18 @@ msgid "Compléter le contrat"
 msgstr "Compléter le contrat"
 
 #. module: suivi_machines
+#. odoo-python
+#: code:addons/suivi_machines/models/type_contrat.py:0
+msgid "Contrat %(numero)s (%(type)s) signé en ligne par %(signataire)s."
+msgstr "Contrat %(numero)s (%(type)s) signé en ligne par %(signataire)s."
+
+#. module: suivi_machines
+#. odoo-python
+#: code:addons/suivi_machines/models/type_contrat.py:0
+msgid "Contrat %(numero)s (%(type)s) signé.pdf"
+msgstr "Contrat %(numero)s (%(type)s) signé.pdf"
+
+#. module: suivi_machines
 #: model_terms:ir.ui.view,arch_db:suivi_machines.view_order_form_type_contrat
 msgid "Contrat (client)"
 msgstr "Contrat (client)"
@@ -1923,6 +1935,12 @@ msgstr "Contrat propriétaire : main-d'œuvre par heure."
 #: model:ir.actions.server,name:suivi_machines.cron_forfaits_annuels_ir_actions_server
 msgid "Contrats : forfaits annuels d'entretien"
 msgstr "Contrats : forfaits annuels d'entretien"
+
+#. module: suivi_machines
+#. odoo-python
+#: code:addons/suivi_machines/models/type_contrat.py:0
+msgid "Contrats clients"
+msgstr "Contrats clients"
 
 #. module: suivi_machines
 #: model:ir.model.fields.selection,name:suivi_machines.selection__suivi_type_contrat__modele__popcorn

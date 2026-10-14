@@ -5,6 +5,7 @@ Chaque type regle le comportement du contrat (machine louee ou vendue) et le for
 (clause 8.2 : montant par machine, a la signature puis tous les 12 mois). Les montants se modifient dans
 Ventes > Configuration > Types de contrat, sans programmation.
 """
+import logging
 import re
 
 from babel import dates as babel_dates
@@ -13,6 +14,8 @@ from markupsafe import Markup
 
 from odoo import api, fields, models
 from odoo.exceptions import UserError
+
+_logger = logging.getLogger(__name__)
 
 
 class SuiviTypeContrat(models.Model):
@@ -192,6 +195,54 @@ class SaleOrder(models.Model):
         self.write({"caution_signature": signature, "caution_signe_par": nom,
                     "caution_signe_le": fields.Datetime.now(), "caution_nom": self.caution_nom or nom})
         self.message_post(body=self.env._("Caution signée en ligne par %s.", nom))
+
+    # ------------------------------------------------------------ contrat signe : dossier du client
+    def _archiver_contrat_signe(self):
+        """Contrat signe en ligne : son PDF signe est range dans le dossier du client (fiche client, et
+        application Documents si elle est installee). Ne bloque jamais la signature."""
+        for order in self.filtered(lambda o: o.type_contrat_id and o.signature):
+            try:
+                with self.env.cr.savepoint():
+                    order._ranger_pdf_contrat()
+            except Exception:  # noqa: BLE001 - la signature du client passe avant tout
+                _logger.warning("Contrat %s : PDF signé non rangé dans le dossier du client", order.name,
+                                exc_info=True)
+
+    def _ranger_pdf_contrat(self):
+        self.ensure_one()
+        Attachment = self.env["ir.attachment"].sudo()
+        piece = Attachment.search([("res_model", "=", "sale.order"), ("res_id", "=", self.id),
+                                   ("mimetype", "=", "application/pdf")], order="id desc", limit=1)
+        if not piece:
+            pdf = self.env["ir.actions.report"].sudo().with_context(sale_include_signature=True)._render_qweb_pdf(
+                "sale.action_report_saleorder", self.ids)[0]
+            piece = Attachment.create({"name": "%s.pdf" % self.name, "raw": pdf, "mimetype": "application/pdf",
+                                       "res_model": "sale.order", "res_id": self.id})
+        client = self.partner_id.commercial_partner_id
+        nom = self.env._("Contrat %(numero)s (%(type)s) signé.pdf", numero=self.name, type=self.type_contrat_id.name)
+        copie = piece.copy({"name": nom, "res_model": "res.partner", "res_id": client.id})
+        client.sudo().message_post(
+            body=Markup("<p>%s</p>") % self.env._("Contrat %(numero)s (%(type)s) signé en ligne par %(signataire)s.",
+                                                  numero=self.name, type=self.type_contrat_id.name,
+                                                  signataire=self.signed_by or client.name),
+            attachment_ids=copie.ids, message_type="comment", subtype_xmlid="mail.mt_note")
+        if "documents.document" in self.env:
+            self._ranger_dans_documents(client, nom, piece)
+
+    def _ranger_dans_documents(self, client, nom, piece):
+        """Application Documents (Enterprise) : dossier « Contrats clients », document relie au client."""
+        Document = self.env["documents.document"].sudo()
+        nom_dossier = self.env._("Contrats clients")
+        valeurs = {"name": nom, "datas": piece.datas, "mimetype": "application/pdf", "partner_id": client.id,
+                   "res_model": "res.partner", "res_id": client.id}
+        if "documents.folder" in self.env:   # anciennes versions de Documents
+            Dossier = self.env["documents.folder"].sudo()
+            dossier = Dossier.search([("name", "=", nom_dossier)], limit=1) or Dossier.create({"name": nom_dossier})
+        else:                                 # Documents 18+ : un dossier est un document de type « folder »
+            dossier = Document.search([("type", "=", "folder"), ("name", "=", nom_dossier)], limit=1) \
+                or Document.create({"name": nom_dossier, "type": "folder"})
+        valeurs["folder_id"] = dossier.id
+        return Document.create({cle: val for cle, val in valeurs.items() if cle in Document._fields})
 
     @api.model
     def _contrat_cases_modele(self, produits):

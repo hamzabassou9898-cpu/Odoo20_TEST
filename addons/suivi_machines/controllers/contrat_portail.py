@@ -35,3 +35,15 @@ class ContratPortail(CustomerPortal):
         except UserError as erreur:
             return {"error": str(erreur)}
         return {"force_refresh": True, "redirect_url": order_sudo.get_portal_url(anchor="contrat_monroy")}
+
+    @http.route()
+    def portal_quote_accept(self, order_id, access_token=None, name=None, signature=None):
+        """Contrat signe en ligne : le PDF signe est range dans le dossier du client."""
+        resultat = super().portal_quote_accept(order_id, access_token=access_token, name=name, signature=signature)
+        if isinstance(resultat, dict) and not resultat.get("error"):
+            try:
+                order_sudo = self._contrat_du_client(order_id, access_token or request.httprequest.args.get("access_token"))
+            except (AccessError, MissingError):
+                return resultat
+            order_sudo._archiver_contrat_signe()
+        return resultat

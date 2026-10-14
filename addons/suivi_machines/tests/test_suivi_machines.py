@@ -781,3 +781,30 @@ class TestContratEnLigne(HttpCase):
         self.assertNotIn("Compléter le contrat", self.url_open(so.get_portal_url()).text)
         with self.assertRaises(UserError):
             so._contrat_completer_par_client({"caution_nom": "Autre"})
+
+    def test_contrat_signe_range_dans_le_dossier_du_client(self):
+        """Le client signe en ligne : le contrat signé (PDF) va dans sa fiche, et dans Documents si installé."""
+        client = self.env["res.partner"].create({"name": "Café Signature", "is_company": True,
+                                                 "email": "cafe@exemple.ca", "ref": "MON999"})
+        categ = self.env["product.category"].create({"name": "Machines (signature)", "suivi_machine": True})
+        produit = self.env["product.product"].create({"name": "Machine signature", "categ_id": categ.id,
+                                                      "is_storable": True, "tracking": "serial"})
+        so = self.env["sale.order"].create({
+            "partner_id": client.id, "type_contrat_id": self.env.ref("suivi_machines.type_contrat_convention").id,
+            "date_debut_location": PERIODE_TEST[0], "date_fin_location": PERIODE_TEST[1],
+            "order_line": [(0, 0, {"product_id": produit.id, "product_uom_qty": 1, "price_unit": 100})]})
+        so.action_quotation_sent()
+        jeton = so._portal_ensure_token()
+        signature = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+        resultat = self.make_jsonrpc_request("/my/orders/%s/accept?access_token=%s" % (so.id, jeton),
+                                             {"name": "Richard Filion", "signature": signature})
+        self.assertFalse(resultat.get("error"), resultat)
+        so.invalidate_recordset()
+        self.assertEqual(so.state, "sale", "contrat signé = confirmé")
+        pieces = self.env["ir.attachment"].search([("res_model", "=", "res.partner"), ("res_id", "=", client.id)])
+        self.assertTrue(pieces.filtered(lambda a: so.name in a.name and a.name.endswith("signé.pdf")),
+                        "le contrat signé est dans la fiche du client")
+        self.assertTrue(client.message_ids.filtered(lambda m: "signé en ligne par Richard Filion" in (m.body or "")))
+        if "documents.document" in self.env:
+            documents = self.env["documents.document"].search([("partner_id", "=", client.id)])
+            self.assertTrue(documents.filtered(lambda d: so.name in (d.name or "")), "rangé dans Documents")
