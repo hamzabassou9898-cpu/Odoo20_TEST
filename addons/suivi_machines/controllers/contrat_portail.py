@@ -23,19 +23,6 @@ class ContratPortail(CustomerPortal):
             pass
         return request.redirect(order_sudo.get_portal_url(anchor="contrat_monroy"))
 
-    @http.route(["/my/orders/<int:order_id>/caution/signer"], type="jsonrpc", auth="public", website=True)
-    def caution_signer(self, order_id, access_token=None, name=None, signature=None):
-        access_token = access_token or request.httprequest.args.get("access_token")
-        try:
-            order_sudo = self._contrat_du_client(order_id, access_token)
-        except (AccessError, MissingError):
-            return {"error": request.env._("Contrat introuvable.")}
-        try:
-            order_sudo._signer_caution(name, signature)
-        except UserError as erreur:
-            return {"error": str(erreur)}
-        return {"force_refresh": True, "redirect_url": order_sudo.get_portal_url(anchor="contrat_monroy")}
-
     @http.route()
     def portal_quote_accept(self, order_id, access_token=None, name=None, signature=None):
         """Contrat signe en ligne : le PDF signe est range dans le dossier du client."""

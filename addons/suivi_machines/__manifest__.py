@@ -3,7 +3,7 @@
     "name": "Suivi des machines",
     "summary": "Dossier de chaque machine (numéro de série) : interventions, "
                "historique, santé et tableau de bord",
-    "version": "20.0.1.34.0",
+    "version": "20.0.1.35.0",
     "category": "Inventory/Inventory",
     "author": "Volcan",
     "website": "https://volcan.ca/",
@@ -24,6 +24,9 @@
         "views/stock_picking_views.xml",
         "views/menus.xml",
     ],
+    "assets": {
+        "web.assets_frontend": ["suivi_machines/static/src/js/contrat_portail.js"],
+    },
     "post_init_hook": "post_init_hook",
     "installable": True,
 }

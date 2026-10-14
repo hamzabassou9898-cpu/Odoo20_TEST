@@ -63,17 +63,16 @@
                     <group>
                         <group string="Client">
                             <field name="contrat_initiales"/>
+                            <field name="contrat_compagnie" widget="radio" options="{'horizontal': true}"/>
                             <field name="proprietaire_immeuble"/>
                         </group>
-                        <group string="Caution (compagnie)">
+                        <group string="Caution (compagnie)" invisible="contrat_compagnie != 'oui'">
                             <field name="caution_nom"/>
                             <field name="caution_numero"/>
                             <field name="caution_rue"/>
                             <field name="caution_ville"/>
                             <field name="caution_province"/>
-                            <field name="caution_signature" widget="signature" readonly="1"/>
-                            <field name="caution_signe_par" readonly="1"/>
-                            <field name="caution_signe_le" readonly="1"/>
+
                         </group>
                     </group>
                 </page>

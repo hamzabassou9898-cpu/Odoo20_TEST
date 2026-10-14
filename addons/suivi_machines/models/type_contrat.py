@@ -5,6 +5,7 @@ Chaque type regle le comportement du contrat (machine louee ou vendue) et le for
 (clause 8.2 : montant par machine, a la signature puis tous les 12 mois). Les montants se modifient dans
 Ventes > Configuration > Types de contrat, sans programmation.
 """
+import base64
 import logging
 import re
 
@@ -14,6 +15,7 @@ from markupsafe import Markup
 
 from odoo import api, fields, models
 from odoo.exceptions import UserError
+from odoo.tools.image import image_data_uri
 
 _logger = logging.getLogger(__name__)
 
@@ -85,9 +87,10 @@ class SaleOrder(models.Model):
     caution_rue = fields.Char("Caution : rue", copy=False)
     caution_ville = fields.Char("Caution : ville", copy=False)
     caution_province = fields.Char("Caution : province", copy=False)
-    caution_signature = fields.Binary("Signature de la caution", copy=False, attachment=True)
-    caution_signe_par = fields.Char("Caution signée par", copy=False)
-    caution_signe_le = fields.Datetime("Caution signée le", copy=False)
+    contrat_compagnie = fields.Selection(
+        [("oui", "Oui"), ("non", "Non")], "Signe au nom d'une compagnie", copy=False,
+        help="Réponse du client sur sa page : « Oui » = la caution s'applique et elle est signée avec la "
+             "signature du contrat.")
     proprietaire_immeuble = fields.Char("Propriétaire de l'immeuble (nom et adresse)", copy=False)
     forfait_prochaine_date = fields.Date(
         "Prochain forfait annuel", copy=False, tracking=True,
@@ -133,6 +136,11 @@ class SaleOrder(models.Model):
 
         return {
             "blanc": blanc,
+            # Signatures en images (page du client et PDF)
+            "signature_client": image_data_uri(self.signature) if self.signature else "",
+            # Compagnie : la caution est signee avec la signature du contrat
+            "signature_caution": image_data_uri(self.signature) if self.signature and self.contrat_compagnie == "oui"
+                                 else "",
             "modele": type_contrat.modele, "type": type_contrat,
             "proprietaire": self.company_id, "client": client,
             "commerce": self.partner_id if self.partner_id.is_company else client,
@@ -167,8 +175,8 @@ class SaleOrder(models.Model):
         }
 
     # ------------------------------------------------------------ rempli par le client (page du devis)
-    CHAMPS_CLIENT = ("contrat_initiales", "caution_nom", "caution_numero", "caution_rue", "caution_ville",
-                     "caution_province", "proprietaire_immeuble")
+    CHAMPS_CLIENT = ("contrat_initiales", "contrat_compagnie", "caution_nom", "caution_numero", "caution_rue",
+                     "caution_ville", "caution_province", "proprietaire_immeuble")
 
     def _contrat_modifiable_par_client(self):
         """Le client complete son contrat tant qu'il ne l'a pas signe."""
@@ -180,69 +188,87 @@ class SaleOrder(models.Model):
         self.ensure_one()
         if not self._contrat_modifiable_par_client():
             raise UserError(self.env._("Le contrat est déjà signé : il ne peut plus être modifié."))
-        self.write({champ: (valeurs.get(champ) or "").strip()[:150] or False for champ in self.CHAMPS_CLIENT})
-        self.message_post(body=self.env._("Le client a complété le contrat (initiales, caution, propriétaire "
-                                          "de l'immeuble)."))
+        # Enregistre automatiquement pendant que le client remplit les cases du contrat (champs recus seulement)
+        ecriture = {champ: (valeurs.get(champ) or "").strip()[:150] or False
+                    for champ in self.CHAMPS_CLIENT if champ in valeurs}
+        if ecriture.get("contrat_compagnie") not in (None, False, "oui", "non"):
+            ecriture.pop("contrat_compagnie")
+        if ecriture:
+            self.write(ecriture)
 
-    def _signer_caution(self, nom, signature):
-        """Signature de la caution (compagnie), sur la page du client, avant la signature du contrat."""
-        self.ensure_one()
-        if not self._contrat_modifiable_par_client():
-            raise UserError(self.env._("Le contrat est déjà signé : il ne peut plus être modifié."))
-        if not signature:
-            raise UserError(self.env._("La signature est vide."))
-        nom = (nom or "").strip()[:100] or self.caution_nom
-        self.write({"caution_signature": signature, "caution_signe_par": nom,
-                    "caution_signe_le": fields.Datetime.now(), "caution_nom": self.caution_nom or nom})
-        self.message_post(body=self.env._("Caution signée en ligne par %s.", nom))
-
-    # ------------------------------------------------------------ contrat signe : dossier du client
+    # ------------------------------------------------------------ PDF dans le dossier (Documents) du client
     def _archiver_contrat_signe(self):
-        """Contrat signe en ligne : son PDF signe est range dans le dossier du client (fiche client, et
-        application Documents si elle est installee). Ne bloque jamais la signature."""
+        """Contrat signe en ligne : message dans la fiche du client + PDF signe dans ses Documents."""
         for order in self.filtered(lambda o: o.type_contrat_id and o.signature):
+            pdf = order._archiver_pdf_client()
+            if pdf:
+                client = order.partner_id.commercial_partner_id
+                client.sudo().message_post(
+                    body=Markup("<p>%s</p>") % self.env._(
+                        "Contrat %(numero)s (%(type)s) signé en ligne par %(signataire)s.", numero=order.name,
+                        type=order.type_contrat_id.name, signataire=order.signed_by or client.name),
+                    attachment_ids=pdf.ids, message_type="comment", subtype_xmlid="mail.mt_note")
+
+    def _nom_document_client(self):
+        self.ensure_one()
+        if self.type_contrat_id:
+            nom = self.env._("Contrat %(numero)s (%(type)s)", numero=self.name, type=self.type_contrat_id.name)
+            return nom + (self.env._(" signé") if self.signature else "") + ".pdf"
+        if self.type_commande == "location":
+            return self.env._("Contrat de location %s.pdf", self.name)
+        return self.env._("Bon de vente %s.pdf", self.name)
+
+    def _archiver_pdf_client(self):
+        """PDF du bon de vente / de la location / du contrat range dans le profil du client : application
+        Documents si installee, sinon pieces jointes de sa fiche. Mis a jour (pas de doublon). Ne bloque
+        jamais la confirmation ni la signature. Retourne la piece jointe de la fiche client (ou False)."""
+        resultat = self.env["ir.attachment"]
+        for order in self:
             try:
                 with self.env.cr.savepoint():
-                    order._ranger_pdf_contrat()
-            except Exception:  # noqa: BLE001 - la signature du client passe avant tout
-                _logger.warning("Contrat %s : PDF signé non rangé dans le dossier du client", order.name,
-                                exc_info=True)
+                    resultat |= order._ranger_pdf_client()
+            except Exception:  # noqa: BLE001 - la vente passe avant tout
+                _logger.warning("%s : PDF non rangé dans le profil du client", order.name, exc_info=True)
+        return resultat
 
-    def _ranger_pdf_contrat(self):
+    def _ranger_pdf_client(self):
         self.ensure_one()
-        Attachment = self.env["ir.attachment"].sudo()
-        piece = Attachment.search([("res_model", "=", "sale.order"), ("res_id", "=", self.id),
-                                   ("mimetype", "=", "application/pdf")], order="id desc", limit=1)
-        if not piece:
-            pdf = self.env["ir.actions.report"].sudo().with_context(sale_include_signature=True)._render_qweb_pdf(
-                "sale.action_report_saleorder", self.ids)[0]
-            piece = Attachment.create({"name": "%s.pdf" % self.name, "raw": pdf, "mimetype": "application/pdf",
-                                       "res_model": "sale.order", "res_id": self.id})
+        pdf = self.env["ir.actions.report"].sudo().with_context(sale_include_signature=True)._render_qweb_pdf(
+            "sale.action_report_saleorder", self.ids)[0]
         client = self.partner_id.commercial_partner_id
-        nom = self.env._("Contrat %(numero)s (%(type)s) signé.pdf", numero=self.name, type=self.type_contrat_id.name)
-        copie = piece.copy({"name": nom, "res_model": "res.partner", "res_id": client.id})
-        client.sudo().message_post(
-            body=Markup("<p>%s</p>") % self.env._("Contrat %(numero)s (%(type)s) signé en ligne par %(signataire)s.",
-                                                  numero=self.name, type=self.type_contrat_id.name,
-                                                  signataire=self.signed_by or client.name),
-            attachment_ids=copie.ids, message_type="comment", subtype_xmlid="mail.mt_note")
+        nom = self._nom_document_client()
+        Attachment = self.env["ir.attachment"].sudo()
+        piece = Attachment.search([("res_model", "=", "res.partner"), ("res_id", "=", client.id),
+                                   ("name", "=", nom)], limit=1)
+        if piece:
+            piece.raw = pdf
+        else:
+            piece = Attachment.create({"name": nom, "raw": pdf, "mimetype": "application/pdf",
+                                       "res_model": "res.partner", "res_id": client.id})
         if "documents.document" in self.env:
-            self._ranger_dans_documents(client, nom, piece)
+            self._ranger_dans_documents(client, nom, pdf)
+        return piece
 
-    def _ranger_dans_documents(self, client, nom, piece):
-        """Application Documents (Enterprise) : dossier « Contrats clients », document relie au client."""
+    def _ranger_dans_documents(self, client, nom, pdf):
+        """Application Documents : dossier « Contrats et ventes clients », document relie au client (bouton
+        Documents de sa fiche). Champs standards seulement : nom, fichier, client, dossier."""
         Document = self.env["documents.document"].sudo()
-        nom_dossier = self.env._("Contrats clients")
-        valeurs = {"name": nom, "datas": piece.datas, "mimetype": "application/pdf", "partner_id": client.id,
-                   "res_model": "res.partner", "res_id": client.id}
+        nom_dossier = self.env._("Contrats et ventes clients")
         if "documents.folder" in self.env:   # anciennes versions de Documents
             Dossier = self.env["documents.folder"].sudo()
             dossier = Dossier.search([("name", "=", nom_dossier)], limit=1) or Dossier.create({"name": nom_dossier})
         else:                                 # Documents 18+ : un dossier est un document de type « folder »
             dossier = Document.search([("type", "=", "folder"), ("name", "=", nom_dossier)], limit=1) \
                 or Document.create({"name": nom_dossier, "type": "folder"})
-        valeurs["folder_id"] = dossier.id
-        return Document.create({cle: val for cle, val in valeurs.items() if cle in Document._fields})
+        document = Document.search([("partner_id", "=", client.id), ("name", "=", nom),
+                                    ("folder_id", "=", dossier.id)], limit=1)
+        donnees = base64.b64encode(pdf)
+        if document:
+            document.datas = donnees
+        else:
+            document = Document.create({"name": nom, "datas": donnees, "partner_id": client.id,
+                                        "folder_id": dossier.id})
+        return document
 
     @api.model
     def _contrat_cases_modele(self, produits):
@@ -289,6 +315,7 @@ class SaleOrder(models.Model):
 
     def action_confirm(self):
         res = super().action_confirm()
+        self.filtered(lambda o: o.state == "sale")._archiver_pdf_client()
         # Clause 8.2 : forfait paye a la signature (ligne du contrat), puis tous les 12 mois
         aujourdhui = fields.Date.context_today(self)
         for contrat in self.filtered(lambda o: o.state == "sale" and o.forfait_montant > 0

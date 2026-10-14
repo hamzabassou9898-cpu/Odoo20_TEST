@@ -5,6 +5,14 @@
         (sale.order._contrat_valeurs). Imprimes avec le devis (PDF) et affiches sur la page du client, qui signe
         en ligne.
     -->
+    <!-- Blanc rempli par le client : case de saisie DANS le contrat sur sa page, valeur en gras ailleurs -->
+    <template id="contrat_champ">
+        <input t-if="editable" form="contrat_client_form" t-att-name="champ" t-att-value="doc[champ] or ''"
+               t-att-size="taille or 22" t-att-maxlength="150" class="o_contrat_saisie"
+               style="border: none; border-bottom: 1px solid #2f6fd1; background: #f3f7ff; padding: 0 4px; font-weight: bold;"/>
+        <t t-else="" t-out="b(doc[champ])"/>
+    </template>
+
     <template id="contrat_monroy">
         <t t-set="v" t-value="doc._contrat_valeurs()"/>
         <t t-set="b" t-value="v['blanc']"/>
@@ -88,7 +96,7 @@
             <p>6.1 Le client reconnaît que le propriétaire ou l’un de ses représentants autorisés a le droit d’effectuer, aux temps et lieux que le propriétaire jugera nécessaires, des vérifications chez le client afin de s’assurer que le client respecte toutes et chacune des clauses du présent contrat;</p>
             <p>6.2 Plus particulièrement, tout résultat de tests effectués chez le client par le propriétaire ou l’un de ses représentants autorisés, pour s’assurer du respect des clauses 3 et 4 du présent contrat, sera présumé valide à moins que le client n’en conteste juridiquement les résultats.</p>
             <p><strong>6.3 Le client reconnaît que les obligations d’approvisionnement exclusif (clause 3), du maintien de la qualité du produit (clause 4) ainsi que l’obligation de respecter les prix de vente au détail et de participer aux activités promotionnelles (clause 5) constituent des conditions essentielles au présent contrat et que le défaut par le client de respecter l’une de ces obligations, entraînera l’application immédiate de la clause pénale prévue au paragraphe 10 du présent contrat et ce, sans autre avis ni délai.</strong></p>
-            <p style="text-align: right;">Initiales : <t t-out="b(doc.contrat_initiales)"/></p>
+            <p style="text-align: right;">Initiales : <t t-call="suivi_machines.contrat_champ" champ="'contrat_initiales'" taille="6"/></p>
             <p><strong>7. COMMANDES ET LIVRAISONS</strong></p>
             <p>7.1 Les factures soumises au client seront payables en totalité dès leur réception, en argent comptant ou par chèque, lequel pourra être postdaté à une date ne dépassant pas sept (7) jours suivant la date de livraison;</p>
             <p>7.2 Le client devra respecter les minimums de livraison établis de temps à autre par le propriétaire ou son agent autorisé;</p>
@@ -113,7 +121,7 @@
                     </td>
                     <td style="width: 50%; vertical-align: bottom;">
                         <div style="border-bottom: 1px solid #000; min-height: 60px;">
-                            <img t-if="doc.signature and image_data_uri" t-att-src="image_data_uri(doc.signature)"
+                            <img t-if="v['signature_client']" t-att-src="v['signature_client']"
                                  style="max-height: 60px; max-width: 220px;"/>
                         </div>
                         <div>Client</div>
@@ -121,16 +129,24 @@
                 </tr>
             </table>
             <p style="text-align: center; margin-top: 16px;"><strong>CAUTION</strong><br/>(applicable dans le cas d’une compagnie uniquement)</p>
-            <p>Je, soussigné <t t-out="b(doc.caution_nom)"/>, résidant au <t t-out="b(doc.caution_numero)"/>, rue <t t-out="b(doc.caution_rue)"/>, ville de <t t-out="b(doc.caution_ville)"/>, province de <t t-out="b(doc.caution_province)"/>, déclare avoir pris connaissance de le présent contrat et je m’engage à me porter caution personnellement de toutes et chacune des obligations ci-dessus contractées par le client notamment au paiement de la somme due en vertu de la clause pénale et m’engage à cet effet conjointement et solidairement avec le client, renonçant aux bénéfices de division et de discussion.</p>
+            <p t-if="editable" class="text-center o_contrat_compagnie">
+                Signez-vous au nom d’une compagnie ?
+                <label class="ms-2"><input type="radio" form="contrat_client_form" name="contrat_compagnie" value="oui"
+                       class="o_contrat_saisie" t-att-checked="doc.contrat_compagnie == 'oui'"/> Oui</label>
+                <label class="ms-2"><input type="radio" form="contrat_client_form" name="contrat_compagnie" value="non"
+                       class="o_contrat_saisie" t-att-checked="doc.contrat_compagnie == 'non'"/> Non</label>
+                <br/><small class="text-muted">Oui : remplissez la caution ci-dessous ; elle sera signée avec votre
+                signature du contrat (« Accepter et signer »).</small>
+            </p>
+            <p>Je, soussigné <t t-call="suivi_machines.contrat_champ" champ="'caution_nom'" taille="24"/>, résidant au <t t-call="suivi_machines.contrat_champ" champ="'caution_numero'" taille="6"/>, rue <t t-call="suivi_machines.contrat_champ" champ="'caution_rue'" taille="20"/>, ville de <t t-call="suivi_machines.contrat_champ" champ="'caution_ville'" taille="16"/>, province de <t t-call="suivi_machines.contrat_champ" champ="'caution_province'" taille="12"/>, déclare avoir pris connaissance de le présent contrat et je m’engage à me porter caution personnellement de toutes et chacune des obligations ci-dessus contractées par le client notamment au paiement de la somme due en vertu de la clause pénale et m’engage à cet effet conjointement et solidairement avec le client, renonçant aux bénéfices de division et de discussion.</p>
             <div style="margin-top: 16px; width: 50%;">
                 <div style="border-bottom: 1px solid #000; min-height: 50px;">
-                    <img t-if="doc.caution_signature and image_data_uri" t-att-src="image_data_uri(doc.caution_signature)"
+                    <img t-if="v['signature_caution']" t-att-src="v['signature_caution']"
                          style="max-height: 50px; max-width: 220px;"/>
-                    <span t-elif="doc.caution_signe_par" t-out="doc.caution_signe_par" style="font-style: italic;"/>
                 </div>
                 <div>Signature</div>
             </div>
-            <p>PROPRIÉTAIRE DE L’IMMEUBLE (NOM ET ADRESSE) : <t t-out="b(doc.proprietaire_immeuble)"/></p>
+            <p>PROPRIÉTAIRE DE L’IMMEUBLE (NOM ET ADRESSE) : <t t-call="suivi_machines.contrat_champ" champ="'proprietaire_immeuble'" taille="45"/></p>
             <p style="text-align: right; font-size: 10px;">Rév. 01/13</p>
     </template>
 
@@ -206,7 +222,7 @@
             <p>6.1 Le client reconnaît que le propriétaire ou l’un de ses représentants autorisés a le droit d’effectuer, aux temps et lieux que le propriétaire jugera nécessaires, des vérifications chez le client afin de s’assurer que le client respecte toutes et chacune des clauses de la présente convention;</p>
             <p>6.2 Plus particulièrement, tout résultat de tests effectués chez le client par le propriétaire ou l’un de ses représentants autorisés, pour s’assurer du respect des clauses 3 et 4 de la présente convention, sera présumé valide à moins que le client n’en conteste juridiquement les résultats.</p>
             <p><strong>6.3 Le client reconnaît que les obligations d’approvisionnement exclusif (clause 3), du maintien de la qualité du produit (clause 4) ainsi que l’obligation de respecter les prix de vente au détail et de participer aux activités promotionnelles (clause 5) constituent des conditions essentielles à la présente convention et que le défaut par le client de respecter l’une de ces obligations, entraînera l’application immédiate de la clause pénale prévue au paragraphe 10 de la présente convention et ce, sans autre avis ni délai.</strong></p>
-            <p style="text-align: right;">Initiales : <t t-out="b(doc.contrat_initiales)"/></p>
+            <p style="text-align: right;">Initiales : <t t-call="suivi_machines.contrat_champ" champ="'contrat_initiales'" taille="6"/></p>
             <p><strong>7. COMMANDES ET LIVRAISONS</strong></p>
             <p>7.1 Les factures soumises au client seront payables en totalité dès leur réception, en argent comptant ou par chèque, lequel pourra être postdaté à une date ne dépassant pas sept (7) jours suivant la date de livraison;</p>
             <p>7.2 Le client devra respecter les minimums de livraison établis de temps à autre par le propriétaire ou son agent autorisé;</p>
@@ -231,7 +247,7 @@
                     </td>
                     <td style="width: 50%; vertical-align: bottom;">
                         <div style="border-bottom: 1px solid #000; min-height: 60px;">
-                            <img t-if="doc.signature and image_data_uri" t-att-src="image_data_uri(doc.signature)"
+                            <img t-if="v['signature_client']" t-att-src="v['signature_client']"
                                  style="max-height: 60px; max-width: 220px;"/>
                         </div>
                         <div>Client</div>
@@ -239,16 +255,24 @@
                 </tr>
             </table>
             <p style="text-align: center; margin-top: 16px;"><strong>CAUTION</strong><br/>(applicable dans le cas d’une compagnie uniquement)</p>
-            <p>Je, soussigné <t t-out="b(doc.caution_nom)"/>, résidant au <t t-out="b(doc.caution_numero)"/>, rue <t t-out="b(doc.caution_rue)"/>, ville de <t t-out="b(doc.caution_ville)"/>, province de <t t-out="b(doc.caution_province)"/>, déclare avoir pris connaissance de la présente convention et je m’engage à me porter caution personnellement de toutes et chacune des obligations ci-dessus contractées par le client notamment au paiement de la somme due en vertu de la clause pénale et m’engage à cet effet conjointement et solidairement avec le client, renonçant aux bénéfices de division et de discussion.</p>
+            <p t-if="editable" class="text-center o_contrat_compagnie">
+                Signez-vous au nom d’une compagnie ?
+                <label class="ms-2"><input type="radio" form="contrat_client_form" name="contrat_compagnie" value="oui"
+                       class="o_contrat_saisie" t-att-checked="doc.contrat_compagnie == 'oui'"/> Oui</label>
+                <label class="ms-2"><input type="radio" form="contrat_client_form" name="contrat_compagnie" value="non"
+                       class="o_contrat_saisie" t-att-checked="doc.contrat_compagnie == 'non'"/> Non</label>
+                <br/><small class="text-muted">Oui : remplissez la caution ci-dessous ; elle sera signée avec votre
+                signature du contrat (« Accepter et signer »).</small>
+            </p>
+            <p>Je, soussigné <t t-call="suivi_machines.contrat_champ" champ="'caution_nom'" taille="24"/>, résidant au <t t-call="suivi_machines.contrat_champ" champ="'caution_numero'" taille="6"/>, rue <t t-call="suivi_machines.contrat_champ" champ="'caution_rue'" taille="20"/>, ville de <t t-call="suivi_machines.contrat_champ" champ="'caution_ville'" taille="16"/>, province de <t t-call="suivi_machines.contrat_champ" champ="'caution_province'" taille="12"/>, déclare avoir pris connaissance de la présente convention et je m’engage à me porter caution personnellement de toutes et chacune des obligations ci-dessus contractées par le client notamment au paiement de la somme due en vertu de la clause pénale et m’engage à cet effet conjointement et solidairement avec le client, renonçant aux bénéfices de division et de discussion.</p>
             <div style="margin-top: 16px; width: 50%;">
                 <div style="border-bottom: 1px solid #000; min-height: 50px;">
-                    <img t-if="doc.caution_signature and image_data_uri" t-att-src="image_data_uri(doc.caution_signature)"
+                    <img t-if="v['signature_caution']" t-att-src="v['signature_caution']"
                          style="max-height: 50px; max-width: 220px;"/>
-                    <span t-elif="doc.caution_signe_par" t-out="doc.caution_signe_par" style="font-style: italic;"/>
                 </div>
                 <div>Signature</div>
             </div>
-            <p>PROPRIÉTAIRE DE L’IMMEUBLE (NOM ET ADRESSE) : <t t-out="b(doc.proprietaire_immeuble)"/></p>
+            <p>PROPRIÉTAIRE DE L’IMMEUBLE (NOM ET ADRESSE) : <t t-call="suivi_machines.contrat_champ" champ="'proprietaire_immeuble'" taille="45"/></p>
             <p style="text-align: right; font-size: 10px;">Rév. 01/13</p>
     </template>
 
@@ -307,7 +331,7 @@
             <p>6.1 Le client reconnaît que le propriétaire ou l’un de ses représentants autorisés a le droit d’effectuer, aux temps et lieux que le propriétaire jugera nécessaires, des vérifications chez le client afin de s’assurer que le client respecte toutes et chacune des clauses de la présente convention;</p>
             <p>6.2 Plus particulièrement, pour s’assurer du respect des clauses 3 et 4 de la présente convention.</p>
             <p><strong>6.3 Le client reconnaît que les obligations d’approvisionnement exclusif (clause 3), du maintien de la qualité du produit (clause 4) ainsi que l’obligation de respecter les prix de vente au détail et de participer aux activités promotionnelles (clause 5) constituent des conditions essentielles à la présente convention et que le défaut par le client de respecter l’une de ces obligations, entraînera l’application immédiate de la clause pénale prévue au paragraphe 10 de la présente convention et ce, sans autre avis ni délai.</strong></p>
-            <p style="text-align: right;">Initiales : <t t-out="b(doc.contrat_initiales)"/></p>
+            <p style="text-align: right;">Initiales : <t t-call="suivi_machines.contrat_champ" champ="'contrat_initiales'" taille="6"/></p>
             <p><strong>7. COMMANDES ET LIVRAISONS</strong></p>
             <p>7.1 Les factures soumises au client seront payables en totalité dès leur réception, en argent comptant ou par chèque;</p>
             <p>7.2 Le client devra respecter les minimums de livraison établis de temps à autre par le propriétaire ou son agent autorisé;</p>
@@ -332,7 +356,7 @@
                     </td>
                     <td style="width: 50%; vertical-align: bottom;">
                         <div style="border-bottom: 1px solid #000; min-height: 60px;">
-                            <img t-if="doc.signature and image_data_uri" t-att-src="image_data_uri(doc.signature)"
+                            <img t-if="v['signature_client']" t-att-src="v['signature_client']"
                                  style="max-height: 60px; max-width: 220px;"/>
                         </div>
                         <div>Client</div>
@@ -340,16 +364,24 @@
                 </tr>
             </table>
             <p style="text-align: center; margin-top: 16px;"><strong>CAUTION</strong><br/>(applicable dans le cas d’une compagnie uniquement)</p>
-            <p>Je, soussigné <t t-out="b(doc.caution_nom)"/>, résidant au <t t-out="b(doc.caution_numero)"/>, rue <t t-out="b(doc.caution_rue)"/>, ville de <t t-out="b(doc.caution_ville)"/>, province de <t t-out="b(doc.caution_province)"/>, déclare avoir pris connaissance de la présente convention et je m’engage à me porter caution personnellement de toutes et chacune des obligations ci-dessus contractées par le client notamment au paiement de la somme due en vertu de la clause pénale et m’engage à cet effet conjointement et solidairement avec le client, renonçant aux bénéfices de division et de discussion.</p>
+            <p t-if="editable" class="text-center o_contrat_compagnie">
+                Signez-vous au nom d’une compagnie ?
+                <label class="ms-2"><input type="radio" form="contrat_client_form" name="contrat_compagnie" value="oui"
+                       class="o_contrat_saisie" t-att-checked="doc.contrat_compagnie == 'oui'"/> Oui</label>
+                <label class="ms-2"><input type="radio" form="contrat_client_form" name="contrat_compagnie" value="non"
+                       class="o_contrat_saisie" t-att-checked="doc.contrat_compagnie == 'non'"/> Non</label>
+                <br/><small class="text-muted">Oui : remplissez la caution ci-dessous ; elle sera signée avec votre
+                signature du contrat (« Accepter et signer »).</small>
+            </p>
+            <p>Je, soussigné <t t-call="suivi_machines.contrat_champ" champ="'caution_nom'" taille="24"/>, résidant au <t t-call="suivi_machines.contrat_champ" champ="'caution_numero'" taille="6"/>, rue <t t-call="suivi_machines.contrat_champ" champ="'caution_rue'" taille="20"/>, ville de <t t-call="suivi_machines.contrat_champ" champ="'caution_ville'" taille="16"/>, province de <t t-call="suivi_machines.contrat_champ" champ="'caution_province'" taille="12"/>, déclare avoir pris connaissance de la présente convention et je m’engage à me porter caution personnellement de toutes et chacune des obligations ci-dessus contractées par le client notamment au paiement de la somme due en vertu de la clause pénale et m’engage à cet effet conjointement et solidairement avec le client, renonçant aux bénéfices de division et de discussion.</p>
             <div style="margin-top: 16px; width: 50%;">
                 <div style="border-bottom: 1px solid #000; min-height: 50px;">
-                    <img t-if="doc.caution_signature and image_data_uri" t-att-src="image_data_uri(doc.caution_signature)"
+                    <img t-if="v['signature_caution']" t-att-src="v['signature_caution']"
                          style="max-height: 50px; max-width: 220px;"/>
-                    <span t-elif="doc.caution_signe_par" t-out="doc.caution_signe_par" style="font-style: italic;"/>
                 </div>
                 <div>Signature</div>
             </div>
-            <p>PROPRIÉTAIRE DE L’IMMEUBLE (NOM ET ADRESSE) : <t t-out="b(doc.proprietaire_immeuble)"/></p>
+            <p>PROPRIÉTAIRE DE L’IMMEUBLE (NOM ET ADRESSE) : <t t-call="suivi_machines.contrat_champ" champ="'proprietaire_immeuble'" taille="45"/></p>
             <p style="text-align: right; font-size: 10px;">Rév. 10/2016</p>
     </template>
 
@@ -397,7 +429,7 @@
             <p>6.1 Le client reconnaît que le distributeur ou l’un de ses représentants autorisés a le droit d’effectuer, aux temps et lieux que le distributeur jugera nécessaires, des vérifications chez le client afin de s’assurer que le client respecte toutes et chacune des clauses du présent contrat;</p>
             <p>6.2 Plus particulièrement, tout résultat de tests effectués chez le client par le distributeur ou l’un de ses représentants autorisés, pour s’assurer du respect des clauses 3 et 4 du présent contrat, sera présumé valide à moins que le client n’en conteste juridiquement les résultats.</p>
             <p><strong>6.3 Le client reconnaît que les obligations d’approvisionnement exclusif (clause 3), du maintien de la qualité du produit (clause 4) ainsi que l’obligation de respecter les prix de vente au détail et de participer aux activités promotionnelles (clause 5) constituent des conditions essentielles au présent contrat et que le défaut par le client de respecter l’une de ces obligations, entraînera l’application immédiate de la clause pénale prévue au paragraphe 9 du présent contrat et ce, sans autre avis ni délai.</strong></p>
-            <p style="text-align: right;">Initiales : <t t-out="b(doc.contrat_initiales)"/></p>
+            <p style="text-align: right;">Initiales : <t t-call="suivi_machines.contrat_champ" champ="'contrat_initiales'" taille="6"/></p>
             <p><strong>7. COMMANDES ET LIVRAISONS</strong></p>
             <p>7.1 Les factures soumises au client seront payables en totalité dès leur réception, en argent comptant ou par chèque, lequel pourra être postdaté à une date ne dépassant pas sept (7) jours suivant la date de livraison;</p>
             <p>7.2 Le client devra respecter les minimums de livraison établis de temps à autre par le propriétaire ou son agent autorisé;</p>
@@ -419,7 +451,7 @@
                     </td>
                     <td style="width: 50%; vertical-align: bottom;">
                         <div style="border-bottom: 1px solid #000; min-height: 60px;">
-                            <img t-if="doc.signature and image_data_uri" t-att-src="image_data_uri(doc.signature)"
+                            <img t-if="v['signature_client']" t-att-src="v['signature_client']"
                                  style="max-height: 60px; max-width: 220px;"/>
                         </div>
                         <div>Client</div>
@@ -427,16 +459,24 @@
                 </tr>
             </table>
             <p style="text-align: center; margin-top: 16px;"><strong>CAUTION</strong><br/>(applicable dans le cas d’une compagnie uniquement)</p>
-            <p>Je, soussigné <t t-out="b(doc.caution_nom)"/>, résidant au <t t-out="b(doc.caution_numero)"/>, rue <t t-out="b(doc.caution_rue)"/>, ville de <t t-out="b(doc.caution_ville)"/>, province de <t t-out="b(doc.caution_province)"/>, déclare avoir pris connaissance du présent contrat et je m’engage à me porter caution personnellement de toutes et chacune des obligations ci-dessus contractées par le client notamment au paiement de la somme due en vertu de la clause pénale et m’engage à cet effet conjointement et solidairement avec le client, renonçant aux bénéfices de division et de discussion.</p>
+            <p t-if="editable" class="text-center o_contrat_compagnie">
+                Signez-vous au nom d’une compagnie ?
+                <label class="ms-2"><input type="radio" form="contrat_client_form" name="contrat_compagnie" value="oui"
+                       class="o_contrat_saisie" t-att-checked="doc.contrat_compagnie == 'oui'"/> Oui</label>
+                <label class="ms-2"><input type="radio" form="contrat_client_form" name="contrat_compagnie" value="non"
+                       class="o_contrat_saisie" t-att-checked="doc.contrat_compagnie == 'non'"/> Non</label>
+                <br/><small class="text-muted">Oui : remplissez la caution ci-dessous ; elle sera signée avec votre
+                signature du contrat (« Accepter et signer »).</small>
+            </p>
+            <p>Je, soussigné <t t-call="suivi_machines.contrat_champ" champ="'caution_nom'" taille="24"/>, résidant au <t t-call="suivi_machines.contrat_champ" champ="'caution_numero'" taille="6"/>, rue <t t-call="suivi_machines.contrat_champ" champ="'caution_rue'" taille="20"/>, ville de <t t-call="suivi_machines.contrat_champ" champ="'caution_ville'" taille="16"/>, province de <t t-call="suivi_machines.contrat_champ" champ="'caution_province'" taille="12"/>, déclare avoir pris connaissance du présent contrat et je m’engage à me porter caution personnellement de toutes et chacune des obligations ci-dessus contractées par le client notamment au paiement de la somme due en vertu de la clause pénale et m’engage à cet effet conjointement et solidairement avec le client, renonçant aux bénéfices de division et de discussion.</p>
             <div style="margin-top: 16px; width: 50%;">
                 <div style="border-bottom: 1px solid #000; min-height: 50px;">
-                    <img t-if="doc.caution_signature and image_data_uri" t-att-src="image_data_uri(doc.caution_signature)"
+                    <img t-if="v['signature_caution']" t-att-src="v['signature_caution']"
                          style="max-height: 50px; max-width: 220px;"/>
-                    <span t-elif="doc.caution_signe_par" t-out="doc.caution_signe_par" style="font-style: italic;"/>
                 </div>
                 <div>Signature</div>
             </div>
-            <p>PROPRIÉTAIRE DE L’IMMEUBLE (NOM ET ADRESSE) : <t t-out="b(doc.proprietaire_immeuble)"/></p>
+            <p>PROPRIÉTAIRE DE L’IMMEUBLE (NOM ET ADRESSE) : <t t-call="suivi_machines.contrat_champ" champ="'proprietaire_immeuble'" taille="45"/></p>
             <p style="text-align: right; font-size: 10px;">Rév. 12/09</p>
     </template>
 
@@ -455,64 +495,18 @@
         <xpath expr="//section[@id='customer_info']" position="before">
             <section t-if="sale_order.type_contrat_id" id="contrat_monroy" class="p-3 p-lg-4 mt-4 rounded-3 border">
                 <t t-set="doc" t-value="sale_order"/>
+                <t t-set="editable" t-value="sale_order._contrat_modifiable_par_client()"/>
+                <div t-if="editable" class="alert alert-info">
+                    Remplissez les cases bleues du contrat (initiales, compagnie et caution, propriétaire de
+                    l’immeuble) : elles s’enregistrent toutes seules. Ensuite, signez avec <strong>« Accepter et signer »</strong>.
+                </div>
                 <t t-call="suivi_machines.contrat_monroy"/>
-            </section>
-            <section t-if="sale_order.type_contrat_id and sale_order._contrat_modifiable_par_client()"
-                     id="contrat_a_completer" class="p-3 p-lg-4 mt-4 rounded-3 border">
-                <h4>Compléter le contrat</h4>
-                <p class="text-muted">Remplissez ces informations : elles s’ajoutent au contrat. Ensuite, signez le
-                    contrat avec le bouton « Accepter et signer ».</p>
-                <form t-attf-action="/my/orders/#{sale_order.id}/contrat" method="post">
+                <form t-if="editable" id="contrat_client_form" t-attf-action="/my/orders/#{sale_order.id}/contrat"
+                      method="post" class="mt-3">
                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                     <input type="hidden" name="access_token" t-att-value="sale_order.access_token"/>
-                    <div class="row g-2">
-                        <div class="col-6 col-md-3">
-                            <label class="form-label" for="contrat_initiales">Vos initiales</label>
-                            <input class="form-control" id="contrat_initiales" name="contrat_initiales" maxlength="10"
-                                   t-att-value="sale_order.contrat_initiales"/>
-                        </div>
-                    </div>
-                    <h5 class="mt-3">Caution <small class="text-muted">(applicable dans le cas d’une compagnie uniquement)</small></h5>
-                    <div class="row g-2">
-                        <div class="col-12 col-md-6">
-                            <label class="form-label" for="caution_nom">Nom de la caution (je, soussigné)</label>
-                            <input class="form-control" id="caution_nom" name="caution_nom" t-att-value="sale_order.caution_nom"/>
-                        </div>
-                        <div class="col-4 col-md-2">
-                            <label class="form-label" for="caution_numero">Numéro</label>
-                            <input class="form-control" id="caution_numero" name="caution_numero" t-att-value="sale_order.caution_numero"/>
-                        </div>
-                        <div class="col-8 col-md-4">
-                            <label class="form-label" for="caution_rue">Rue</label>
-                            <input class="form-control" id="caution_rue" name="caution_rue" t-att-value="sale_order.caution_rue"/>
-                        </div>
-                        <div class="col-6">
-                            <label class="form-label" for="caution_ville">Ville</label>
-                            <input class="form-control" id="caution_ville" name="caution_ville" t-att-value="sale_order.caution_ville"/>
-                        </div>
-                        <div class="col-6">
-                            <label class="form-label" for="caution_province">Province</label>
-                            <input class="form-control" id="caution_province" name="caution_province" t-att-value="sale_order.caution_province"/>
-                        </div>
-                    </div>
-                    <div class="mt-3">
-                        <label class="form-label" for="proprietaire_immeuble">Propriétaire de l’immeuble (nom et adresse)</label>
-                        <input class="form-control" id="proprietaire_immeuble" name="proprietaire_immeuble"
-                               t-att-value="sale_order.proprietaire_immeuble"/>
-                    </div>
-                    <button type="submit" class="btn btn-primary mt-3">Enregistrer dans le contrat</button>
+                    <noscript><button type="submit" class="btn btn-primary">Enregistrer dans le contrat</button></noscript>
                 </form>
-                <div class="mt-4">
-                    <h5>Signature de la caution</h5>
-                    <div t-if="sale_order.caution_signature" class="alert alert-success mb-0">
-                        Caution signée par <strong t-out="sale_order.caution_signe_par"/>.
-                    </div>
-                    <t t-else="" t-call="portal.signature_form"
-                       call_url="'/my/orders/%s/caution/signer?access_token=%s' % (sale_order.id, sale_order.access_token)"
-                       default_name="sale_order.caution_nom or ''"
-                       mode="'draw'"
-                       send_label="'Signer comme caution'"/>
-                </div>
             </section>
         </xpath>
     </template>

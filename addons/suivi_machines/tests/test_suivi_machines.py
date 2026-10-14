@@ -648,6 +648,16 @@ class TestSuiviMachines(TransactionCase):
         arch = self.env["stock.picking"].get_views([(False, "form")])["views"]["form"]["arch"]
         self.assertIn("machines_sans_serie", arch)
 
+    def test_bon_de_vente_confirme_dans_le_profil_du_client(self):
+        """Chaque bon de vente / location confirmé : son PDF va dans le profil du client (Documents)."""
+        so = self._commande(self.lot_a)
+        pieces = self.env["ir.attachment"].search([("res_model", "=", "res.partner"),
+                                                   ("res_id", "=", self.client.commercial_partner_id.id)])
+        self.assertTrue(pieces.filtered(lambda a: a.name == "Bon de vente %s.pdf" % so.name))
+        if "documents.document" in self.env:
+            self.assertTrue(self.env["documents.document"].search(
+                [("partner_id", "=", self.client.commercial_partner_id.id), ("name", "=", "Bon de vente %s.pdf" % so.name)]))
+
     def test_une_ligne_par_machine(self):
         """« Machine x 2 » : 2 lignes d'une machine, pour choisir le n° de serie de chacune."""
         so = self.env["sale.order"].create({
@@ -752,34 +762,36 @@ class TestContratEnLigne(HttpCase):
         self.assertIn("CLAUSE PÉNALE", reponse.text)
         self.assertIn("HARLAN’S", reponse.text)
         self.assertIn("MON888", reponse.text)
-        # Le client complete lui-meme le contrat (initiales, caution, proprietaire de l'immeuble)
-        self.assertIn("Compléter le contrat", reponse.text)
+        # Le client complete lui-meme le contrat : cases DANS le texte du contrat, enregistrees toutes seules
+        for champ in ("contrat_initiales", "caution_nom", "caution_ville", "proprietaire_immeuble", "contrat_compagnie"):
+            self.assertIn('name="%s"' % champ, reponse.text)
+        self.assertIn('id="contrat_client_form"', reponse.text)
         import re
         csrf = re.search(r'name="csrf_token" value="([^"]+)"', reponse.text).group(1)
         self.url_open("/my/orders/%s/contrat" % so.id, data={
             "csrf_token": csrf, "access_token": so.access_token, "contrat_initiales": "M.G.",
-            "caution_nom": "Marie Gagnon", "caution_numero": "12", "caution_rue": "des Érables",
-            "caution_ville": "Québec", "caution_province": "Québec",
+            "contrat_compagnie": "oui", "caution_nom": "Marie Gagnon", "caution_numero": "12",
+            "caution_rue": "des Érables", "caution_ville": "Québec", "caution_province": "Québec",
             "proprietaire_immeuble": "Immeubles du Port inc., 1 rue du Quai"})
         so.invalidate_recordset()
-        self.assertEqual((so.contrat_initiales, so.caution_nom, so.caution_ville), ("M.G.", "Marie Gagnon", "Québec"))
-        # La caution signe en ligne
-        signature = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
-        resultat = self.make_jsonrpc_request(
-            "/my/orders/%s/caution/signer?access_token=%s" % (so.id, so.access_token),
-            {"name": "Marie Gagnon", "signature": signature})
-        self.assertTrue(resultat.get("force_refresh"), resultat)
+        self.assertEqual((so.contrat_initiales, so.contrat_compagnie, so.caution_nom), ("M.G.", "oui", "Marie Gagnon"))
+        # Enregistrement d'une seule case (sauvegarde automatique) : les autres restent
+        self.url_open("/my/orders/%s/contrat" % so.id, data={
+            "csrf_token": csrf, "access_token": so.access_token, "caution_ville": "Lévis"})
         so.invalidate_recordset()
-        self.assertEqual(so.caution_signe_par, "Marie Gagnon")
-        html = self.env["ir.actions.report"]._render_qweb_html("sale.action_report_saleorder", so.ids)[0].decode()
+        self.assertEqual((so.caution_ville, so.caution_nom), ("Lévis", "Marie Gagnon"))
+        # Le client signe (une seule signature) : compagnie = la caution est signee avec
+        signature = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+        so.write({"signature": signature, "signed_by": "Marie Gagnon"})
+        html = " ".join(self.env["ir.actions.report"]._render_qweb_html(
+            "sale.action_report_saleorder", so.ids)[0].decode().split())
         for texte in ("Initiales : <strong>M.G.</strong>", "Je, soussigné <strong>Marie Gagnon</strong>",
                       "rue <strong>des Érables</strong>", "Immeubles du Port inc."):
             self.assertIn(texte, html)
-        # Mauvais lien : refuse ; apres la signature du contrat : plus modifiable
-        self.assertIn("error", self.make_jsonrpc_request(
-            "/my/orders/%s/caution/signer?access_token=faux" % so.id, {"name": "X", "signature": signature}))
-        so.write({"signature": signature, "signed_by": "Client"})
-        self.assertNotIn("Compléter le contrat", self.url_open(so.get_portal_url()).text)
+        self.assertGreaterEqual(html.count("data:image/png;base64"), 2, "signature du client ET de la caution")
+        page = self.url_open(so.get_portal_url()).text
+        self.assertIn("data:image/png;base64", page, "la signature apparaît dans le contrat sur la page")
+        self.assertNotIn('id="contrat_client_form"', self.url_open(so.get_portal_url()).text, "plus modifiable")
         with self.assertRaises(UserError):
             so._contrat_completer_par_client({"caution_nom": "Autre"})
 
@@ -807,7 +819,8 @@ class TestContratEnLigne(HttpCase):
         pieces = self.env["ir.attachment"].search([("res_model", "=", "res.partner"), ("res_id", "=", client.id)])
         self.assertTrue(pieces.filtered(lambda a: so.name in a.name and a.name.endswith("signé.pdf")),
                         "le contrat signé est dans la fiche du client")
+        self.assertEqual(len(pieces.filtered(lambda a: so.name in a.name)), 1, "mis à jour, pas de doublon")
         self.assertTrue(client.message_ids.filtered(lambda m: "signé en ligne par Richard Filion" in (m.body or "")))
         if "documents.document" in self.env:
             documents = self.env["documents.document"].search([("partner_id", "=", client.id)])
-            self.assertTrue(documents.filtered(lambda d: so.name in (d.name or "")), "rangé dans Documents")
+            self.assertEqual(len(documents.filtered(lambda d: so.name in (d.name or ""))), 1, "rangé dans Documents")
