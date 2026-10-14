@@ -837,4 +837,9 @@ class TestContratEnLigne(HttpCase):
         self.assertTrue(client.message_ids.filtered(lambda m: "signé en ligne par Richard Filion" in (m.body or "")))
         if "documents.document" in self.env:
             documents = self.env["documents.document"].search([("partner_id", "=", client.id)])
-            self.assertEqual(len(documents.filtered(lambda d: so.name in (d.name or ""))), 1, "rangé dans Documents")
+            document = documents.filtered(lambda d: so.name in (d.name or ""))
+            self.assertEqual(len(document), 1, "rangé dans Documents (un seul, mis à jour à la signature)")
+            self.assertTrue(document.attachment_id.raw, "le PDF est dans le document")
+            self.assertTrue(document.name.endswith("signé.pdf"))
+            if "owner_id" in document._fields:
+                self.assertFalse(document.owner_id.share, "propriétaire interne : visible par le bureau")

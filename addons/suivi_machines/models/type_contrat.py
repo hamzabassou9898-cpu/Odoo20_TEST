@@ -5,7 +5,6 @@ Chaque type regle le comportement du contrat (machine louee ou vendue) et le for
 (clause 8.2 : montant par machine, a la signature puis tous les 12 mois). Les montants se modifient dans
 Ventes > Configuration > Types de contrat, sans programmation.
 """
-import base64
 import logging
 import re
 
@@ -284,12 +283,20 @@ class SaleOrder(models.Model):
                 dossier.access_internal = "edit"
         document = Document.search([("partner_id", "=", client.id), ("name", "in", noms or [nom]),
                                     ("folder_id", "=", dossier.id)], limit=1)
-        donnees = base64.b64encode(pdf)
-        if document:
-            document.write(dict(acces, name=nom, datas=donnees))
+        # Le fichier d'un document est sa piece jointe (attachment_id) : Documents (Odoo 20) n'a plus de
+        # champ « datas » sur le document lui-meme
+        if document and document.attachment_id:
+            document.attachment_id.write({"name": nom, "raw": pdf})
+            document.write(dict(acces, name=nom))
         else:
-            document = Document.create(dict(acces, name=nom, datas=donnees, partner_id=client.id,
-                                            folder_id=dossier.id))
+            fichier = self.env["ir.attachment"].sudo().create({"name": nom, "raw": pdf,
+                                                               "mimetype": "application/pdf"})
+            valeurs = dict(acces, name=nom, attachment_id=fichier.id, partner_id=client.id,
+                           folder_id=dossier.id)
+            if document:
+                document.write(valeurs)
+            else:
+                document = Document.create(valeurs)
         return document
 
     @api.model
