@@ -338,7 +338,12 @@
                   decoration-muted="state in ('done', 'cancel')">
                 <field name="scheduled_date" string="Prévu le"/>
                 <field name="name" string="Référence"/>
-                <field name="picking_type_id" string="Type" optional="show"/>
+                <!-- Etiquette claire : Livraison (vert) / Ramassage (orange) -->
+                <field name="type_tournee" string="Type" widget="badge" width="110px"
+                       decoration-success="type_tournee == 'livraison'"
+                       decoration-warning="type_tournee == 'ramassage'"
+                       decoration-muted="type_tournee == 'autre'"/>
+                <field name="picking_type_id" string="Opération" optional="hide"/>
                 <field name="partner_id" string="Client"/>
                 <field name="route" string="Route"/>
                 <field name="livreur_id" widget="many2one_avatar_user"/>
@@ -418,7 +423,8 @@
                     <filter name="grp_livreur" string="Technicien" context="{'group_by': 'livreur_id'}"/>
                     <filter name="grp_jour" string="Jour" context="{'group_by': 'scheduled_date:day'}"/>
                     <filter name="grp_route" string="Route" context="{'group_by': 'route'}"/>
-                    <filter name="grp_type" string="Type" context="{'group_by': 'picking_type_id'}"/>
+                    <filter name="grp_tournee" string="Livraison / ramassage" context="{'group_by': 'type_tournee'}"/>
+                    <filter name="grp_type" string="Opération" context="{'group_by': 'picking_type_id'}"/>
                 </group>
             </search>
         </field>

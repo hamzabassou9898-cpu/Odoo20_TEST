@@ -85,6 +85,9 @@ class TestPilotage(TransactionCase):
         vue = self.env.ref("suivi_machines_pilotage.view_pilotage_transfert_search")
         recherche = self.env["stock.picking"].get_views([(vue.id, "search")])
         self.assertIn("ramassees_mois", recherche["views"]["search"]["arch"])
+        liste = self.env["stock.picking"].get_views(
+            [(self.env.ref("suivi_machines_pilotage.view_pilotage_transfert_list").id, "list")])
+        self.assertIn('name="type_tournee"', liste["views"]["list"]["arch"], "étiquette Livraison / Ramassage")
         # Toutes les livraisons, pas seulement les machines : un accessoire livre compte aussi
         self.assertEqual(ind.action_ouvrir()["domain"], [])
         self.assertEqual(ind.action_ouvrir_livrees()["domain"], [])
