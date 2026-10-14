@@ -614,7 +614,10 @@ class TestTicketMachine(TransactionCase):
         self.assertFalse(self.env["sale.order"]._cron_tickets_reprise(), "pas de doublon")
         etape = self.env["helpdesk.stage"].search([("name", "ilike", "reprise")], limit=1) \
             or self.env["helpdesk.stage"].create({"name": "Reprise de machine"})
+        tech = self._tech("chauffeur_reprise_test")
+        ticket.user_id = tech
         retour = self.env["stock.picking"].browse(ticket.action_ramassage()["res_id"])
+        self.assertEqual(retour.livreur_id, tech, "le technicien du ticket fait le ramassage")
         self.assertEqual(ticket.stage_id, etape)
         self.assertEqual(retour.move_ids.move_line_ids.lot_id, lots, "un seul retour, chaque machine avec SON n°")
         machines = retour.move_ids.filtered("machine_lot_id")
@@ -1084,6 +1087,31 @@ class TestTicketMachine(TransactionCase):
                              "stage_id": nouveau.id, "user_id": tech.id})
         self.assertEqual(commande.stage_id, nouveau, "pas d'étape propre : on ne touche pas")
 
+
+    def test_echange_machine_installee_sans_stock(self):
+        """Machine installée chez le client sans mouvement de stock (saisie à la main) : l'échange part
+        de l'emplacement Clients au lieu de planter sur un emplacement vide."""
+        ancienne = self.env["stock.lot"].create({"name": "ECH-MAIN-1", "product_id": self.produit.id})
+        self.env["machine.intervention"].create({
+            "lot_id": ancienne.id, "type": "installation", "state": "fait", "partner_id": self.commerce.id,
+            "date": fields.Datetime.now() - relativedelta(months=2)})
+        self.assertEqual((ancienne.machine_client_id, ancienne.location_id), (self.commerce, ancienne.location_id.browse()))
+        nouvelle = self.env["stock.lot"].create({"name": "ECH-MAIN-2", "product_id": self.produit.id})
+        self.env["stock.quant"]._update_available_quantity(
+            self.produit, self.env.ref("stock.stock_location_stock"), 1, lot_id=nouvelle)
+        ticket = self.env["helpdesk.ticket"].create({
+            "name": "Échange machine saisie", "partner_id": self.commerce.id, "type_demande": "remplacement",
+            "lot_id": ancienne.id, "user_id": self.env.user.id, "lot_remplacement_id": nouvelle.id})
+        ticket.action_echanger_machine()
+        retour, livraison = ticket.echange_retour_id, ticket.echange_livraison_id
+        self.assertEqual(retour.location_id.usage, "customer")
+        self.assertEqual(livraison.location_dest_id, retour.location_id)
+        for pk in retour | livraison:
+            pk.move_ids.picked = True
+        livraison.with_context(skip_sms=True).button_validate()
+        self.assertEqual((retour.state, livraison.state), ("done", "done"))
+        self.assertEqual(ancienne.machine_statut, "entrepot", "revenue en inventaire")
+        self.assertEqual(nouvelle.machine_client_id, self.commerce)
 
     def test_echange_machine_pas_en_stock(self):
         lot, so, _reprise = self._location_livree("ECH-3")

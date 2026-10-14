@@ -57,7 +57,7 @@ class HelpdeskTicket(models.Model):
         technicien = self._technicien_ticket()
         quand = self.date_planifiee or fields.Datetime.now()
         client = self.commerce_id or self.partner_id or ancienne.machine_client_id
-        chez_client = ancienne.location_id
+        chez_client = self._echange_emplacement_client(ancienne, client)
         entrepot = self.env["stock.warehouse"].search([("company_id", "=", self.env.company.id)], limit=1)
         self._echange_quant_disponible(nouvelle, entrepot.lot_stock_id)
         ligne_vente = self._echange_derniere_livraison().move_id.sale_line_id
@@ -95,6 +95,16 @@ class HelpdeskTicket(models.Model):
             nouvelle=nouvelle.display_name, tech=technicien.name))
         return {"type": "ir.actions.act_window", "res_model": "stock.picking", "res_id": livraison.id,
                 "view_mode": "form", "views": [(False, "form")], "target": "current"}
+
+    @api.model
+    def _echange_emplacement_client(self, lot, client):
+        """Ou est l'ancienne machine : son emplacement client (ou « Location ») ; une machine installee sans
+        mouvement de stock (saisie a la main, reprise de l'historique) part de l'emplacement Clients."""
+        societe = lot.company_id or self.env.company
+        location = societe.rental_loc_id if "rental_loc_id" in societe._fields else False
+        if lot.location_id and (lot.location_id.usage == "customer" or lot.location_id == location):
+            return lot.location_id
+        return client.property_stock_customer or self.env.ref("stock.stock_location_customers")
 
     @api.model
     def _echange_quant_disponible(self, lot, entrepot):

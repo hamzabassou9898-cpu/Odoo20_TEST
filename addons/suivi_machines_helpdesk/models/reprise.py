@@ -124,7 +124,8 @@ class HelpdeskTicket(models.Model):
                          "location_id": source.id, "location_dest_id": destination.id,
                          "partner_id": retour.partner_id.id})
             accessoires.append("%s x %s" % (ligne.qty_delivered, produit.display_name))
-        retour.write({"ticket_assistance_id": self.id})
+        # Le technicien du ticket fait le ramassage : Josef ne le choisit qu'une fois
+        retour.write({"ticket_assistance_id": self.id, "livreur_id": self._technicien_ticket().id or False})
         retour.action_confirm()
         retour.action_assign()
         # Retour depuis le client (pas de reservation) : chaque ligne = la machine de son mouvement
