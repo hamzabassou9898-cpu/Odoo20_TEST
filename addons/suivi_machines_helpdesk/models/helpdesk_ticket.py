@@ -310,6 +310,14 @@ class MachineIntervention(models.Model):
     ticket_id = fields.Many2one("helpdesk.ticket", "Ticket d'assistance", index="btree_not_null",
                                 tracking=True, copy=False)
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        # Machine en entrepot : client du ticket d'origine
+        for vals in vals_list:
+            if not vals.get("partner_id") and vals.get("ticket_id"):
+                vals["partner_id"] = self.env["helpdesk.ticket"].browse(vals["ticket_id"]).partner_id.id or False
+        return super().create(vals_list)
+
     def action_creer_bon_commande(self):
         # Bon de commande des frais : rattache aussi au ticket d'origine
         action = super().action_creer_bon_commande()

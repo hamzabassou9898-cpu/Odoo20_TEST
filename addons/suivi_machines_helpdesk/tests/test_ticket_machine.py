@@ -144,6 +144,39 @@ class TestTicketMachine(TransactionCase):
         self.assertEqual(planifiee.description, "Nettoyage complet")
         self.assertEqual(ticket.stage_id, resolu, "le ticket ne reste pas ouvert")
 
+    def test_entretien_valide_deux_fois_sans_doublon(self):
+        """Meme machine validee deux fois le meme jour (deux tickets) : un seul entretien fait ; la visite
+        planifiee du 2e ticket est annulee."""
+        tech = self._tech("tech_doublon_e")
+        aujourdhui = fields.Date.context_today(self.env.user)
+        tickets = self.env["helpdesk.ticket"].create([{
+            "name": "Entretien %s" % i, "partner_id": self.commerce.id, "lot_id": self.lots[0].id,
+            "type_demande": "entretien", "user_id": tech.id,
+            "date_planifiee": fields.Datetime.now()} for i in (1, 2)])
+        Intervention = self.env["machine.intervention"]
+        domaine = [("lot_id", "=", self.lots[0].id), ("type", "=", "entretien"), ("state", "=", "fait")]
+        avant = Intervention.search_count(domaine)
+        for ticket in tickets:
+            action = ticket.action_valider_entretien()
+            f = Form(self.env[action["res_model"]].with_context(**action["context"]))
+            f.date_entretien = aujourdhui
+            f.save().action_valider()
+        self.assertEqual(Intervention.search_count(domaine), avant + 1, "un seul entretien fait")
+        self.assertFalse(tickets.intervention_ticket_ids.filtered(lambda i: i.state == "planifie"))
+
+    def test_intervention_client_par_defaut(self):
+        """Client de l'intervention : celui chez qui est la machine, sinon le client du ticket."""
+        Intervention = self.env["machine.intervention"]
+        lot = self.lots[0]
+        self.assertTrue(lot.machine_client_id)
+        self.assertEqual(Intervention.create({"lot_id": lot.id}).partner_id, lot.machine_client_id)
+        entrepot = self.env["stock.lot"].create({"name": "SANS-CLIENT-1", "product_id": lot.product_id.id})
+        ticket = self.env["helpdesk.ticket"].create({"name": "Sans client", "partner_id": self.commerce.id})
+        self.assertFalse(entrepot.machine_client_id)
+        interv = Intervention.create({"lot_id": entrepot.id, "ticket_id": ticket.id})
+        self.assertEqual(interv.partner_id, self.commerce)
+        self.assertTrue(interv.route, "la route suit le client")
+
     def test_une_seule_machine_choisie_automatiquement(self):
         f = self._form()
         f.code_client = "TST200"

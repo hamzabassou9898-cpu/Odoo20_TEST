@@ -93,6 +93,10 @@ class HelpdeskTicket(models.Model):
                     [("est_entretien", "=", True), ("lot_id", "=", lot.id),
                      ("date_entretien_prevu", "=", lot.date_prochain_entretien)]):
                 continue
+            # Un ticket d'entretien est deja ouvert pour cette machine : pas un deuxieme
+            if Ticket.search([("est_entretien", "=", True), ("lot_id", "=", lot.id)]).filtered(
+                    lambda t: not t._est_ferme()):
+                continue
             client = lot.machine_client_id
             en_retard = lot.date_prochain_entretien < aujourdhui
             vals = {
@@ -221,11 +225,18 @@ class ValiderEntretien(models.TransientModel):
             "user_id": self.technicien_id.id,
             "description": self.note or ticket.name,
         }
-        # Intervention d'entretien deja planifiee sur ce ticket : on la marque faite (pas de doublon)
-        planifiee = ticket.intervention_ticket_ids.filtered(
+        # Pas de doublon : l'entretien deja valide ce jour-la pour cette machine (autre ticket, double clic)
+        # ou celui deja planifie sur ce ticket est mis a jour au lieu d'en creer un autre
+        deja_fait = self.env["machine.intervention"].search([
+            ("lot_id", "=", lot.id), ("type", "=", "entretien"), ("state", "=", "fait"),
+            ("date", "=", valeurs["date"])], limit=1)
+        prevue = ticket.intervention_ticket_ids.filtered(
             lambda i: i.state == "planifie" and i.type == "entretien" and i.lot_id == lot)[:1]
+        planifiee = deja_fait or prevue
+        if deja_fait and prevue:
+            prevue.state = "annule"   # deja fait par ailleurs : la visite prevue n'a plus lieu d'etre
         if planifiee:
-            planifiee.write(valeurs)
+            planifiee.write(dict(valeurs, ticket_id=planifiee.ticket_id.id or ticket.id))
         else:
             self.env["machine.intervention"].create(dict(
                 valeurs, lot_id=lot.id, ticket_id=ticket.id,

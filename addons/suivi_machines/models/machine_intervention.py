@@ -45,6 +45,9 @@ class MachineIntervention(models.Model):
         for vals in vals_list:
             if vals.get("name", "Nouveau") == "Nouveau":
                 vals["name"] = self.env["ir.sequence"].next_by_code("machine.intervention") or "Nouveau"
+            # Client par defaut : celui chez qui est la machine (colonnes Client et Route jamais vides)
+            if not vals.get("partner_id") and vals.get("lot_id"):
+                vals["partner_id"] = self.env["stock.lot"].browse(vals["lot_id"]).machine_client_id.id or False
         return super().create(vals_list)
 
     @api.depends("partner_id.type", "partner_id.parent_id", "partner_id.street", "partner_id.street2",
