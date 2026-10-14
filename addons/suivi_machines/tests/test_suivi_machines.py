@@ -569,35 +569,44 @@ class TestSuiviMachines(TransactionCase):
         self.assertEqual(so.type_commande, "location")
         arch = self.env["sale.order"].get_views([(False, "form")])["views"]["form"]["arch"]
         self.assertIn("type_contrat_id", arch)
-        self.assertIn("action_voir_forfaits", arch)
+        self.assertIn("forfait_montant", arch)
 
     def test_forfait_annuel_selon_le_contrat(self):
-        """Convention : forfait par machine a la signature, puis tous les 12 mois (tache planifiee)."""
+        """Convention : le forfait est une ligne DU CONTRAT (signee avec lui), prix modifiable ; chaque
+        annee, la ligne de l'annee suivante est ajoutee au meme contrat (tache planifiee)."""
         from dateutil.relativedelta import relativedelta
         convention = self.env.ref("suivi_machines.type_contrat_convention")
         so = self.env["sale.order"].create({
             "partner_id": self.client.id, "type_contrat_id": convention.id,
             "date_debut_location": PERIODE_TEST[0], "date_fin_location": PERIODE_TEST[1],
             "order_line": [(0, 0, {"product_id": self.produit.id, "product_uom_qty": 2})]})
+        forfait = so.order_line.filtered("est_forfait")
+        self.assertEqual((forfait.product_uom_qty, forfait.price_unit), (2, 359.99), "ligne du contrat dès la soumission")
+        self.assertEqual(forfait.product_id, self.env.ref("suivi_machines.produit_forfait_entretien"))
+        # Une machine de plus : la ligne suit ; prix negocie sur le contrat : la ligne suit
+        so.write({"order_line": [(0, 0, {"product_id": self.produit.id, "product_uom_qty": 1})]})
+        self.assertEqual(forfait.product_uom_qty, 3)
+        so.forfait_montant = 300
+        self.assertEqual(forfait.price_unit, 300, "prix modifiable sur le contrat")
+        # Prix change a la main sur la ligne : garde
+        forfait.price_unit = 290
+        so.write({"order_line": [(0, 0, {"product_id": self.produit.id, "product_uom_qty": 1})]})
+        self.assertEqual((forfait.product_uom_qty, forfait.price_unit), (4, 290))
         so.action_confirm()
         aujourdhui = fields.Date.context_today(so)
-        forfait = so.forfait_ids
-        self.assertEqual(len(forfait), 1, "forfait à la signature")
-        self.assertEqual((forfait.order_line.product_uom_qty, forfait.order_line.price_unit), (2, 359.99))
-        self.assertEqual(forfait.amount_untaxed, 719.98)
-        self.assertEqual(forfait.state, "draft", "à confirmer et facturer par le bureau")
-        self.assertEqual(forfait.type_commande, "vente")
-        self.assertTrue(forfait.activity_ids, "le bureau est prévenu")
-        self.assertFalse(forfait.forfait_ids, "un forfait ne crée pas de forfait")
         self.assertEqual(so.forfait_prochaine_date, aujourdhui + relativedelta(months=12))
-        self.assertEqual(so.action_voir_forfaits()["domain"], [("forfait_contrat_id", "=", so.id)])
+        self.assertEqual(len(so.order_line.filtered("est_forfait")), 1)
         # Pas encore l'anniversaire : rien
         self.env["sale.order"]._cron_forfaits_annuels()
-        self.assertEqual(len(so.forfait_ids), 1)
-        # Un an plus tard : nouveau forfait, date reportee de 12 mois
+        self.assertEqual(len(so.order_line.filtered("est_forfait")), 1)
+        # Un an plus tard : ligne de l'annee ajoutee au meme contrat, au prix negocie, a facturer
         so.forfait_prochaine_date = aujourdhui
         self.env["sale.order"]._cron_forfaits_annuels()
-        self.assertEqual(len(so.forfait_ids), 2)
+        lignes = so.order_line.filtered("est_forfait").sorted("id")
+        self.assertEqual(len(lignes), 2)
+        self.assertEqual((lignes[-1].product_uom_qty, lignes[-1].price_unit), (4, 290))
+        self.assertIn("Frais annuels", lignes[-1].name)
+        self.assertTrue(so.activity_ids.filtered(lambda a: "Forfait annuel" in (a.summary or "")))
         self.assertEqual(so.forfait_prochaine_date, aujourdhui + relativedelta(months=12))
         # Location (0 $) et proprietaire : jamais de forfait
         for xmlid in ("type_contrat_location", "type_contrat_proprietaire"):
@@ -606,8 +615,17 @@ class TestSuiviMachines(TransactionCase):
                 "date_debut_location": PERIODE_TEST[0], "date_fin_location": PERIODE_TEST[1],
                 "order_line": [(0, 0, {"product_id": self.produit.id, "product_uom_qty": 1})]})
             autre.action_confirm()
-            self.assertFalse(autre.forfait_ids, xmlid)
+            self.assertFalse(autre.order_line.filtered("est_forfait"), xmlid)
             self.assertFalse(autre.forfait_prochaine_date)
+        # Changer de type sur une soumission : la ligne suit (supprimee si plus de forfait)
+        brouillon = self.env["sale.order"].create({
+            "partner_id": self.client.id, "type_contrat_id": convention.id,
+            "date_debut_location": PERIODE_TEST[0], "date_fin_location": PERIODE_TEST[1],
+            "order_line": [(0, 0, {"product_id": self.produit.id, "product_uom_qty": 1})]})
+        brouillon.type_contrat_id = self.env.ref("suivi_machines.type_contrat_popcorn")
+        self.assertEqual(brouillon.order_line.filtered("est_forfait").price_unit, 279.5)
+        brouillon.type_contrat_id = self.env.ref("suivi_machines.type_contrat_location")
+        self.assertFalse(brouillon.order_line.filtered("est_forfait"))
 
     def test_une_ligne_par_machine(self):
         """« Machine x 2 » : 2 lignes d'une machine, pour choisir le n° de serie de chacune."""

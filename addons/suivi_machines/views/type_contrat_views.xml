@@ -35,23 +35,16 @@
         <field name="model">sale.order</field>
         <field name="inherit_id" ref="suivi_machines.view_order_form_machine_lot"/>
         <field name="arch" type="xml">
-            <div name="button_box" position="inside">
-                <button name="action_voir_forfaits" type="object" class="oe_stat_button" icon="fa-refresh"
-                        invisible="not nb_forfaits">
-                    <field name="nb_forfaits" widget="statinfo" string="Forfaits annuels"/>
-                </button>
-            </div>
             <field name="type_commande" position="before">
-                <field name="type_contrat_id" options="{'no_create': True}" placeholder="Location, convention…"
-                       invisible="forfait_contrat_id"/>
+                <field name="type_contrat_id" options="{'no_create': True}" placeholder="Location, convention…"/>
             </field>
             <field name="type_commande" position="attributes">
                 <attribute name="readonly">type_contrat_id</attribute>
             </field>
             <field name="date_fin_location" position="after">
-                <field name="forfait_montant" invisible="not forfait_montant" string="Forfait annuel / machine"/>
+                <field name="forfait_montant" invisible="not type_contrat_id"
+                       readonly="state not in ('draft', 'sent')"/>
                 <field name="forfait_prochaine_date" invisible="not forfait_montant or state != 'sale'"/>
-                <field name="forfait_contrat_id" invisible="not forfait_contrat_id"/>
             </field>
         </field>
     </record>

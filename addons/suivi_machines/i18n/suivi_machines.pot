@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 20.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-14 13:58+0000\n"
-"PO-Revision-Date: 2026-10-14 13:58+0000\n"
+"POT-Creation-Date: 2026-10-14 14:05+0000\n"
+"PO-Revision-Date: 2026-10-14 14:05+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -116,6 +116,13 @@ msgstr ""
 #. odoo-python
 #: code:addons/suivi_machines/models/machine_intervention_frais.py:0
 msgid "Ajoutez d'abord les frais de l'intervention."
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,help:suivi_machines.field_sale_order__forfait_prochaine_date
+msgid ""
+"Anniversaire de la signature : ce jour-là, Odoo ajoute au contrat la ligne "
+"du forfait de l'année suivante, à facturer."
 msgstr ""
 
 #. module: suivi_machines
@@ -310,24 +317,8 @@ msgstr ""
 
 #. module: suivi_machines
 #. odoo-python
-#: code:addons/suivi_machines/models/type_contrat.py:0
-msgid "Contrat %s : forfait annuel d'entretien."
-msgstr ""
-
-#. module: suivi_machines
-#: model:ir.model.fields,field_description:suivi_machines.field_sale_order__forfait_contrat_id
-msgid "Contrat (forfait)"
-msgstr ""
-
-#. module: suivi_machines
-#. odoo-python
 #: code:addons/suivi_machines/models/vente_numero_serie.py:0
 msgid "Contrat ajusté : ajout de %s."
-msgstr ""
-
-#. module: suivi_machines
-#: model:ir.model.fields,help:suivi_machines.field_sale_order__forfait_contrat_id
-msgid "Contrat dont ce bon de vente facture le forfait annuel d'entretien."
 msgstr ""
 
 #. module: suivi_machines
@@ -428,13 +419,6 @@ msgstr ""
 msgid ""
 "Date du premier entretien des machines livrées. Odoo la garde sur la fiche "
 "de chaque machine et prévient le bureau un mois avant."
-msgstr ""
-
-#. module: suivi_machines
-#: model:ir.model.fields,help:suivi_machines.field_sale_order__forfait_prochaine_date
-msgid ""
-"Date du prochain forfait annuel d'entretien (anniversaire de la signature). "
-"Odoo prépare le bon de vente ce jour-là."
 msgstr ""
 
 #. module: suivi_machines
@@ -628,14 +612,20 @@ msgid "Followers (Partners)"
 msgstr ""
 
 #. module: suivi_machines
-#. odoo-python
-#: code:addons/suivi_machines/models/type_contrat.py:0
-msgid "Forfait annuel %(forfait)s préparé : %(nb)s machine(s) × %(montant)s."
+#: model:ir.model.fields,field_description:suivi_machines.field_sale_order_line__est_forfait
+msgid "Forfait annuel"
 msgstr ""
 
 #. module: suivi_machines
-#: model_terms:ir.ui.view,arch_db:suivi_machines.view_order_form_type_contrat
+#: model:ir.model.fields,field_description:suivi_machines.field_sale_order__forfait_montant
 msgid "Forfait annuel / machine"
+msgstr ""
+
+#. module: suivi_machines
+#. odoo-python
+#: code:addons/suivi_machines/models/type_contrat.py:0
+msgid ""
+"Forfait annuel ajouté au contrat : %(nb)s machine(s) × %(prix)s, à facturer."
 msgstr ""
 
 #. module: suivi_machines
@@ -645,7 +635,6 @@ msgid "Forfait annuel du %s : aucune machine chez le client, rien à facturer."
 msgstr ""
 
 #. module: suivi_machines
-#: model:ir.model.fields,field_description:suivi_machines.field_sale_order__forfait_montant
 #: model:ir.model.fields,field_description:suivi_machines.field_suivi_type_contrat__forfait_montant
 msgid "Forfait annuel par machine"
 msgstr ""
@@ -653,19 +642,7 @@ msgstr ""
 #. module: suivi_machines
 #. odoo-python
 #: code:addons/suivi_machines/models/type_contrat.py:0
-msgid "Forfait annuel à confirmer et facturer"
-msgstr ""
-
-#. module: suivi_machines
-#: model:ir.model.fields,field_description:suivi_machines.field_sale_order__forfait_ids
-#: model_terms:ir.ui.view,arch_db:suivi_machines.view_order_form_type_contrat
-msgid "Forfaits annuels"
-msgstr ""
-
-#. module: suivi_machines
-#. odoo-python
-#: code:addons/suivi_machines/models/type_contrat.py:0
-msgid "Forfaits annuels - %s"
+msgid "Forfait annuel à facturer"
 msgstr ""
 
 #. module: suivi_machines
@@ -692,7 +669,6 @@ msgid ""
 msgstr ""
 
 #. module: suivi_machines
-#: model:ir.model.fields,help:suivi_machines.field_sale_order__forfait_montant
 #: model:ir.model.fields,help:suivi_machines.field_suivi_type_contrat__forfait_montant
 msgid ""
 "Frais annuels d'entretien et de réparations usuelles (clause 8.2) : payés à "
@@ -874,6 +850,14 @@ msgstr ""
 
 #. module: suivi_machines
 #. odoo-python
+#: code:addons/suivi_machines/models/type_contrat.py:0
+msgid ""
+"Le forfait annuel d'entretien a été ajouté au contrat : « Créer une facture "
+"»."
+msgstr ""
+
+#. module: suivi_machines
+#. odoo-python
 #: code:addons/suivi_machines/models/vente_numero_serie.py:0
 msgid "Le n° de série %(lot)s n'appartient pas au produit %(prod)s."
 msgstr ""
@@ -907,6 +891,11 @@ msgstr ""
 msgid ""
 "Les numéros de série des produits de la catégorie « Machines &amp; "
 "équipements » apparaissent ici."
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,help:suivi_machines.field_sale_order_line__est_forfait
+msgid "Ligne du forfait annuel d'entretien du contrat."
 msgstr ""
 
 #. module: suivi_machines
@@ -1122,11 +1111,6 @@ msgid "My Activity Deadline"
 msgstr ""
 
 #. module: suivi_machines
-#: model:ir.model.fields,field_description:suivi_machines.field_sale_order__nb_forfaits
-msgid "Nb forfaits annuels"
-msgstr ""
-
-#. module: suivi_machines
 #: model:ir.model.fields,field_description:suivi_machines.field_stock_lot__nb_interventions
 msgid "Nb interventions"
 msgstr ""
@@ -1258,6 +1242,13 @@ msgstr ""
 #. module: suivi_machines
 #: model:ir.model.fields,field_description:suivi_machines.field_stock_lot__prochain_entretien_fixe
 msgid "Premier entretien prévu"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,help:suivi_machines.field_sale_order__forfait_montant
+msgid ""
+"Prix du forfait annuel d'entretien par machine pour CE contrat : celui du "
+"type de contrat, modifiable (prix négocié). Repris chaque année."
 msgstr ""
 
 #. module: suivi_machines
