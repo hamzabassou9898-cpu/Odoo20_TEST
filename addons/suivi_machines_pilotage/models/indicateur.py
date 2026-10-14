@@ -95,8 +95,9 @@ class PilotageIndicateur(models.Model):
             "livraisons_a_faire": ("stock.picking", transfert + a_faire + livraison),
             "ramassages_a_faire": ("stock.picking", transfert + a_faire + ramassage),
             "sans_livreur": ("stock.picking", transfert + a_faire + [("livreur_id", "=", False)]),
-            "livraisons_faites": ("stock.picking", transfert + livraison + [
-                ("state", "=", "done"), ("date_done", ">=", fields.Datetime.to_datetime(b["debut_mois"]))]),
+            # Toutes les livraisons ET tous les ramassages termines ce mois (une etiquette chacun)
+            "livraisons_faites": ("stock.picking", self._fait_ce_mois(b) + [
+                ("type_tournee", "in", ("livraison", "ramassage"))]),
             "bris_mois": ("machine.intervention", [("type", "=", "bris"), ("state", "!=", "annule"),
                                                    ("date", ">=", fields.Datetime.to_datetime(b["debut_mois"]))]),
             "machines_probleme": ("stock.lot", [("est_machine", "=", True),
@@ -109,6 +110,36 @@ class PilotageIndicateur(models.Model):
                                                    ("statut_sage", "=", "a_transferer")]),
             "facturer_sage": ("machine.intervention", [("etat_facturation", "=", "bon_cree")]),
         }
+
+    @api.model
+    def _fait_ce_mois(self, b=None):
+        b = b or self._bornes()
+        return [("state", "=", "done"), ("date_done", ">=", fields.Datetime.to_datetime(b["debut_mois"]))]
+
+    @api.model
+    def _parts_transferts_faits(self):
+        """Carte « Livraisons & ramassages faits ce mois » : TOUTES les livraisons et tous les ramassages
+        (machines, accessoires, locations), genre -> domaine."""
+        base = self._fait_ce_mois()
+        return {"livraison": base + [("type_tournee", "=", "livraison")],
+                "ramassage": base + [("type_tournee", "=", "ramassage")]}
+
+    def action_ouvrir_livrees(self):
+        """Etiquette « Livraison » : les livraisons de machines faites ce mois."""
+        return self._action_pour_code_filtre("livrees_mois", self.env._("Livraisons faites ce mois"))
+
+    def action_ouvrir_ramassees(self):
+        """Etiquette « Ramassage » : les ramassages de machines faits ce mois."""
+        return self._action_pour_code_filtre("ramassees_mois", self.env._("Ramassages faits ce mois"))
+
+    @api.model
+    def _action_pour_code_filtre(self, filtre, nom):
+        action = self.env["ir.actions.act_window"]._for_xml_id("suivi_machines_pilotage.action_pilotage_transferts")
+        # Tous les transferts (pas seulement ceux des machines)
+        action.update({"context": {"search_default_" + filtre: 1}, "name": nom, "display_name": nom,
+                       "domain": []})
+        action.pop("help", None)
+        return action
 
     @api.model
     def _parts_reparation(self, genre=None):
@@ -200,6 +231,12 @@ class PilotageIndicateur(models.Model):
                                        [self.env._("Réparation"), reparations, "danger", "reparations"],
                                        [self.env._("Machine à remplacer"), remplacements, "warning",
                                         "remplacements"]]
+            elif ind.code == "livraisons_faites" and ind.valeur:
+                Picking = self.env["stock.picking"]
+                parts = self._parts_transferts_faits()
+                ind.repartition = [
+                    [self.env._("Livraison"), Picking.search_count(parts["livraison"]), "success", "livrees"],
+                    [self.env._("Ramassage"), Picking.search_count(parts["ramassage"]), "warning", "ramassees"]]
             devise = self.env.company.currency_id
             if model == "machine.intervention" and ind.code in ("a_facturer", "facturer_sage"):
                 total = sum(Model.search(domaine).mapped("montant_frais"))
@@ -229,7 +266,7 @@ class PilotageIndicateur(models.Model):
         "livraisons_a_faire": ("suivi_machines_pilotage.action_pilotage_transferts", "livraisons_a_faire"),
         "ramassages_a_faire": ("suivi_machines_pilotage.action_pilotage_transferts", "ramassages_a_faire"),
         "sans_livreur": ("suivi_machines_pilotage.action_pilotage_transferts", "sans_livreur"),
-        "livraisons_faites": ("suivi_machines_pilotage.action_pilotage_transferts", "livrees_mois"),
+        "livraisons_faites": ("suivi_machines_pilotage.action_pilotage_transferts", ("livrees_mois", "ramassees_mois")),
         "bris_mois": ("suivi_machines_pilotage.action_pilotage_bris", "ce_mois"),
         "machines_probleme": ("suivi_machines_pilotage.action_pilotage_machines_probleme", None),
         "a_facturer": ("suivi_machines_pilotage.action_pilotage_facturation", "a_facturer"),
@@ -240,7 +277,10 @@ class PilotageIndicateur(models.Model):
 
     def action_ouvrir(self):
         self.ensure_one()
-        return self._action_pour_code(self.code, self.name)
+        action = self._action_pour_code(self.code, self.name)
+        if action and self.code == "livraisons_faites":
+            action["domain"] = []   # toutes les livraisons et tous les ramassages, pas seulement les machines
+        return action
 
     @api.model
     def _action_pour_code(self, code, nom=None):

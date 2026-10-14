@@ -98,11 +98,11 @@
     </record>
     <record id="indicateur_livraisons_faites" model="pilotage.indicateur">
         <field name="code">livraisons_faites</field>
-        <field name="name">Livraisons faites ce mois</field>
+        <field name="name">Livraisons &amp; ramassages faits ce mois</field>
         <field name="section">livraisons</field>
         <field name="sequence">4</field>
         <field name="couleur">success</field>
-        <field name="description">Machines livrées depuis le 1er du mois</field>
+        <field name="description">Livraisons et ramassages terminés depuis le 1er du mois</field>
     </record>
     <record id="indicateur_tickets_nouveaux" model="pilotage.indicateur">
         <field name="code">tickets_nouveaux</field>

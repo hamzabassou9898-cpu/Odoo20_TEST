@@ -37,6 +37,15 @@
                                             t-attf-class="badge rounded-pill border-0 text-bg-{{r[2]}}">
                                         <t t-out="r[0]"/> : <t t-out="r[1]"/>
                                     </button>
+                                    <!-- Livraisons & ramassages faits : clic = la liste du mois -->
+                                    <button t-elif="r[3] == 'livrees'" name="action_ouvrir_livrees" type="object"
+                                            t-attf-class="badge rounded-pill border-0 text-bg-{{r[2]}}">
+                                        <t t-out="r[0]"/> : <t t-out="r[1]"/>
+                                    </button>
+                                    <button t-elif="r[3] == 'ramassees'" name="action_ouvrir_ramassees" type="object"
+                                            t-attf-class="badge rounded-pill border-0 text-bg-{{r[2]}}">
+                                        <t t-out="r[0]"/> : <t t-out="r[1]"/>
+                                    </button>
                                     <span t-else="" t-attf-class="badge rounded-pill text-bg-{{r[2]}}">
                                         <t t-out="r[0]"/> : <t t-out="r[1]"/>
                                     </span>

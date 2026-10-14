@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 20.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-13 17:54+0000\n"
-"PO-Revision-Date: 2026-10-13 17:54+0000\n"
+"POT-Creation-Date: 2026-10-14 12:08+0000\n"
+"PO-Revision-Date: 2026-10-14 12:08+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -209,6 +209,18 @@ msgid "Aucun entretien à venir"
 msgstr ""
 
 #. module: suivi_machines_pilotage
+#. odoo-javascript
+#: code:addons/suivi_machines_pilotage/static/src/tableau_moderne/tableau_moderne.xml:0
+msgid "Aucun mouvement."
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-javascript
+#: code:addons/suivi_machines_pilotage/static/src/tableau_moderne/tableau_moderne.xml:0
+msgid "Aucun stock."
+msgstr ""
+
+#. module: suivi_machines_pilotage
 #: model:pilotage.indicateur,description:suivi_machines_pilotage.indicateur_entretiens_a_planifier
 msgid "Aucun technicien assigné pour l'instant"
 msgstr ""
@@ -227,6 +239,18 @@ msgstr ""
 #. odoo-python
 #: code:addons/suivi_machines_pilotage/models/donnees_test.py:0
 msgid "Aucune machine (n° de série) ni client trouvé pour créer des tickets."
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-javascript
+#: code:addons/suivi_machines_pilotage/static/src/tableau_moderne/tableau_moderne.xml:0
+msgid "Aucune machine en entrepôt."
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-javascript
+#: code:addons/suivi_machines_pilotage/static/src/tableau_moderne/tableau_moderne.xml:0
+msgid "Aucune machine."
 msgstr ""
 
 #. module: suivi_machines_pilotage
@@ -462,6 +486,12 @@ msgid "Dernier entretien"
 msgstr ""
 
 #. module: suivi_machines_pilotage
+#. odoo-javascript
+#: code:addons/suivi_machines_pilotage/static/src/tableau_moderne/tableau_moderne.xml:0
+msgid "Derniers mouvements de stock"
+msgstr ""
+
+#. module: suivi_machines_pilotage
 #: model:ir.model.fields,field_description:suivi_machines_pilotage.field_pilotage_indicateur__description
 msgid "Description"
 msgstr ""
@@ -476,6 +506,18 @@ msgstr ""
 #: model:ir.model.fields,field_description:suivi_machines_pilotage.field_stock_picking__display_name
 #: model:ir.model.fields,field_description:suivi_machines_pilotage.field_suivi_rappel_veille_mixin__display_name
 msgid "Display Name"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-javascript
+#: code:addons/suivi_machines_pilotage/static/src/tableau_moderne/tableau_moderne.xml:0
+msgid "Disponibles en entrepôt"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-python
+#: code:addons/suivi_machines_pilotage/models/tableau_moderne.py:0
+msgid "Disponibles en entrepôt : %s"
 msgstr ""
 
 #. module: suivi_machines_pilotage
@@ -818,6 +860,8 @@ msgstr ""
 
 #. module: suivi_machines_pilotage
 #. odoo-javascript
+#. odoo-python
+#: code:addons/suivi_machines_pilotage/models/indicateur.py:0
 #: code:addons/suivi_machines_pilotage/static/src/planning/planning.xml:0
 #: model:ir.model.fields.selection,name:suivi_machines_pilotage.selection__portail_tache__type_tache__livraison
 #: model:ir.model.fields.selection,name:suivi_machines_pilotage.selection__stock_picking__type_tournee__livraison
@@ -848,6 +892,11 @@ msgid "Livraisons & ramassages de la semaine"
 msgstr ""
 
 #. module: suivi_machines_pilotage
+#: model:pilotage.indicateur,name:suivi_machines_pilotage.indicateur_livraisons_faites
+msgid "Livraisons & ramassages faits ce mois"
+msgstr ""
+
+#. module: suivi_machines_pilotage
 #. odoo-python
 #: code:addons/suivi_machines_pilotage/models/tableau_moderne.py:0
 msgid "Livraisons & ramassages à faire"
@@ -866,7 +915,13 @@ msgid "Livraisons et ramassages"
 msgstr ""
 
 #. module: suivi_machines_pilotage
-#: model:pilotage.indicateur,name:suivi_machines_pilotage.indicateur_livraisons_faites
+#: model:pilotage.indicateur,description:suivi_machines_pilotage.indicateur_livraisons_faites
+msgid "Livraisons et ramassages terminés depuis le 1er du mois"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-python
+#: code:addons/suivi_machines_pilotage/models/indicateur.py:0
 msgid "Livraisons faites ce mois"
 msgstr ""
 
@@ -913,6 +968,12 @@ msgid "Machine"
 msgstr ""
 
 #. module: suivi_machines_pilotage
+#. odoo-python
+#: code:addons/suivi_machines_pilotage/models/indicateur.py:0
+msgid "Machine à remplacer"
+msgstr ""
+
+#. module: suivi_machines_pilotage
 #: model:ir.model.fields,field_description:suivi_machines_pilotage.field_portail_tache__machines
 #: model:ir.model.fields,field_description:suivi_machines_pilotage.field_stock_picking__machines_tournee
 #: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_livraisons_faites_list
@@ -923,12 +984,13 @@ msgstr ""
 #. module: suivi_machines_pilotage
 #. odoo-python
 #: code:addons/suivi_machines_pilotage/models/tableau_moderne.py:0
-msgid "Machines chez les clients"
+msgid "Machines : %s"
 msgstr ""
 
 #. module: suivi_machines_pilotage
-#: model:pilotage.indicateur,description:suivi_machines_pilotage.indicateur_livraisons_faites
-msgid "Machines livrées depuis le 1er du mois"
+#. odoo-python
+#: code:addons/suivi_machines_pilotage/models/tableau_moderne.py:0
+msgid "Machines chez les clients"
 msgstr ""
 
 #. module: suivi_machines_pilotage
@@ -940,6 +1002,12 @@ msgstr ""
 #: model:ir.actions.act_window,name:suivi_machines_pilotage.action_pilotage_machines_probleme
 #: model:ir.ui.menu,name:suivi_machines_pilotage.menu_pilotage_probleme
 msgid "Machines à problème"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-python
+#: code:addons/suivi_machines_pilotage/models/indicateur.py:0
+msgid "Machines à remplacer — %s"
 msgstr ""
 
 #. module: suivi_machines_pilotage
@@ -990,6 +1058,12 @@ msgstr ""
 #. module: suivi_machines_pilotage
 #: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_lot_search
 msgid "Mois de l'entretien"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-python
+#: code:addons/suivi_machines_pilotage/models/tableau_moderne.py:0
+msgid "Mouvements de stock"
 msgstr ""
 
 #. module: suivi_machines_pilotage
@@ -1056,6 +1130,8 @@ msgid "Parc & activité"
 msgstr ""
 
 #. module: suivi_machines_pilotage
+#. odoo-javascript
+#: code:addons/suivi_machines_pilotage/static/src/tableau_moderne/tableau_moderne.xml:0
 #: model:ir.ui.menu,name:suivi_machines_pilotage.menu_pilotage_parc
 msgid "Parc machines"
 msgstr ""
@@ -1150,6 +1226,12 @@ msgid "Produits"
 msgstr ""
 
 #. module: suivi_machines_pilotage
+#. odoo-python
+#: code:addons/suivi_machines_pilotage/models/tableau_moderne.py:0
+msgid "Produits en rupture de stock"
+msgstr ""
+
+#. module: suivi_machines_pilotage
 #: model:ir.actions.act_window,name:suivi_machines_pilotage.action_pilotage_produits_categorie
 #: model:ir.ui.menu,name:suivi_machines_pilotage.menu_pilotage_produits_categorie
 msgid "Produits par catégorie"
@@ -1167,6 +1249,8 @@ msgstr ""
 
 #. module: suivi_machines_pilotage
 #. odoo-javascript
+#. odoo-python
+#: code:addons/suivi_machines_pilotage/models/indicateur.py:0
 #: code:addons/suivi_machines_pilotage/static/src/planning/planning.xml:0
 #: model:ir.model.fields.selection,name:suivi_machines_pilotage.selection__portail_tache__type_tache__ramassage
 #: model:ir.model.fields.selection,name:suivi_machines_pilotage.selection__stock_picking__type_tournee__ramassage
@@ -1181,9 +1265,20 @@ msgid "Ramassages"
 msgstr ""
 
 #. module: suivi_machines_pilotage
+#. odoo-python
+#: code:addons/suivi_machines_pilotage/models/indicateur.py:0
+msgid "Ramassages faits ce mois"
+msgstr ""
+
+#. module: suivi_machines_pilotage
 #: model:pilotage.indicateur,name:suivi_machines_pilotage.indicateur_ramassages_a_faire
 #: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_transfert_search
 msgid "Ramassages à faire"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_transfert_search
+msgid "Ramassées ce mois"
 msgstr ""
 
 #. module: suivi_machines_pilotage
@@ -1306,6 +1401,12 @@ msgid "Répartition"
 msgstr ""
 
 #. module: suivi_machines_pilotage
+#. odoo-python
+#: code:addons/suivi_machines_pilotage/models/tableau_moderne.py:0
+msgid "Sans catégorie"
+msgstr ""
+
+#. module: suivi_machines_pilotage
 #: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_transfert_search
 #: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_portail_livreurs_search
 msgid "Sans livreur"
@@ -1379,6 +1480,18 @@ msgstr ""
 #: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_appels_search
 #: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_lot_search
 msgid "Statut"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-python
+#: code:addons/suivi_machines_pilotage/models/tableau_moderne.py:0
+msgid "Stock : %s"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-javascript
+#: code:addons/suivi_machines_pilotage/static/src/tableau_moderne/tableau_moderne.xml:0
+msgid "Stock par catégorie"
 msgstr ""
 
 #. module: suivi_machines_pilotage
@@ -1668,6 +1781,12 @@ msgid "client à préciser"
 msgstr ""
 
 #. module: suivi_machines_pilotage
+#. odoo-javascript
+#: code:addons/suivi_machines_pilotage/static/src/tableau_moderne/tableau_moderne.xml:0
+msgid "en rupture →"
+msgstr ""
+
+#. module: suivi_machines_pilotage
 #. odoo-python
 #: code:addons/suivi_machines_pilotage/models/tableau_moderne.py:0
 msgid "est_machine"
@@ -1677,6 +1796,18 @@ msgstr ""
 #. odoo-javascript
 #: code:addons/suivi_machines_pilotage/static/src/tableau_moderne/tableau_moderne.xml:0
 msgid "fait"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-javascript
+#: code:addons/suivi_machines_pilotage/static/src/tableau_moderne/tableau_moderne.xml:0
+msgid "par modèle"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#. odoo-javascript
+#: code:addons/suivi_machines_pilotage/static/src/tableau_moderne/tableau_moderne.xml:0
+msgid "par statut"
 msgstr ""
 
 #. module: suivi_machines_pilotage

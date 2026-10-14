@@ -38,6 +38,77 @@ class TestPilotage(TransactionCase):
         self.assertGreaterEqual(facturer.valeur, 1)
         self.assertIn("Total", facturer.sous_titre)
 
+    def test_livraisons_et_ramassages_faits(self):
+        """Carte « Livraisons & ramassages faits ce mois » : une étiquette par sens, cliquable."""
+        stock = self.env.ref("stock.stock_location_stock")
+        clients = self.env.ref("stock.stock_location_customers")
+        entrepot = self.env["stock.warehouse"].search([("company_id", "=", self.env.company.id)], limit=1)
+        lot = self.env["stock.lot"].create({"name": "PIL-LIV", "product_id": self.produit.id})
+        self.env["stock.quant"]._update_available_quantity(self.produit, stock, 1, lot_id=lot)
+
+        def transfert(type_op, source, dest):
+            pk = self.env["stock.picking"].create({
+                "picking_type_id": type_op.id, "partner_id": self.client.id, "location_id": source.id,
+                "location_dest_id": dest.id, "livreur_id": self.env.user.id,
+                "prochain_entretien": fields.Date.today() + relativedelta(months=12), "frequence_entretien": "12",
+                "move_ids": [(0, 0, {"product_id": self.produit.id, "product_uom_qty": 1,
+                                     "uom_id": self.produit.uom_id.id, "location_id": source.id,
+                                     "location_dest_id": dest.id})]})
+            pk.action_confirm()
+            pk.move_ids.move_line_ids.unlink()
+            self.env["stock.move.line"].create({
+                "move_id": pk.move_ids.id, "picking_id": pk.id, "product_id": self.produit.id, "lot_id": lot.id,
+                "quantity": 1, "location_id": source.id, "location_dest_id": dest.id})
+            pk.move_ids.picked = True
+            pk.button_validate()
+            self.assertEqual(pk.state, "done")
+            return pk
+
+        livraison = transfert(entrepot.out_type_id, stock, clients)
+        ramassage = transfert(entrepot.in_type_id, clients, stock)
+        ind = self._ind("livraisons_faites")
+        ind.invalidate_recordset()
+        self.assertEqual(ind.name, "Livraisons & ramassages faits ce mois")
+        parts = {libelle: (nombre, lien) for libelle, nombre, _c, lien in ind.repartition}
+        self.assertEqual(ind.valeur, parts["Livraison"][0] + parts["Ramassage"][0])
+        self.assertEqual((parts["Livraison"][1], parts["Ramassage"][1]), ("livrees", "ramassees"))
+        Picking = self.env["stock.picking"]
+        self.assertIn(livraison, Picking.search(self.env["pilotage.indicateur"]._parts_transferts_faits()["livraison"]))
+        self.assertIn(ramassage, Picking.search(self.env["pilotage.indicateur"]._parts_transferts_faits()["ramassage"]))
+        self.assertIn("search_default_ramassees_mois", ind.action_ouvrir_ramassees()["context"])
+        self.assertIn("search_default_livrees_mois", ind.action_ouvrir_livrees()["context"])
+        contexte = ind.action_ouvrir()["context"]
+        self.assertTrue(contexte.get("search_default_livrees_mois") and contexte.get("search_default_ramassees_mois"))
+        arch = self.env["pilotage.indicateur"].get_views([(False, "kanban")])["views"]["kanban"]["arch"]
+        self.assertIn("action_ouvrir_ramassees", arch)
+        # Les filtres existent dans la recherche des transferts
+        vue = self.env.ref("suivi_machines_pilotage.view_pilotage_transfert_search")
+        recherche = self.env["stock.picking"].get_views([(vue.id, "search")])
+        self.assertIn("ramassees_mois", recherche["views"]["search"]["arch"])
+        # Toutes les livraisons, pas seulement les machines : un accessoire livre compte aussi
+        self.assertEqual(ind.action_ouvrir()["domain"], [])
+        self.assertEqual(ind.action_ouvrir_livrees()["domain"], [])
+        accessoire = self.env["product.product"].create({"name": "Pompe livrée", "is_storable": True})
+        self.env["stock.quant"]._update_available_quantity(accessoire, stock, 5)
+        pk = self.env["stock.picking"].create({
+            "picking_type_id": entrepot.out_type_id.id, "partner_id": self.client.id, "location_id": stock.id,
+            "location_dest_id": clients.id, "livreur_id": self.env.user.id,
+            "move_ids": [(0, 0, {"product_id": accessoire.id, "product_uom_qty": 2, "uom_id": accessoire.uom_id.id,
+                                 "location_id": stock.id, "location_dest_id": clients.id})]})
+        pk.action_confirm()
+        pk.action_assign()
+        pk.move_ids.picked = True
+        pk.button_validate()
+        self.assertIn(pk, Picking.search(self.env["pilotage.indicateur"]._parts_transferts_faits()["livraison"]))
+        # Location : vers l'emplacement interne « Location » = livraison chez le client
+        societe = self.env.company
+        if "rental_loc_id" in societe._fields:
+            location = societe.rental_loc_id or self.env["stock.location"].create(
+                {"name": "Location test", "usage": "internal", "location_id": stock.location_id.id})
+            societe.rental_loc_id = location
+            self.assertEqual(Picking.new({"location_id": stock.id, "location_dest_id": location.id,
+                                          "company_id": societe.id}).type_tournee, "livraison")
+
     def test_appels_ouverts(self):
         avant = self._ind("appels_ouverts").valeur
         self.env["helpdesk.ticket"].create({"name": "Ne gèle pas", "code_client": "PIL1"})

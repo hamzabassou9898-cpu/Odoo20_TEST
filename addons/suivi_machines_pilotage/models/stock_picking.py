@@ -14,12 +14,19 @@ class StockPicking(models.Model):
     machines_tournee = fields.Char("Machines", compute="_compute_affichage_tournee")
     accessoires_tournee = fields.Char("Accessoires", compute="_compute_affichage_tournee")
 
-    @api.depends("location_id.usage", "location_dest_id.usage")
+    @api.depends("location_id.usage", "location_dest_id.usage", "company_id")
     def _compute_type_tournee(self):
         for picking in self:
-            if picking.location_dest_id.usage == "customer":
+            # Chez le client : emplacement Clients, ou l'emplacement interne « Location » (machines louees)
+            societe = picking.company_id or self.env.company
+            location = societe.rental_loc_id if "rental_loc_id" in societe._fields else self.env["stock.location"]
+
+            def chez_client(emplacement):
+                return emplacement.usage == "customer" or (location and emplacement == location)
+
+            if chez_client(picking.location_dest_id) and not chez_client(picking.location_id):
                 picking.type_tournee = "livraison"
-            elif picking.location_id.usage == "customer":
+            elif chez_client(picking.location_id) and not chez_client(picking.location_dest_id):
                 picking.type_tournee = "ramassage"
             else:
                 picking.type_tournee = "autre"

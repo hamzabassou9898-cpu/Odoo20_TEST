@@ -411,7 +411,9 @@
                         domain="[('scheduled_date', '&lt;', (context_today() + relativedelta(days=8)).strftime('%Y-%m-%d')), ('state', 'not in', ('done', 'cancel'))]"/>
                 <separator/>
                 <filter name="livrees_mois" string="Livrées ce mois"
-                        domain="[('state', '=', 'done'), ('location_dest_id.usage', '=', 'customer'), ('date_done', '&gt;=', context_today().strftime('%Y-%m-01'))]"/>
+                        domain="[('state', '=', 'done'), ('type_tournee', '=', 'livraison'), ('date_done', '&gt;=', context_today().strftime('%Y-%m-01'))]"/>
+                <filter name="ramassees_mois" string="Ramassées ce mois"
+                        domain="[('state', '=', 'done'), ('type_tournee', '=', 'ramassage'), ('date_done', '&gt;=', context_today().strftime('%Y-%m-01'))]"/>
                 <group>
                     <filter name="grp_livreur" string="Technicien" context="{'group_by': 'livreur_id'}"/>
                     <filter name="grp_jour" string="Jour" context="{'group_by': 'scheduled_date:day'}"/>
