@@ -170,8 +170,23 @@ class PortailTache(models.Model):
         """Technicien d'un ticket dans le portail : la personne assignee, sinon celui de la derniere intervention."""
         return SQL("COALESCE(t.user_id, t.technicien_id)")
 
-    def action_ouvrir(self):
+    def _document_a_ouvrir(self):
+        """Ce que Josef ouvre depuis le Planning : le ticket, le bon de livraison ou le bon de retour.
+        Une intervention sans ticket ouvre le dernier ticket de sa machine, sinon son dernier transfert ;
+        l'intervention seulement s'il n'y a ni l'un ni l'autre."""
         self.ensure_one()
         source = self._source()
-        return {"type": "ir.actions.act_window", "res_model": source._name, "res_id": source.id,
+        if source._name != "machine.intervention":
+            return source
+        if source.ticket_id:
+            return source.ticket_id
+        lot = source.lot_id
+        ticket = self.env["helpdesk.ticket"].search([("lot_id", "=", lot.id)], order="id desc", limit=1)
+        transfert = self.env["stock.picking"].search(
+            [("move_line_ids.lot_id", "=", lot.id), ("state", "!=", "cancel")], order="id desc", limit=1)
+        return ticket or transfert or source
+
+    def action_ouvrir(self):
+        document = self._document_a_ouvrir()
+        return {"type": "ir.actions.act_window", "res_model": document._name, "res_id": document.id,
                 "views": [(False, "form")], "target": "current"}

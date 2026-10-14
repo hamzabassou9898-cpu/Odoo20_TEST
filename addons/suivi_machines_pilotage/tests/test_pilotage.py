@@ -54,6 +54,21 @@ class TestPilotage(TransactionCase):
         action = self.env.ref("suivi_machines_pilotage.action_pilotage_appels_assistance").run()
         self.assertEqual(action["res_model"], "helpdesk.ticket")
 
+    def test_planning_ouvre_le_ticket(self):
+        """Planning : une tache d'intervention ouvre le ticket de la machine (jamais l'intervention quand un
+        ticket existe)."""
+        interv = self.env["machine.intervention"].create({
+            "lot_id": self.lot.id, "type": "entretien", "state": "planifie", "partner_id": self.client.id,
+            "user_id": self.env.user.id, "date": fields.Datetime.now()})
+        Tache = self.env["portail.tache"]
+        tache = Tache.search([("intervention_id", "=", interv.id)])
+        self.assertTrue(tache)
+        self.assertEqual(tache.action_ouvrir()["res_model"], "machine.intervention", "rien d'autre a ouvrir")
+        ticket = self.env["helpdesk.ticket"].create({"name": "Entretien machine", "partner_id": self.client.id,
+                                                     "lot_id": self.lot.id})
+        action = tache.action_ouvrir()
+        self.assertEqual((action["res_model"], action["res_id"]), ("helpdesk.ticket", ticket.id))
+
     def test_compteurs(self):
         self.assertGreaterEqual(self._ind("entretien_retard").valeur, 1)
         facturer = self._ind("a_facturer")
