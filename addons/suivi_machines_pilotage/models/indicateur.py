@@ -287,6 +287,18 @@ class PilotageIndicateur(models.Model):
             action["domain"] = []   # toutes les livraisons et tous les ramassages, pas seulement les machines
         return action
 
+    @api.model
+    def action_appels_de_service(self):
+        """Menu « Appels de service » : la vue complete de l'Assistance (colonnes par etape) de l'equipe
+        des appels de service, comme depuis l'application Assistance ; sinon la liste des appels."""
+        if "helpdesk.team" in self.env:
+            Equipe = self.env["helpdesk.team"]
+            equipe = Equipe.browse(self.env["sale.order"]._reglages_reprise().get("equipe") or []).exists() \
+                or Equipe.search([], limit=1)
+            if equipe and hasattr(equipe, "action_view_ticket"):
+                return equipe.action_view_ticket()
+        return self.env["ir.actions.act_window"]._for_xml_id("suivi_machines_pilotage.action_pilotage_appels")
+
     def _action_entretiens_et_reparations(self):
         """Carte d'echeance (en retard, semaine, 30 jours) avec des reparations / machines a remplacer :
         une seule liste de tickets (reparations + tickets d'entretien des machines comptees). Sans

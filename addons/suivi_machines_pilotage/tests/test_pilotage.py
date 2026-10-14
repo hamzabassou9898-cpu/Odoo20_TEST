@@ -43,6 +43,17 @@ class TestPilotage(TransactionCase):
         self.assertEqual(nouveau.type_commande, "location")
         self.assertTrue(nouveau.name.startswith("LOC"), nouveau.name)
 
+    def test_menus_inventaire_et_appels(self):
+        """Inventaire : Parc machines, mouvements de stock et inventaire physique ; Appels de service ouvre
+        la vue de l'Assistance."""
+        self.assertEqual(self.env.ref("suivi_machines_pilotage.menu_pilotage_parc").name, "Inventaire")
+        self.assertEqual(self.env.ref("suivi_machines_pilotage.menu_pilotage_vue_ensemble").name, "Parc machines")
+        actions = self.env.ref("suivi_machines_pilotage.menu_pilotage_parc").child_id.mapped("action")
+        self.assertIn(self.env.ref("stock.stock_move_line_action"), actions)
+        self.assertIn(self.env.ref("stock.action_view_inventory_tree"), actions)
+        action = self.env.ref("suivi_machines_pilotage.action_pilotage_appels_assistance").run()
+        self.assertEqual(action["res_model"], "helpdesk.ticket")
+
     def test_compteurs(self):
         self.assertGreaterEqual(self._ind("entretien_retard").valeur, 1)
         facturer = self._ind("a_facturer")
