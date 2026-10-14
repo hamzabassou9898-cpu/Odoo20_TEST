@@ -57,6 +57,27 @@
                     <field name="prix_detail_775" class="oe_inline"/>
                 </div>
             </field>
+            <xpath expr="//notebook" position="inside">
+                <page string="Contrat (client)" name="contrat_client" invisible="not type_contrat_id">
+                    <p class="text-muted">Rempli par le client sur sa page (lien du devis) avant de signer ; modifiable ici.</p>
+                    <group>
+                        <group string="Client">
+                            <field name="contrat_initiales"/>
+                            <field name="proprietaire_immeuble"/>
+                        </group>
+                        <group string="Caution (compagnie)">
+                            <field name="caution_nom"/>
+                            <field name="caution_numero"/>
+                            <field name="caution_rue"/>
+                            <field name="caution_ville"/>
+                            <field name="caution_province"/>
+                            <field name="caution_signature" widget="signature" readonly="1"/>
+                            <field name="caution_signe_par" readonly="1"/>
+                            <field name="caution_signe_le" readonly="1"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
         </field>
     </record>
 </odoo>

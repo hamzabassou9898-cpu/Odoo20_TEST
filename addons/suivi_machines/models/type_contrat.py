@@ -12,6 +12,7 @@ from dateutil.relativedelta import relativedelta
 from markupsafe import Markup
 
 from odoo import api, fields, models
+from odoo.exceptions import UserError
 
 
 class SuiviTypeContrat(models.Model):
@@ -74,6 +75,17 @@ class SaleOrder(models.Model):
     prix_detail_353 = fields.Float("Prix de détail 353 ml", digits="Product Price", copy=True)
     prix_detail_510 = fields.Float("Prix de détail 510 ml", digits="Product Price", copy=True)
     prix_detail_775 = fields.Float("Prix de détail 775 ml", digits="Product Price", copy=True)
+    # Rempli par le client sur sa page (lien du devis), avant de signer
+    contrat_initiales = fields.Char("Initiales du client", copy=False)
+    caution_nom = fields.Char("Caution : nom", copy=False)
+    caution_numero = fields.Char("Caution : numéro civique", copy=False)
+    caution_rue = fields.Char("Caution : rue", copy=False)
+    caution_ville = fields.Char("Caution : ville", copy=False)
+    caution_province = fields.Char("Caution : province", copy=False)
+    caution_signature = fields.Binary("Signature de la caution", copy=False, attachment=True)
+    caution_signe_par = fields.Char("Caution signée par", copy=False)
+    caution_signe_le = fields.Datetime("Caution signée le", copy=False)
+    proprietaire_immeuble = fields.Char("Propriétaire de l'immeuble (nom et adresse)", copy=False)
     forfait_prochaine_date = fields.Date(
         "Prochain forfait annuel", copy=False, tracking=True,
         help="Anniversaire de la signature : ce jour-là, Odoo ajoute au contrat la ligne du forfait de "
@@ -150,6 +162,36 @@ class SaleOrder(models.Model):
             "signe_ville": self.company_id.city or "", "signe_jour": self.signed_on and self.signed_on.day or "",
             "signe_mois": mois, "signe_annee": self.signed_on and self.signed_on.year or "",
         }
+
+    # ------------------------------------------------------------ rempli par le client (page du devis)
+    CHAMPS_CLIENT = ("contrat_initiales", "caution_nom", "caution_numero", "caution_rue", "caution_ville",
+                     "caution_province", "proprietaire_immeuble")
+
+    def _contrat_modifiable_par_client(self):
+        """Le client complete son contrat tant qu'il ne l'a pas signe."""
+        self.ensure_one()
+        return bool(self.type_contrat_id) and self.state in ("draft", "sent") and not self.signature
+
+    def _contrat_completer_par_client(self, valeurs):
+        """Initiales, caution et proprietaire de l'immeuble saisis par le client sur sa page."""
+        self.ensure_one()
+        if not self._contrat_modifiable_par_client():
+            raise UserError(self.env._("Le contrat est déjà signé : il ne peut plus être modifié."))
+        self.write({champ: (valeurs.get(champ) or "").strip()[:150] or False for champ in self.CHAMPS_CLIENT})
+        self.message_post(body=self.env._("Le client a complété le contrat (initiales, caution, propriétaire "
+                                          "de l'immeuble)."))
+
+    def _signer_caution(self, nom, signature):
+        """Signature de la caution (compagnie), sur la page du client, avant la signature du contrat."""
+        self.ensure_one()
+        if not self._contrat_modifiable_par_client():
+            raise UserError(self.env._("Le contrat est déjà signé : il ne peut plus être modifié."))
+        if not signature:
+            raise UserError(self.env._("La signature est vide."))
+        nom = (nom or "").strip()[:100] or self.caution_nom
+        self.write({"caution_signature": signature, "caution_signe_par": nom,
+                    "caution_signe_le": fields.Datetime.now(), "caution_nom": self.caution_nom or nom})
+        self.message_post(body=self.env._("Caution signée en ligne par %s.", nom))
 
     @api.model
     def _contrat_cases_modele(self, produits):

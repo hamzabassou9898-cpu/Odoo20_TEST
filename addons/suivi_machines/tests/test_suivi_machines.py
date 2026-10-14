@@ -751,3 +751,33 @@ class TestContratEnLigne(HttpCase):
         self.assertIn("CLAUSE PÉNALE", reponse.text)
         self.assertIn("HARLAN’S", reponse.text)
         self.assertIn("MON888", reponse.text)
+        # Le client complete lui-meme le contrat (initiales, caution, proprietaire de l'immeuble)
+        self.assertIn("Compléter le contrat", reponse.text)
+        import re
+        csrf = re.search(r'name="csrf_token" value="([^"]+)"', reponse.text).group(1)
+        self.url_open("/my/orders/%s/contrat" % so.id, data={
+            "csrf_token": csrf, "access_token": so.access_token, "contrat_initiales": "M.G.",
+            "caution_nom": "Marie Gagnon", "caution_numero": "12", "caution_rue": "des Érables",
+            "caution_ville": "Québec", "caution_province": "Québec",
+            "proprietaire_immeuble": "Immeubles du Port inc., 1 rue du Quai"})
+        so.invalidate_recordset()
+        self.assertEqual((so.contrat_initiales, so.caution_nom, so.caution_ville), ("M.G.", "Marie Gagnon", "Québec"))
+        # La caution signe en ligne
+        signature = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+        resultat = self.make_jsonrpc_request(
+            "/my/orders/%s/caution/signer?access_token=%s" % (so.id, so.access_token),
+            {"name": "Marie Gagnon", "signature": signature})
+        self.assertTrue(resultat.get("force_refresh"), resultat)
+        so.invalidate_recordset()
+        self.assertEqual(so.caution_signe_par, "Marie Gagnon")
+        html = self.env["ir.actions.report"]._render_qweb_html("sale.action_report_saleorder", so.ids)[0].decode()
+        for texte in ("Initiales : <strong>M.G.</strong>", "Je, soussigné <strong>Marie Gagnon</strong>",
+                      "rue <strong>des Érables</strong>", "Immeubles du Port inc."):
+            self.assertIn(texte, html)
+        # Mauvais lien : refuse ; apres la signature du contrat : plus modifiable
+        self.assertIn("error", self.make_jsonrpc_request(
+            "/my/orders/%s/caution/signer?access_token=faux" % so.id, {"name": "X", "signature": signature}))
+        so.write({"signature": signature, "signed_by": "Client"})
+        self.assertNotIn("Compléter le contrat", self.url_open(so.get_portal_url()).text)
+        with self.assertRaises(UserError):
+            so._contrat_completer_par_client({"caution_nom": "Autre"})

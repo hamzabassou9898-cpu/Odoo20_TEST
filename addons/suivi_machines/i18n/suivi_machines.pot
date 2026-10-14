@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 20.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-14 14:42+0000\n"
-"PO-Revision-Date: 2026-10-14 14:42+0000\n"
+"POT-Creation-Date: 2026-10-14 14:59+0000\n"
+"PO-Revision-Date: 2026-10-14 14:59+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -123,6 +123,40 @@ msgid ", ce"
 msgstr ""
 
 #. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_texte_convention
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_texte_popcorn
+msgid ""
+", déclare avoir pris connaissance de la présente convention et je m’engage à"
+" me porter caution personnellement de toutes et chacune des obligations ci-"
+"dessus contractées par le client notamment au paiement de la somme due en "
+"vertu de la clause pénale et m’engage à cet effet conjointement et "
+"solidairement avec le client, renonçant aux bénéfices de division et de "
+"discussion."
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_texte_location
+msgid ""
+", déclare avoir pris connaissance de le présent contrat et je m’engage à me "
+"porter caution personnellement de toutes et chacune des obligations ci-"
+"dessus contractées par le client notamment au paiement de la somme due en "
+"vertu de la clause pénale et m’engage à cet effet conjointement et "
+"solidairement avec le client, renonçant aux bénéfices de division et de "
+"discussion."
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_texte_proprietaire
+msgid ""
+", déclare avoir pris connaissance du présent contrat et je m’engage à me "
+"porter caution personnellement de toutes et chacune des obligations ci-"
+"dessus contractées par le client notamment au paiement de la somme due en "
+"vertu de la clause pénale et m’engage à cet effet conjointement et "
+"solidairement avec le client, renonçant aux bénéfices de division et de "
+"discussion."
+msgstr ""
+
+#. module: suivi_machines
 #: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_texte_proprietaire
 msgid ", le propriétaire du congélateur modèle"
 msgstr ""
@@ -145,6 +179,38 @@ msgstr ""
 #: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_texte_popcorn
 msgid ""
 ", le propriétaire permettra au client d’utiliser un de ses équipements."
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_texte_convention
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_texte_location
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_texte_popcorn
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_texte_proprietaire
+msgid ", province de"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_texte_convention
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_texte_location
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_texte_popcorn
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_texte_proprietaire
+msgid ", rue"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_texte_convention
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_texte_location
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_texte_popcorn
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_texte_proprietaire
+msgid ", résidant au"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_texte_convention
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_texte_location
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_texte_popcorn
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_texte_proprietaire
+msgid ", ville de"
 msgstr ""
 
 #. module: suivi_machines
@@ -1248,6 +1314,60 @@ msgid "CONVENTION"
 msgstr ""
 
 #. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_order_form_type_contrat
+msgid "Caution (compagnie)"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_sale_order__caution_nom
+msgid "Caution : nom"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_sale_order__caution_numero
+msgid "Caution : numéro civique"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_sale_order__caution_province
+msgid "Caution : province"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_sale_order__caution_rue
+msgid "Caution : rue"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_sale_order__caution_ville
+msgid "Caution : ville"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.sale_order_portal_content_contrat
+msgid ""
+"Caution <small class=\"text-muted\">(applicable dans le cas d’une compagnie "
+"uniquement)</small>"
+msgstr ""
+
+#. module: suivi_machines
+#. odoo-python
+#: code:addons/suivi_machines/models/type_contrat.py:0
+msgid "Caution signée en ligne par %s."
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_sale_order__caution_signe_le
+msgid "Caution signée le"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_sale_order__caution_signe_par
+#: model_terms:ir.ui.view,arch_db:suivi_machines.sale_order_portal_content_contrat
+msgid "Caution signée par"
+msgstr ""
+
+#. module: suivi_machines
 #: model_terms:ir.ui.view,arch_db:suivi_machines.view_intervention_form
 msgid "Ce qui a été fait, problème constaté, pièces changées..."
 msgstr ""
@@ -1322,6 +1442,7 @@ msgstr ""
 #: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_texte_popcorn
 #: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_texte_proprietaire
 #: model_terms:ir.ui.view,arch_db:suivi_machines.view_intervention_search
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_order_form_type_contrat
 msgid "Client"
 msgstr ""
 
@@ -1378,9 +1499,25 @@ msgid "Company"
 msgstr ""
 
 #. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.sale_order_portal_content_contrat
+msgid "Compléter le contrat"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_order_form_type_contrat
+msgid "Contrat (client)"
+msgstr ""
+
+#. module: suivi_machines
 #. odoo-python
 #: code:addons/suivi_machines/models/vente_numero_serie.py:0
 msgid "Contrat ajusté : ajout de %s."
+msgstr ""
+
+#. module: suivi_machines
+#. odoo-python
+#: code:addons/suivi_machines/controllers/contrat_portail.py:0
+msgid "Contrat introuvable."
 msgstr ""
 
 #. module: suivi_machines
@@ -1582,6 +1719,11 @@ msgstr ""
 #: model:ir.model.fields.selection,name:suivi_machines.selection__stock_lot__machine_statut__en_reparation
 #: model_terms:ir.ui.view,arch_db:suivi_machines.view_lot_search_machine
 msgid "En réparation"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.sale_order_portal_content_contrat
+msgid "Enregistrer dans le contrat"
 msgstr ""
 
 #. module: suivi_machines
@@ -1917,7 +2059,12 @@ msgstr ""
 #: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_texte_location
 #: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_texte_popcorn
 #: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_texte_proprietaire
-msgid "Initiales : ____________"
+msgid "Initiales :"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_sale_order__contrat_initiales
+msgid "Initiales du client"
 msgstr ""
 
 #. module: suivi_machines
@@ -1971,42 +2118,16 @@ msgstr ""
 
 #. module: suivi_machines
 #: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_texte_convention
-#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_texte_popcorn
-msgid ""
-"Je, soussigné ______________________________, résidant au ______, rue "
-"______________________, ville de ______________________, province de "
-"______________________, déclare avoir pris connaissance de la présente "
-"convention et je m’engage à me porter caution personnellement de toutes et "
-"chacune des obligations ci-dessus contractées par le client notamment au "
-"paiement de la somme due en vertu de la clause pénale et m’engage à cet "
-"effet conjointement et solidairement avec le client, renonçant aux bénéfices"
-" de division et de discussion."
-msgstr ""
-
-#. module: suivi_machines
 #: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_texte_location
-msgid ""
-"Je, soussigné ______________________________, résidant au ______, rue "
-"______________________, ville de ______________________, province de "
-"______________________, déclare avoir pris connaissance de le présent "
-"contrat et je m’engage à me porter caution personnellement de toutes et "
-"chacune des obligations ci-dessus contractées par le client notamment au "
-"paiement de la somme due en vertu de la clause pénale et m’engage à cet "
-"effet conjointement et solidairement avec le client, renonçant aux bénéfices"
-" de division et de discussion."
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_texte_popcorn
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_texte_proprietaire
+msgid "Je, soussigné"
 msgstr ""
 
 #. module: suivi_machines
-#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_texte_proprietaire
-msgid ""
-"Je, soussigné ______________________________, résidant au ______, rue "
-"______________________, ville de ______________________, province de "
-"______________________, déclare avoir pris connaissance du présent contrat "
-"et je m’engage à me porter caution personnellement de toutes et chacune des "
-"obligations ci-dessus contractées par le client notamment au paiement de la "
-"somme due en vertu de la clause pénale et m’engage à cet effet conjointement"
-" et solidairement avec le client, renonçant aux bénéfices de division et de "
-"discussion."
+#. odoo-python
+#: code:addons/suivi_machines/models/type_contrat.py:0
+msgid "La signature est vide."
 msgstr ""
 
 #. module: suivi_machines
@@ -2023,6 +2144,14 @@ msgstr ""
 #: model:ir.model.fields,field_description:suivi_machines.field_suivi_machines_planifier_ramassage__write_date
 #: model:ir.model.fields,field_description:suivi_machines.field_suivi_type_contrat__write_date
 msgid "Last Updated on"
+msgstr ""
+
+#. module: suivi_machines
+#. odoo-python
+#: code:addons/suivi_machines/models/type_contrat.py:0
+msgid ""
+"Le client a complété le contrat (initiales, caution, propriétaire de "
+"l'immeuble)."
 msgstr ""
 
 #. module: suivi_machines
@@ -2048,6 +2177,12 @@ msgid ""
 "Le client déclare qu’il a pris connaissance et qu’il comprend la nature et "
 "l’étendue de toutes les clauses du présent contrat incluant la clause pénale"
 " que l’on retrouve au paragraphe 9 et il s’en déclare satisfait;"
+msgstr ""
+
+#. module: suivi_machines
+#. odoo-python
+#: code:addons/suivi_machines/models/type_contrat.py:0
+msgid "Le contrat est déjà signé : il ne peut plus être modifié."
 msgstr ""
 
 #. module: suivi_machines
@@ -2368,6 +2503,11 @@ msgid "Next Activity Type"
 msgstr ""
 
 #. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.sale_order_portal_content_contrat
+msgid "Nom de la caution (je, soussigné)"
+msgstr ""
+
+#. module: suivi_machines
 #: model:ir.model.fields.selection,name:suivi_machines.selection__stock_lot__machine_etat__actif
 msgid "Normal"
 msgstr ""
@@ -2404,6 +2544,7 @@ msgstr ""
 
 #. module: suivi_machines
 #: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__name
+#: model_terms:ir.ui.view,arch_db:suivi_machines.sale_order_portal_content_contrat
 msgid "Numéro"
 msgstr ""
 
@@ -2431,9 +2572,7 @@ msgstr ""
 #: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_texte_location
 #: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_texte_popcorn
 #: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_texte_proprietaire
-msgid ""
-"PROPRIÉTAIRE DE L’IMMEUBLE (NOM ET ADRESSE) : "
-"________________________________________"
+msgid "PROPRIÉTAIRE DE L’IMMEUBLE (NOM ET ADRESSE) :"
 msgstr ""
 
 #. module: suivi_machines
@@ -2558,6 +2697,21 @@ msgid "Propriétaire"
 msgstr ""
 
 #. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_sale_order__proprietaire_immeuble
+msgid "Propriétaire de l'immeuble (nom et adresse)"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.sale_order_portal_content_contrat
+msgid "Propriétaire de l’immeuble (nom et adresse)"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.sale_order_portal_content_contrat
+msgid "Province"
+msgstr ""
+
+#. module: suivi_machines
 #: model:ir.model.fields,help:suivi_machines.field_sale_order__saison
 msgid "Période d'activité indiquée en haut du contrat."
 msgstr ""
@@ -2608,6 +2762,20 @@ msgid "Remplacements"
 msgstr ""
 
 #. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_order_form_type_contrat
+msgid ""
+"Rempli par le client sur sa page (lien du devis) avant de signer ; "
+"modifiable ici."
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.sale_order_portal_content_contrat
+msgid ""
+"Remplissez ces informations : elles s’ajoutent au contrat. Ensuite, signez le\n"
+"                    contrat avec le bouton « Accepter et signer »."
+msgstr ""
+
+#. module: suivi_machines
 #: model:ir.model.fields,field_description:suivi_machines.field_suivi_machines_planifier_ramassage__avec_accessoires
 msgid "Reprendre aussi les accessoires"
 msgstr ""
@@ -2639,6 +2807,11 @@ msgstr ""
 #: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__route
 #: model_terms:ir.ui.view,arch_db:suivi_machines.view_intervention_search
 msgid "Route"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.sale_order_portal_content_contrat
+msgid "Rue"
 msgstr ""
 
 #. module: suivi_machines
@@ -2740,6 +2913,20 @@ msgstr ""
 #. module: suivi_machines
 #: model:ir.model.fields,help:suivi_machines.field_suivi_type_contrat__forfait_produit_id
 msgid "Service utilisé sur le bon de vente du forfait annuel."
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_texte_convention
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_texte_location
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_texte_popcorn
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_texte_proprietaire
+msgid "Signature"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_sale_order__caution_signature
+#: model_terms:ir.ui.view,arch_db:suivi_machines.sale_order_portal_content_contrat
+msgid "Signature de la caution"
 msgstr ""
 
 #. module: suivi_machines
@@ -2950,6 +3137,11 @@ msgid "Vie de la machine"
 msgstr ""
 
 #. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.sale_order_portal_content_contrat
+msgid "Ville"
+msgstr ""
+
+#. module: suivi_machines
 #: model_terms:ir.ui.view,arch_db:suivi_machines.view_lot_form_machine
 msgid "Voir les bris et réparations"
 msgstr ""
@@ -2965,6 +3157,11 @@ msgid "Voir les entretiens faits"
 msgstr ""
 
 #. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.sale_order_portal_content_contrat
+msgid "Vos initiales"
+msgstr ""
+
+#. module: suivi_machines
 #: model:ir.ui.menu,name:suivi_machines.menu_machines_vue_ensemble
 msgid "Vue d'ensemble"
 msgstr ""
@@ -2972,14 +3169,6 @@ msgstr ""
 #. module: suivi_machines
 #: model:ir.actions.act_window,name:suivi_machines.action_vue_ensemble_machines
 msgid "Vue d'ensemble des machines"
-msgstr ""
-
-#. module: suivi_machines
-#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_texte_convention
-#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_texte_location
-#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_texte_popcorn
-#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_texte_proprietaire
-msgid "______________________________<br/>Signature"
 msgstr ""
 
 #. module: suivi_machines
