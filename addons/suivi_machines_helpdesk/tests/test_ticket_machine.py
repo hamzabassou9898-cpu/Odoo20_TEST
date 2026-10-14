@@ -1253,3 +1253,12 @@ class TestTicketMachine(TransactionCase):
         with self.assertRaisesRegex(UserError, "même modèle"):
             remp.action_echanger_machine()
         self.assertNotIn(vendue, ticket.machines_choix_ids.filtered(lambda l: l.machine_statut != "chez_client"))
+
+    def test_etiquette_type_dans_le_kanban(self):
+        """Kanban de l'Assistance : une étiquette de couleur par type de ticket sous le titre."""
+        from lxml import etree
+        arch = etree.fromstring(self.env["helpdesk.ticket"].get_views([(False, "kanban")])["views"]["kanban"]["arch"])
+        badge = arch.xpath("//templates//field[@name='type_demande'][@widget='badge']")
+        self.assertTrue(badge, "étiquette du type sur la carte")
+        for decoration in ("decoration-danger", "decoration-info", "decoration-warning"):
+            self.assertTrue(badge[0].get(decoration), decoration)

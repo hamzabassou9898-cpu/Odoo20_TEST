@@ -280,6 +280,19 @@
             <!-- Champ declare en tete : toujours charge, quelle que soit la structure de la carte -->
             <xpath expr="//kanban" position="inside">
                 <field name="technicien_id"/>
+                <field name="type_demande"/>
+            </xpath>
+            <!-- Etiquette du type de ticket sous le titre : une couleur par type, lisible d'un coup d'oeil -->
+            <xpath expr="(//templates//field[@name='name'])[1]" position="after">
+                <div class="o_type_ticket my-1" invisible="not type_demande">
+                    <field name="type_demande" widget="badge"
+                           decoration-danger="type_demande == 'reparation'"
+                           decoration-info="type_demande == 'entretien'"
+                           decoration-warning="type_demande == 'remplacement'"
+                           decoration-primary="type_demande == 'ramassage'"
+                           decoration-success="type_demande == 'commande'"
+                           decoration-muted="type_demande == 'ajustement'"/>
+                </div>
             </xpath>
             <!-- Dans la carte (templates), pas dans les declarations de champs en tete -->
             <xpath expr="(//templates//field[@name='user_id'])[1]" position="before">
