@@ -87,6 +87,11 @@ class SaleOrder(models.Model):
     caution_rue = fields.Char("Caution : rue", copy=False)
     caution_ville = fields.Char("Caution : ville", copy=False)
     caution_province = fields.Char("Caution : province", copy=False)
+    # Anciens champs (signature separee de la caution, retiree) : gardes pour les bases ou une ancienne
+    # vue les affiche encore ; plus utilises
+    caution_signature = fields.Binary("Ancienne signature de la caution", copy=False, attachment=True)
+    caution_signe_par = fields.Char("Ancienne caution signée par", copy=False)
+    caution_signe_le = fields.Datetime("Ancienne caution signée le", copy=False)
     contrat_compagnie = fields.Selection(
         [("oui", "Oui"), ("non", "Non")], "Signe au nom d'une compagnie", copy=False,
         help="Réponse du client sur sa page : « Oui » = la caution s'applique et elle est signée avec la "
