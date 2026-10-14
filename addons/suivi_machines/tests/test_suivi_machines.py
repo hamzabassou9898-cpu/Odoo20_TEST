@@ -599,14 +599,26 @@ class TestSuiviMachines(TransactionCase):
         # Pas encore l'anniversaire : rien
         self.env["sale.order"]._cron_forfaits_annuels()
         self.assertEqual(len(so.order_line.filtered("est_forfait")), 1)
-        # Un an plus tard : ligne de l'annee ajoutee au meme contrat, au prix negocie, a facturer
+        # Un an plus tard : rappel au bureau, rien d'ajoute tout seul (le prix est a ajuster)
         so.forfait_prochaine_date = aujourdhui
         self.env["sale.order"]._cron_forfaits_annuels()
+        self.assertTrue(so.forfait_a_renouveler)
+        self.assertEqual(len(so.order_line.filtered("est_forfait")), 1, "pas de ligne automatique")
+        self.assertEqual(len(so._activites_forfait()), 1)
+        self.env["sale.order"]._cron_forfaits_annuels()
+        self.assertEqual(len(so._activites_forfait()), 1, "un seul rappel")
+        # Josef renouvelle : prix de l'an dernier propose, ajuste a 310
+        action = so.action_renouveler_forfait()
+        assistant = Form(self.env[action["res_model"]].with_context(action["context"]))
+        self.assertEqual((assistant.prix_precedent, assistant.prix, assistant.nombre), (290, 290, 4))
+        assistant.prix = 310
+        assistant.save().action_renouveler()
         lignes = so.order_line.filtered("est_forfait").sorted("id")
         self.assertEqual(len(lignes), 2)
-        self.assertEqual((lignes[-1].product_uom_qty, lignes[-1].price_unit), (4, 290))
+        self.assertEqual((lignes[-1].product_uom_qty, lignes[-1].price_unit), (4, 310))
         self.assertIn("Frais annuels", lignes[-1].name)
-        self.assertTrue(so.activity_ids.filtered(lambda a: "Forfait annuel" in (a.summary or "")))
+        self.assertFalse(so.forfait_a_renouveler)
+        self.assertFalse(so._activites_forfait(), "rappel termine")
         self.assertEqual(so.forfait_prochaine_date, aujourdhui + relativedelta(months=12))
         # Location (0 $) et proprietaire : jamais de forfait
         for xmlid in ("type_contrat_location", "type_contrat_proprietaire"):

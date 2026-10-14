@@ -99,8 +99,11 @@ class SaleOrder(models.Model):
     proprietaire_immeuble = fields.Char("Propriétaire de l'immeuble (nom et adresse)", copy=False)
     forfait_prochaine_date = fields.Date(
         "Prochain forfait annuel", copy=False, tracking=True,
-        help="Anniversaire de la signature : ce jour-là, Odoo ajoute au contrat la ligne du forfait de "
-             "l'année suivante, à facturer.")
+        help="Anniversaire de la signature : ce jour-là, Odoo rappelle au bureau de renouveler le forfait "
+             "(prix à ajuster).")
+    forfait_a_renouveler = fields.Boolean(
+        "Forfait à renouveler", copy=False, readonly=True,
+        help="L'anniversaire est arrivé : renouveler le forfait avec le bouton « Renouveler le forfait ».")
 
     @api.depends("type_contrat_id")
     def _compute_forfait_montant(self):
@@ -396,39 +399,83 @@ class SaleOrder(models.Model):
             return 0, chez_client
         return int(sum(self.order_line.filtered("est_machine").mapped("product_uom_qty"))), chez_client
 
-    def _ajouter_forfait_annuel(self):
-        """Anniversaire : ligne du forfait de l'annee ajoutee AU CONTRAT (a facturer avec « Créer une
-        facture »), au prix de ce contrat ; activite pour le bureau ; prochaine date + 12 mois."""
-        for contrat in self:
-            debut = contrat.forfait_prochaine_date or fields.Date.context_today(self)
-            nombre, machines = contrat._machines_forfait()
-            contrat.forfait_prochaine_date = debut + relativedelta(months=12)
-            produit = contrat._produit_forfait()
-            if nombre <= 0 or not produit:
-                contrat.message_post(body=self.env._(
-                    "Forfait annuel du %s : aucune machine chez le client, rien à facturer.", debut))
-                continue
-            # Prix negocie : celui de la derniere ligne de forfait du contrat, sinon celui du contrat
-            precedente = contrat.order_line.filtered("est_forfait").sorted("id")[-1:]
-            prix = precedente.price_unit if precedente else contrat.forfait_montant
-            contrat.with_context(synchro_forfait=True).write({"order_line": [(0, 0, {
-                "product_id": produit.id, "est_forfait": True, "product_uom_qty": nombre, "price_unit": prix,
-                "name": contrat._libelle_forfait(debut, machines)})]})
-            contrat.message_post(body=Markup("<p>%s</p>") % self.env._(
-                "Forfait annuel ajouté au contrat : %(nb)s machine(s) × %(prix)s, à facturer.",
-                nb=nombre, prix=prix))
-            contrat.activity_schedule(
-                "mail.mail_activity_data_todo", user_id=(contrat.user_id or self.env.ref("base.user_admin")).id,
-                summary=self.env._("Forfait annuel à facturer"),
-                note=self.env._("Le forfait annuel d'entretien a été ajouté au contrat : « Créer une facture »."))
+    def _forfait_prix_precedent(self):
+        """Prix negocie : celui de la derniere ligne de forfait du contrat, sinon celui du contrat."""
+        self.ensure_one()
+        precedente = self.order_line.filtered("est_forfait").sorted("id")[-1:]
+        return precedente.price_unit if precedente else self.forfait_montant
+
+    def _ajouter_forfait_annuel(self, prix, nombre=None):
+        """Renouvellement fait par le bureau : ligne du forfait de l'annee ajoutee AU CONTRAT (a facturer
+        avec « Créer une facture ») au prix choisi ; prochaine date + 12 mois ; rappel termine."""
+        self.ensure_one()
+        debut = self.forfait_prochaine_date or fields.Date.context_today(self)
+        nombre_machines, machines = self._machines_forfait()
+        nombre = nombre_machines if nombre is None else nombre
+        produit = self._produit_forfait()
+        if nombre <= 0 or not produit:
+            raise UserError(self.env._("Aucune machine de ce contrat n'est chez le client : rien à renouveler."))
+        if prix < 0:
+            raise UserError(self.env._("Le prix du forfait ne peut pas être négatif."))
+        self.with_context(synchro_forfait=True).write({
+            "forfait_prochaine_date": debut + relativedelta(months=12), "forfait_a_renouveler": False,
+            "order_line": [(0, 0, {"product_id": produit.id, "est_forfait": True, "product_uom_qty": nombre,
+                                   "price_unit": prix, "name": self._libelle_forfait(debut, machines)})]})
+        self.message_post(body=Markup("<p>%s</p>") % self.env._(
+            "Forfait annuel renouvelé : %(nb)s machine(s) × %(prix).2f $, à facturer.", nb=nombre, prix=prix))
+        self._activites_forfait().action_feedback(feedback=self.env._("Forfait renouvelé à %.2f $.", prix))
+
+    def _activites_forfait(self):
+        resume = self.env._("Forfait annuel à renouveler")
+        return self.activity_ids.filtered(lambda a: a.summary == resume)
+
+    def action_renouveler_forfait(self):
+        self.ensure_one()
+        return {"type": "ir.actions.act_window", "name": self.env._("Renouveler le forfait"),
+                "res_model": "suivi.forfait.renouvellement", "view_mode": "form", "views": [(False, "form")],
+                "target": "new", "context": {"default_order_id": self.id}}
 
     @api.model
     def _cron_forfaits_annuels(self):
-        """Chaque jour : forfait annuel des contrats dont l'anniversaire est arrive."""
+        """Chaque jour : anniversaire arrive -> rappel au bureau (le prix est ajuste avant de renouveler)."""
         contrats = self.search([("state", "=", "sale"), ("forfait_montant", ">", 0),
+                                ("forfait_a_renouveler", "=", False),
                                 ("forfait_prochaine_date", "<=", fields.Date.context_today(self))])
-        contrats._ajouter_forfait_annuel()
+        for contrat in contrats:
+            contrat.forfait_a_renouveler = True
+            contrat.activity_schedule(
+                "mail.mail_activity_data_todo", date_deadline=contrat.forfait_prochaine_date,
+                user_id=(contrat.user_id or self.env.ref("base.user_admin")).id,
+                summary=self.env._("Forfait annuel à renouveler"),
+                note=self.env._("Anniversaire du contrat : ajustez le prix puis cliquez sur « Renouveler le "
+                                "forfait » (prix de l'an dernier : %.2f $).", contrat._forfait_prix_precedent()))
         return contrats
+
+
+class RenouvellementForfait(models.TransientModel):
+    _name = "suivi.forfait.renouvellement"
+    _description = "Renouveler le forfait annuel"
+
+    order_id = fields.Many2one("sale.order", "Contrat", required=True, readonly=True)
+    partner_id = fields.Many2one(related="order_id.partner_id", string="Client")
+    date_debut = fields.Date(related="order_id.forfait_prochaine_date", string="Début de la période")
+    prix_precedent = fields.Float("Prix de l'an dernier", readonly=True, digits="Product Price")
+    prix = fields.Float("Nouveau prix (par machine)", required=True, digits="Product Price")
+    nombre = fields.Integer("Nombre de machines", required=True)
+
+    @api.model
+    def default_get(self, fields_list):
+        res = super().default_get(fields_list)
+        order = self.env["sale.order"].browse(res.get("order_id") or self.env.context.get("default_order_id"))
+        if order:
+            prix = order._forfait_prix_precedent()
+            res.update(prix_precedent=prix, prix=prix, nombre=order._machines_forfait()[0])
+        return res
+
+    def action_renouveler(self):
+        self.ensure_one()
+        self.order_id._ajouter_forfait_annuel(self.prix, self.nombre)
+        return {"type": "ir.actions.act_window_close"}
 
 
 class SaleOrderLine(models.Model):

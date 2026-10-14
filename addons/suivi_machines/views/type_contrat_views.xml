@@ -57,6 +57,19 @@
                     <field name="prix_detail_775" class="oe_inline"/>
                 </div>
             </field>
+            <xpath expr="//header" position="inside">
+                <field name="forfait_a_renouveler" invisible="1"/>
+                <button name="action_renouveler_forfait" type="object" string="Renouveler le forfait"
+                        class="btn-primary" invisible="not forfait_a_renouveler or state != 'sale'"
+                        help="Ajuster le prix et ajouter le forfait de l'année au contrat"/>
+            </xpath>
+            <xpath expr="//sheet" position="before">
+                <div class="alert alert-warning mb-0 py-2" role="alert"
+                     invisible="not forfait_a_renouveler or state != 'sale'">
+                    <strong>Forfait annuel à renouveler</strong> : ajustez le prix avec le bouton
+                    « Renouveler le forfait ».
+                </div>
+            </xpath>
             <xpath expr="//notebook" position="inside">
                 <page string="Contrat (client)" name="contrat_client" invisible="not type_contrat_id">
                     <p class="text-muted">Rempli par le client sur sa page (lien du devis) avant de signer ; modifiable ici.</p>
@@ -77,6 +90,31 @@
                     </group>
                 </page>
             </xpath>
+        </field>
+    </record>
+
+    <record id="view_forfait_renouvellement_form" model="ir.ui.view">
+        <field name="name">suivi.forfait.renouvellement.form</field>
+        <field name="model">suivi.forfait.renouvellement</field>
+        <field name="arch" type="xml">
+            <form string="Renouveler le forfait">
+                <group>
+                    <group>
+                        <field name="order_id" force_save="1"/>
+                        <field name="partner_id"/>
+                        <field name="date_debut"/>
+                    </group>
+                    <group>
+                        <field name="prix_precedent" force_save="1"/>
+                        <field name="prix"/>
+                        <field name="nombre"/>
+                    </group>
+                </group>
+                <footer>
+                    <button name="action_renouveler" type="object" string="Renouveler" class="btn-primary"/>
+                    <button string="Annuler" special="cancel"/>
+                </footer>
+            </form>
         </field>
     </record>
 </odoo>

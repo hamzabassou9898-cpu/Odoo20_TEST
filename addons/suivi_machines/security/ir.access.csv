@@ -8,3 +8,4 @@ access_machine_intervention_frais_employe,Frais d'intervention : lecture,machine
 access_planifier_ramassage_user,Planifier le ramassage,suivi.machines.planifier.ramassage,stock.group_stock_user,crud,
 access_type_contrat_employe,Types de contrat : lecture,suivi.type.contrat,base.group_user,r,
 access_type_contrat_vente,Types de contrat : responsables ventes,suivi.type.contrat,sales_team.group_sale_manager,crud,
+access_forfait_renouvellement_user,Renouveler le forfait,suivi.forfait.renouvellement,sales_team.group_sale_salesman,crud,
