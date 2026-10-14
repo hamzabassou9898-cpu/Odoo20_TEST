@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Montants modifiables ensuite (Ventes > Configuration > Types de contrat) : non ecrases aux mises a jour -->
+    <data noupdate="1">
+        <record id="produit_forfait_entretien" model="product.product">
+            <field name="name">Frais annuels d'entretien (forfait)</field>
+            <field name="type">service</field>
+            <field name="default_code">FORFAIT-ENT</field>
+            <field name="list_price">0</field>
+        </record>
+
+        <record id="type_contrat_location" model="suivi.type.contrat">
+            <field name="name">Location / entreprise</field>
+            <field name="sequence">1</field>
+            <field name="type_commande">location</field>
+            <field name="forfait_montant">0</field>
+            <field name="forfait_produit_id" ref="produit_forfait_entretien"/>
+            <field name="note">Monroy loue le congélateur. Entretien et réparations usuelles compris (0 $ par année).</field>
+        </record>
+        <record id="type_contrat_convention" model="suivi.type.contrat">
+            <field name="name">Convention slush</field>
+            <field name="sequence">2</field>
+            <field name="type_commande">location</field>
+            <field name="forfait_montant">359.99</field>
+            <field name="forfait_produit_id" ref="produit_forfait_entretien"/>
+            <field name="note">Droit d'utilisation du congélateur. Forfait annuel d'entretien par machine (clause 8.2).</field>
+        </record>
+        <record id="type_contrat_popcorn" model="suivi.type.contrat">
+            <field name="name">Convention popcorn</field>
+            <field name="sequence">3</field>
+            <field name="type_commande">location</field>
+            <field name="forfait_montant">279.50</field>
+            <field name="forfait_produit_id" ref="produit_forfait_entretien"/>
+            <field name="note">Droit d'utilisation (produits HARLAN'S). Forfait annuel d'entretien par équipement (clause 8.2).</field>
+        </record>
+        <record id="type_contrat_proprietaire" model="suivi.type.contrat">
+            <field name="name">Propriétaire</field>
+            <field name="sequence">4</field>
+            <field name="type_commande">vente</field>
+            <field name="forfait_montant">0</field>
+            <field name="forfait_produit_id" ref="produit_forfait_entretien"/>
+            <field name="note">La machine appartient au client. Pas de forfait : chaque appel de service est facturé.</field>
+        </record>
+    </data>
+
+    <record id="cron_forfaits_annuels" model="ir.cron">
+        <field name="name">Contrats : forfaits annuels d'entretien</field>
+        <field name="model_id" ref="sale.model_sale_order"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_forfaits_annuels()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active" eval="True"/>
+    </record>
+</odoo>

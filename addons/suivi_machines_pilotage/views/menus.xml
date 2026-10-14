@@ -59,6 +59,8 @@
               parent="menu_pilotage_parc" action="action_pilotage_produits_categorie" sequence="4"/>
 
     <menuitem id="menu_pilotage_outils" name="Outils" parent="menu_pilotage_root" sequence="90"/>
+    <menuitem id="menu_pilotage_types_contrat" name="Types de contrat" parent="menu_pilotage_outils"
+              action="suivi_machines.action_types_contrat" sequence="0"/>
     <menuitem id="menu_pilotage_donnees_test" name="Tickets de test" parent="menu_pilotage_outils"
               action="action_donnees_test" sequence="1"/>
 </odoo>

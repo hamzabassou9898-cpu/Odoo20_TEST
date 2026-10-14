@@ -6,3 +6,5 @@ access_machine_intervention_frais_user,Frais d'intervention : utilisateurs inven
 access_machine_intervention_frais_vente,Frais d'intervention : ventes,machine.intervention.frais,sales_team.group_sale_salesman,crud,
 access_machine_intervention_frais_employe,Frais d'intervention : lecture,machine.intervention.frais,base.group_user,r,
 access_planifier_ramassage_user,Planifier le ramassage,suivi.machines.planifier.ramassage,stock.group_stock_user,crud,
+access_type_contrat_employe,Types de contrat : lecture,suivi.type.contrat,base.group_user,r,
+access_type_contrat_vente,Types de contrat : responsables ventes,suivi.type.contrat,sales_team.group_sale_manager,crud,

@@ -127,7 +127,22 @@ class SaleOrder(models.Model):
             # Contrat de location : son propre numero (LOC00001), pas celui des ventes
             if location and vals.get("name", nouveau) == nouveau:
                 vals["name"] = self._numero_contrat(vals.get("company_id")) or nouveau
-        return super().create(vals_list)
+        commandes = super().create(vals_list)
+        commandes._une_ligne_par_machine()
+        return commandes
+
+    def _une_ligne_par_machine(self):
+        """Soumission : « Machine x 2 » devient 2 lignes d'une machine, chacune avec SON n° de serie
+        (un seul n° de serie par ligne). Meme prix, juste apres la ligne d'origine."""
+        for order in self.filtered(lambda o: o.state in ("draft", "sent")):
+            for ligne in order.order_line.filtered(
+                    lambda l: l.est_machine and l.product_uom_qty > 1 and float(l.product_uom_qty).is_integer()):
+                nombre = int(ligne.product_uom_qty)
+                valeurs = {"order_id": order.id, "product_uom_qty": 1, "machine_lot_id": False,
+                           "price_unit": ligne.price_unit, "discount": ligne.discount, "sequence": ligne.sequence}
+                ligne.write({"product_uom_qty": 1, "price_unit": valeurs["price_unit"]})   # prix garde
+                for _i in range(nombre - 1):
+                    ligne.copy(valeurs)
 
     @api.model
     def _numero_contrat(self, company_id=None):
@@ -151,6 +166,8 @@ class SaleOrder(models.Model):
         if vals.get("is_rental_order"):
             vals = dict(vals, type_commande="location")
         res = super().write(vals)
+        if "order_line" in vals:
+            self._une_ligne_par_machine()
         if "type_commande" in vals and "name" not in vals:
             self._renumeroter_selon_type()
         if "type_commande" in vals:

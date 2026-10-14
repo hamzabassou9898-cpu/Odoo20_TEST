@@ -797,7 +797,8 @@ class TestTicketMachine(TransactionCase):
         noms = [f.get("name") for f in groupe.xpath("./field") if f.get("invisible") not in ("1", "True")]
         self.assertIn("adresse_commerce", noms, "adresse commerciale : sa propre ligne, dans le groupe du téléphone")
         self.assertEqual(noms[noms.index("adresse_commerce"):],
-                         ["adresse_commerce", "contrat_client_id", "contrat_client_type", "contrat_client_debut",
+                         ["adresse_commerce", "contrat_client_id", "contrat_client_modele_id", "contrat_client_type",
+                          "contrat_client_debut",
                           "contrat_client_fin"], "puis le contrat du client, son type et ses dates")
         self.assertNotIn("commerce_id", visibles, "client affiché une seule fois (champ natif)")
         boutons = [b.get("name") for b in arch.iter("button") if b.getparent().tag == "header"]

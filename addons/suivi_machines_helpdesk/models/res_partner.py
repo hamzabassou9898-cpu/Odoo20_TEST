@@ -145,6 +145,9 @@ class HelpdeskTicket(models.Model):
     contrat_client_type = fields.Selection(
         [("vente", "Vente"), ("location", "Location")], "Type de contrat", compute="_compute_contrat_client",
         groups="sales_team.group_sale_salesman")
+    contrat_client_modele_id = fields.Many2one("suivi.type.contrat", "Contrat", compute="_compute_contrat_client",
+                                               groups="sales_team.group_sale_salesman",
+                                               help="Location, convention, popcorn ou propriétaire.")
     contrat_client_debut = fields.Datetime("Début du contrat", compute="_compute_contrat_client",
                                            groups="sales_team.group_sale_salesman")
     contrat_client_fin = fields.Datetime("Fin du contrat", compute="_compute_contrat_client",
@@ -156,5 +159,6 @@ class HelpdeskTicket(models.Model):
             client = ticket.commerce_id or ticket.partner_id
             contrat = client.contrat_location_id if client else self.env["sale.order"]
             ticket.update({"contrat_client_id": contrat, "contrat_client_type": contrat.type_commande,
+                           "contrat_client_modele_id": contrat.type_contrat_id,
                            "contrat_client_debut": contrat.date_debut_location,
                            "contrat_client_fin": contrat.date_fin_location})

@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 20.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-14 12:08+0000\n"
-"PO-Revision-Date: 2026-10-14 12:08+0000\n"
+"POT-Creation-Date: 2026-10-14 13:38+0000\n"
+"PO-Revision-Date: 2026-10-14 13:38+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -871,6 +871,7 @@ msgid "Livraison"
 msgstr ""
 
 #. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_transfert_search
 #: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_portail_livreurs_search
 msgid "Livraison / ramassage"
 msgstr ""
@@ -1091,6 +1092,12 @@ msgstr ""
 #: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_lot_list
 #: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_lot_search
 msgid "N° de série"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_transfert_list
+#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_transfert_search
+msgid "Opération"
 msgstr ""
 
 #. module: suivi_machines_pilotage
@@ -1676,7 +1683,6 @@ msgstr ""
 #: model:ir.model.fields,field_description:suivi_machines_pilotage.field_portail_tache__type_tache
 #: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_intervention_search
 #: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_transfert_list
-#: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_pilotage_transfert_search
 msgid "Type"
 msgstr ""
 
@@ -1699,6 +1705,11 @@ msgstr ""
 #. module: suivi_machines_pilotage
 #: model_terms:ir.ui.view,arch_db:suivi_machines_pilotage.view_portail_techniciens_search
 msgid "Type de tâche"
+msgstr ""
+
+#. module: suivi_machines_pilotage
+#: model:ir.ui.menu,name:suivi_machines_pilotage.menu_pilotage_types_contrat
+msgid "Types de contrat"
 msgstr ""
 
 #. module: suivi_machines_pilotage

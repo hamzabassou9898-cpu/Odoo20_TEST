@@ -3,8 +3,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 20.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-14 12:22+0000\n"
-"PO-Revision-Date: 2026-10-14 12:22+0000\n"
+"POT-Creation-Date: 2026-10-14 13:44+0000\n"
+"PO-Revision-Date: 2026-10-14 13:44+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: fr\n"
@@ -75,6 +75,11 @@ msgstr "Accessoires"
 #: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__message_needaction
 msgid "Action Needed"
 msgstr "Action Needed"
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_suivi_type_contrat__active
+msgid "Active"
+msgstr "Active"
 
 #. module: suivi_machines
 #: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__activity_ids
@@ -289,14 +294,46 @@ msgstr "Company"
 
 #. module: suivi_machines
 #. odoo-python
+#: code:addons/suivi_machines/models/type_contrat.py:0
+msgid "Contrat %s : forfait annuel d'entretien."
+msgstr "Contrat %s : forfait annuel d'entretien."
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_sale_order__forfait_contrat_id
+msgid "Contrat (forfait)"
+msgstr "Contrat (forfait)"
+
+#. module: suivi_machines
+#. odoo-python
 #: code:addons/suivi_machines/models/vente_numero_serie.py:0
 msgid "Contrat ajusté : ajout de %s."
 msgstr "Contrat ajusté : ajout de %s."
 
 #. module: suivi_machines
+#: model:ir.model.fields,help:suivi_machines.field_sale_order__forfait_contrat_id
+msgid "Contrat dont ce bon de vente facture le forfait annuel d'entretien."
+msgstr "Contrat dont ce bon de vente facture le forfait annuel d'entretien."
+
+#. module: suivi_machines
+#: model:ir.actions.server,name:suivi_machines.cron_forfaits_annuels_ir_actions_server
+msgid "Contrats : forfaits annuels d'entretien"
+msgstr "Contrats : forfaits annuels d'entretien"
+
+#. module: suivi_machines
+#: model:suivi.type.contrat,name:suivi_machines.type_contrat_popcorn
+msgid "Convention popcorn"
+msgstr "Convention popcorn"
+
+#. module: suivi_machines
+#: model:suivi.type.contrat,name:suivi_machines.type_contrat_convention
+msgid "Convention slush"
+msgstr "Convention slush"
+
+#. module: suivi_machines
 #: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__create_uid
 #: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention_frais__create_uid
 #: model:ir.model.fields,field_description:suivi_machines.field_suivi_machines_planifier_ramassage__create_uid
+#: model:ir.model.fields,field_description:suivi_machines.field_suivi_type_contrat__create_uid
 msgid "Created by"
 msgstr "Created by"
 
@@ -304,6 +341,7 @@ msgstr "Created by"
 #: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__create_date
 #: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention_frais__create_date
 #: model:ir.model.fields,field_description:suivi_machines.field_suivi_machines_planifier_ramassage__create_date
+#: model:ir.model.fields,field_description:suivi_machines.field_suivi_type_contrat__create_date
 msgid "Created on"
 msgstr "Created on"
 
@@ -372,6 +410,15 @@ msgstr ""
 "de chaque machine et prévient le bureau un mois avant."
 
 #. module: suivi_machines
+#: model:ir.model.fields,help:suivi_machines.field_sale_order__forfait_prochaine_date
+msgid ""
+"Date du prochain forfait annuel d'entretien (anniversaire de la signature). "
+"Odoo prépare le bon de vente ce jour-là."
+msgstr ""
+"Date du prochain forfait annuel d'entretien (anniversaire de la signature). "
+"Odoo prépare le bon de vente ce jour-là."
+
+#. module: suivi_machines
 #: model:ir.model.fields,field_description:suivi_machines.field_suivi_machines_planifier_ramassage__date
 msgid "Date du ramassage"
 msgstr "Date du ramassage"
@@ -401,6 +448,7 @@ msgstr "Description"
 #: model:ir.model.fields,field_description:suivi_machines.field_stock_picking__display_name
 #: model:ir.model.fields,field_description:suivi_machines.field_stock_rule__display_name
 #: model:ir.model.fields,field_description:suivi_machines.field_suivi_machines_planifier_ramassage__display_name
+#: model:ir.model.fields,field_description:suivi_machines.field_suivi_type_contrat__display_name
 msgid "Display Name"
 msgstr "Display Name"
 
@@ -559,6 +607,49 @@ msgid "Followers (Partners)"
 msgstr "Followers (Partners)"
 
 #. module: suivi_machines
+#. odoo-python
+#: code:addons/suivi_machines/models/type_contrat.py:0
+msgid "Forfait annuel %(forfait)s préparé : %(nb)s machine(s) × %(montant)s."
+msgstr "Forfait annuel %(forfait)s préparé : %(nb)s machine(s) × %(montant)s."
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_order_form_type_contrat
+msgid "Forfait annuel / machine"
+msgstr "Forfait annuel / machine"
+
+#. module: suivi_machines
+#. odoo-python
+#: code:addons/suivi_machines/models/type_contrat.py:0
+msgid "Forfait annuel du %s : aucune machine chez le client, rien à facturer."
+msgstr ""
+"Forfait annuel du %s : aucune machine chez le client, rien à facturer."
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_sale_order__forfait_montant
+#: model:ir.model.fields,field_description:suivi_machines.field_suivi_type_contrat__forfait_montant
+msgid "Forfait annuel par machine"
+msgstr "Forfait annuel par machine"
+
+#. module: suivi_machines
+#. odoo-python
+#: code:addons/suivi_machines/models/type_contrat.py:0
+msgid "Forfait annuel à confirmer et facturer"
+msgstr "Forfait annuel à confirmer et facturer"
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_sale_order__forfait_ids
+#: model:ir.model.fields,field_description:suivi_machines.field_sale_order__nb_forfaits
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_order_form_type_contrat
+msgid "Forfaits annuels"
+msgstr "Forfaits annuels"
+
+#. module: suivi_machines
+#. odoo-python
+#: code:addons/suivi_machines/models/type_contrat.py:0
+msgid "Forfaits annuels - %s"
+msgstr "Forfaits annuels - %s"
+
+#. module: suivi_machines
 #: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__frais_ids
 msgid "Frais"
 msgstr "Frais"
@@ -567,6 +658,31 @@ msgstr "Frais"
 #: model_terms:ir.ui.view,arch_db:suivi_machines.view_intervention_form
 msgid "Frais (déplacement, réparation, livraison, pièces...)"
 msgstr "Frais (déplacement, réparation, livraison, pièces...)"
+
+#. module: suivi_machines
+#: model:product.template,name:suivi_machines.produit_forfait_entretien_product_template
+msgid "Frais annuels d'entretien (forfait)"
+msgstr "Frais annuels d'entretien (forfait)"
+
+#. module: suivi_machines
+#. odoo-python
+#: code:addons/suivi_machines/models/type_contrat.py:0
+msgid ""
+"Frais annuels d'entretien et de réparations usuelles (%(type)s) du %(debut)s"
+" au %(fin)s"
+msgstr ""
+"Frais annuels d'entretien et de réparations usuelles (%(type)s) du %(debut)s"
+" au %(fin)s"
+
+#. module: suivi_machines
+#: model:ir.model.fields,help:suivi_machines.field_sale_order__forfait_montant
+#: model:ir.model.fields,help:suivi_machines.field_suivi_type_contrat__forfait_montant
+msgid ""
+"Frais annuels d'entretien et de réparations usuelles (clause 8.2) : payés à "
+"la signature, puis tous les 12 mois, pour chaque machine. 0 = aucun forfait."
+msgstr ""
+"Frais annuels d'entretien et de réparations usuelles (clause 8.2) : payés à "
+"la signature, puis tous les 12 mois, pour chaque machine. 0 = aucun forfait."
 
 #. module: suivi_machines
 #: model:ir.model,name:suivi_machines.model_machine_intervention_frais
@@ -629,6 +745,7 @@ msgstr "Hors service"
 #: model:ir.model.fields,field_description:suivi_machines.field_stock_picking__id
 #: model:ir.model.fields,field_description:suivi_machines.field_stock_rule__id
 #: model:ir.model.fields,field_description:suivi_machines.field_suivi_machines_planifier_ramassage__id
+#: model:ir.model.fields,field_description:suivi_machines.field_suivi_type_contrat__id
 msgid "ID"
 msgstr "ID"
 
@@ -735,6 +852,7 @@ msgstr "Is Follower"
 #: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__write_uid
 #: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention_frais__write_uid
 #: model:ir.model.fields,field_description:suivi_machines.field_suivi_machines_planifier_ramassage__write_uid
+#: model:ir.model.fields,field_description:suivi_machines.field_suivi_type_contrat__write_uid
 msgid "Last Updated by"
 msgstr "Last Updated by"
 
@@ -742,6 +860,7 @@ msgstr "Last Updated by"
 #: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__write_date
 #: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention_frais__write_date
 #: model:ir.model.fields,field_description:suivi_machines.field_suivi_machines_planifier_ramassage__write_date
+#: model:ir.model.fields,field_description:suivi_machines.field_suivi_type_contrat__write_date
 msgid "Last Updated on"
 msgstr "Last Updated on"
 
@@ -841,8 +960,37 @@ msgstr "Livrée · %s"
 
 #. module: suivi_machines
 #: model:ir.model.fields.selection,name:suivi_machines.selection__sale_order__type_commande__location
+#: model:ir.model.fields.selection,name:suivi_machines.selection__suivi_type_contrat__type_commande__location
 msgid "Location"
 msgstr "Location"
+
+#. module: suivi_machines
+#: model:suivi.type.contrat,name:suivi_machines.type_contrat_location
+msgid "Location / entreprise"
+msgstr "Location / entreprise"
+
+#. module: suivi_machines
+#: model:ir.model.fields,help:suivi_machines.field_suivi_type_contrat__type_commande
+msgid ""
+"Location : la machine reste à Monroy (« En location » chez le client). Vente"
+" : la machine appartient au client (contrat propriétaire)."
+msgstr ""
+"Location : la machine reste à Monroy (« En location » chez le client). Vente"
+" : la machine appartient au client (contrat propriétaire)."
+
+#. module: suivi_machines
+#: model:ir.model.fields,help:suivi_machines.field_sale_order__type_contrat_id
+msgid ""
+"Location, convention, convention popcorn ou propriétaire : règle le type "
+"(vente / location) et le forfait annuel d'entretien."
+msgstr ""
+"Location, convention, convention popcorn ou propriétaire : règle le type "
+"(vente / location) et le forfait annuel d'entretien."
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_order_form_type_contrat
+msgid "Location, convention…"
+msgstr "Location, convention…"
 
 #. module: suivi_machines
 #: model:ir.model,name:suivi_machines.model_stock_lot
@@ -851,6 +999,7 @@ msgstr "Lot/Serial"
 
 #. module: suivi_machines
 #: model:ir.model.fields,field_description:suivi_machines.field_stock_picking__machine_fiche_label
+#: model:ir.model.fields,field_description:suivi_machines.field_suivi_type_contrat__type_commande
 #: model_terms:ir.ui.view,arch_db:suivi_machines.view_historique_search
 msgid "Machine"
 msgstr "Machine"
@@ -903,6 +1052,12 @@ msgstr "Machines"
 #: code:addons/suivi_machines/models/stock_picking.py:0
 msgid "Machines - %s"
 msgstr "Machines - %s"
+
+#. module: suivi_machines
+#. odoo-python
+#: code:addons/suivi_machines/models/type_contrat.py:0
+msgid "Machines : %s"
+msgstr "Machines : %s"
 
 #. module: suivi_machines
 #. odoo-python
@@ -1013,6 +1168,11 @@ msgid "Normal"
 msgstr "Normal"
 
 #. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_suivi_type_contrat__note
+msgid "Note"
+msgstr "Note"
+
+#. module: suivi_machines
 #: model_terms:ir.ui.view,arch_db:suivi_machines.view_lot_form_machine
 msgid "Nouvelle intervention"
 msgstr "Nouvelle intervention"
@@ -1113,6 +1273,11 @@ msgid "Prochain entretien"
 msgstr "Prochain entretien"
 
 #. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_sale_order__forfait_prochaine_date
+msgid "Prochain forfait annuel"
+msgstr "Prochain forfait annuel"
+
+#. module: suivi_machines
 #: model:ir.model,name:suivi_machines.model_product_template
 msgid "Product"
 msgstr "Product"
@@ -1135,6 +1300,16 @@ msgstr "Produit"
 #: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention_frais__product_id
 msgid "Produit / service"
 msgstr "Produit / service"
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_suivi_type_contrat__forfait_produit_id
+msgid "Produit du forfait"
+msgstr "Produit du forfait"
+
+#. module: suivi_machines
+#: model:suivi.type.contrat,name:suivi_machines.type_contrat_proprietaire
+msgid "Propriétaire"
+msgstr "Propriétaire"
 
 #. module: suivi_machines
 #: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention_frais__quantite
@@ -1265,8 +1440,14 @@ msgstr "Santé de la machine"
 
 #. module: suivi_machines
 #: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention_frais__sequence
+#: model:ir.model.fields,field_description:suivi_machines.field_suivi_type_contrat__sequence
 msgid "Sequence"
 msgstr "Sequence"
+
+#. module: suivi_machines
+#: model:ir.model.fields,help:suivi_machines.field_suivi_type_contrat__forfait_produit_id
+msgid "Service utilisé sur le bon de vente du forfait annuel."
+msgstr "Service utilisé sur le bon de vente du forfait annuel."
 
 #. module: suivi_machines
 #: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention_frais__sous_total
@@ -1390,9 +1571,22 @@ msgid "Type"
 msgstr "Type"
 
 #. module: suivi_machines
+#: model:ir.model,name:suivi_machines.model_suivi_type_contrat
+#: model:ir.model.fields,field_description:suivi_machines.field_sale_order__type_contrat_id
+#: model:ir.model.fields,field_description:suivi_machines.field_suivi_type_contrat__name
+msgid "Type de contrat"
+msgstr "Type de contrat"
+
+#. module: suivi_machines
 #: model:ir.model.fields,help:suivi_machines.field_machine_intervention__activity_exception_decoration
 msgid "Type of the exception activity on record."
 msgstr "Type of the exception activity on record."
+
+#. module: suivi_machines
+#: model:ir.actions.act_window,name:suivi_machines.action_types_contrat
+#: model:ir.ui.menu,name:suivi_machines.menu_types_contrat
+msgid "Types de contrat"
+msgstr "Types de contrat"
 
 #. module: suivi_machines
 #. odoo-python
@@ -1414,6 +1608,7 @@ msgstr "Vendues"
 
 #. module: suivi_machines
 #: model:ir.model.fields.selection,name:suivi_machines.selection__sale_order__type_commande__vente
+#: model:ir.model.fields.selection,name:suivi_machines.selection__suivi_type_contrat__type_commande__vente
 msgid "Vente"
 msgstr "Vente"
 
