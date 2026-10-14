@@ -32,6 +32,17 @@ class TestPilotage(TransactionCase):
     def _ind(self, code):
         return self.env.ref("suivi_machines_pilotage.indicateur_" + code)
 
+    def test_menu_locations(self):
+        """Locations : « Nouveau contrat de location » en premier, « Types de contrat » à la fin."""
+        menus = self.env.ref("suivi_machines_pilotage.menu_pilotage_locations").child_id.sorted("sequence")
+        self.assertEqual(menus[0], self.env.ref("suivi_machines_pilotage.menu_pilotage_nouveau_contrat"))
+        self.assertEqual(menus[-1], self.env.ref("suivi_machines_pilotage.menu_pilotage_types_contrat"))
+        action = self.env.ref("suivi_machines_pilotage.action_pilotage_nouveau_contrat").run()
+        self.assertEqual((action["res_model"], action["view_mode"]), ("sale.order", "form"))
+        nouveau = self.env["sale.order"].with_context(**action["context"]).create({"partner_id": self.client.id})
+        self.assertEqual(nouveau.type_commande, "location")
+        self.assertTrue(nouveau.name.startswith("LOC"), nouveau.name)
+
     def test_compteurs(self):
         self.assertGreaterEqual(self._ind("entretien_retard").valeur, 1)
         facturer = self._ind("a_facturer")

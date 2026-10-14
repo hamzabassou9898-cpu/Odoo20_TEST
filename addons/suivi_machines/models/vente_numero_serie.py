@@ -112,9 +112,23 @@ class SaleOrder(models.Model):
         }
 
     @api.model
+    def action_nouveau_contrat_location(self):
+        """Menu « Nouveau contrat de location » : page de l'application Location si elle est installee
+        (dates d'enlevement / retour), sinon la page de commande, deja en location."""
+        vue_location = self.env.ref("sale_renting.rental_order_primary_form_view", raise_if_not_found=False)
+        contexte = {"default_type_commande": "location"}
+        if vue_location:
+            contexte.update(in_rental_app=True, default_is_rental_order=True)
+        return {"type": "ir.actions.act_window", "name": self.env._("Nouveau contrat de location"),
+                "res_model": "sale.order", "view_mode": "form", "target": "current", "context": contexte,
+                "views": [(vue_location.id if vue_location else False, "form")]}
+
+    @api.model
     def _default_type_commande(self):
         # Commande creee depuis l'application Location (Enterprise) : toujours une location
         ctx = self.env.context
+        if ctx.get("default_type_commande") in ("location", "vente"):
+            return ctx["default_type_commande"]
         return "location" if ctx.get("in_rental_app") or ctx.get("default_is_rental_order") else "vente"
 
     @api.model_create_multi

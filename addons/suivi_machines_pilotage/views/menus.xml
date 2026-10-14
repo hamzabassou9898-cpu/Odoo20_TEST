@@ -28,8 +28,18 @@
     <menuitem id="menu_portail_livreurs" name="Portail techniciens" parent="menu_pilotage_root"
               action="action_portail_techniciens" sequence="12"/>
     <menuitem id="menu_pilotage_locations" name="Locations" parent="menu_pilotage_root" sequence="20"/>
+    <record id="action_pilotage_nouveau_contrat" model="ir.actions.server">
+        <field name="name">Nouveau contrat de location</field>
+        <field name="model_id" ref="sale.model_sale_order"/>
+        <field name="state">code</field>
+        <field name="code">action = model.action_nouveau_contrat_location()</field>
+    </record>
+    <menuitem id="menu_pilotage_nouveau_contrat" name="Nouveau contrat de location" parent="menu_pilotage_locations"
+              action="action_pilotage_nouveau_contrat" sequence="0"/>
     <menuitem id="menu_pilotage_contrats" name="Contrats de location" parent="menu_pilotage_locations"
               action="action_pilotage_locations" sequence="1"/>
+    <menuitem id="menu_pilotage_types_contrat" name="Types de contrat" parent="menu_pilotage_locations"
+              action="suivi_machines.action_types_contrat" sequence="9"/>
     <menuitem id="menu_pilotage_reprises" name="Tickets de reprise" parent="menu_pilotage_locations"
               action="action_pilotage_tickets_reprise" sequence="2"/>
     <menuitem id="menu_pilotage_planifier_ramassage" name="Planifier un ramassage" parent="menu_pilotage_locations"
@@ -59,8 +69,6 @@
               parent="menu_pilotage_parc" action="action_pilotage_produits_categorie" sequence="4"/>
 
     <menuitem id="menu_pilotage_outils" name="Outils" parent="menu_pilotage_root" sequence="90"/>
-    <menuitem id="menu_pilotage_types_contrat" name="Types de contrat" parent="menu_pilotage_outils"
-              action="suivi_machines.action_types_contrat" sequence="0"/>
     <menuitem id="menu_pilotage_donnees_test" name="Tickets de test" parent="menu_pilotage_outils"
               action="action_donnees_test" sequence="1"/>
 </odoo>
