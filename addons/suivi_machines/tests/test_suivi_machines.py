@@ -745,6 +745,7 @@ class TestContratEnLigne(HttpCase):
             "partner_id": client.id, "type_contrat_id": self.env.ref("suivi_machines.type_contrat_popcorn").id,
             "date_debut_location": PERIODE_TEST[0], "date_fin_location": PERIODE_TEST[1],
             "order_line": [(0, 0, {"product_id": produit.id, "product_uom_qty": 1})]})
+        so.write({"require_signature": True, "prepayment_percent": 0})
         so.action_quotation_sent()
         reponse = self.url_open(so.get_portal_url())
         self.assertEqual(reponse.status_code, 200)
@@ -793,6 +794,8 @@ class TestContratEnLigne(HttpCase):
             "partner_id": client.id, "type_contrat_id": self.env.ref("suivi_machines.type_contrat_convention").id,
             "date_debut_location": PERIODE_TEST[0], "date_fin_location": PERIODE_TEST[1],
             "order_line": [(0, 0, {"product_id": produit.id, "product_uom_qty": 1, "price_unit": 100})]})
+        # Selon la base (Odoo.sh), un paiement en ligne peut etre exige apres la signature : pas ici
+        so.write({"require_signature": True, "prepayment_percent": 0})
         so.action_quotation_sent()
         jeton = so._portal_ensure_token()
         signature = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
