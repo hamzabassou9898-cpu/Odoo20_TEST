@@ -18,6 +18,38 @@ class StockLot(models.Model):
     _inherit = "stock.lot"
 
     frise_html = fields.Html("Vie de la machine", compute="_compute_frise", sanitize=False)
+    # Resume sous la frise : des boutons cliquables (la liste correspondante s'ouvre)
+    frise_nb_clients = fields.Integer("Clients", compute="_compute_frise")
+    frise_nb_entretiens = fields.Integer("Entretiens", compute="_compute_frise")
+    frise_nb_bris = fields.Integer("Bris / réparations", compute="_compute_frise")
+
+    def _frise_clients(self):
+        """Clients chez qui la machine a ete livree (inventaire) ou installee (intervention)."""
+        self.ensure_one()
+        lignes = self.env["stock.move.line"].sudo().search(
+            [("lot_id", "=", self.id), ("state", "=", "done"), ("location_dest_id.usage", "=", "customer")])
+        installations = self._frise_interventions(("installation",))
+        return (lignes.picking_id.partner_id | lignes.filtered(lambda l: not l.picking_id).move_id.partner_id
+                | installations.partner_id)
+
+    def _frise_interventions(self, types):
+        self.ensure_one()
+        return self.sudo().intervention_ids.filtered(lambda i: i.state == "fait" and i.type in types)
+
+    def action_frise_clients(self):
+        self.ensure_one()
+        return self._action("res.partner", self.env._("Clients - %s", self.name),
+                            [("id", "in", self._frise_clients().ids)])
+
+    def action_frise_entretiens(self):
+        self.ensure_one()
+        return self._action("machine.intervention", self.env._("Entretiens - %s", self.name),
+                            [("id", "in", self._frise_interventions(("entretien",)).ids)])
+
+    def action_frise_bris(self):
+        self.ensure_one()
+        return self._action("machine.intervention", self.env._("Bris / réparations - %s", self.name),
+                            [("id", "in", self._frise_interventions(("bris", "reparation")).ids)])
 
     def _evenements_frise(self):
         """Evenements de la machine, du plus ancien au plus recent : (date, cle, libelle)."""
@@ -49,9 +81,13 @@ class StockLot(models.Model):
     @api.depends("intervention_ids.state", "intervention_ids.date", "date_prochain_entretien")
     def _compute_frise(self):
         for lot in self:
+            lot.frise_nb_clients = lot.frise_nb_entretiens = lot.frise_nb_bris = 0
             if not lot.id or not lot.est_machine:
                 lot.frise_html = False
                 continue
+            lot.frise_nb_clients = len(lot._frise_clients())
+            lot.frise_nb_entretiens = len(lot._frise_interventions(("entretien",)))
+            lot.frise_nb_bris = len(lot._frise_interventions(("bris", "reparation")))
             evenements = lot._evenements_frise()
             if not evenements:
                 lot.frise_html = Markup('<p class="text-muted mb-0">%s</p>') % self.env._(
@@ -67,23 +103,9 @@ class StockLot(models.Model):
                     '<small class="text-muted">%s</small></div>') % (
                     COULEURS.get(cle, "secondary"), escape(libelle),
                     format_date(self.env, date, date_format="MMM yyyy") if date else ""))
-            clients = {libelle for _d, cle, libelle in evenements if cle == "livraison"}
-            resume = [
-                (len(clients), self.env._("Clients")),
-                (sum(1 for e in evenements if e[1] == "entretien"), self.env._("Entretiens")),
-                (sum(1 for e in evenements if e[1] in ("bris", "reparation")), self.env._("Bris / réparations")),
-            ]
-            cartes = Markup("").join(
-                Markup('<div class="border rounded px-3 py-2"><div class="fs-4 fw-bold">%s</div>'
-                       '<div class="small text-muted">%s</div></div>') % (nombre, texte) for nombre, texte in resume)
-            if lot.date_prochain_entretien:
-                cartes += Markup('<div class="border rounded px-3 py-2"><div class="fs-4 fw-bold">%s</div>'
-                                 '<div class="small text-muted">%s</div></div>') % (
-                    format_date(self.env, lot.date_prochain_entretien, date_format="d MMM yyyy"),
-                    self.env._("Prochain entretien"))
             debut = Markup('<small class="text-muted me-2">%s</small>') % self.env._(
                 "+%s plus anciens", plus_anciens) if plus_anciens > 0 else Markup("")
             lot.frise_html = Markup(
                 '<div class="d-flex align-items-start gap-1 overflow-auto pb-2" '
-                'style="background:linear-gradient(#e3e5ea,#e3e5ea) 0 11px/100%% 3px no-repeat">%s%s</div>'
-                '<div class="d-flex flex-wrap gap-2 mt-2">%s</div>') % (debut, Markup("").join(points), cartes)
+                'style="background:linear-gradient(#e3e5ea,#e3e5ea) 0 11px/100%% 3px no-repeat">%s%s</div>') % (
+                debut, Markup("").join(points))

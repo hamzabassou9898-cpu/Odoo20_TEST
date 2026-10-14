@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 20.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-13 17:54+0000\n"
-"PO-Revision-Date: 2026-10-13 17:54+0000\n"
+"POT-Creation-Date: 2026-10-14 12:22+0000\n"
+"PO-Revision-Date: 2026-10-14 12:22+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -31,6 +31,12 @@ msgstr ""
 
 #. module: suivi_machines
 #. odoo-python
+#: code:addons/suivi_machines/models/stock_picking.py:0
+msgid "%s machines"
+msgstr ""
+
+#. module: suivi_machines
+#. odoo-python
 #: code:addons/suivi_machines/models/frise_machine.py:0
 msgid "+%s plus anciens"
 msgstr ""
@@ -47,6 +53,7 @@ msgstr ""
 
 #. module: suivi_machines
 #: model_terms:ir.ui.view,arch_db:suivi_machines.view_order_form_machine_lot
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_picking_form_machine
 msgid "<span class=\"o_stat_text\">Fiche de machine</span>"
 msgstr ""
 
@@ -186,9 +193,15 @@ msgid "Bris"
 msgstr ""
 
 #. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_stock_lot__frise_nb_bris
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_lot_form_machine
+msgid "Bris / réparations"
+msgstr ""
+
+#. module: suivi_machines
 #. odoo-python
 #: code:addons/suivi_machines/models/frise_machine.py:0
-msgid "Bris / réparations"
+msgid "Bris / réparations - %s"
 msgstr ""
 
 #. module: suivi_machines
@@ -242,9 +255,15 @@ msgid "Client actuel"
 msgstr ""
 
 #. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_stock_lot__frise_nb_clients
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_lot_form_machine
+msgid "Clients"
+msgstr ""
+
+#. module: suivi_machines
 #. odoo-python
 #: code:addons/suivi_machines/models/frise_machine.py:0
-msgid "Clients"
+msgid "Clients - %s"
 msgstr ""
 
 #. module: suivi_machines
@@ -455,10 +474,16 @@ msgid "Entretien en retard"
 msgstr ""
 
 #. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_stock_lot__frise_nb_entretiens
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_intervention_search
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_lot_form_machine
+msgid "Entretiens"
+msgstr ""
+
+#. module: suivi_machines
 #. odoo-python
 #: code:addons/suivi_machines/models/frise_machine.py:0
-#: model_terms:ir.ui.view,arch_db:suivi_machines.view_intervention_search
-msgid "Entretiens"
+msgid "Entretiens - %s"
 msgstr ""
 
 #. module: suivi_machines
@@ -799,6 +824,7 @@ msgid "Lot/Serial"
 msgstr ""
 
 #. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_stock_picking__machine_fiche_label
 #: model_terms:ir.ui.view,arch_db:suivi_machines.view_historique_search
 msgid "Machine"
 msgstr ""
@@ -845,8 +871,19 @@ msgstr ""
 
 #. module: suivi_machines
 #. odoo-python
+#: code:addons/suivi_machines/models/stock_picking.py:0
+msgid "Machines - %s"
+msgstr ""
+
+#. module: suivi_machines
+#. odoo-python
 #: code:addons/suivi_machines/models/vente_numero_serie.py:0
 msgid "Machines de %s"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_stock_picking__machine_fiche_ids
+msgid "Machines du transfert"
 msgstr ""
 
 #. module: suivi_machines
@@ -911,9 +948,19 @@ msgid "Nb interventions"
 msgstr ""
 
 #. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_stock_picking__machine_fiche_count
+msgid "Nb machines"
+msgstr ""
+
+#. module: suivi_machines
 #. odoo-python
 #: code:addons/suivi_machines/models/vente_numero_serie.py:0
 msgid "New"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__activity_calendar_event_id
+msgid "Next Activity Calendar Event"
 msgstr ""
 
 #. module: suivi_machines
@@ -1030,10 +1077,9 @@ msgid "Prix unitaire"
 msgstr ""
 
 #. module: suivi_machines
-#. odoo-python
-#: code:addons/suivi_machines/models/frise_machine.py:0
 #: model:ir.model.fields,field_description:suivi_machines.field_stock_lot__date_prochain_entretien
 #: model:ir.model.fields,field_description:suivi_machines.field_stock_picking__prochain_entretien
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_lot_form_machine
 msgid "Prochain entretien"
 msgstr ""
 
@@ -1348,6 +1394,21 @@ msgstr ""
 #: model:ir.model.fields,field_description:suivi_machines.field_stock_lot__frise_html
 #: model_terms:ir.ui.view,arch_db:suivi_machines.view_lot_form_machine
 msgid "Vie de la machine"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_lot_form_machine
+msgid "Voir les bris et réparations"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_lot_form_machine
+msgid "Voir les clients chez qui la machine a été livrée"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_lot_form_machine
+msgid "Voir les entretiens faits"
 msgstr ""
 
 #. module: suivi_machines

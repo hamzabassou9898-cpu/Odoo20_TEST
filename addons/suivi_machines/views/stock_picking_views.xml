@@ -12,6 +12,17 @@
                         class="btn-primary" invisible="state != 'done' or picking_type_code != 'outgoing'"
                         help="Créer le bon de retour des machines (et accessoires) de cette livraison"/>
             </xpath>
+            <!-- Fiche de machine en haut, des que le n° de serie est choisi -->
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_fiche_machines" type="object" class="oe_stat_button"
+                        icon="precision_manufacturing" invisible="not machine_fiche_count">
+                    <div class="o_stat_info">
+                        <span class="o_stat_value"><field name="machine_fiche_label"/></span>
+                        <span class="o_stat_text">Fiche de machine</span>
+                    </div>
+                    <field name="machine_fiche_count" invisible="1"/>
+                </button>
+            </xpath>
             <!-- Livraison / ramassage : pas de validation sans technicien (bandeau rouge) -->
             <xpath expr="//sheet" position="before">
                 <field name="technicien_requis" invisible="1"/>

@@ -33,6 +33,32 @@ class StockPicking(models.Model):
         for picking in self:
             picking.livre_machines = any(m.est_machine and m._vers_client() for m in picking.move_ids)
 
+    # Fiche de machine en haut du transfert : des que le n° de serie est choisi
+    machine_fiche_ids = fields.Many2many("stock.lot", string="Machines du transfert",
+                                         compute="_compute_machine_fiche")
+    machine_fiche_count = fields.Integer("Nb machines", compute="_compute_machine_fiche")
+    machine_fiche_label = fields.Char("Machine", compute="_compute_machine_fiche")
+
+    @api.depends("move_ids.machine_lot_id", "move_ids.move_line_ids.lot_id")
+    def _compute_machine_fiche(self):
+        for picking in self:
+            lots = (picking.move_ids.machine_lot_id | picking.move_ids.move_line_ids.lot_id).filtered("est_machine")
+            picking.machine_fiche_ids = lots
+            picking.machine_fiche_count = len(lots)
+            picking.machine_fiche_label = (lots.ref or lots.name) if len(lots) == 1 else \
+                self.env._("%s machines", len(lots))
+
+    def action_fiche_machines(self):
+        """Une machine : sa fiche ; plusieurs : la liste des fiches."""
+        self.ensure_one()
+        lots = self.machine_fiche_ids
+        if len(lots) == 1:
+            return {"type": "ir.actions.act_window", "res_model": "stock.lot", "res_id": lots.id,
+                    "view_mode": "form", "views": [(False, "form")], "target": "current"}
+        return {"type": "ir.actions.act_window", "name": self.env._("Machines - %s", self.name),
+                "res_model": "stock.lot", "view_mode": "list,form", "views": [(False, "list"), (False, "form")],
+                "domain": [("id", "in", lots.ids)]}
+
     technicien_requis = fields.Boolean(
         "Technicien requis", compute="_compute_technicien_requis",
         help="Livraison chez un client ou ramassage : le technicien assigné est obligatoire pour valider.")

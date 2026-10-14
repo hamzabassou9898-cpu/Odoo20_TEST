@@ -58,6 +58,28 @@
                 </group>
                 <separator string="Vie de la machine" invisible="not est_machine"/>
                 <field name="frise_html" nolabel="1" colspan="2" readonly="1" invisible="not est_machine"/>
+                <!-- Resume de la vie de la machine : chaque carte ouvre sa liste -->
+                <div class="d-flex flex-wrap gap-2 mt-2 mb-3" invisible="not est_machine">
+                    <button name="action_frise_clients" type="object" class="btn btn-light border rounded px-3 py-2 text-start"
+                            title="Voir les clients chez qui la machine a été livrée">
+                        <div class="fs-4 fw-bold"><field name="frise_nb_clients"/></div>
+                        <div class="small text-muted">Clients</div>
+                    </button>
+                    <button name="action_frise_entretiens" type="object" class="btn btn-light border rounded px-3 py-2 text-start"
+                            title="Voir les entretiens faits">
+                        <div class="fs-4 fw-bold"><field name="frise_nb_entretiens"/></div>
+                        <div class="small text-muted">Entretiens</div>
+                    </button>
+                    <button name="action_frise_bris" type="object" class="btn btn-light border rounded px-3 py-2 text-start"
+                            title="Voir les bris et réparations">
+                        <div class="fs-4 fw-bold"><field name="frise_nb_bris"/></div>
+                        <div class="small text-muted">Bris / réparations</div>
+                    </button>
+                    <div class="border rounded px-3 py-2" invisible="not date_prochain_entretien">
+                        <div class="fs-4 fw-bold"><field name="date_prochain_entretien" readonly="1"/></div>
+                        <div class="small text-muted">Prochain entretien</div>
+                    </div>
+                </div>
                 <notebook invisible="not est_machine">
                     <page string="Historique" name="historique">
                         <field name="historique_ids" readonly="1">

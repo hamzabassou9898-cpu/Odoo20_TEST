@@ -429,13 +429,34 @@ class TestSuiviMachines(TransactionCase):
         self.assertIn(self.client.name, frise)
         self.assertIn("Entretien", frise)
         self.assertIn("Joint usé", frise)
-        self.assertIn("Prochain entretien", frise)
+        # Resume cliquable sous la frise : clients, entretiens, bris / reparations
+        self.assertEqual(self.lot_b.frise_nb_clients, 1)
+        self.assertEqual(self.lot_b.frise_nb_entretiens, 1)
+        self.assertGreaterEqual(self.lot_b.frise_nb_bris, 1)
+        self.assertEqual(self.env["res.partner"].search(self.lot_b.action_frise_clients()["domain"]), self.client)
+        entretiens = self.env["machine.intervention"].search(self.lot_b.action_frise_entretiens()["domain"])
+        self.assertEqual(set(entretiens.mapped("type")), {"entretien"})
+        bris = self.env["machine.intervention"].search(self.lot_b.action_frise_bris()["domain"])
+        self.assertTrue(bris and set(bris.mapped("type")) <= {"bris", "reparation"})
         self.assertLess(frise.index("Livrée"), frise.index("Joint usé"), "du plus ancien au plus récent")
+        # Bon de livraison : la fiche de la machine en haut (n° de serie choisi)
+        self.assertEqual(pk.machine_fiche_ids, self.lot_b)
+        self.assertEqual(pk.machine_fiche_label, self.lot_b.ref or self.lot_b.name)
+        self.assertEqual(pk.action_fiche_machines()["res_id"], self.lot_b.id)
+        arch_pk = self.env["stock.picking"].get_views([(False, "form")])["views"]["form"]["arch"]
+        self.assertIn("action_fiche_machines", arch_pk)
+        # Machine installee sans bon de livraison (saisie a la main) : son client compte aussi
+        saisie = self.env["stock.lot"].create({"name": "SAISIE-1", "product_id": self.produit.id})
+        self.env["machine.intervention"].create({"lot_id": saisie.id, "type": "installation", "state": "fait",
+                                                 "partner_id": self.client.id})
+        self.assertEqual(saisie.frise_nb_clients, 1)
         # Machine sans evenement : message simple
         neuve = self.env["stock.lot"].create({"name": "NEUVE-1", "product_id": self.produit.id})
         self.assertIn("Aucun événement", str(neuve.frise_html))
         arch = self.env["stock.lot"].get_views([(False, "form")])["views"]["form"]["arch"]
         self.assertIn("frise_html", arch)
+        for bouton in ("action_frise_clients", "action_frise_entretiens", "action_frise_bris"):
+            self.assertIn(bouton, arch)
 
 
     def test_technicien_obligatoire_pour_valider(self):
