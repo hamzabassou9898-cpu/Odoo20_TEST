@@ -627,6 +627,27 @@ class TestSuiviMachines(TransactionCase):
         brouillon.type_contrat_id = self.env.ref("suivi_machines.type_contrat_location")
         self.assertFalse(brouillon.order_line.filtered("est_forfait"))
 
+    def test_numero_de_serie_obligatoire_a_la_livraison(self):
+        """Josef choisit le n° de série de chaque machine sur le bon de livraison : obligatoire pour valider."""
+        so = self.env["sale.order"].create({
+            "partner_id": self.client.id,
+            "order_line": [(0, 0, {"product_id": self.produit.id, "product_uom_qty": 2})]})
+        so.action_confirm()
+        livraison = so.picking_ids
+        livraison.write({"livreur_id": self.env.user.id, "frequence_entretien": "12",
+                         "prochain_entretien": fields.Date.today() + relativedelta(months=12)})
+        livraison.move_ids.move_line_ids.unlink()
+        self.assertTrue(livraison.machines_sans_serie, "bandeau rouge sur le bon de livraison")
+        with self.assertRaisesRegex(UserError, "n° de série de chaque machine"):
+            livraison.button_validate()
+        moves = livraison.move_ids.filtered("est_machine")
+        moves[0].machine_lot_id = self.lot_a
+        self.assertTrue(livraison.machines_sans_serie, "une machine sur deux : pas encore")
+        moves[1].machine_lot_id = self.lot_b
+        self.assertFalse(livraison.machines_sans_serie)
+        arch = self.env["stock.picking"].get_views([(False, "form")])["views"]["form"]["arch"]
+        self.assertIn("machines_sans_serie", arch)
+
     def test_une_ligne_par_machine(self):
         """« Machine x 2 » : 2 lignes d'une machine, pour choisir le n° de serie de chacune."""
         so = self.env["sale.order"].create({
@@ -658,12 +679,16 @@ class TestSuiviMachines(TransactionCase):
                            "phone": "418-555-0100", "is_company": True})
         lot = self.env["stock.lot"].create({"name": "SER-CONTRAT", "product_id": self.produit.id, "ref": "F999"})
         rapport = self.env["ir.actions.report"]
-        prix = self.env.company.currency_id.format
+        # Texte original des formulaires (montants ecrits compris), seuls les blancs sont remplis
         attendus = {
-            "type_contrat_location": ["CONTRAT DE LOCATION / ENTREPRISE", "louera au client", prix(4000)],
-            "type_contrat_convention": ["CONVENTION", "permettra au client d’utiliser", prix(359.99), prix(125)],
-            "type_contrat_popcorn": ["CONVENTION", "HARLAN’S", prix(279.5), prix(70), prix(2500)],
-            "type_contrat_proprietaire": ["CONTRAT PROPRIÉTAIRE", "DISTRIBUTEUR", prix(105), prix(125)],
+            "type_contrat_location": ["CONTRAT DE LOCATION / ENTREPRISE", "louera au client", "0.00 $",
+                                      "QUATRE MILLE DOLLARS (4000$", "frais de 125$", "Rév. 01/13", "de le présent contrat"],
+            "type_contrat_convention": ["CONVENTION", "permettra au client d’utiliser", "359.99$", "frais de 125$",
+                                        "Rév. 01/13", "V2 ELMECO"],
+            "type_contrat_popcorn": ["POPCORN", "HARLAN’S", "279.50 $", "frais de 70$",
+                                     "DEUX MILLE CINQ CENTS DOLLARS (2500$", "Rév. 10/2016"],
+            "type_contrat_proprietaire": ["CONTRAT PROPRIÉTAIRE", "DISTRIBUTEUR", "125.00$ plus un taux horaire de 105,00 $",
+                                          "Rév. 12/09"],
         }
         for xmlid, textes in attendus.items():
             so = self.env["sale.order"].create({
@@ -674,9 +699,30 @@ class TestSuiviMachines(TransactionCase):
             self.assertTrue(so.require_signature, "le client signe le contrat en ligne")
             html = rapport._render_qweb_html("sale.action_report_saleorder", so.ids)[0].decode()
             with self.subTest(type=xmlid):
-                for texte in textes + ["Client", "MON777", "Dépanneur Test", "F999 (SER-CONTRAT)", "Été",
-                                       "1 janvier 2026", "31 décembre 2027", "CLAUSE PÉNALE"]:
+                for texte in textes + ["Client", "MON777", "Dépanneur Test", "1 janvier 2026", "31 décembre 2027",
+                                       "CLAUSE PÉNALE", "Initiales"] + (["F999 (SER-CONTRAT)"] if "popcorn" not in xmlid else []):
                     self.assertIn(texte, html)
+        # N° de serie choisi a la livraison (comme d'habitude) : a la signature « attribue a la livraison »,
+        # puis le contrat montre les n° de serie choisis sur le bon de livraison (une ligne par machine)
+        lot2 = self.env["stock.lot"].create({"name": "SER-LIVRE-2", "product_id": self.produit.id})
+        self.env["stock.quant"]._update_available_quantity(self.produit, self.stock, 1, lot_id=lot2)
+        so = self.env["sale.order"].create({
+            "partner_id": self.client.id, "type_contrat_id": self.env.ref("suivi_machines.type_contrat_convention").id,
+            "date_debut_location": PERIODE_TEST[0], "date_fin_location": PERIODE_TEST[1],
+            "order_line": [(0, 0, {"product_id": self.produit.id, "product_uom_qty": 2})]})
+        html = rapport._render_qweb_html("sale.action_report_saleorder", so.ids)[0].decode()
+        self.assertIn("numéro de série ______________", html, "blanc avant la livraison, comme le formulaire")
+        so.action_confirm()
+        livraison = so.picking_ids
+        moves = livraison.move_ids.filtered("est_machine")
+        self.assertEqual(len(moves), 2, "une ligne de livraison par machine, chacune avec son n° de série")
+        moves[0].machine_lot_id = self.lot_a
+        moves[1].machine_lot_id = lot2
+        self.assertEqual(set(so.order_line.filtered("est_machine").mapped("machine_lot_id.name")),
+                         {self.lot_a.name, "SER-LIVRE-2"}, "reportés sur les lignes du contrat")
+        html = rapport._render_qweb_html("sale.action_report_saleorder", so.ids)[0].decode()
+        self.assertIn("SER-LIVRE-2", html)
+        self.assertIn(self.lot_a.name, html)
         # Sans type de contrat : devis normal, pas de contrat
         simple = self.env["sale.order"].create({"partner_id": self.client.id})
         self.assertNotIn("CLAUSE PÉNALE", rapport._render_qweb_html("sale.action_report_saleorder", simple.ids)[0].decode())

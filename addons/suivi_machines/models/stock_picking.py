@@ -59,6 +59,15 @@ class StockPicking(models.Model):
                 "res_model": "stock.lot", "view_mode": "list,form", "views": [(False, "list"), (False, "form")],
                 "domain": [("id", "in", lots.ids)]}
 
+    machines_sans_serie = fields.Boolean(
+        "Machines sans n° de série", compute="_compute_machines_sans_serie",
+        help="Livraison chez le client : une machine n'a pas encore son n° de série (obligatoire pour valider).")
+
+    @api.depends("move_ids.machine_lot_id", "move_ids.move_line_ids.lot_id", "move_ids.product_uom_qty", "state")
+    def _compute_machines_sans_serie(self):
+        for picking in self:
+            picking.machines_sans_serie = picking.state not in ("done", "cancel") and picking._machines_sans_serie()
+
     technicien_requis = fields.Boolean(
         "Technicien requis", compute="_compute_technicien_requis",
         help="Livraison chez un client ou ramassage : le technicien assigné est obligatoire pour valider.")
@@ -93,7 +102,21 @@ class StockPicking(models.Model):
             raise UserError(self.env._(
                 "Indiquez le prochain entretien et sa fréquence (3, 6, 12 mois…) avant de valider : %s.",
                 ", ".join(sans_entretien.mapped("name"))))
+        sans_serie = self.filtered(lambda p: p.state not in ("done", "cancel") and p._machines_sans_serie())
+        if sans_serie:
+            raise UserError(self.env._(
+                "Indiquez le n° de série de chaque machine livrée avant de valider : %s.",
+                ", ".join(sans_serie.mapped("name"))))
         return super().button_validate()
+
+    def _machines_sans_serie(self):
+        """Livraison chez le client : chaque machine doit avoir SON n° de serie (une ligne par machine)."""
+        self.ensure_one()
+        for move in self.move_ids.filtered(lambda m: m.est_machine and m.state != "cancel" and m._vers_client()):
+            lots = move.move_line_ids.filtered(lambda l: l.quantity > 0).lot_id | move.machine_lot_id
+            if len(lots) < int(move.product_uom_qty):
+                return True
+        return False
 
     def _action_done(self):
         res = super()._action_done()

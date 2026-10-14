@@ -1,265 +1,415 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <!--
-        Contrats Monroy (location / entreprise, convention slush, convention popcorn, proprietaire) :
-        imprimes avec le devis (PDF) et affiches sur la page du client, qui signe en ligne.
-        Les blancs sont remplis depuis Odoo (sale.order._contrat_valeurs).
+        Contrats Monroy : TEXTE ORIGINAL (verbatim des formulaires papier). Odoo remplit seulement les blancs
+        (sale.order._contrat_valeurs). Imprimes avec le devis (PDF) et affiches sur la page du client, qui signe
+        en ligne.
     -->
     <template id="contrat_monroy">
         <t t-set="v" t-value="doc._contrat_valeurs()"/>
         <t t-set="b" t-value="v['blanc']"/>
-        <t t-set="m" t-value="v['modele']"/>
-        <t t-set="partie" t-value="'DISTRIBUTEUR' if m == 'proprietaire' else 'PROPRIÉTAIRE'"/>
-        <t t-set="p" t-value="'distributeur' if m == 'proprietaire' else 'propriétaire'"/>
-        <t t-set="convention" t-value="m in ('convention', 'popcorn')"/>
-        <t t-set="le_doc" t-value="'la présente convention' if convention else 'le présent contrat'"/>
-        <t t-set="du_doc" t-value="'de la présente convention' if convention else 'du présent contrat'"/>
-        <t t-set="au_doc" t-value="'à la présente convention' if convention else 'au présent contrat'"/>
-        <t t-set="marque" t-value="'HARLAN’S' if m == 'popcorn' else 'SLUSH PUPPIE'"/>
-        <t t-set="equipement" t-value="'équipement' if m == 'popcorn' else 'congélateur'"/>
-        <t t-set="penale" t-value="'9' if m == 'proprietaire' else '10'"/>
         <div class="o_contrat_monroy" style="font-size: 12px; line-height: 1.45;">
-            <!-- En-tete : modele, saison -->
-            <table style="width: 100%; margin-bottom: 8px;">
+            <t t-if="v['modele'] == 'location'"><t t-call="suivi_machines.contrat_texte_location"/></t>
+            <t t-elif="v['modele'] == 'convention'"><t t-call="suivi_machines.contrat_texte_convention"/></t>
+            <t t-elif="v['modele'] == 'popcorn'"><t t-call="suivi_machines.contrat_texte_popcorn"/></t>
+            <t t-else=""><t t-call="suivi_machines.contrat_texte_proprietaire"/></t>
+        </div>
+    </template>
+
+    <template id="contrat_texte_location">
+            <table style="width: 100%; font-size: 11px; margin-bottom: 6px;">
                 <tr>
-                    <td><strong>MODÈLE :</strong> <t t-out="b(v['modeles_machines'])"/></td>
-                    <td style="text-align: right;" t-if="v['saison']"><strong>SAISON :</strong> <t t-out="v['saison']"/></td>
+                    <td style="width: 12%; vertical-align: top;"><strong>MODÈLE :</strong></td>
+                    <td style="width: 38%; vertical-align: top;">
+                        DEBOUT : <t t-out="'☒' if 'F100' in v['coches'] else '☐'"/> F100&#160;&#160;<t t-out="'☒' if 'SP10' in v['coches'] else '☐'"/> SP10<br/>
+                        COMPTOIR : <t t-out="'☒' if 'F100C' in v['coches'] else '☐'"/> F100&#160;&#160;<t t-out="'☒' if 'SP10C' in v['coches'] else '☐'"/> SP10<br/>
+                        <t t-out="'☒' if 'BFC1' in v['coches'] else '☐'"/> Bébé FC1<br/>
+                        <t t-out="'☒' if 'V1' in v['coches'] else '☐'"/> V1<br/>
+                        <t t-out="'☒' if 'FC1' in v['coches'] else '☐'"/> FC1<br/>
+                        <t t-out="'☒' if 'BFC2' in v['coches'] else '☐'"/> Bébé FC2<br/>
+                        <t t-out="'☒' if 'FC2' in v['coches'] else '☐'"/> FC2<br/>
+                        <t t-out="'☒' if 'V2' in v['coches'] else '☐'"/> V2 Elmeco<br/>
+                        <t t-out="'☒' if 'FC3' in v['coches'] else '☐'"/> FC3<br/>
+                        <t t-out="'☒' if 'AUTRE' in v['coches'] else '☐'"/> AUTRE
+                    </td>
+                    <td style="width: 25%; vertical-align: top;">
+                        ☐ TIMER____<br/>☐ SLUSH<br/>☐ S.P. PLUS<br/>☐ LIMONADE<br/>☐ CAPPUCCINO
+                    </td>
+                    <td style="width: 25%; vertical-align: top;">
+                        <t t-out="'☒' if 'annee' in v['saisons'] else '☐'"/> ANNÉE<br/>
+                        <t t-out="'☒' if 'hiver' in v['saisons'] else '☐'"/> HIVER<br/>
+                        <t t-out="'☒' if 'ete' in v['saisons'] else '☐'"/> ÉTÉ<br/>
+                        <t t-out="'☒' if 'ecole' in v['saisons'] else '☐'"/> ÉCOLE ______
+                    </td>
                 </tr>
             </table>
-            <h3 style="text-align: center; font-weight: bold; margin: 10px 0;">
-                <t t-if="m == 'location'">CONTRAT DE LOCATION / ENTREPRISE</t>
-                <t t-elif="m == 'proprietaire'">CONTRAT PROPRIÉTAIRE</t>
-                <t t-else="">CONVENTION</t>
-            </h3>
-            <!-- Parties -->
+            <h3 style="text-align: center; font-weight: bold; margin: 8px 0;">CONTRAT DE LOCATION / ENTREPRISE</h3>
             <table style="width: 100%; border-collapse: collapse; margin-bottom: 8px;">
                 <tr>
-                    <td style="width: 40%; vertical-align: top; padding-right: 10px;">
+                    <td style="width: 38%; vertical-align: top; padding-right: 10px;">
                         <strong>ENTRE</strong><br/>
                         <strong t-out="v['proprietaire'].name"/><br/>
                         <span t-out="v['proprietaire'].street or ''"/><br/>
-                        <span t-out="' '.join(x for x in (v['proprietaire'].city, v['proprietaire'].state_id.code, v['proprietaire'].zip) if x)"/><br/>
-                        <span t-out="v['proprietaire'].phone or ''"/><br/>
-                        <em>Ci-après appelé « LE <t t-out="partie"/> »</em>
+                        <span t-out="' '.join(x for x in (v['proprietaire'].city, v['proprietaire'].state_id.code, v['proprietaire'].zip) if x)"/>
                     </td>
-                    <td style="width: 60%; vertical-align: top;">
-                        <strong>ET</strong><br/>
-                        Nom du commerce : <strong t-out="v['commerce'].name"/><br/>
-                        Nom légal (cie) : <strong t-out="v['client'].name"/><br/>
-                        Adresse : <strong t-out="v['client'].street or ''"/><br/>
-                        Ville : <strong t-out="v['client'].city or ''"/> — Code postal : <strong t-out="v['client'].zip or ''"/><br/>
-                        Tél. : <strong t-out="v['telephone']"/>
-                        <t t-if="v['contact']"> — Contact : <strong t-out="v['contact']"/></t><br/>
-                        Courriel : <strong t-out="v['courriel']"/> — # client : <strong t-out="v['numero_client']"/><br/>
-                        <em>Ci-après appelé « LE CLIENT »</em>
+                    <td style="width: 62%; vertical-align: top;">
+                        <strong>ET</strong>&#160; Nom du commerce : <t t-out="b(v['commerce'].name)"/><br/>
+                        Nom légal (cie) : <t t-out="b(v['client'].name)"/><br/>
+                        Adresse : <t t-out="b(v['client'].street)"/><br/>
+                        Ville : <t t-out="b(v['client'].city)"/> &#160;&#160; Code postal : <t t-out="b(v['client'].zip)"/><br/>
+                        Tél. : <t t-out="b(v['telephone'])"/> &#160;&#160; Tél. : <t t-out="b(v['telephone2'])"/><br/>
+                        Contact : <t t-out="b(v['contact'])"/><br/>
+                        Courriel : <t t-out="b(v['courriel'])"/> &#160;&#160; # client : <t t-out="b(v['numero_client'])"/>
                     </td>
+                </tr>
+                <tr>
+                    <td style="padding-top: 4px;">Ci-après appelé ¨LE PROPRIÉTAIRE¨</td>
+                    <td style="padding-top: 4px;">Ci-après appelé ¨LE CLIENT¨</td>
                 </tr>
             </table>
             <p><strong>LESQUELS CONVIENNENT DE CE QUI SUIT :</strong></p>
-
-            <!-- 1. OBJET -->
             <p><strong>1. OBJET</strong></p>
-            <t t-if="m == 'proprietaire'">
-                <p>1.1 À compter du <t t-out="b(v['debut'])"/>,
-                    le propriétaire du congélateur modèle <t t-out="b(v['modeles_machines'])"/>
-                    et portant le # de série <t t-out="b(v['series'])"/>
-                    désire avoir l’autorisation de se servir du nom et de la réputation du produit SLUSH PUPPIE pour
-                    effectuer ses ventes de barbotine (slush).</p>
-            </t>
-            <t t-else="">
-                <p>1.1 À compter du <t t-out="b(v['debut'])"/>,
-                    le propriétaire
-                    <t t-if="m == 'location'">louera au client un de ses congélateurs de marque SLUSH PUPPIE, numéro de machine</t>
-                    <t t-elif="m == 'convention'">permettra au client d’utiliser un de ses congélateurs de marque SLUSH PUPPIE, numéro de série</t>
-                    <t t-else="">permettra au client d’utiliser un de ses équipements, numéro de série</t>
-                    <t t-out="b(v['series'])"/>
-                    et tous les équipements s’y rapportant;</p>
-                <p>1.2 Lors de la livraison<t t-if="convention"> ou de la mise en marche</t> du <t t-out="equipement"/>,
-                    le client devra verser au propriétaire la somme de
-                    <t t-out="b(v['montant_depart'])"/>
-                    <t t-if="m == 'location'">pour la location et l’installation des équipements;</t>
-                    <t t-else="">pour les droits d’utilisation de l’équipement;</t></p>
-            </t>
-
-            <!-- 2. DUREE -->
+            <p>1.1 À compter du <t t-out="b(v['debut'])"/>, le propriétaire louera au client un de ses congélateurs de marque SLUSH PUPPIE, numéro de machine <t t-out="b(v['series'])"/> et tous les équipements s’y rapportant;</p>
+            <p>1.2 Lors de la livraison du congélateur, le client devra verser au propriétaire la somme de <t t-out="b(v['montant_depart_nombre'])"/> $ pour la location et l’installation des équipements;</p>
             <p><strong>2. DURÉE</strong></p>
-            <p>2.1 <t t-out="le_doc[0].upper() + le_doc[1:]"/> sera en vigueur du
-                <t t-out="b(v['debut'])"/> au
-                <t t-out="b(v['fin'])"/> inclusivement et se
-                renouvellera automatiquement pour une période identique (du
-                <t t-out="b(v['renouvellement_debut'])"/> au
-                <t t-out="b(v['renouvellement_fin'])"/>), aux
-                mêmes conditions à moins que le client ait avisé le <t t-out="p"/> de son intention de non renouvellement
-                par avis écrit, transmis sous pli recommandé au moins quatre-vingt-dix (90) jours avant la date à laquelle
-                doit débuter la (ou les) période(s) de renouvellement. Si le client ne respecte pas ces conditions ainsi
-                que la durée initiale <t t-out="du_doc"/>, il sera en défaut, ce qui entraînera l’application immédiate de
-                la clause pénale prévue au paragraphe <t t-out="penale"/> des présentes et ce, sans autre avis ni délai;</p>
-            <t t-if="m in ('location', 'convention')">
-                <p>2.2 Le client pourra durant les périodes non visées par <t t-out="le_doc"/>, de son renouvellement et/ou
-                    durant les périodes de non activités de son établissement demander au propriétaire de reprendre le
-                    congélateur et le propriétaire pourra à sa discrétion durant les mêmes périodes reprendre possession du
-                    congélateur. La reprise de possession du congélateur par le propriétaire durant une telle période n’aura
-                    pas pour effet de résilier <t t-out="le_doc"/>, ou d’empêcher le renouvellement automatique de celle-ci
-                    conformément à l’article 2.1 des présentes. Il est entendu que le propriétaire remettra le congélateur en
-                    possession du client pour les périodes de renouvellement et ce, sans avoir à aviser au préalable le client.</p>
-            </t>
-            <t t-if="m != 'proprietaire'">
-                <p><t t-out="'2.3' if m in ('location', 'convention') else '2.2'"/> Malgré le terme prévu à la clause 2.1
-                    de la présente, le propriétaire conserve le droit absolu de propriété du <t t-out="equipement"/> et des
-                    équipements s’y rapportant et pourra en reprendre possession ou les remplacer en tout temps, à son entière
-                    discrétion, ainsi qu’en cas de défaut par le client de respecter l’une des clauses <t t-out="du_doc"/> et
-                    ce, sans être tenu de payer au client aucune indemnité de quelque nature que ce soit;</p>
-            </t>
-
-            <!-- 3. APPROVISIONNEMENT -->
+            <p>2.1 Le présent contrat sera en vigueur du <t t-out="b(v['debut'])"/> au <t t-out="b(v['fin'])"/> inclusivement et se renouvellera automatiquement pour une période identique (du <t t-out="b(v['renouvellement_debut'])"/> au <t t-out="b(v['renouvellement_fin'])"/>), aux mêmes conditions à moins que le client ait avisé le propriétaire de son intention de non renouvellement par avis écrit, transmis sous pli recommandé au moins quatre-vingt-dix (90) jours avant la date à laquelle doit débuter la (ou les) période(s) de renouvellement. Si le client ne respecte pas ces conditions ainsi que la durée initiale du présent contrat, il sera en défaut, ce qui entraînera l’application immédiate de la clause pénale prévue au paragraphe 10 des présentes et ce, sans autre avis ni délai;</p>
+            <p>2.2 Le client pourra durant les périodes non visées par le présent contrat, de son renouvellement et/ou durant les périodes de non activités de son établissement demander au propriétaire de reprendre le congélateur et le propriétaire pourra à sa discrétion durant les mêmes périodes reprendre possession du congélateur. La reprise de possession du congélateur par le propriétaire durant une telle période n’aura pas pour effet de résilier le présent contrat, ou d’empêcher le renouvellement automatique de celle-ci conformément à l’article 2.1 des présentes. Il est entendu que le propriétaire remettra le congélateur en possession du client pour les périodes de renouvellement et ce, sans avoir à aviser au préalable le client.</p>
+            <p>2.3 Malgré le terme prévu à la clause 2.1 de la présente, le propriétaire conserve le droit absolu de propriété du congélateur et des équipements s’y rapportant et pourra en reprendre possession ou les remplacer en tout temps, à son entière discrétion, ainsi qu’en cas de défaut par le client de respecter l’une des clauses du présent contrat et ce, sans être tenu de payer au client aucune indemnité de quelque nature que ce soit;</p>
             <p><strong>3. APPROVISIONNEMENT</strong></p>
-            <p>3.1 Le client devra s’approvisionner exclusivement chez le <t t-out="p"/> ou son agent autorisé et il ne
-                devra utiliser que des produits de marque <t t-out="marque"/>.<t t-if="m != 'popcorn'"> Plus
-                spécifiquement, le client s’engage à utiliser exclusivement les liquides et les verres de marque SLUSH
-                PUPPIE;</t></p>
-            <p>3.2 Le <t t-out="p"/> ou son agent autorisé s’engage à livrer la marchandise dans un délai raisonnable.
-                Toutefois, advenant l’impossibilité pour le <t t-out="p"/> de livrer la marchandise pour cause de force
-                majeure ou pour quelque motif que ce soit, le client s’engage à ne pas s’approvisionner en produits autres
-                que ceux du <t t-out="p"/><t t-if="m != 'popcorn'"> et à ne pas avoir en sa possession de quelque façon que
-                ce soit des marchandises de même nature que celles vendues par le <t t-out="p"/></t>;</p>
-
-            <!-- 4. QUALITE -->
+            <p>3.1 Le client devra s’approvisionner exclusivement chez le propriétaire ou son agent autorisé et il ne devra utiliser que des produits de marque SLUSH PUPPIE. Plus spécifiquement, le client s’engage à utiliser exclusivement les liquides et les verres de marque SLUSH PUPPIE;</p>
+            <p>3.2 Le propriétaire ou son agent autorisé s’engage à livrer la marchandise dans un délai raisonnable. Toutefois, advenant l’impossibilité pour le propriétaire de livrer la marchandise pour cause de force majeure ou pour quelque motif que ce soit, le client s’engage à ne pas s’approvisionner en produits autres que ceux du propriétaire et à ne pas avoir en sa possession de quelque façon que ce soit des marchandises de même nature que celles vendues par le propriétaire;</p>
             <p><strong>4. QUALITÉ DU PRODUIT</strong></p>
-            <p>4.1 Le client reconnaît avoir pris connaissance des directives du <t t-out="p"/><t t-if="m != 'popcorn'">
-                quant au mélange qu’il doit effectuer avec les produits</t> et s’engage à respecter ces directives et à se
-                soumettre à toutes autres directives du <t t-out="p"/> relatives à la qualité du produit;</p>
-            <p>4.2 Le client s’engage à tenir le <t t-out="equipement"/> et les équipements s’y rapportant dans une
-                condition de propreté extrême<t t-if="m != 'proprietaire'">, conformément<t t-if="m != 'popcorn'"> au
-                guide de nettoyage et de désinfection fixé au congélateur ainsi</t> aux normes légales fédérales,
-                provinciales et municipales applicables</t>. Par ailleurs, le client déclare avoir pris connaissance des
-                directives du <t t-out="p"/> quant au nettoyage et la désinfection du <t t-out="equipement"/> et des
-                accessoires<t t-if="m != 'popcorn'"> et il s’engage à n’utiliser que le produit de nettoyage communément
-                appelé « AMFO »</t>. De plus, le client autorise le <t t-out="p"/> à recevoir copie de tous les différents
-                rapports d’inspection émanant de services gouvernementaux. Le client sera responsable des amendes dues,
-                relatives aux infractions et devra les acquitter dans les plus brefs délais;</p>
-
-            <!-- 5. PROMOTIONS -->
+            <p>4.1 Le client reconnaît avoir pris connaissance des directives du propriétaire quant au mélange qu’il doit effectuer avec les produits et s’engage à respecter ces directives et à se soumettre à toutes autres directives du propriétaire relatives à la qualité du produit;</p>
+            <p>4.2 Le client s’engage à tenir le congélateur et les équipements s’y rapportant dans une condition de propreté extrême, conformément au guide de nettoyage et de désinfection fixé au congélateur ainsi qu’aux normes légales fédérales, provinciales et municipales applicables. Par ailleurs, le client déclare avoir pris connaissance des directives du propriétaire quant au nettoyage et la désinfection du congélateur et des accessoires et il s’engage à n’utiliser que le produit de nettoyage communément appelé ¨AMFO¨. De plus, le client autorise le propriétaire à recevoir copie de tous les différents rapports d’inspection émanant de services gouvernementaux. Le client sera responsable des amendes dues, relatives aux infractions et devra les acquitter dans les plus brefs délais;</p>
             <p><strong>5. PROMOTIONS ET PRIX DE VENTE AU DÉTAIL</strong></p>
-            <p>5.1 Le client est tenu de participer aux activités promotionnelles ordonnées par le <t t-out="p"/> et à se
-                soumettre aux directives du <t t-out="p"/> concernant ces activités promotionnelles et à les respecter
-                intégralement;</p>
-            <p>5.2 Le client s’engage à respecter et à se soumettre aux prix de vente au détail des produits de marque
-                <t t-out="marque"/> décrétés par le <t t-out="p"/> et il ne pourra les modifier sans autorisation.
-                <t t-if="m != 'popcorn'">Les prix au détail s’établissent comme suit :
-                    <t t-out="b(v['prix_353'])"/> pour le format 353 ml,
-                    <t t-out="b(v['prix_510'])"/> pour le format 510 ml et
-                    <t t-out="b(v['prix_775'])"/> pour le format 775 ml.</t></p>
-
-            <!-- 6. INSPECTION -->
+            <p>5.1 Le client est tenu de participer aux activités promotionnelles ordonnées par le propriétaire et à se soumettre aux directives du propriétaire concernant ces activités promotionnelles et à les respecter intégralement;</p>
+            <p>5.2 Le client s’engage à respecter et à se soumettre aux prix de vente au détail des produits de marque SLUSH PUPPIE décrétés par le propriétaire et il ne pourra les modifier sans autorisation. Les prix au détail s’établissent comme suit : <t t-out="b(v['prix_353'])"/>$ pour le format 353 ml, <t t-out="b(v['prix_510'])"/>$ pour le format 510 ml et <t t-out="b(v['prix_775'])"/>$ pour le format 775 ml.</p>
             <p><strong>6. DROIT D’INSPECTION</strong></p>
-            <p>6.1 Le client reconnaît que le <t t-out="p"/> ou l’un de ses représentants autorisés a le droit d’effectuer,
-                aux temps et lieux que le <t t-out="p"/> jugera nécessaires, des vérifications chez le client afin de
-                s’assurer que le client respecte toutes et chacune des clauses <t t-out="du_doc"/>;</p>
-            <p>6.2 Plus particulièrement, <t t-if="m == 'popcorn'">pour s’assurer du respect des clauses 3 et 4 de la
-                présente convention.</t><t t-else="">tout résultat de tests effectués chez le client par le
-                <t t-out="p"/> ou l’un de ses représentants autorisés, pour s’assurer du respect des clauses 3 et 4
-                <t t-out="du_doc"/>, sera présumé valide à moins que le client n’en conteste juridiquement les résultats.</t></p>
-            <p>6.3 <strong>Le client reconnaît que les obligations d’approvisionnement exclusif (clause 3), du maintien de
-                la qualité du produit (clause 4) ainsi que l’obligation de respecter les prix de vente au détail et de
-                participer aux activités promotionnelles (clause 5) constituent des conditions essentielles
-                <t t-out="au_doc"/> et que le défaut par le client de respecter l’une de ces obligations, entraînera
-                l’application immédiate de la clause pénale prévue au paragraphe <t t-out="penale"/> <t t-out="du_doc"/>
-                et ce, sans autre avis ni délai.</strong></p>
-
-            <!-- 7. COMMANDES -->
+            <p>6.1 Le client reconnaît que le propriétaire ou l’un de ses représentants autorisés a le droit d’effectuer, aux temps et lieux que le propriétaire jugera nécessaires, des vérifications chez le client afin de s’assurer que le client respecte toutes et chacune des clauses du présent contrat;</p>
+            <p>6.2 Plus particulièrement, tout résultat de tests effectués chez le client par le propriétaire ou l’un de ses représentants autorisés, pour s’assurer du respect des clauses 3 et 4 du présent contrat, sera présumé valide à moins que le client n’en conteste juridiquement les résultats.</p>
+            <p><strong>6.3 Le client reconnaît que les obligations d’approvisionnement exclusif (clause 3), du maintien de la qualité du produit (clause 4) ainsi que l’obligation de respecter les prix de vente au détail et de participer aux activités promotionnelles (clause 5) constituent des conditions essentielles au présent contrat et que le défaut par le client de respecter l’une de ces obligations, entraînera l’application immédiate de la clause pénale prévue au paragraphe 10 du présent contrat et ce, sans autre avis ni délai.</strong></p>
+            <p style="text-align: right;">Initiales : ____________</p>
             <p><strong>7. COMMANDES ET LIVRAISONS</strong></p>
-            <p>7.1 Les factures soumises au client seront payables en totalité dès leur réception, en argent comptant ou
-                par chèque<t t-if="m != 'popcorn'">, lequel pourra être postdaté à une date ne dépassant pas sept (7) jours
-                suivant la date de livraison</t>;</p>
-            <p>7.2 Le client devra respecter les minimums de livraison établis de temps à autre par le
-                <t t-out="p"/> ou son agent autorisé;</p>
-            <p>7.3 <t t-if="m == 'proprietaire'">Les appels de service seront la responsabilité du client. Un frais de
-                déplacement de <strong t-out="v['deplacement']"/> plus un taux horaire de <strong t-out="v['taux_horaire']"/>
-                ainsi que les pièces de remplacement seront facturés au client.</t>
-                <t t-else="">Les appels de service inutiles seront la responsabilité du client et dans ces cas, des frais
-                de <strong t-out="v['appel_inutile']"/> seront facturés au client;</t></p>
-            <p>7.4 À l’expiration <t t-out="du_doc"/>, le client aura l’option de retourner les produits non ouverts et en
-                bonnes conditions de revente et obtenir un crédit moins des frais d’administration de 20% du coût des
-                produits.<t t-if="m in ('location', 'convention')"> Cette option sera également ouverte au client dans les
-                situations prévues à la clause 2.2;</t></p>
-
-            <!-- 8. DOMMAGES ET ENTRETIEN (pas pour le proprietaire) -->
-            <t t-if="m != 'proprietaire'">
-                <p><strong>8. DOMMAGES ET ENTRETIEN</strong></p>
-                <p>8.1 Le client assumera l’entière responsabilité de tout dommage pouvant être causé au
-                    <t t-out="equipement"/>, soit par sa faute ou par celle d’un tiers;</p>
-                <p>8.2 Lors de la signature <t t-out="du_doc"/>, le client devra verser au propriétaire la somme de
-                    <strong t-out="v['forfait']"/> plus taxes pour chaque <t t-out="equipement"/> qu’il a en sa
-                    possession. Par la suite, le client devra verser au propriétaire ce même montant à tous les douze (12)
-                    mois. Ce montant représente les frais annuels d’entretien et de réparations usuelles du
-                    <t t-out="equipement"/> et des équipements s’y rapportant, lesquels seront effectués par le
-                    propriétaire durant ses heures normales d’opération;</p>
-            </t>
-
-            <!-- AUTRES CONDITIONS -->
-            <t t-set="autres" t-value="'8' if m == 'proprietaire' else '9'"/>
-            <p><strong><t t-out="autres"/>. AUTRES CONDITIONS</strong></p>
-            <p><t t-out="autres"/>.1 Le client ne pourra céder ou sous-louer, en tout ou en partie, ses droits et
-                obligations prévues <t t-out="au_doc"/>, sans obtenir préalablement le consentement écrit du
-                <t t-out="p"/> à cet effet, lequel ne pourra refuser d’y consentir sans motif valable. Cependant, advenant
-                un tel consentement, le client demeurera conjointement et solidairement responsable des obligations
-                prévues <t t-out="au_doc"/> avec le nouveau cessionnaire;</p>
-            <p><t t-out="autres"/>.2 <t t-out="le_doc[0].upper() + le_doc[1:]"/> lie le client, ses mandataires ou
-                représentants légaux, rentiers, exécuteurs, administrateurs, successeurs, ayant cause et ayant droit;</p>
-            <p><t t-out="autres"/>.3 Le client reconnaît et accepte, nonobstant le lieu de la signature, que
-                l’interprétation, l’accomplissement, l’entrée en vigueur, la validité et les effets <t t-out="du_doc"/>
-                sont assujettis exclusivement aux lois du Québec et à la juridiction des tribunaux du Québec et du
-                district judiciaire de Québec.</p>
-
-            <!-- CLAUSE PENALE -->
-            <p><strong><t t-out="penale"/>. CLAUSE PÉNALE</strong></p>
-            <p><strong><t t-out="penale"/>.1 LE CLIENT QUI OMET DE RESPECTER OU DE SE CONFORMER À L’UNE DES OBLIGATIONS
-                DÉCRITES CI-DESSUS OU QUI RETARDE À S’EXÉCUTER SUR UNE OU PLUSIEURS DES CLAUSES
-                <t t-out="du_doc.upper()"/> SELON LES ÉCHÉANCES PRESCRITES SERA CONSIDÉRÉ EN DÉFAUT. LE DÉFAUT D’UN CLIENT
-                ENTRAÎNERA L’APPLICATION DE LA CLAUSE PÉNALE. LE CLIENT DEVRA ALORS IMMÉDIATEMENT VERSER AU
-                <t t-out="partie"/>, À TITRE DE DOMMAGES LIQUIDÉS, LA SOMME DE <t t-out="v['clause_penale']"/> PLUS LES
-                TAXES APPLICABLES. LE CLIENT SERA EN DEMEURE PAR LE SEUL FAIT DE SA CONTRAVENTION OU INEXÉCUTION, SOUS
-                RÉSERVE ET SANS PRÉJUDICE AUX DROITS DU <t t-out="partie"/> D’OBTENIR LE RESPECT DES OBLIGATIONS DU CLIENT
-                INCLUANT LE DROIT DU <t t-out="partie"/> DE RÉSILIER DE PLEIN DROIT <t t-out="le_doc.upper()"/> ET SANS
-                PRÉJUDICE AUX DROITS DU <t t-out="partie"/> D’EXERCER TOUS LES AUTRES RECOURS APPROPRIÉS;</strong></p>
-            <p>Le client déclare qu’il a pris connaissance et qu’il comprend la nature et l’étendue de toutes les clauses
-                <t t-out="du_doc"/> incluant la clause pénale que l’on retrouve au paragraphe <t t-out="penale"/> et il
-                s’en déclare satisfait;</p>
-
-            <!-- SIGNATURES -->
-            <p style="margin-top: 14px;">SIGNÉE À <t t-out="b(v['signe_ville'] if doc.signed_on else '')"/>,
-                ce <t t-out="b(v['signe_jour'])"/> jour de
-                <t t-out="b(v['signe_mois'])"/>
-                <t t-out="b(v['signe_annee'])"/></p>
+            <p>7.1 Les factures soumises au client seront payables en totalité dès leur réception, en argent comptant ou par chèque, lequel pourra être postdaté à une date ne dépassant pas sept (7) jours suivant la date de livraison;</p>
+            <p>7.2 Le client devra respecter les minimums de livraison établis de temps à autre par le propriétaire ou son agent autorisé;</p>
+            <p>7.3 Les appels de service inutiles seront la responsabilité du client et dans ces cas, des frais de 125$ seront facturés au client;</p>
+            <p>7.4 À l’expiration du présent contrat, le client aura l’option de retourner les produits non ouverts et en bonnes conditions de revente et obtenir un crédit moins des frais d’administration de 20% du coût des produits. Cette option sera également ouverte au client dans les situations prévues à la clause 2.2;</p>
+            <p><strong>8. DOMMAGES ET ENTRETIEN</strong></p>
+            <p>8.1 Le client assumera l’entière responsabilité de tout dommage pouvant être causé au congélateur, soit par sa faute ou par celle d’un tiers;</p>
+            <p>8.2 Lors de la signature de la présente convention, le client devra verser au propriétaire la somme de <t t-out="v['forfait_texte']"/> plus taxes pour chaque congélateur qu’il a en sa possession. Par la suite, le client devra verser au propriétaire ce même montant à tous les douze (12) mois. Ce montant représente les frais annuels d’entretien et de réparations usuelles du congélateur et des équipements s’y rapportant, lesquels seront effectués par le propriétaire durant ses heures normales d’opération;</p>
+            <p><strong>9. AUTRES CONDITIONS</strong></p>
+            <p>9.1 Le client ne pourra céder ou sous-louer, en tout ou en partie, ses droits et obligations prévues au présent contrat, sans obtenir préalablement le consentement écrit du propriétaire à cet effet, lequel ne pourra refuser d’y consentir sans motif valable. Cependant, advenant un tel consentement, le client demeurera conjointement et solidairement responsable des obligations prévues au présent contrat avec le nouveau cessionnaire;</p>
+            <p>9.2 Le présent contrat lie le client, ses mandataires ou représentants légaux, rentiers, exécuteurs, administrateurs, successeurs, ayant cause et ayant droit;</p>
+            <p>9.3 Le client reconnaît et accepte, nonobstant le lieu de la signature, que l’interprétation, l’accomplissement, l’entrée en vigueur, la validité et les effets du présent contrat sont assujettis exclusivement aux lois du Québec et à la juridiction des tribunaux du Québec et du district judiciaire de Québec.</p>
+            <p><strong>10. CLAUSE PÉNALE</strong></p>
+            <p><strong>10.1 LE CLIENT QUI OMET DE RESPECTER OU DE SE CONFORMER À L’UNE DES OBLIGATIONS DÉCRITES CI-DESSUS OU QUI RETARDE À S’EXÉCUTER SUR UNE OU PLUSIEURS DES CLAUSES DU PRÉSENT CONTRAT SELON LES ÉCHÉANCES PRESCRITES SERA CONSIDÉRÉ EN DÉFAUT. LE DÉFAUT D’UN CLIENT ENTRAÎNERA L’APPLICATION DE LA CLAUSE PÉNALE. LE CLIENT DEVRA ALORS IMMÉDIATEMENT VERSER AU PROPRIÉTAIRE, À TITRE DE DOMMAGES LIQUIDÉS, LA SOMME DE QUATRE MILLE DOLLARS (4000$ PLUS LES TAXES APPLICABLES). LE CLIENT SERA EN DEMEURE PAR LE SEUL FAIT DE SA CONTRAVENTION OU INEXÉCUTION, SOUS RÉSERVE ET SANS PRÉJUDICE AUX DROITS DU PROPRIÉTAIRE D’OBTENIR LE RESPECT DES OBLIGATIONS DU CLIENT INCLUANT LE DROIT DU PROPRIÉTAIRE DE RÉSILIER DE PLEIN DROIT DU PRÉSENT CONTRAT ET SANS PRÉJUDICE AUX DROITS DU PROPRIÉTAIRE D’EXERCER TOUS LES AUTRES RECOURS APPROPRIÉS;</strong></p>
+            <p>Le client déclare qu’il a pris connaissance et qu’il comprend la nature et l’étendue de toutes les clauses du présent contrat incluant la clause pénale que l’on retrouve au paragraphe 10 et il s’en déclare satisfait;</p>
+            <p style="margin-top: 14px;">SIGNÉE À <t t-out="b(v['signe_ville'])"/>, ce <t t-out="b(v['signe_jour'])"/> ième jour de <t t-out="b(v['signe_mois'])"/> 20<t t-out="b(v['signe_annee2'])"/></p>
             <table style="width: 100%; margin-top: 10px;">
                 <tr>
                     <td style="width: 50%; vertical-align: bottom; padding-right: 20px;">
                         <div style="border-bottom: 1px solid #000; height: 60px;"/>
-                        <div><t t-out="'Distributeur' if m == 'proprietaire' else 'Propriétaire'"/> —
-                            <t t-out="v['proprietaire'].name"/></div>
+                        <div>Propriétaire</div>
                     </td>
                     <td style="width: 50%; vertical-align: bottom;">
                         <div style="border-bottom: 1px solid #000; min-height: 60px;">
                             <img t-if="doc.signature and image_data_uri" t-att-src="image_data_uri(doc.signature)"
                                  style="max-height: 60px; max-width: 220px;"/>
                         </div>
-                        <div>Client<t t-if="doc.signed_by"> — <t t-out="doc.signed_by"/></t></div>
+                        <div>Client</div>
                     </td>
                 </tr>
             </table>
-            <div style="margin-top: 16px; border: 1px solid #999; padding: 8px;">
-                <p style="text-align: center; margin: 0;"><strong>CAUTION</strong><br/>
-                    <em>(applicable dans le cas d’une compagnie uniquement)</em></p>
-                <p style="margin: 6px 0 0;">Je, soussigné ______________________________, résidant au ______,
-                    rue ______________________, ville de ______________________, province de ______________________,
-                    déclare avoir pris connaissance <t t-out="du_doc"/> et je m’engage à me porter caution personnellement
-                    de toutes et chacune des obligations ci-dessus contractées par le client notamment au paiement de la
-                    somme due en vertu de la clause pénale et m’engage à cet effet conjointement et solidairement avec le
-                    client, renonçant aux bénéfices de division et de discussion.</p>
-                <p style="margin: 18px 0 0;">Signature : ______________________________</p>
-            </div>
-            <p style="margin-top: 10px;">PROPRIÉTAIRE DE L’IMMEUBLE (NOM ET ADRESSE) : ________________________________________</p>
-        </div>
+            <p style="text-align: center; margin-top: 16px;"><strong>CAUTION</strong><br/>(applicable dans le cas d’une compagnie uniquement)</p>
+            <p>Je, soussigné ______________________________, résidant au ______, rue ______________________, ville de ______________________, province de ______________________, déclare avoir pris connaissance de le présent contrat et je m’engage à me porter caution personnellement de toutes et chacune des obligations ci-dessus contractées par le client notamment au paiement de la somme due en vertu de la clause pénale et m’engage à cet effet conjointement et solidairement avec le client, renonçant aux bénéfices de division et de discussion.</p>
+            <p style="margin-top: 24px;">______________________________<br/>Signature</p>
+            <p>PROPRIÉTAIRE DE L’IMMEUBLE (NOM ET ADRESSE) : ________________________________________</p>
+            <p style="text-align: right; font-size: 10px;">Rév. 01/13</p>
+    </template>
+
+    <template id="contrat_texte_convention">
+            <table style="width: 100%; font-size: 11px; margin-bottom: 6px;">
+                <tr>
+                    <td style="width: 12%; vertical-align: top;"><strong>MODÈLE :</strong></td>
+                    <td style="width: 38%; vertical-align: top;">
+                        DEBOUT : <t t-out="'☒' if 'F100' in v['coches'] else '☐'"/> F100&#160;&#160;<t t-out="'☒' if 'SP10' in v['coches'] else '☐'"/> SP10<br/>
+                        COMPTOIR : <t t-out="'☒' if 'F100C' in v['coches'] else '☐'"/> F100&#160;&#160;<t t-out="'☒' if 'SP10C' in v['coches'] else '☐'"/> SP10<br/>
+                        <t t-out="'☒' if 'BFC1' in v['coches'] else '☐'"/> Bébé FC1<br/>
+                        <t t-out="'☒' if 'V1' in v['coches'] else '☐'"/> V1<br/>
+                        <t t-out="'☒' if 'FC1' in v['coches'] else '☐'"/> FC1<br/>
+                        <t t-out="'☒' if 'BFC2' in v['coches'] else '☐'"/> Bébé FC2<br/>
+                        <t t-out="'☒' if 'FC2' in v['coches'] else '☐'"/> FC2<br/>
+                        <t t-out="'☒' if 'V2' in v['coches'] else '☐'"/> V2 ELMECO<br/>
+                        <t t-out="'☒' if 'FC3' in v['coches'] else '☐'"/> FC3<br/>
+                        <t t-out="'☒' if 'AUTRE' in v['coches'] else '☐'"/> AUTRE
+                    </td>
+                    <td style="width: 25%; vertical-align: top;">
+                        ☐ TIMER____<br/>☐ SLUSH<br/>☐ S.P. PLUS<br/>☐ LIMONADE<br/>☐ CAPPUCCINO
+                    </td>
+                    <td style="width: 25%; vertical-align: top;">
+                        <t t-out="'☒' if 'annee' in v['saisons'] else '☐'"/> ANNÉE<br/>
+                        <t t-out="'☒' if 'hiver' in v['saisons'] else '☐'"/> HIVER<br/>
+                        <t t-out="'☒' if 'ete' in v['saisons'] else '☐'"/> ÉTÉ<br/>
+                        <t t-out="'☒' if 'ecole' in v['saisons'] else '☐'"/> ÉCOLE ______
+                    </td>
+                </tr>
+            </table>
+            <h3 style="text-align: center; font-weight: bold; margin: 8px 0;">CONVENTION</h3>
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 8px;">
+                <tr>
+                    <td style="width: 38%; vertical-align: top; padding-right: 10px;">
+                        <strong>ENTRE</strong><br/>
+                        <strong t-out="v['proprietaire'].name"/><br/>
+                        <span t-out="v['proprietaire'].street or ''"/><br/>
+                        <span t-out="' '.join(x for x in (v['proprietaire'].city, v['proprietaire'].state_id.code, v['proprietaire'].zip) if x)"/>
+                    </td>
+                    <td style="width: 62%; vertical-align: top;">
+                        <strong>ET</strong>&#160; Nom du commerce : <t t-out="b(v['commerce'].name)"/><br/>
+                        Nom légal (cie) : <t t-out="b(v['client'].name)"/><br/>
+                        Adresse : <t t-out="b(v['client'].street)"/><br/>
+                        Ville : <t t-out="b(v['client'].city)"/> &#160;&#160; Code postal : <t t-out="b(v['client'].zip)"/><br/>
+                        Tél. : <t t-out="b(v['telephone'])"/> &#160;&#160; Tél. : <t t-out="b(v['telephone2'])"/><br/>
+                        Contact : <t t-out="b(v['contact'])"/><br/>
+                        Courriel : <t t-out="b(v['courriel'])"/> &#160;&#160; # client : <t t-out="b(v['numero_client'])"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding-top: 4px;">Ci-après appelé ¨LE PROPRIÉTAIRE¨</td>
+                    <td style="padding-top: 4px;">Ci-après appelé ¨LE CLIENT¨</td>
+                </tr>
+            </table>
+            <p><strong>LESQUELS CONVIENNENT DE CE QUI SUIT :</strong></p>
+            <p><strong>1. OBJET</strong></p>
+            <p>1.1 À compter du <t t-out="b(v['debut'])"/>, le propriétaire permettra au client d’utiliser un de ses congélateurs de marque SLUSH PUPPIE, numéro de série <t t-out="b(v['series'])"/> et tous les équipements s’y rapportant;</p>
+            <p>1.2 Lors de la livraison ou de la mise en marche du congélateur, le client devra verser au propriétaire la somme de <t t-out="b(v['montant_depart'])"/> pour les droits d’utilisation de l’équipement;</p>
+            <p><strong>2. DURÉE</strong></p>
+            <p>2.1 La présente convention sera en vigueur du <t t-out="b(v['debut'])"/> au <t t-out="b(v['fin'])"/> inclusivement et se renouvellera automatiquement pour une période identique (du <t t-out="b(v['renouvellement_debut'])"/> au <t t-out="b(v['renouvellement_fin'])"/>), aux mêmes conditions à moins que le client ait avisé le propriétaire de son intention de non renouvellement par avis écrit, transmis sous pli recommandé au moins quatre-vingt-dix (90) jours avant la date à laquelle doit débuter la (ou les) période(s) de renouvellement. Si le client ne respecte pas ces conditions ainsi que la durée initiale de la présente convention, il sera en défaut, ce qui entraînera l’application immédiate de la clause pénale prévue au paragraphe 10 des présentes et ce, sans autre avis ni délai;</p>
+            <p>2.2 Le client pourra durant les périodes non visées par la présente convention, de son renouvellement et/ou durant les périodes de non activités de son établissement demander au propriétaire de reprendre le congélateur et le propriétaire pourra à sa discrétion durant les mêmes périodes reprendre possession du congélateur. La reprise de possession du congélateur par le propriétaire durant une telle période n’aura pas pour effet de résilier la présente convention, ou d’empêcher le renouvellement automatique de celle-ci conformément à l’article 2.1 des présentes. Il est entendu que le propriétaire remettra le congélateur en possession du client pour les périodes de renouvellement et ce, sans avoir à aviser au préalable le client.</p>
+            <p>2.3 Malgré le terme prévu à la clause 2.1 de la présente, le propriétaire conserve le droit absolu de propriété du congélateur et des équipements s’y rapportant et pourra en reprendre possession ou les remplacer en tout temps, à son entière discrétion, ainsi qu’en cas de défaut par le client de respecter l’une des clauses de la présente convention et ce, sans être tenu de payer au client aucune indemnité de quelque nature que ce soit;</p>
+            <p><strong>3. APPROVISIONNEMENT</strong></p>
+            <p>3.1 Le client devra s’approvisionner exclusivement chez le propriétaire ou son agent autorisé et il ne devra utiliser que des produits de marque SLUSH PUPPIE. Plus spécifiquement, le client s’engage à utiliser exclusivement les liquides et les verres de marque SLUSH PUPPIE;</p>
+            <p>3.2 Le propriétaire ou son agent autorisé s’engage à livrer la marchandise dans un délai raisonnable. Toutefois, advenant l’impossibilité pour le propriétaire de livrer la marchandise pour cause de force majeure ou pour quelque motif que ce soit, le client s’engage à ne pas s’approvisionner en produits autres que ceux du propriétaire et à ne pas avoir en sa possession de quelque façon que ce soit des marchandises de même nature que celles vendues par le propriétaire;</p>
+            <p><strong>4. QUALITÉ DU PRODUIT</strong></p>
+            <p>4.1 Le client reconnaît avoir pris connaissance des directives du propriétaire quant au mélange qu’il doit effectuer avec les produits et s’engage à respecter ces directives et à se soumettre à toutes autres directives du propriétaire relatives à la qualité du produit;</p>
+            <p>4.2 Le client s’engage à tenir le congélateur et les équipements s’y rapportant dans une condition de propreté extrême, conformément au guide de nettoyage et de désinfection fixé au congélateur ainsi qu’aux normes légales fédérales, provinciales et municipales applicables. Par ailleurs, le client déclare avoir pris connaissance des directives du propriétaire quant au nettoyage et la désinfection du congélateur et des accessoires et il s’engage à n’utiliser que le produit de nettoyage communément appelé ¨AMFO¨. De plus, le client autorise le propriétaire à recevoir copie de tous les différents rapports d’inspection émanant de services gouvernementaux. Le client sera responsable des amendes dues, relatives aux infractions et devra les acquitter dans les plus brefs délais;</p>
+            <p><strong>5. PROMOTIONS ET PRIX DE VENTE AU DÉTAIL</strong></p>
+            <p>5.1 Le client est tenu de participer aux activités promotionnelles ordonnées par le propriétaire et à se soumettre aux directives du propriétaire concernant ces activités promotionnelles et à les respecter intégralement;</p>
+            <p>5.2 Le client s’engage à respecter et à se soumettre aux prix de vente au détail des produits de marque SLUSH PUPPIE décrétés par le propriétaire et il ne pourra les modifier sans autorisation. Les prix au détail s’établissent comme suit : <t t-out="b(v['prix_353'])"/>$ pour le format 353 ml, <t t-out="b(v['prix_510'])"/>$ pour le format 510 ml et <t t-out="b(v['prix_775'])"/>$ pour le format 775 ml.</p>
+            <p><strong>6. DROIT D’INSPECTION</strong></p>
+            <p>6.1 Le client reconnaît que le propriétaire ou l’un de ses représentants autorisés a le droit d’effectuer, aux temps et lieux que le propriétaire jugera nécessaires, des vérifications chez le client afin de s’assurer que le client respecte toutes et chacune des clauses de la présente convention;</p>
+            <p>6.2 Plus particulièrement, tout résultat de tests effectués chez le client par le propriétaire ou l’un de ses représentants autorisés, pour s’assurer du respect des clauses 3 et 4 de la présente convention, sera présumé valide à moins que le client n’en conteste juridiquement les résultats.</p>
+            <p><strong>6.3 Le client reconnaît que les obligations d’approvisionnement exclusif (clause 3), du maintien de la qualité du produit (clause 4) ainsi que l’obligation de respecter les prix de vente au détail et de participer aux activités promotionnelles (clause 5) constituent des conditions essentielles à la présente convention et que le défaut par le client de respecter l’une de ces obligations, entraînera l’application immédiate de la clause pénale prévue au paragraphe 10 de la présente convention et ce, sans autre avis ni délai.</strong></p>
+            <p style="text-align: right;">Initiales : ____________</p>
+            <p><strong>7. COMMANDES ET LIVRAISONS</strong></p>
+            <p>7.1 Les factures soumises au client seront payables en totalité dès leur réception, en argent comptant ou par chèque, lequel pourra être postdaté à une date ne dépassant pas sept (7) jours suivant la date de livraison;</p>
+            <p>7.2 Le client devra respecter les minimums de livraison établis de temps à autre par le propriétaire ou son agent autorisé;</p>
+            <p>7.3 Les appels de service inutiles seront la responsabilité du client et dans ces cas, des frais de 125$ seront facturés au client;</p>
+            <p>7.4 À l’expiration de la présente convention, le client aura l’option de retourner les produits non ouverts et en bonnes conditions de revente et obtenir un crédit moins des frais d’administration de 20% du coût des produits. Cette option sera également ouverte au client dans les situations prévues à la clause 2.2;</p>
+            <p><strong>8. DOMMAGES ET ENTRETIEN</strong></p>
+            <p>8.1 Le client assumera l’entière responsabilité de tout dommage pouvant être causé au congélateur, soit par sa faute ou par celle d’un tiers;</p>
+            <p>8.2 Lors de la signature de la présente convention, le client devra verser au propriétaire la somme de <t t-out="v['forfait_texte']"/> plus taxes pour chaque congélateur qu’il a en sa possession. Par la suite, le client devra verser au propriétaire ce même montant à tous les douze (12) mois. Ce montant représente les frais annuels d’entretien et de réparations usuelles du congélateur et des équipements s’y rapportant, lesquels seront effectués par le propriétaire durant ses heures normales d’opération;</p>
+            <p><strong>9. AUTRES CONDITIONS</strong></p>
+            <p>9.1 Le client ne pourra céder ou sous-louer, en tout ou en partie, ses droits et obligations prévues à la présente convention, sans obtenir préalablement le consentement écrit du propriétaire à cet effet, lequel ne pourra refuser d’y consentir sans motif valable. Cependant, advenant un tel consentement, le client demeurera conjointement et solidairement responsable des obligations prévues à la présente convention avec le nouveau cessionnaire;</p>
+            <p>9.2 La présente convention lie le client, ses mandataires ou représentants légaux, rentiers, exécuteurs, administrateurs, successeurs, ayant cause et ayant droit;</p>
+            <p>9.3 Le client reconnaît et accepte, nonobstant le lieu de la signature, que l’interprétation, l’accomplissement, l’entrée en vigueur, la validité et les effets de la présente convention sont assujettis exclusivement aux lois du Québec et à la juridiction des tribunaux du Québec et du district judiciaire de Québec.</p>
+            <p><strong>10. CLAUSE PÉNALE</strong></p>
+            <p><strong>10.1 LE CLIENT QUI OMET DE RESPECTER OU DE SE CONFORMER À L’UNE DES OBLIGATIONS DÉCRITES CI-DESSUS OU QUI RETARDE À S’EXÉCUTER SUR UNE OU PLUSIEURS DES CLAUSES DE LA PRÉSENTE CONVENTION SELON LES ÉCHÉANCES PRESCRITES SERA CONSIDÉRÉ EN DÉFAUT. LE DÉFAUT D’UN CLIENT ENTRAÎNERA L’APPLICATION DE LA CLAUSE PÉNALE. LE CLIENT DEVRA ALORS IMMÉDIATEMENT VERSER AU PROPRIÉTAIRE, À TITRE DE DOMMAGES LIQUIDÉS, LA SOMME DE QUATRE MILLE DOLLARS (4000$ PLUS LES TAXES APPLICABLES). LE CLIENT SERA EN DEMEURE PAR LE SEUL FAIT DE SA CONTRAVENTION OU INEXÉCUTION, SOUS RÉSERVE ET SANS PRÉJUDICE AUX DROITS DU PROPRIÉTAIRE D’OBTENIR LE RESPECT DES OBLIGATIONS DU CLIENT INCLUANT LE DROIT DU PROPRIÉTAIRE DE RÉSILIER DE PLEIN DROIT LA PRÉSENTE CONVENTION ET SANS PRÉJUDICE AUX DROITS DU PROPRIÉTAIRE D’EXERCER TOUS LES AUTRES RECOURS APPROPRIÉS;</strong></p>
+            <p>Le client déclare qu’il a pris connaissance et qu’il comprend la nature et l’étendue de toutes les clauses de la présente convention incluant la clause pénale que l’on retrouve au paragraphe 10 et il s’en déclare satisfait;</p>
+            <p style="margin-top: 14px;">SIGNÉE À <t t-out="b(v['signe_ville'])"/>, ce <t t-out="b(v['signe_jour'])"/> ième jour de <t t-out="b(v['signe_mois'])"/> 20<t t-out="b(v['signe_annee2'])"/></p>
+            <table style="width: 100%; margin-top: 10px;">
+                <tr>
+                    <td style="width: 50%; vertical-align: bottom; padding-right: 20px;">
+                        <div style="border-bottom: 1px solid #000; height: 60px;"/>
+                        <div>Propriétaire</div>
+                    </td>
+                    <td style="width: 50%; vertical-align: bottom;">
+                        <div style="border-bottom: 1px solid #000; min-height: 60px;">
+                            <img t-if="doc.signature and image_data_uri" t-att-src="image_data_uri(doc.signature)"
+                                 style="max-height: 60px; max-width: 220px;"/>
+                        </div>
+                        <div>Client</div>
+                    </td>
+                </tr>
+            </table>
+            <p style="text-align: center; margin-top: 16px;"><strong>CAUTION</strong><br/>(applicable dans le cas d’une compagnie uniquement)</p>
+            <p>Je, soussigné ______________________________, résidant au ______, rue ______________________, ville de ______________________, province de ______________________, déclare avoir pris connaissance de la présente convention et je m’engage à me porter caution personnellement de toutes et chacune des obligations ci-dessus contractées par le client notamment au paiement de la somme due en vertu de la clause pénale et m’engage à cet effet conjointement et solidairement avec le client, renonçant aux bénéfices de division et de discussion.</p>
+            <p style="margin-top: 24px;">______________________________<br/>Signature</p>
+            <p>PROPRIÉTAIRE DE L’IMMEUBLE (NOM ET ADRESSE) : ________________________________________</p>
+            <p style="text-align: right; font-size: 10px;">Rév. 01/13</p>
+    </template>
+
+    <template id="contrat_texte_popcorn">
+            <table style="width: 100%; font-size: 12px; margin-bottom: 6px;">
+                <tr>
+                    <td style="vertical-align: top;"><strong>POPCORN</strong><br/><br/>MODÈLE : <t t-out="b(v['modeles_machines'])"/></td>
+                    <td style="text-align: right; vertical-align: top;">
+                        Année : <t t-out="'☒' if 'annee' in v['saisons'] else '☐'"/><br/>
+                        Hiver : <t t-out="'☒' if 'hiver' in v['saisons'] else '☐'"/><br/>
+                        Été : <t t-out="'☒' if 'ete' in v['saisons'] else '☐'"/>
+                    </td>
+                </tr>
+            </table>
+            <h3 style="text-align: center; font-weight: bold; margin: 8px 0;">CONVENTION</h3>
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 8px;">
+                <tr>
+                    <td style="width: 38%; vertical-align: top; padding-right: 10px;">
+                        <strong>ENTRE</strong><br/>
+                        <strong t-out="v['proprietaire'].name"/><br/>
+                        <span t-out="v['proprietaire'].street or ''"/><br/>
+                        <span t-out="' '.join(x for x in (v['proprietaire'].city, v['proprietaire'].state_id.code, v['proprietaire'].zip) if x)"/>
+                    </td>
+                    <td style="width: 62%; vertical-align: top;">
+                        <strong>ET</strong>&#160; Nom du commerce : <t t-out="b(v['commerce'].name)"/><br/>
+                        Nom légal (cie) : <t t-out="b(v['client'].name)"/><br/>
+                        Adresse : <t t-out="b(v['client'].street)"/><br/>
+                        Ville : <t t-out="b(v['client'].city)"/> &#160;&#160; Code postal : <t t-out="b(v['client'].zip)"/><br/>
+                        Tél. : <t t-out="b(v['telephone'])"/><br/>
+                        Contact : <t t-out="b(v['contact'])"/><br/>
+                        Courriel : <t t-out="b(v['courriel'])"/> &#160;&#160; # client : <t t-out="b(v['numero_client'])"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding-top: 4px;">Ci-après appelé ¨LE PROPRIÉTAIRE¨</td>
+                    <td style="padding-top: 4px;">Ci-après appelé ¨LE CLIENT¨</td>
+                </tr>
+            </table>
+            <p><strong>LESQUELS CONVIENNENT DE CE QUI SUIT :</strong></p>
+            <p><strong>1. OBJET</strong></p>
+            <p>1.1 À compter du <t t-out="b(v['debut'])"/>, le propriétaire permettra au client d’utiliser un de ses équipements.</p>
+            <p>1.2 Lors de la livraison ou de la mise en marche des équipements, le client devra verser au propriétaire la somme de <t t-out="b(v['montant_depart'])"/> pour les droits d’utilisation de l’équipement;</p>
+            <p><strong>2. DURÉE</strong></p>
+            <p>2.1 La présente convention sera en vigueur du <t t-out="b(v['debut'])"/> au <t t-out="b(v['fin'])"/> inclusivement et se renouvellera automatiquement pour une période identique (du <t t-out="b(v['renouvellement_debut'])"/> au <t t-out="b(v['renouvellement_fin'])"/>), aux mêmes conditions à moins que le client ait avisé le propriétaire de son intention de non renouvellement par avis écrit, transmis sous pli recommandé au moins quatre-vingt-dix (90) jours avant la date à laquelle doit débuter la (ou les) période(s) de renouvellement. Si le client ne respecte pas ces conditions ainsi que la durée initiale de la présente convention, il sera en défaut, ce qui entraînera l’application immédiate de la clause pénale prévue au paragraphe 10 des présentes et ce, sans autre avis ni délai;</p>
+            <p>2.2 Malgré le terme prévu à la clause 2.1 de la présente, le propriétaire conserve le droit absolu de propriété du des équipements s’y rapportant et pourra en reprendre possession ou les remplacer en tout temps, à son entière discrétion, ainsi qu’en cas de défaut par le client de respecter l’une des clauses de la présente convention et ce, sans être tenu de payer au client aucune indemnité de quelque nature que ce soit;</p>
+            <p><strong>3. APPROVISIONNEMENT</strong></p>
+            <p>3.1 Le client devra s’approvisionner exclusivement chez le propriétaire ou son agent autorisé et il ne devra utiliser que des produits de marque HARLAN’S;</p>
+            <p>3.2 Le propriétaire ou son agent autorisé s’engage à livrer la marchandise dans un délai raisonnable. Toutefois, advenant l’impossibilité pour le propriétaire de livrer la marchandise pour cause de force majeure ou pour quelque motif que ce soit, le client s’engage à ne pas s’approvisionner en produits autres que ceux du propriétaire;</p>
+            <p><strong>4. QUALITÉ DU PRODUIT</strong></p>
+            <p>4.1 Le client reconnaît avoir pris connaissance des directives du propriétaire et s’engage à respecter ces directives et à se soumettre à toutes autres directives du propriétaire relatives à la qualité du produit;</p>
+            <p>4.2 Le client s’engage à tenir les équipements dans une condition de propreté extrême, conformément aux normes légales fédérales, provinciales et municipales applicables. Par ailleurs, le client déclare avoir pris connaissance des directives du propriétaire quant au nettoyage et la désinfection du congélateur et des accessoires . De plus, le client autorise le propriétaire à recevoir copie de tous les différents rapports d’inspection émanant de services gouvernementaux. Le client sera responsable des amendes dues, relatives aux infractions et devra les acquitter dans les plus brefs délais;</p>
+            <p><strong>5. PROMOTIONS ET PRIX DE VENTE AU DÉTAIL</strong></p>
+            <p>5.1 Le client est tenu de participer aux activités promotionnelles proposé par le propriétaire et à se soumettre aux directives du propriétaire concernant ces activités promotionnelles et à les respecter intégralement;</p>
+            <p>5.2 Le client s’engage à respecter et à se soumettre aux prix de vente au détail des produits de marque HARLAN’S décrétés par le propriétaire et il ne pourra les modifier sans autorisation.</p>
+            <p><strong>6. DROIT D’INSPECTION</strong></p>
+            <p>6.1 Le client reconnaît que le propriétaire ou l’un de ses représentants autorisés a le droit d’effectuer, aux temps et lieux que le propriétaire jugera nécessaires, des vérifications chez le client afin de s’assurer que le client respecte toutes et chacune des clauses de la présente convention;</p>
+            <p>6.2 Plus particulièrement, pour s’assurer du respect des clauses 3 et 4 de la présente convention.</p>
+            <p><strong>6.3 Le client reconnaît que les obligations d’approvisionnement exclusif (clause 3), du maintien de la qualité du produit (clause 4) ainsi que l’obligation de respecter les prix de vente au détail et de participer aux activités promotionnelles (clause 5) constituent des conditions essentielles à la présente convention et que le défaut par le client de respecter l’une de ces obligations, entraînera l’application immédiate de la clause pénale prévue au paragraphe 10 de la présente convention et ce, sans autre avis ni délai.</strong></p>
+            <p style="text-align: right;">Initiales : ____________</p>
+            <p><strong>7. COMMANDES ET LIVRAISONS</strong></p>
+            <p>7.1 Les factures soumises au client seront payables en totalité dès leur réception, en argent comptant ou par chèque;</p>
+            <p>7.2 Le client devra respecter les minimums de livraison établis de temps à autre par le propriétaire ou son agent autorisé;</p>
+            <p>7.3 Les appels de service inutiles seront la responsabilité du client et dans ces cas, des frais de 70$ seront facturés au client;</p>
+            <p>7.4 À l’expiration de la présente convention, le client aura l’option de retourner les produits non ouverts et en bonnes conditions de revente et obtenir un crédit moins des frais d’administration de 20% du coût des produits.</p>
+            <p><strong>8. DOMMAGES ET ENTRETIEN</strong></p>
+            <p>8.1 Le client assumera l’entière responsabilité de tout dommage pouvant être causé aux équipements, soit par sa faute ou par celle d’un tiers;</p>
+            <p>8.2 Lors de la signature de la présente convention, le client devra verser au propriétaire la somme de <t t-out="v['forfait_texte']"/> plus taxes pour chaque équipement qu’il a en sa possession. Par la suite, le client devra verser au propriétaire ce même montant à tous les douze (12) mois. Ce montant représente les frais annuels d’entretien et de réparations usuelles des équipements, lesquels seront effectués par le propriétaire durant ses heures normales d’opération;</p>
+            <p><strong>9. AUTRES CONDITIONS</strong></p>
+            <p>9.1 Le client ne pourra céder ou sous-louer, en tout ou en partie, ses droits et obligations prévues à la présente convention, sans obtenir préalablement le consentement écrit du propriétaire à cet effet, lequel ne pourra refuser d’y consentir sans motif valable. Cependant, advenant un tel consentement, le client demeurera conjointement et solidairement responsable des obligations prévues à la présente convention avec le nouveau cessionnaire;</p>
+            <p>9.2 La présente convention lie le client, ses mandataires ou représentants légaux, rentiers, exécuteurs, administrateurs, successeurs, ayant cause et ayant droit;</p>
+            <p>9.3 Le client reconnaît et accepte, nonobstant le lieu de la signature, que l’interprétation, l’accomplissement, l’entrée en vigueur, la validité et les effets de la présente convention sont assujettis exclusivement aux lois du Québec et à la juridiction des tribunaux du Québec et du district judiciaire de Québec.</p>
+            <p><strong>10. CLAUSE PÉNALE</strong></p>
+            <p><strong>10.1 LE CLIENT QUI OMET DE RESPECTER OU DE SE CONFORMER À L’UNE DES OBLIGATIONS DÉCRITES CI-DESSUS OU QUI RETARDE À S’EXÉCUTER SUR UNE OU PLUSIEURS DES CLAUSES DE LA PRÉSENTE CONVENTION SELON LES ÉCHÉANCES PRESCRITES SERA CONSIDÉRÉ EN DÉFAUT. LE DÉFAUT D’UN CLIENT ENTRAÎNERA L’APPLICATION DE LA CLAUSE PÉNALE. LE CLIENT DEVRA ALORS IMMÉDIATEMENT VERSER AU PROPRIÉTAIRE, À TITRE DE DOMMAGES LIQUIDÉS, LA SOMME DEUX MILLE CINQ CENTS DOLLARS (2500$ PLUS LES TAXES APPLICABLES). LE CLIENT SERA EN DEMEURE PAR LE SEUL FAIT DE SA CONTRAVENTION OU INEXÉCUTION, SOUS RÉSERVE ET SANS PRÉJUDICE AUX DROITS DU PROPRIÉTAIRE D’OBTENIR LE RESPECT DES OBLIGATIONS DU CLIENT INCLUANT LE DROIT DU PROPRIÉTAIRE DE RÉSILIER DE PLEIN DROIT LA PRÉSENTE CONVENTION ET SANS PRÉJUDICE AUX DROITS DU PROPRIÉTAIRE D’EXERCER TOUS LES AUTRES RECOURS APPROPRIÉS;</strong></p>
+            <p>Le client déclare qu’il a pris connaissance et qu’il comprend la nature et l’étendue de toutes les clauses de la présente convention incluant la clause pénale que l’on retrouve au paragraphe 10 et il s’en déclare satisfait;</p>
+            <p style="margin-top: 14px;">SIGNÉE À <t t-out="b(v['signe_ville'])"/>, ce <t t-out="b(v['signe_jour'])"/> ième jour de <t t-out="b(v['signe_mois'])"/> 20<t t-out="b(v['signe_annee2'])"/></p>
+            <table style="width: 100%; margin-top: 10px;">
+                <tr>
+                    <td style="width: 50%; vertical-align: bottom; padding-right: 20px;">
+                        <div style="border-bottom: 1px solid #000; height: 60px;"/>
+                        <div>Propriétaire</div>
+                    </td>
+                    <td style="width: 50%; vertical-align: bottom;">
+                        <div style="border-bottom: 1px solid #000; min-height: 60px;">
+                            <img t-if="doc.signature and image_data_uri" t-att-src="image_data_uri(doc.signature)"
+                                 style="max-height: 60px; max-width: 220px;"/>
+                        </div>
+                        <div>Client</div>
+                    </td>
+                </tr>
+            </table>
+            <p style="text-align: center; margin-top: 16px;"><strong>CAUTION</strong><br/>(applicable dans le cas d’une compagnie uniquement)</p>
+            <p>Je, soussigné ______________________________, résidant au ______, rue ______________________, ville de ______________________, province de ______________________, déclare avoir pris connaissance de la présente convention et je m’engage à me porter caution personnellement de toutes et chacune des obligations ci-dessus contractées par le client notamment au paiement de la somme due en vertu de la clause pénale et m’engage à cet effet conjointement et solidairement avec le client, renonçant aux bénéfices de division et de discussion.</p>
+            <p style="margin-top: 24px;">______________________________<br/>Signature</p>
+            <p>PROPRIÉTAIRE DE L’IMMEUBLE (NOM ET ADRESSE) : ________________________________________</p>
+            <p style="text-align: right; font-size: 10px;">Rév. 10/2016</p>
+    </template>
+
+    <template id="contrat_texte_proprietaire">
+            <p style="font-size: 12px; margin-bottom: 6px;">☐ SLUSH&#160;&#160;&#160;&#160;☐ LIMONADE&#160;&#160;&#160;&#160;☐ CAPPUCCINO&#160;&#160;&#160;&#160;☐ S.P. PLUS</p>
+            <h3 style="text-align: center; font-weight: bold; margin: 8px 0;">CONTRAT PROPRIÉTAIRE</h3>
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 8px;">
+                <tr>
+                    <td style="width: 38%; vertical-align: top; padding-right: 10px;">
+                        <strong>ENTRE</strong><br/>
+                        <strong t-out="v['proprietaire'].name"/><br/>
+                        <span t-out="v['proprietaire'].street or ''"/><br/>
+                        <span t-out="' '.join(x for x in (v['proprietaire'].city, v['proprietaire'].state_id.code, v['proprietaire'].zip) if x)"/>
+                    </td>
+                    <td style="width: 62%; vertical-align: top;">
+                        <strong>ET</strong>&#160; Nom du commerce : <t t-out="b(v['commerce'].name)"/><br/>
+                        Nom légal (cie) : <t t-out="b(v['client'].name)"/><br/>
+                        Adresse : <t t-out="b(v['client'].street)"/><br/>
+                        Ville : <t t-out="b(v['client'].city)"/> &#160;&#160; Code postal : <t t-out="b(v['client'].zip)"/><br/>
+                        Tél. : <t t-out="b(v['telephone'])"/> &#160;&#160; Tél. : <t t-out="b(v['telephone2'])"/><br/>
+                        Contact : <t t-out="b(v['contact'])"/><br/>
+                        Courriel : <t t-out="b(v['courriel'])"/> &#160;&#160; # client : <t t-out="b(v['numero_client'])"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding-top: 4px;">Ci-après appelé ¨LE DISTRIBUTEUR¨</td>
+                    <td style="padding-top: 4px;">Ci-après appelé ¨LE CLIENT¨</td>
+                </tr>
+            </table>
+            <p><strong>LESQUELS CONVIENNENT DE CE QUI SUIT :</strong></p>
+            <p><strong>1. OBJET</strong></p>
+            <p>1.1 À compter du <t t-out="b(v['debut'])"/>, le propriétaire du congélateur modèle <t t-out="b(v['modeles_machines'])"/> et portant le # de série <t t-out="b(v['series'])"/> désire avoir l’autorisation de se servir du nom et de la réputation du produit SLUSH PUPPIE pour effectuer ses ventes de barbotine (slush).</p>
+            <p><strong>2. DURÉE</strong></p>
+            <p>2.1 Le présent contrat sera en vigueur du <t t-out="b(v['debut'])"/> au <t t-out="b(v['fin'])"/> inclusivement et se renouvellera automatiquement pour une période identique (du <t t-out="b(v['renouvellement_debut'])"/> au <t t-out="b(v['renouvellement_fin'])"/>), aux mêmes conditions à moins que le client ait avisé le distributeur de son intention de non renouvellement par avis écrit, transmis sous pli recommandé au moins quatre-vingt-dix (90) jours avant la date à laquelle doit débuter la (ou les) période(s) de renouvellement. Si le client ne respecte pas ces conditions ainsi que la durée initiale du présent contrat, il sera en défaut, ce qui entraînera l’application immédiate de la clause pénale prévue au paragraphe 9 des présentes et ce, sans autre avis ni délai;</p>
+            <p><strong>3. APPROVISIONNEMENT</strong></p>
+            <p>3.1 Le client devra s’approvisionner exclusivement chez le distributeur ou son agent autorisé et il ne devra utiliser que des produits de marque SLUSH PUPPIE. Plus spécifiquement, le client s’engage à utiliser exclusivement les liquides et les verres de marque SLUSH PUPPIE;</p>
+            <p>3.2 Le distributeur ou son agent autorisé s’engage à livrer la marchandise dans un délai raisonnable. Toutefois, advenant l’impossibilité pour le distributeur de livrer la marchandise pour cause de force majeure ou pour quelque motif que ce soit, le client s’engage à ne pas s’approvisionner en produits autres que ceux du distributeur et à ne pas avoir en sa possession de quelque façon que ce soit des marchandises de même nature que celles vendues par le distributeur;</p>
+            <p><strong>4. QUALITÉ DU PRODUIT</strong></p>
+            <p>4.1 Le client reconnaît avoir pris connaissance des directives du distributeur quant au mélange qu’il doit effectuer avec les produits et s’engage à respecter ces directives et à se soumettre à toutes autres directives du distributeur relatives à la qualité du produit;</p>
+            <p>4.2 Le client s’engage à tenir le congélateur et les équipements s’y rapportant dans une condition de propreté extrême. Par ailleurs, le client déclare avoir pris connaissance des directives du distributeur quant au nettoyage et la désinfection du congélateur et des accessoires et il s’engage à n’utiliser que le produit de nettoyage communément appelé ¨AMFO¨. De plus, le client autorise le distributeur à recevoir copie de tous les différents rapports d’inspection émanant de services gouvernementaux. Le client sera responsable des amendes dues, relatives aux infractions et devra les acquitter dans les plus brefs délais;</p>
+            <p><strong>5. PROMOTIONS ET PRIX DE VENTE AU DÉTAIL</strong></p>
+            <p>5.1 Le client est tenu de participer aux activités promotionnelles ordonnées par le distributeur et à se soumettre aux directives du distributeur concernant ces activités promotionnelles et à les respecter intégralement;</p>
+            <p>5.2 Le client s’engage à respecter et à se soumettre aux prix de vente au détail des produits de marque SLUSH PUPPIE décrétés par le distributeur et il ne pourra les modifier sans autorisation. . Les prix au détail s’établissent comme suit : <t t-out="b(v['prix_353'])"/>$ pour le format 353 ml, <t t-out="b(v['prix_510'])"/>$ pour le format 510 ml et <t t-out="b(v['prix_775'])"/>$ pour le format 775 ml.</p>
+            <p><strong>6. DROIT D’INSPECTION</strong></p>
+            <p>6.1 Le client reconnaît que le distributeur ou l’un de ses représentants autorisés a le droit d’effectuer, aux temps et lieux que le distributeur jugera nécessaires, des vérifications chez le client afin de s’assurer que le client respecte toutes et chacune des clauses du présent contrat;</p>
+            <p>6.2 Plus particulièrement, tout résultat de tests effectués chez le client par le distributeur ou l’un de ses représentants autorisés, pour s’assurer du respect des clauses 3 et 4 du présent contrat, sera présumé valide à moins que le client n’en conteste juridiquement les résultats.</p>
+            <p><strong>6.3 Le client reconnaît que les obligations d’approvisionnement exclusif (clause 3), du maintien de la qualité du produit (clause 4) ainsi que l’obligation de respecter les prix de vente au détail et de participer aux activités promotionnelles (clause 5) constituent des conditions essentielles au présent contrat et que le défaut par le client de respecter l’une de ces obligations, entraînera l’application immédiate de la clause pénale prévue au paragraphe 9 du présent contrat et ce, sans autre avis ni délai.</strong></p>
+            <p style="text-align: right;">Initiales : ____________</p>
+            <p><strong>7. COMMANDES ET LIVRAISONS</strong></p>
+            <p>7.1 Les factures soumises au client seront payables en totalité dès leur réception, en argent comptant ou par chèque, lequel pourra être postdaté à une date ne dépassant pas sept (7) jours suivant la date de livraison;</p>
+            <p>7.2 Le client devra respecter les minimums de livraison établis de temps à autre par le propriétaire ou son agent autorisé;</p>
+            <p>7.3 Les appels de service seront la responsabilité du client. Un frais de déplacement de 125.00$ plus un taux horaire de 105,00 $ ainsi que les pièces de remplacement seront facturés au client.</p>
+            <p>7.4 À l’expiration du présent contrat, le client aura l’option de retourner les produits non ouverts et en bonnes conditions de revente et obtenir un crédit moins des frais d’administration de 20% du coût des produits.</p>
+            <p><strong>8. AUTRES CONDITIONS</strong></p>
+            <p>8.1 Le client ne pourra céder ou sous-louer, en tout ou en partie, ses droits et obligations prévues du présent contrat, sans obtenir préalablement le consentement écrit du distributeur à cet effet, lequel ne pourra refuser d’y consentir sans motif valable. Cependant, advenant un tel consentement, le client demeurera conjointement et solidairement responsable des obligations prévues du présent contrat avec le nouveau cessionnaire;</p>
+            <p>8.2 Le présent contrat lie le client, ses mandataires ou représentants légaux, ayant cause et ayant droit;</p>
+            <p>8.3 Le client reconnaît et accepte, nonobstant le lieu de la signature, que l’interprétation, l’accomplissement, l’entrée en vigueur, la validité et les effets du présent contrat sont assujettis exclusivement aux lois du Québec et à la juridiction des tribunaux du Québec et du district judiciaire de Québec.</p>
+            <p><strong>9. CLAUSE PÉNALE</strong></p>
+            <p><strong>9.1 LE CLIENT QUI OMET DE RESPECTER OU DE SE CONFORMER À L’UNE DES OBLIGATIONS DÉCRITES CI-DESSUS OU QUI RETARDE À S’EXÉCUTER SUR UNE OU PLUSIEURS DES CLAUSES DU PRÉSENT CONTRAT SELON LES ÉCHÉANCES PRESCRITES SERA CONSIDÉRÉ EN DÉFAUT. LE DÉFAUT D’UN CLIENT ENTRAÎNERA L’APPLICATION DE LA CLAUSE PÉNALE. LE CLIENT DEVRA ALORS IMMÉDIATEMENT VERSER AU DISTRIBUTEUR, À TITRE DE DOMMAGES LIQUIDÉS, LA SOMME DE QUATRE MILLE DOLLARS (4000$ PLUS LES TAXES APPLICABLES). LE CLIENT SERA EN DEMEURE PAR LE SEUL FAIT DE SA CONTRAVENTION OU INEXÉCUTION, SOUS RÉSERVE ET SANS PRÉJUDICE AUX DROITS DU DISTRIBUTEUR D’OBTENIR LE RESPECT DES OBLIGATIONS DU CLIENT INCLUANT LE DROIT DU DISTRIBUTEUR DE RÉSILIER DE PLEIN DROIT LE PRÉSENT CONTRAT ET SANS PRÉJUDICE AUX DROITS DU DISTRIBUTEUR D’EXERCER TOUS LES AUTRES RECOURS APPROPRIÉS;</strong></p>
+            <p>Le client déclare qu’il a pris connaissance et qu’il comprend la nature et l’étendue de toutes les clauses du présent contrat incluant la clause pénale que l’on retrouve au paragraphe 9 et il s’en déclare satisfait;</p>
+            <p style="margin-top: 14px;">SIGNÉE À <t t-out="b(v['signe_ville'])"/>, ce <t t-out="b(v['signe_jour'])"/> ième jour de <t t-out="b(v['signe_mois'])"/> 20<t t-out="b(v['signe_annee2'])"/></p>
+            <table style="width: 100%; margin-top: 10px;">
+                <tr>
+                    <td style="width: 50%; vertical-align: bottom; padding-right: 20px;">
+                        <div style="border-bottom: 1px solid #000; height: 60px;"/>
+                        <div>Distributeur</div>
+                    </td>
+                    <td style="width: 50%; vertical-align: bottom;">
+                        <div style="border-bottom: 1px solid #000; min-height: 60px;">
+                            <img t-if="doc.signature and image_data_uri" t-att-src="image_data_uri(doc.signature)"
+                                 style="max-height: 60px; max-width: 220px;"/>
+                        </div>
+                        <div>Client</div>
+                    </td>
+                </tr>
+            </table>
+            <p style="text-align: center; margin-top: 16px;"><strong>CAUTION</strong><br/>(applicable dans le cas d’une compagnie uniquement)</p>
+            <p>Je, soussigné ______________________________, résidant au ______, rue ______________________, ville de ______________________, province de ______________________, déclare avoir pris connaissance du présent contrat et je m’engage à me porter caution personnellement de toutes et chacune des obligations ci-dessus contractées par le client notamment au paiement de la somme due en vertu de la clause pénale et m’engage à cet effet conjointement et solidairement avec le client, renonçant aux bénéfices de division et de discussion.</p>
+            <p style="margin-top: 24px;">______________________________<br/>Signature</p>
+            <p>PROPRIÉTAIRE DE L’IMMEUBLE (NOM ET ADRESSE) : ________________________________________</p>
+            <p style="text-align: right; font-size: 10px;">Rév. 12/09</p>
     </template>
 
     <!-- PDF du devis / bon de commande : le contrat suit, sur une nouvelle page -->

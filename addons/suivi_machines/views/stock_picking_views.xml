@@ -37,6 +37,11 @@
                     Indiquez le <strong>Prochain entretien</strong> et la <strong>Fréquence des entretiens</strong> des
                     machines livrées : Odoo les garde sur la fiche de chaque machine et prévient le bureau un mois avant.
                 </div>
+                <field name="machines_sans_serie" invisible="1"/>
+                <div class="alert alert-danger mb-0 py-2" role="alert" invisible="not machines_sans_serie">
+                    Indiquez le <strong>N° de série</strong> de chaque machine livrée (colonne « N° de série (machine) ») :
+                    il est obligatoire pour valider et il est reporté sur le contrat.
+                </div>
                 <div class="alert alert-danger mb-0 py-2" role="alert" invisible="not technicien_requis or livreur_id">
                     Choisissez le <strong>Technicien assigné</strong> : il est obligatoire pour valider cette
                     livraison ou ce ramassage.

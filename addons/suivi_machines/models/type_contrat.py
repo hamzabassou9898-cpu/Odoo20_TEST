@@ -5,6 +5,8 @@ Chaque type regle le comportement du contrat (machine louee ou vendue) et le for
 (clause 8.2 : montant par machine, a la signature puis tous les 12 mois). Les montants se modifient dans
 Ventes > Configuration > Types de contrat, sans programmation.
 """
+import re
+
 from babel import dates as babel_dates
 from dateutil.relativedelta import relativedelta
 from markupsafe import Markup
@@ -124,6 +126,7 @@ class SaleOrder(models.Model):
             "courriel": self.partner_id.email or client.email or "",
             "numero_client": client.ref or "",
             "modeles_machines": ", ".join(dict.fromkeys(lignes_machines.product_id.mapped("display_name"))),
+            # N° de serie choisis sur le bon de livraison (reportes sur les lignes du contrat) ; blanc avant
             "series": ", ".join(series.mapped(lambda l: l.ref and "%s (%s)" % (l.ref, l.name) or l.name)),
             "debut": date_fr(debut), "fin": date_fr(fin),
             "renouvellement_debut": date_fr(renouvellement[0]), "renouvellement_fin": date_fr(renouvellement[1]),
@@ -133,13 +136,39 @@ class SaleOrder(models.Model):
             "deplacement": devise.format(type_contrat.frais_deplacement),
             "taux_horaire": devise.format(type_contrat.taux_horaire),
             "clause_penale": devise.format(type_contrat.clause_penale),
-            "prix_353": devise.format(self.prix_detail_353) if self.prix_detail_353 else "",
-            "prix_510": devise.format(self.prix_detail_510) if self.prix_detail_510 else "",
-            "prix_775": devise.format(self.prix_detail_775) if self.prix_detail_775 else "",
+            # Format du formulaire original : « 2.75$ », « 359.99$ »
+            "prix_353": "%.2f" % self.prix_detail_353 if self.prix_detail_353 else "",
+            "prix_510": "%.2f" % self.prix_detail_510 if self.prix_detail_510 else "",
+            "prix_775": "%.2f" % self.prix_detail_775 if self.prix_detail_775 else "",
+            "montant_depart_nombre": "%.2f" % depart if depart else "",
+            "forfait_texte": ("%.2f$" if type_contrat.modele == "convention" else "%.2f $") % self.forfait_montant,
+            "telephone2": self.partner_id.mobile if "mobile" in self.partner_id._fields else "",
+            "coches": self._contrat_cases_modele(lignes_machines.product_id),
+            "saisons": [self.saison] if self.saison else [],
+            "signe_annee2": "%02d" % (self.signed_on.year % 100) if self.signed_on else "",
             "saison": dict(self._fields["saison"]._description_selection(self.env)).get(self.saison, ""),
             "signe_ville": self.company_id.city or "", "signe_jour": self.signed_on and self.signed_on.day or "",
             "signe_mois": mois, "signe_annee": self.signed_on and self.signed_on.year or "",
         }
+
+    @api.model
+    def _contrat_cases_modele(self, produits):
+        """Cases « MODÈLE » du formulaire cochees d'apres le nom / la reference des machines du contrat."""
+        cases = set()
+        for produit in produits:
+            texte = " %s %s " % ((produit.default_code or "").upper(), (produit.name or "").upper())
+            bebe, comptoir = "BÉBÉ" in texte or "BEBE" in texte, "COMPTOIR" in texte
+            for code in ("F100", "SP10", "FC1", "FC2", "FC3", "V1", "V2"):
+                if re.search(r"(?<![A-Z0-9])%s(?![0-9])" % code, texte):
+                    if code in ("FC1", "FC2") and bebe:
+                        cases.add("B" + code)
+                    elif code in ("F100", "SP10") and comptoir:
+                        cases.add(code + "C")
+                    else:
+                        cases.add(code)
+        if produits and not cases:
+            cases.add("AUTRE")
+        return cases
 
     @api.onchange("type_contrat_id")
     def _onchange_type_contrat_id(self):
