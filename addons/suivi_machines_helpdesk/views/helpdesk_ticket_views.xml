@@ -47,6 +47,10 @@
                 <!-- Entretien : meme bouton, il ouvre la validation (date, prochain entretien) -->
                 <button name="action_marquer_fait" type="object" string="Marquer comme fait" class="btn-primary"
                         invisible="not id or not est_entretien or statut_entretien == 'fait'"/>
+                <!-- Frais du travail fait (main-d'oeuvre, livraison...) : bon de vente fait depuis le ticket -->
+                <button name="action_facturer_frais" type="object" string="Facturer les frais" class="btn-secondary"
+                        invisible="not id or not partner_id or type_demande not in ('reparation', 'entretien', 'remplacement', 'ramassage') or (type_demande != 'ramassage' and statut_entretien != 'fait')"
+                        groups="sales_team.group_sale_salesman"/>
                 <!-- Ajuster un contrat : ouvre le contrat de location du client -->
                 <button name="action_ajuster_contrat" type="object" string="Ajuster le contrat" class="btn-primary"
                         invisible="type_demande != 'ajustement' or not partner_id"/>

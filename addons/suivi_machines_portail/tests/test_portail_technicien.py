@@ -387,6 +387,8 @@ class TestPortailTechnicien(HttpCase):
         self.assertIn("/signer_technicien", page, "le technicien signe à son tour")
         self.assertTrue(bon.doit_signer_technicien)
         self.assertIn("error", self.make_jsonrpc_request(url + "/signer_technicien", {"name": "T", "signature": ""}))
+        # Comme sur Odoo.sh : l'admin est prevenu par courriel (base neutralisee = aucun courriel envoye)
+        self.env.ref("base.user_admin").notification_type = "email"
         admin = self.env.ref("base.user_admin").partner_id
         notif = lambda: self.env["mail.message"].search([("partner_ids", "in", admin.ids),
                                                         ("subject", "=", "Bon %s signé" % bon.name)])
@@ -397,6 +399,9 @@ class TestPortailTechnicien(HttpCase):
         message = notif()
         self.assertEqual(len(message), 1, "Josef (responsable) est prévenu quand le bon est complet")
         self.assertNotIn(self.client.id, message.partner_ids.ids, "le client n'est pas prévenu")
+        # ... et il le voit DANS Odoo quand meme : une activite a faire sur le ticket
+        activite = self.ticket.activity_ids.filtered(lambda a: a.summary == "Bon %s signé" % bon.name)
+        self.assertEqual(activite.user_id, self.env.ref("base.user_admin"), "activité pour Josef dans Odoo")
         self.env.invalidate_all()
         self.assertTrue(bon.signature_technicien)
         self.assertFalse(bon.doit_signer_technicien)
@@ -464,6 +469,24 @@ class TestPortailTechnicien(HttpCase):
         bon = self.env["suivi.bon.intervention"]._creer_depuis_tache(tache, "Client", self.SIGNATURE)
         self.assertEqual(interv.state, "fait", "intervention faite")
         self.assertEqual(bon.intervention_id, interv)
+        # Intervention sans ticket, mais un ticket ouvert sur la meme machine (ticket d'origine) :
+        # le bon et son PDF vont dans les deux, et le bureau a son activite sur le ticket
+        ticket = self.env["helpdesk.ticket"].create({"name": "Machine à remplacer", "partner_id": self.client.id,
+                                                     "lot_id": lot.id})
+        interv2 = self.env["machine.intervention"].create({
+            "lot_id": lot.id, "type": "remplacement", "user_id": self.tech_a.id, "partner_id": self.client.id,
+            "date": fields.Datetime.now()})
+        tache2 = self.env["portail.tache"].search([("intervention_id", "=", interv2.id)])
+        bon2 = self.env["suivi.bon.intervention"]._creer_depuis_tache(tache2, "Client", self.SIGNATURE)
+        self.assertEqual(bon2._dossier_bureau(), ticket)
+        if bon2.doit_signer_technicien:
+            bon2._signer_technicien(self.SIGNATURE)
+        for document in (interv2, ticket):
+            messages = document.message_ids.filtered(lambda m: bon2.name in (m.body or ""))
+            self.assertTrue(messages, "bon dans %s" % document._name)
+            if bon2.pdf_id:
+                self.assertIn(bon2.pdf_id, messages.attachment_ids, "PDF dans %s" % document._name)
+        self.assertTrue(ticket.activity_ids.filtered(lambda a: bon2.name in (a.summary or "")), "activité du bureau")
         type_out = self.env.ref("stock.picking_type_out")
         picking = self.env["stock.picking"].create({
             "picking_type_id": type_out.id, "partner_id": self.client.id, "livreur_id": self.tech_a.id,

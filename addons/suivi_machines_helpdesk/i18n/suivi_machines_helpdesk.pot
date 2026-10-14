@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 20.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-13 17:54+0000\n"
-"PO-Revision-Date: 2026-10-13 17:54+0000\n"
+"POT-Creation-Date: 2026-10-14 12:43+0000\n"
+"PO-Revision-Date: 2026-10-14 12:43+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -236,6 +236,12 @@ msgstr ""
 #: code:addons/suivi_machines_helpdesk/models/helpdesk_ticket.py:0
 #: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.helpdesk_ticket_view_form_machine
 msgid "Bon de vente"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/helpdesk_ticket.py:0
+msgid "Bon de vente %s créé pour les frais du ticket."
 msgstr ""
 
 #. module: suivi_machines_helpdesk
@@ -513,6 +519,11 @@ msgid "Est Reprise"
 msgstr ""
 
 #. module: suivi_machines_helpdesk
+#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.helpdesk_ticket_view_form_machine
+msgid "Facturer les frais"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
 #: model:ir.model.fields.selection,name:suivi_machines_helpdesk.selection__helpdesk_ticket__statut_entretien__fait
 msgid "Fait"
 msgstr ""
@@ -670,6 +681,20 @@ msgid "La machine de remplacement %s n'est pas en entrepôt."
 msgstr ""
 
 #. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/echange_machine.py:0
+msgid ""
+"La machine de remplacement %s n'est pas en stock dans l'entrepôt : vérifiez "
+"son n° de série."
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#. odoo-python
+#: code:addons/suivi_machines_helpdesk/models/echange_machine.py:0
+msgid "La machine de remplacement doit être du même modèle (%s)."
+msgstr ""
+
+#. module: suivi_machines_helpdesk
 #: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_suivi_machines_valider_entretien__write_uid
 msgid "Last Updated by"
 msgstr ""
@@ -737,12 +762,13 @@ msgstr ""
 
 #. module: suivi_machines_helpdesk
 #: model:ir.model.fields,help:suivi_machines_helpdesk.field_helpdesk_ticket__lot_remplacement_id
-msgid "Machine en entrepôt qui sera livrée à la place de celle du ticket."
+msgid ""
+"Machine en entrepôt du même modèle, livrée à la place de celle du ticket."
 msgstr ""
 
 #. module: suivi_machines_helpdesk
 #: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.helpdesk_ticket_view_form_machine
-msgid "Machine en entrepôt à livrer à la place"
+msgid "Machine en entrepôt, même modèle"
 msgstr ""
 
 #. module: suivi_machines_helpdesk
@@ -764,6 +790,11 @@ msgstr ""
 #: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_res_users__sante_nb_machines
 #: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.view_partner_form_contrat_location
 msgid "Machines chez lui"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__machines_choix_ids
+msgid "Machines proposées"
 msgstr ""
 
 #. module: suivi_machines_helpdesk
@@ -864,6 +895,14 @@ msgstr ""
 #: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.helpdesk_ticket_view_form_machine
 #: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.view_partner_form_contrat_location
 msgid "Numéro de série"
+msgstr ""
+
+#. module: suivi_machines_helpdesk
+#: model:ir.model.fields,help:suivi_machines_helpdesk.field_helpdesk_ticket__machines_choix_ids
+msgid ""
+"Numéros de série proposés : les machines du client ; pour un ramassage, "
+"seulement celles qui sont en location chez lui (celles qu'on peut "
+"reprendre)."
 msgstr ""
 
 #. module: suivi_machines_helpdesk

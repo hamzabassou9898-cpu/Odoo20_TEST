@@ -96,30 +96,63 @@ class BonIntervention(models.Model):
             bon.pdf_id = self.env["ir.attachment"].sudo().create({
                 "name": "%s.pdf" % bon.name.replace("/", "-"), "raw": pdf, "mimetype": "application/pdf",
                 "res_model": source._name, "res_id": source.id})
-        bon._source().with_context(mail_create_nosubscribe=True).message_post(
-            body=self.env._("Bon %s signé par le technicien %s.", bon.name, bon.technicien_id.name),
-            author_id=bon.technicien_id.partner_id.id, message_type="comment", subtype_xmlid="mail.mt_note")
+        bon._poster(Markup("<p>%s</p>") % self.env._("Bon %s signé par le technicien %s.",
+                                                     bon.name, bon.technicien_id.name))
         bon._prevenir_bureau()
         return True
 
     def _prevenir_bureau(self):
-        """Bon complet (client, et technicien pour un entretien / une reparation) : notification au
-        responsable (Josef). Seulement lui : ni le client ni les abonnes du document ne sont prevenus."""
+        """Bon complet (client, et technicien pour un entretien / une reparation) : le responsable (Josef)
+        est prevenu DANS Odoo, quelle que soit sa preference (courriel ou Odoo) et meme sans envoi de
+        courriel (base de test neutralisee) : activite a faire sur le ticket, message dans le ticket et
+        notification a l'ecran. Ni le client ni les abonnes du document ne sont prevenus."""
         responsable = self.env["sale.order"]._reglages_reprise()["responsable"]
         if not responsable:
             return
         for bon in self.sudo():
-            source = bon._source()
+            dossier = bon._dossier_bureau()   # ticket d'origine
             signatures = bon.signe_par or "?"
             if bon.signature_technicien:
                 signatures = self.env._("%(client)s et le technicien %(tech)s",
                                         client=signatures, tech=bon.technicien_id.name)
-            source.message_notify(
-                partner_ids=responsable.partner_id.ids, author_id=bon.technicien_id.partner_id.id,
-                subject=self.env._("Bon %s signé", bon.name),
-                body=Markup("<p>%s</p>") % self.env._(
-                    "Bon %(bon)s signé par %(signatures)s (%(client)s). Le PDF est dans le document.",
-                    bon=bon.name, signatures=signatures, client=bon.partner_id.display_name or ""))
+            titre = self.env._("Bon %s signé", bon.name)
+            texte = self.env._("Bon %(bon)s signé par %(signatures)s (%(client)s). Le PDF est dans le document.",
+                               bon=bon.name, signatures=signatures, client=bon.partner_id.display_name or "")
+            # Courriel / boite de reception Odoo selon la preference du responsable
+            dossier.message_notify(partner_ids=responsable.partner_id.ids, author_id=bon.technicien_id.partner_id.id,
+                                  subject=titre, body=Markup("<p>%s</p>") % texte)
+            # Toujours visible dans Odoo : une activite a faire (horloge) ...
+            if "activity_ids" in dossier._fields:
+                dossier.activity_schedule("mail.mail_activity_data_todo", user_id=responsable.id,
+                                          summary=titre, note=Markup("<p>%s</p>") % texte)
+            # ... et une notification a l'ecran s'il est connecte
+            responsable._bus_send("simple_notification", {
+                "type": "success", "title": titre, "message": texte, "sticky": True})
+
+    def _dossier_bureau(self):
+        """Ticket d'origine du travail : le ticket de la tache, celui de l'intervention / du transfert, sinon
+        le dernier ticket ouvert de la meme machine. Sans ticket : le document source."""
+        self.ensure_one()
+        source = self._source()
+        ticket = self.ticket_id
+        for champ in ("ticket_id", "ticket_assistance_id"):   # intervention / transfert lies a un ticket
+            if not ticket and source._name != "helpdesk.ticket" and champ in source._fields:
+                ticket = source[champ]
+        if not ticket and self.lot_id:
+            ticket = self.env["helpdesk.ticket"].sudo().search(
+                ["|", ("lot_id", "=", self.lot_id.id), ("machines_reprise_ids", "in", self.lot_id.ids)],
+                order="id desc").filtered(lambda t: not t._est_ferme())[:1]
+        return ticket or source
+
+    def _poster(self, corps):
+        """Message (note) dans le document source ET dans le ticket d'origine, avec le PDF du bon."""
+        self.ensure_one()
+        for document in {self._source(), self._dossier_bureau()}:
+            message = document.with_context(mail_create_nosubscribe=True).message_post(
+                body=corps, author_id=self.technicien_id.partner_id.id, message_type="comment",
+                subtype_xmlid="mail.mt_note")
+            if self.pdf_id:
+                message.sudo().attachment_ids = [(4, self.pdf_id.id)]
 
     def _rendre_pdf(self):
         """PDF du bon (False sans moteur PDF : le bon reste consultable dans Odoo)."""
@@ -177,26 +210,21 @@ class BonIntervention(models.Model):
         return bon
 
     def _joindre_pdf(self):
-        """PDF du bon dans le fil du document (au nom du technicien). Sans PDF possible : message seul."""
+        """PDF du bon dans le fil du document et du ticket d'origine (au nom du technicien).
+        Sans PDF possible : message seul."""
         for bon in self.sudo():
             source = bon._source()
-            pieces = []
             pdf = bon._rendre_pdf()
             if pdf:
                 piece = self.env["ir.attachment"].sudo().create({
                     "name": "%s.pdf" % bon.name.replace("/", "-"), "raw": pdf, "mimetype": "application/pdf",
                     "res_model": source._name, "res_id": source.id})
                 bon.pdf_id = piece
-                pieces = piece.ids
-            message = source.with_context(mail_create_nosubscribe=True).message_post(
-                body=Markup("<p><b>%s</b></p><p>%s</p>") % (
-                    self.env._("Bon d'intervention %s signé", bon.name),
-                    self.env._("Signé par %(nom)s sur le téléphone de %(tech)s.",
-                               nom=bon.signe_par or "?", tech=bon.technicien_id.name)),
-                author_id=bon.technicien_id.partner_id.id, message_type="comment",
-                subtype_xmlid="mail.mt_note")
-            if pieces:
-                message.sudo().attachment_ids = [(6, 0, pieces)]
+            # Le bon (et son PDF) dans l'intervention / le transfert ET dans le ticket d'origine
+            bon._poster(Markup("<p><b>%s</b></p><p>%s</p>") % (
+                self.env._("Bon d'intervention %s signé", bon.name),
+                self.env._("Signé par %(nom)s sur le téléphone de %(tech)s.",
+                           nom=bon.signe_par or "?", tech=bon.technicien_id.name)))
 
     def _terminer_source(self):
         """La tache signee est terminee : intervention faite, ticket resolu (entretien valide)."""

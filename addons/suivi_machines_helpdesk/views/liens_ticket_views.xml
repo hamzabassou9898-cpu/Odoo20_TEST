@@ -9,6 +9,10 @@
             <field name="partner_id" position="before">
                 <field name="ticket_id" invisible="not ticket_id" readonly="1"/>
             </field>
+            <!-- Intervention d'un ticket : les frais se facturent depuis le ticket (« Facturer les frais ») -->
+            <button name="action_creer_bon_commande" position="attributes">
+                <attribute name="invisible">etat_facturation != 'a_facturer' or ticket_id</attribute>
+            </button>
         </field>
     </record>
 

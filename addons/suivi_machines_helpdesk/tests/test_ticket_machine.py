@@ -1088,6 +1088,36 @@ class TestTicketMachine(TransactionCase):
         self.assertEqual(commande.stage_id, nouveau, "pas d'étape propre : on ne touche pas")
 
 
+    def test_facturer_les_frais_depuis_le_ticket(self):
+        """Le bon de vente des frais se fait depuis le ticket (pas depuis l'intervention)."""
+        ticket = self.env["helpdesk.ticket"].create({
+            "name": "Fuite", "partner_id": self.commerce.id, "type_demande": "reparation",
+            "user_id": self.env.user.id, "date_planifiee": fields.Datetime.now()})
+        main_oeuvre = self.env.ref("suivi_machines.produit_frais_reparation")
+        livraison = self.env.ref("suivi_machines.produit_frais_livraison")
+        interv = self.env["machine.intervention"].create({
+            "type": "reparation", "partner_id": self.commerce.id, "ticket_id": ticket.id, "lot_id": self.lots[0].id,
+            "frais_ids": [(0, 0, {"product_id": main_oeuvre.id, "quantite": 1.5, "prix_unitaire": 85}),
+                          (0, 0, {"product_id": livraison.id, "quantite": 1, "prix_unitaire": 45})]})
+        action = ticket.action_facturer_frais()
+        commande = self.env["sale.order"].browse(action["res_id"])
+        self.assertEqual(commande.ticket_assistance_id, ticket)
+        self.assertEqual(commande.partner_id, self.commerce)
+        self.assertEqual(commande.amount_untaxed, 172.5, "main-d'œuvre 127,50 + livraison 45")
+        self.assertEqual(interv.sale_order_id, commande)
+        self.assertEqual(interv.etat_facturation, "bon_cree")
+        self.assertEqual(ticket.action_facturer_frais()["res_id"], commande.id, "brouillon rouvert, pas de doublon")
+        # Sans frais saisis : main-d'oeuvre + livraison proposees, a completer
+        autre = self.env["helpdesk.ticket"].create({"name": "Bruit", "partner_id": self.commerce.id,
+                                                    "type_demande": "reparation"})
+        vide = self.env["sale.order"].browse(autre.action_facturer_frais()["res_id"])
+        self.assertEqual(vide.order_line.product_id, main_oeuvre | livraison)
+        # L'intervention d'un ticket n'a plus son propre bouton
+        arch = self.env["machine.intervention"].get_views([(False, "form")])["views"]["form"]["arch"]
+        self.assertIn("ticket_id", arch)
+        arch_ticket = self.env["helpdesk.ticket"].get_views([(False, "form")])["views"]["form"]["arch"]
+        self.assertIn("action_facturer_frais", arch_ticket)
+
     def test_echange_machine_installee_sans_stock(self):
         """Machine installée chez le client sans mouvement de stock (saisie à la main) : l'échange part
         de l'emplacement Clients au lieu de planter sur un emplacement vide."""

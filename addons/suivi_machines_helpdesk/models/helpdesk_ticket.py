@@ -225,6 +225,31 @@ class HelpdeskTicket(models.Model):
                             "default_origin": self.name,
                             "default_type_commande": "vente"}}
 
+    def action_facturer_frais(self):
+        """Bon de vente des frais (main-d'oeuvre, livraison, deplacement, pieces) fait DEPUIS LE TICKET :
+        reprend les frais saisis dans ses interventions, sinon propose main-d'oeuvre + livraison a completer.
+        Un bon encore en brouillon est rouvert (pas de doublon)."""
+        self.ensure_one()
+        commande = self.vente_ids.filtered(lambda o: o.state == "draft")[:1]
+        if not commande:
+            interventions = self.sudo().intervention_ticket_ids.filtered(
+                lambda i: i.state != "annule" and not i.sale_order_id and i.frais_ids)
+            lignes = [(0, 0, {"product_id": f.product_id.id, "name": f.name or f.product_id.display_name,
+                              "product_uom_qty": f.quantite, "price_unit": f.prix_unitaire})
+                      for f in interventions.frais_ids]
+            if not lignes:
+                for xmlid in ("suivi_machines.produit_frais_reparation", "suivi_machines.produit_frais_livraison"):
+                    produit = self.env.ref(xmlid, raise_if_not_found=False)
+                    if produit and produit.active:
+                        lignes.append((0, 0, {"product_id": produit.id, "product_uom_qty": 1}))
+            commande = self.env["sale.order"].create({
+                "partner_id": (self.commerce_id or self.partner_id).id, "ticket_assistance_id": self.id,
+                "origin": self.name, "type_commande": "vente", "order_line": lignes})
+            interventions.write({"sale_order_id": commande.id})
+            self.message_post(body=self.env._("Bon de vente %s créé pour les frais du ticket.", commande.name))
+        return {"type": "ir.actions.act_window", "res_model": "sale.order", "res_id": commande.id,
+                "view_mode": "form", "views": [(False, "form")], "target": "current"}
+
     def action_voir_ventes(self):
         self.ensure_one()
         return self._action_liste("sale.order", self.env._("Bons de vente - %s", self.name),
