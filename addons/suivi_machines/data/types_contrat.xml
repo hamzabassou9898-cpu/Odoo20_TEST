@@ -24,6 +24,8 @@
             <field name="forfait_produit_id" ref="produit_forfait_entretien"/>
             <field name="couvre_reparations" eval="True"/>
             <field name="frais_appel_inutile">125</field>
+            <field name="modele">location</field>
+            <field name="clause_penale">4000</field>
             <field name="note">Monroy loue le congélateur. Entretien et réparations usuelles compris (0 $ par année).</field>
         </record>
         <record id="type_contrat_convention" model="suivi.type.contrat">
@@ -34,6 +36,8 @@
             <field name="forfait_produit_id" ref="produit_forfait_entretien"/>
             <field name="couvre_reparations" eval="True"/>
             <field name="frais_appel_inutile">125</field>
+            <field name="modele">convention</field>
+            <field name="clause_penale">4000</field>
             <field name="note">Droit d'utilisation du congélateur. Forfait annuel d'entretien par machine (clause 8.2).</field>
         </record>
         <record id="type_contrat_popcorn" model="suivi.type.contrat">
@@ -44,6 +48,8 @@
             <field name="forfait_produit_id" ref="produit_forfait_entretien"/>
             <field name="couvre_reparations" eval="True"/>
             <field name="frais_appel_inutile">70</field>
+            <field name="modele">popcorn</field>
+            <field name="clause_penale">2500</field>
             <field name="note">Droit d'utilisation (produits HARLAN'S). Forfait annuel d'entretien par équipement (clause 8.2).</field>
         </record>
         <record id="type_contrat_proprietaire" model="suivi.type.contrat">
@@ -55,6 +61,8 @@
             <field name="couvre_reparations" eval="False"/>
             <field name="frais_deplacement">125</field>
             <field name="taux_horaire">105</field>
+            <field name="modele">proprietaire</field>
+            <field name="clause_penale">4000</field>
             <field name="note">La machine appartient au client. Pas de forfait : chaque appel de service est facturé.</field>
         </record>
     </data>

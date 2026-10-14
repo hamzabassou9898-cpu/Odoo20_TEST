@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 20.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-14 14:05+0000\n"
-"PO-Revision-Date: 2026-10-14 14:05+0000\n"
+"POT-Creation-Date: 2026-10-14 14:27+0000\n"
+"PO-Revision-Date: 2026-10-14 14:27+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -36,14 +36,296 @@ msgid "%s machines"
 msgstr ""
 
 #. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"), aux\n"
+"                mêmes conditions à moins que le client ait avisé le"
+msgstr ""
+
+#. module: suivi_machines
 #. odoo-python
 #: code:addons/suivi_machines/models/frise_machine.py:0
 msgid "+%s plus anciens"
 msgstr ""
 
 #. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+",\n"
+"                    le client devra verser au propriétaire la somme de"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+",\n"
+"                    le propriétaire"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+",\n"
+"                    le propriétaire du congélateur modèle"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+",\n"
+"                ce"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ", conformément"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+", de son renouvellement et/ou\n"
+"                    durant les périodes de non activités de son établissement demander au propriétaire de reprendre le\n"
+"                    congélateur et le propriétaire pourra à sa discrétion durant les mêmes périodes reprendre possession du\n"
+"                    congélateur. La reprise de possession du congélateur par le propriétaire durant une telle période n’aura\n"
+"                    pas pour effet de résilier"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+", il sera en défaut, ce qui entraînera l’application immédiate de\n"
+"                la clause pénale prévue au paragraphe"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+", le client aura l’option de retourner les produits non ouverts et en\n"
+"                bonnes conditions de revente et obtenir un crédit moins des frais d’administration de 20% du coût des\n"
+"                produits."
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ", le client devra verser au propriétaire la somme de"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+", lequel pourra être postdaté à une date ne dépassant pas sept (7) jours\n"
+"                suivant la date de livraison"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+", ou d’empêcher le renouvellement automatique de celle-ci\n"
+"                    conformément à l’article 2.1 des présentes. Il est entendu que le propriétaire remettra le congélateur en\n"
+"                    possession du client pour les périodes de renouvellement et ce, sans avoir à aviser au préalable le client."
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ", sans obtenir préalablement le consentement écrit du"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+", sera présumé valide à moins que le client n’en conteste juridiquement les "
+"résultats."
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ", soit par sa faute ou par celle d’un tiers;"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ", À TITRE DE DOMMAGES LIQUIDÉS, LA SOMME DE"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ". AUTRES CONDITIONS"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ". CLAUSE PÉNALE"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ". De plus, le client autorise le"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+". Par ailleurs, le client déclare avoir pris connaissance des\n"
+"                directives du"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+".1 LE CLIENT QUI OMET DE RESPECTER OU DE SE CONFORMER À L’UNE DES OBLIGATIONS\n"
+"                DÉCRITES CI-DESSUS OU QUI RETARDE À S’EXÉCUTER SUR UNE OU PLUSIEURS DES CLAUSES"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+".1 Le client ne pourra céder ou sous-louer, en tout ou en partie, ses droits et\n"
+"                obligations prévues"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+".3 Le client reconnaît et accepte, nonobstant le lieu de la signature, que\n"
+"                l’interprétation, l’accomplissement, l’entrée en vigueur, la validité et les effets"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "1.1 À compter du"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "1.2 Lors de la livraison"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "2.2 Le client pourra durant les périodes non visées par"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "3.1 Le client devra s’approvisionner exclusivement chez le"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "3.2 Le"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "4.1 Le client reconnaît avoir pris connaissance des directives du"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "4.2 Le client s’engage à tenir le"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"5.1 Le client est tenu de participer aux activités promotionnelles ordonnées"
+" par le"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"5.2 Le client s’engage à respecter et à se soumettre aux prix de vente au "
+"détail des produits de marque"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "6.1 Le client reconnaît que le"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "6.2 Plus particulièrement,"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"7.1 Les factures soumises au client seront payables en totalité dès leur réception, en argent comptant ou\n"
+"                par chèque"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"7.2 Le client devra respecter les minimums de livraison établis de temps à "
+"autre par le"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "7.4 À l’expiration"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"8.1 Le client assumera l’entière responsabilité de tout dommage pouvant être"
+" causé au"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "8.2 Lors de la signature"
+msgstr ""
+
+#. module: suivi_machines
 #: model_terms:ir.ui.view,arch_db:suivi_machines.view_picking_form_machine
 msgid ": valider ce transfert valide aussi l'autre (une seule opération)."
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"<br/>\n"
+"                        <em>Ci-après appelé « LE CLIENT »</em>"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"<br/>\n"
+"                        Adresse :"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"<br/>\n"
+"                        Courriel :"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"<br/>\n"
+"                        Nom légal (cie) :"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"<br/>\n"
+"                        Tél. :"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"<br/>\n"
+"                        Ville :"
 msgstr ""
 
 #. module: suivi_machines
@@ -60,6 +342,80 @@ msgstr ""
 #. module: suivi_machines
 #: model_terms:ir.ui.view,arch_db:suivi_machines.view_lot_form_machine
 msgid "<span class=\"o_stat_text\">Historique</span>"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "<strong>1. OBJET</strong>"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "<strong>2. DURÉE</strong>"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "<strong>3. APPROVISIONNEMENT</strong>"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "<strong>4. QUALITÉ DU PRODUIT</strong>"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "<strong>5. PROMOTIONS ET PRIX DE VENTE AU DÉTAIL</strong>"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "<strong>6. DROIT D’INSPECTION</strong>"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "<strong>7. COMMANDES ET LIVRAISONS</strong>"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "<strong>8. DOMMAGES ET ENTRETIEN</strong>"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"<strong>CAUTION</strong><br/>\n"
+"                    <em>(applicable dans le cas d’une compagnie uniquement)</em>"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "<strong>ENTRE</strong><br/>"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"<strong>ET</strong><br/>\n"
+"                        Nom du commerce :"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "<strong>LESQUELS CONVIENNENT DE CE QUI SUIT :</strong>"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "<strong>MODÈLE :</strong>"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "<strong>SAISON :</strong>"
 msgstr ""
 
 #. module: suivi_machines
@@ -134,6 +490,11 @@ msgstr ""
 #. module: suivi_machines
 #: model:ir.model.fields.selection,name:suivi_machines.selection__machine_intervention__state__annule
 msgid "Annulée"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields.selection,name:suivi_machines.selection__sale_order__saison__annee
+msgid "Année"
 msgstr ""
 
 #. module: suivi_machines
@@ -223,8 +584,30 @@ msgid "Bris / réparations - %s"
 msgstr ""
 
 #. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "CONTRAT DE LOCATION / ENTREPRISE"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "CONTRAT PROPRIÉTAIRE"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "CONVENTION"
+msgstr ""
+
+#. module: suivi_machines
 #: model_terms:ir.ui.view,arch_db:suivi_machines.view_intervention_form
 msgid "Ce qui a été fait, problème constaté, pièces changées..."
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"Cette option sera également ouverte au client dans les\n"
+"                situations prévues à la clause 2.2;"
 msgstr ""
 
 #. module: suivi_machines
@@ -259,14 +642,25 @@ msgid "Choisissez le technicien assigné avant de valider : %s."
 msgstr ""
 
 #. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "Ci-après appelé « LE"
+msgstr ""
+
+#. module: suivi_machines
 #: model:ir.model.fields,help:suivi_machines.field_suivi_type_contrat__frais_appel_inutile
 msgid "Clause 7.3 : montant facturé pour un appel de service inutile."
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_suivi_type_contrat__clause_penale
+msgid "Clause pénale"
 msgstr ""
 
 #. module: suivi_machines
 #: model:ir.model.fields,field_description:suivi_machines.field_machine_historique__partner_id
 #: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__partner_id
 #: model:ir.model.fields,field_description:suivi_machines.field_suivi_machines_planifier_ramassage__partner_id
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
 #: model_terms:ir.ui.view,arch_db:suivi_machines.view_intervention_search
 msgid "Client"
 msgstr ""
@@ -337,11 +731,13 @@ msgid "Contrats : forfaits annuels d'entretien"
 msgstr ""
 
 #. module: suivi_machines
+#: model:ir.model.fields.selection,name:suivi_machines.selection__suivi_type_contrat__modele__popcorn
 #: model:suivi.type.contrat,name:suivi_machines.type_contrat_popcorn
 msgid "Convention popcorn"
 msgstr ""
 
 #. module: suivi_machines
+#: model:ir.model.fields.selection,name:suivi_machines.selection__suivi_type_contrat__modele__convention
 #: model:suivi.type.contrat,name:suivi_machines.type_contrat_convention
 msgid "Convention slush"
 msgstr ""
@@ -382,6 +778,11 @@ msgstr ""
 #: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__currency_id
 #: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention_frais__currency_id
 msgid "Currency"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "DE RÉSILIER DE PLEIN DROIT"
 msgstr ""
 
 #. module: suivi_machines
@@ -456,6 +857,11 @@ msgid "Display Name"
 msgstr ""
 
 #. module: suivi_machines
+#: model:ir.model.fields,help:suivi_machines.field_suivi_type_contrat__clause_penale
+msgid "Dommages liquidés en cas de défaut du client (clause pénale)."
+msgstr ""
+
+#. module: suivi_machines
 #: model:ir.module.module,summary:base.module_suivi_machines
 msgid ""
 "Dossier de chaque machine (numéro de série) : interventions, historique, "
@@ -465,6 +871,25 @@ msgstr ""
 #. module: suivi_machines
 #: model:ir.model.fields,field_description:suivi_machines.field_sale_order__date_debut_location
 msgid "Début de la location"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "D’EXERCER TOUS LES AUTRES RECOURS APPROPRIÉS;"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"D’OBTENIR LE RESPECT DES OBLIGATIONS DU CLIENT\n"
+"                INCLUANT LE DROIT DU"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"ET SANS\n"
+"                PRÉJUDICE AUX DROITS DU"
 msgstr ""
 
 #. module: suivi_machines
@@ -719,6 +1144,11 @@ msgid "Historique machine"
 msgstr ""
 
 #. module: suivi_machines
+#: model:ir.model.fields.selection,name:suivi_machines.selection__sale_order__saison__hiver
+msgid "Hiver"
+msgstr ""
+
+#. module: suivi_machines
 #: model:ir.model.fields.selection,name:suivi_machines.selection__stock_lot__machine_etat__hors_service
 #: model:ir.model.fields.selection,name:suivi_machines.selection__stock_lot__machine_statut__hors_service
 msgid "Hors service"
@@ -833,6 +1263,14 @@ msgid "Is Follower"
 msgstr ""
 
 #. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"Je, soussigné ______________________________, résidant au ______,\n"
+"                    rue ______________________, ville de ______________________, province de ______________________,\n"
+"                    déclare avoir pris connaissance"
+msgstr ""
+
+#. module: suivi_machines
 #: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__write_uid
 #: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention_frais__write_uid
 #: model:ir.model.fields,field_description:suivi_machines.field_suivi_machines_planifier_ramassage__write_uid
@@ -846,6 +1284,21 @@ msgstr ""
 #: model:ir.model.fields,field_description:suivi_machines.field_suivi_machines_planifier_ramassage__write_date
 #: model:ir.model.fields,field_description:suivi_machines.field_suivi_type_contrat__write_date
 msgid "Last Updated on"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"Le client déclare qu’il a pris connaissance et qu’il comprend la nature et "
+"l’étendue de toutes les clauses"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"Le client reconnaît que les obligations d’approvisionnement exclusif (clause 3), du maintien de\n"
+"                la qualité du produit (clause 4) ainsi que l’obligation de respecter les prix de vente au détail et de\n"
+"                participer aux activités promotionnelles (clause 5) constituent des conditions essentielles"
 msgstr ""
 
 #. module: suivi_machines
@@ -875,6 +1328,20 @@ msgid "Le ramassage se planifie depuis une livraison terminée."
 msgstr ""
 
 #. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"Les appels de service inutiles seront la responsabilité du client et dans ces cas, des frais\n"
+"                de"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"Les appels de service seront la responsabilité du client. Un frais de\n"
+"                déplacement de"
+msgstr ""
+
+#. module: suivi_machines
 #: model:ir.model.fields,help:suivi_machines.field_product_category__suivi_machine
 #: model:ir.model.fields,help:suivi_machines.field_product_product__est_categorie_machine
 #: model:ir.model.fields,help:suivi_machines.field_product_template__est_categorie_machine
@@ -891,6 +1358,11 @@ msgstr ""
 msgid ""
 "Les numéros de série des produits de la catégorie « Machines &amp; "
 "équipements » apparaissent ici."
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "Les prix au détail s’établissent comme suit :"
 msgstr ""
 
 #. module: suivi_machines
@@ -956,6 +1428,7 @@ msgid "Location"
 msgstr ""
 
 #. module: suivi_machines
+#: model:ir.model.fields.selection,name:suivi_machines.selection__suivi_type_contrat__modele__location
 #: model:suivi.type.contrat,name:suivi_machines.type_contrat_location
 msgid "Location / entreprise"
 msgstr ""
@@ -1071,6 +1544,13 @@ msgid "Main-d'œuvre réparation"
 msgstr ""
 
 #. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"Malgré le terme prévu à la clause 2.1\n"
+"                    de la présente, le propriétaire conserve le droit absolu de propriété du"
+msgstr ""
+
+#. module: suivi_machines
 #: model_terms:ir.ui.view,arch_db:suivi_machines.view_intervention_form
 msgid "Marquer comme faite"
 msgstr ""
@@ -1093,6 +1573,12 @@ msgstr ""
 #. module: suivi_machines
 #: model:ir.model.fields,field_description:suivi_machines.field_stock_lot__date_mise_service
 msgid "Mise en service"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_sale_order__contrat_modele
+#: model:ir.model.fields,field_description:suivi_machines.field_suivi_type_contrat__modele
+msgid "Modèle de contrat"
 msgstr ""
 
 #. module: suivi_machines
@@ -1206,6 +1692,21 @@ msgid "N° de série livrés : %s."
 msgstr ""
 
 #. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"PLUS LES\n"
+"                TAXES APPLICABLES. LE CLIENT SERA EN DEMEURE PAR LE SEUL FAIT DE SA CONTRAVENTION OU INEXÉCUTION, SOUS\n"
+"                RÉSERVE ET SANS PRÉJUDICE AUX DROITS DU"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"PROPRIÉTAIRE DE L’IMMEUBLE (NOM ET ADRESSE) : "
+"________________________________________"
+msgstr ""
+
+#. module: suivi_machines
 #: model:ir.model.fields,field_description:suivi_machines.field_machine_historique__user_id
 msgid "Par"
 msgstr ""
@@ -1230,6 +1731,14 @@ msgid "Planifiées"
 msgstr ""
 
 #. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"Plus\n"
+"                spécifiquement, le client s’engage à utiliser exclusivement les liquides et les verres de marque SLUSH\n"
+"                PUPPIE;"
+msgstr ""
+
+#. module: suivi_machines
 #: model_terms:ir.ui.view,arch_db:suivi_machines.view_lot_search_machine
 msgid "Plus de 3 bris"
 msgstr ""
@@ -1242,6 +1751,26 @@ msgstr ""
 #. module: suivi_machines
 #: model:ir.model.fields,field_description:suivi_machines.field_stock_lot__prochain_entretien_fixe
 msgid "Premier entretien prévu"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.view_order_form_type_contrat
+msgid "Prix de détail (353 / 510 / 775 ml)"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_sale_order__prix_detail_353
+msgid "Prix de détail 353 ml"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_sale_order__prix_detail_510
+msgid "Prix de détail 510 ml"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_sale_order__prix_detail_775
+msgid "Prix de détail 775 ml"
 msgstr ""
 
 #. module: suivi_machines
@@ -1298,8 +1827,14 @@ msgid "Produit du forfait"
 msgstr ""
 
 #. module: suivi_machines
+#: model:ir.model.fields.selection,name:suivi_machines.selection__suivi_type_contrat__modele__proprietaire
 #: model:suivi.type.contrat,name:suivi_machines.type_contrat_proprietaire
 msgid "Propriétaire"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,help:suivi_machines.field_sale_order__saison
+msgid "Période d'activité indiquée en haut du contrat."
 msgstr ""
 
 #. module: suivi_machines
@@ -1399,8 +1934,25 @@ msgid "Réparation / à remplacer"
 msgstr ""
 
 #. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"SELON LES ÉCHÉANCES PRESCRITES SERA CONSIDÉRÉ EN DÉFAUT. LE DÉFAUT D’UN CLIENT\n"
+"                ENTRAÎNERA L’APPLICATION DE LA CLAUSE PÉNALE. LE CLIENT DEVRA ALORS IMMÉDIATEMENT VERSER AU"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "SIGNÉE À"
+msgstr ""
+
+#. module: suivi_machines
 #: model:ir.model.fields,field_description:suivi_machines.field_machine_intervention__message_has_sms_error
 msgid "SMS Delivery error"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,field_description:suivi_machines.field_sale_order__saison
+msgid "Saison"
 msgstr ""
 
 #. module: suivi_machines
@@ -1437,6 +1989,11 @@ msgstr ""
 #. module: suivi_machines
 #: model:ir.model.fields,help:suivi_machines.field_suivi_type_contrat__forfait_produit_id
 msgid "Service utilisé sur le bon de vente du forfait annuel."
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "Signature : ______________________________"
 msgstr ""
 
 #. module: suivi_machines
@@ -1507,6 +2064,13 @@ msgstr ""
 #. module: suivi_machines
 #: model:ir.model.fields,field_description:suivi_machines.field_stock_picking__technicien_requis
 msgid "Technicien requis"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields,help:suivi_machines.field_sale_order__contrat_modele
+#: model:ir.model.fields,help:suivi_machines.field_suivi_type_contrat__modele
+msgid ""
+"Texte du contrat imprimé avec le devis et signé en ligne par le client."
 msgstr ""
 
 #. module: suivi_machines
@@ -1642,8 +2206,83 @@ msgid "Vue d'ensemble des machines"
 msgstr ""
 
 #. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "ainsi que les pièces de remplacement seront facturés au client."
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "au"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"au\n"
+"                guide de nettoyage et de désinfection fixé au congélateur ainsi"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"aux normes légales fédérales,\n"
+"                provinciales et municipales applicables"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "avec le nouveau cessionnaire;"
+msgstr ""
+
+#. module: suivi_machines
 #: model_terms:ir.ui.view,arch_db:suivi_machines.view_lot_kanban_machine
 msgid "bris"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"concernant ces activités promotionnelles et à les respecter\n"
+"                intégralement;"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"de livrer la marchandise pour cause de force\n"
+"                majeure ou pour quelque motif que ce soit, le client s’engage à ne pas s’approvisionner en produits autres\n"
+"                que ceux du"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"de son intention de non renouvellement\n"
+"                par avis écrit, transmis sous pli recommandé au moins quatre-vingt-dix (90) jours avant la date à laquelle\n"
+"                doit débuter la (ou les) période(s) de renouvellement. Si le client ne respecte pas ces conditions ainsi\n"
+"                que la durée initiale"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "des présentes et ce, sans autre avis ni délai;"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "du"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "décrétés par le"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"désire avoir l’autorisation de se servir du nom et de la réputation du produit SLUSH PUPPIE pour\n"
+"                    effectuer ses ventes de barbotine (slush)."
 msgstr ""
 
 #. module: suivi_machines
@@ -1652,13 +2291,295 @@ msgid "entretien(s) en retard"
 msgstr ""
 
 #. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"et\n"
+"                    ce, sans être tenu de payer au client aucune indemnité de quelque nature que ce soit;"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "et ce, sans autre avis ni délai."
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"et des\n"
+"                    équipements s’y rapportant et pourra en reprendre possession ou les remplacer en tout temps, à son entière\n"
+"                    discrétion, ainsi qu’en cas de défaut par le client de respecter l’une des clauses"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"et des\n"
+"                accessoires"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"et des équipements s’y rapportant, lesquels seront effectués par le\n"
+"                    propriétaire durant ses heures normales d’opération;"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"et il\n"
+"                s’en déclare satisfait;"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "et il ne pourra les modifier sans autorisation."
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"et il s’engage à n’utiliser que le produit de nettoyage communément\n"
+"                appelé « AMFO »"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"et je m’engage à me porter caution personnellement\n"
+"                    de toutes et chacune des obligations ci-dessus contractées par le client notamment au paiement de la\n"
+"                    somme due en vertu de la clause pénale et m’engage à cet effet conjointement et solidairement avec le\n"
+"                    client, renonçant aux bénéfices de division et de discussion."
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"et les équipements s’y rapportant dans une\n"
+"                condition de propreté extrême"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "et portant le # de série"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"et que le défaut par le client de respecter l’une de ces obligations, entraînera\n"
+"                l’application immédiate de la clause pénale prévue au paragraphe"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"et s’engage à respecter ces directives et à se\n"
+"                soumettre à toutes autres directives du"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "et tous les équipements s’y rapportant;"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"et à ne pas avoir en sa possession de quelque façon que\n"
+"                ce soit des marchandises de même nature que celles vendues par le"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"et à se\n"
+"                soumettre aux directives du"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "incluant la clause pénale que l’on retrouve au paragraphe"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"inclusivement et se\n"
+"                renouvellera automatiquement pour une période identique (du"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "jour de"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"jugera nécessaires, des vérifications chez le client afin de\n"
+"                s’assurer que le client respecte toutes et chacune des clauses"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"lie le client, ses mandataires ou\n"
+"                représentants légaux, rentiers, exécuteurs, administrateurs, successeurs, ayant cause et ayant droit;"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"louera au client un de ses congélateurs de marque SLUSH PUPPIE, numéro de "
+"machine"
+msgstr ""
+
+#. module: suivi_machines
 #: model_terms:ir.ui.view,arch_db:suivi_machines.view_template_kanban_machine
 msgid "machines"
 msgstr ""
 
 #. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "ou de la mise en marche"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"ou l’un de ses représentants autorisés a le droit d’effectuer,\n"
+"                aux temps et lieux que le"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"ou l’un de ses représentants autorisés, pour s’assurer du respect des "
+"clauses 3 et 4"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"ou son agent autorisé et il ne\n"
+"                devra utiliser que des produits de marque"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"ou son agent autorisé s’engage à livrer la marchandise dans un délai raisonnable.\n"
+"                Toutefois, advenant l’impossibilité pour le"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "ou son agent autorisé;"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"permettra au client d’utiliser un de ses congélateurs de marque SLUSH "
+"PUPPIE, numéro de série"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "permettra au client d’utiliser un de ses équipements, numéro de série"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "plus taxes pour chaque"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "plus un taux horaire de"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "pour la location et l’installation des équipements;"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "pour le format 353 ml,"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "pour le format 510 ml et"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "pour le format 775 ml."
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "pour les droits d’utilisation de l’équipement;"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"pour s’assurer du respect des clauses 3 et 4 de la\n"
+"                présente convention."
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "quant au mélange qu’il doit effectuer avec les produits"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "quant au nettoyage et la désinfection du"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"qu’il a en sa\n"
+"                    possession. Par la suite, le client devra verser au propriétaire ce même montant à tous les douze (12)\n"
+"                    mois. Ce montant représente les frais annuels d’entretien et de réparations usuelles du"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "relatives à la qualité du produit;"
+msgstr ""
+
+#. module: suivi_machines
 #: model_terms:ir.ui.view,arch_db:suivi_machines.view_template_kanban_machine
 msgid "réparation / à remplacer"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "sera en vigueur du"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "seront facturés au client;"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"sont assujettis exclusivement aux lois du Québec et à la juridiction des tribunaux du Québec et du\n"
+"                district judiciaire de Québec."
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "tout résultat de tests effectués chez le client par le"
 msgstr ""
 
 #. module: suivi_machines
@@ -1706,6 +2627,47 @@ msgid "Échange lié"
 msgstr ""
 
 #. module: suivi_machines
+#: model:ir.model.fields.selection,name:suivi_machines.selection__sale_order__saison__ecole
+msgid "École"
+msgstr ""
+
+#. module: suivi_machines
 #: model:ir.model.fields,field_description:suivi_machines.field_stock_lot__machine_etat
 msgid "État de la machine"
+msgstr ""
+
+#. module: suivi_machines
+#: model:ir.model.fields.selection,name:suivi_machines.selection__sale_order__saison__ete
+msgid "Été"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"à cet effet, lequel ne pourra refuser d’y consentir sans motif valable. Cependant, advenant\n"
+"                un tel consentement, le client demeurera conjointement et solidairement responsable des obligations\n"
+"                prévues"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid ""
+"à recevoir copie de tous les différents\n"
+"                rapports d’inspection émanant de services gouvernementaux. Le client sera responsable des amendes dues,\n"
+"                relatives aux infractions et devra les acquitter dans les plus brefs délais;"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "— # client :"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "— Code postal :"
+msgstr ""
+
+#. module: suivi_machines
+#: model_terms:ir.ui.view,arch_db:suivi_machines.contrat_monroy
+msgid "— Contact :"
 msgstr ""

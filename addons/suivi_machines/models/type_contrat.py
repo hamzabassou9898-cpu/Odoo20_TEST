@@ -5,6 +5,7 @@ Chaque type regle le comportement du contrat (machine louee ou vendue) et le for
 (clause 8.2 : montant par machine, a la signature puis tous les 12 mois). Les montants se modifient dans
 Ventes > Configuration > Types de contrat, sans programmation.
 """
+from babel import dates as babel_dates
 from dateutil.relativedelta import relativedelta
 from markupsafe import Markup
 
@@ -43,6 +44,13 @@ class SuiviTypeContrat(models.Model):
                                      help="Contrat propriétaire : frais de déplacement de chaque appel.")
     taux_horaire = fields.Float("Taux horaire", digits="Product Price",
                                 help="Contrat propriétaire : main-d'œuvre par heure.")
+    modele = fields.Selection(
+        [("location", "Location / entreprise"), ("convention", "Convention slush"),
+         ("popcorn", "Convention popcorn"), ("proprietaire", "Propriétaire")], "Modèle de contrat",
+        required=True, default="location",
+        help="Texte du contrat imprimé avec le devis et signé en ligne par le client.")
+    clause_penale = fields.Float("Clause pénale", digits="Product Price",
+                                 help="Dommages liquidés en cas de défaut du client (clause pénale).")
     note = fields.Text("Note")
 
 
@@ -58,6 +66,12 @@ class SaleOrder(models.Model):
         compute="_compute_forfait_montant", store=True, readonly=False, precompute=True,
         help="Prix du forfait annuel d'entretien par machine pour CE contrat : celui du type de contrat, "
              "modifiable (prix négocié). Repris chaque année.")
+    contrat_modele = fields.Selection(related="type_contrat_id.modele")
+    saison = fields.Selection([("annee", "Année"), ("hiver", "Hiver"), ("ete", "Été"), ("ecole", "École")],
+                              "Saison", copy=True, help="Période d'activité indiquée en haut du contrat.")
+    prix_detail_353 = fields.Float("Prix de détail 353 ml", digits="Product Price", copy=True)
+    prix_detail_510 = fields.Float("Prix de détail 510 ml", digits="Product Price", copy=True)
+    prix_detail_775 = fields.Float("Prix de détail 775 ml", digits="Product Price", copy=True)
     forfait_prochaine_date = fields.Date(
         "Prochain forfait annuel", copy=False, tracking=True,
         help="Anniversaire de la signature : ce jour-là, Odoo ajoute au contrat la ligne du forfait de "
@@ -67,6 +81,65 @@ class SaleOrder(models.Model):
     def _compute_forfait_montant(self):
         for order in self:
             order.forfait_montant = order.type_contrat_id.forfait_montant
+
+    @api.depends("type_contrat_id")
+    def _compute_require_signature(self):
+        # Contrat Monroy : le client le signe en ligne avec le devis
+        super()._compute_require_signature()
+        for order in self.filtered("type_contrat_id"):
+            order.require_signature = True
+
+    # ------------------------------------------------------------ contrat imprime / signe en ligne
+    def _contrat_valeurs(self):
+        """Valeurs du contrat (QWeb) tirees d'Odoo : parties, machines, periode, montants."""
+        self.ensure_one()
+        type_contrat = self.type_contrat_id
+        client = self.partner_id.commercial_partner_id
+        devise = self.currency_id
+
+        def date_fr(valeur, motif="d MMMM yyyy"):
+            # Le contrat est toujours en francais, meme si la langue n'est pas installee
+            return babel_dates.format_date(valeur, motif, locale="fr_CA") if valeur else ""
+
+        debut = self.date_debut_location and self.date_debut_location.date() or self.date_order.date()
+        fin = self.date_fin_location and self.date_fin_location.date()
+        renouvellement = (fin + relativedelta(days=1), fin + (fin - debut) + relativedelta(days=1)) \
+            if fin and fin > debut else (None, None)
+        lignes_machines = self.order_line.filtered("est_machine")
+        series = lignes_machines.machine_lot_id | self.machine_ids
+        depart = sum(self.order_line.filtered(lambda l: not l.est_forfait and not l.display_type)
+                     .mapped("price_subtotal"))
+        mois = date_fr(self.signed_on and self.signed_on.date(), "MMMM")
+        def blanc(valeur):
+            """Valeur remplie depuis Odoo (en gras), sinon une ligne a remplir a la main."""
+            return Markup("<strong>%s</strong>") % valeur if valeur else "______________"
+
+        return {
+            "blanc": blanc,
+            "modele": type_contrat.modele, "type": type_contrat,
+            "proprietaire": self.company_id, "client": client,
+            "commerce": self.partner_id if self.partner_id.is_company else client,
+            "contact": self.partner_id.name if self.partner_id != client else "",
+            "telephone": self.partner_id.phone or client.phone or "",
+            "courriel": self.partner_id.email or client.email or "",
+            "numero_client": client.ref or "",
+            "modeles_machines": ", ".join(dict.fromkeys(lignes_machines.product_id.mapped("display_name"))),
+            "series": ", ".join(series.mapped(lambda l: l.ref and "%s (%s)" % (l.ref, l.name) or l.name)),
+            "debut": date_fr(debut), "fin": date_fr(fin),
+            "renouvellement_debut": date_fr(renouvellement[0]), "renouvellement_fin": date_fr(renouvellement[1]),
+            "montant_depart": devise.format(depart) if depart else "",
+            "forfait": devise.format(self.forfait_montant),
+            "appel_inutile": devise.format(type_contrat.frais_appel_inutile),
+            "deplacement": devise.format(type_contrat.frais_deplacement),
+            "taux_horaire": devise.format(type_contrat.taux_horaire),
+            "clause_penale": devise.format(type_contrat.clause_penale),
+            "prix_353": devise.format(self.prix_detail_353) if self.prix_detail_353 else "",
+            "prix_510": devise.format(self.prix_detail_510) if self.prix_detail_510 else "",
+            "prix_775": devise.format(self.prix_detail_775) if self.prix_detail_775 else "",
+            "saison": dict(self._fields["saison"]._description_selection(self.env)).get(self.saison, ""),
+            "signe_ville": self.company_id.city or "", "signe_jour": self.signed_on and self.signed_on.day or "",
+            "signe_mois": mois, "signe_annee": self.signed_on and self.signed_on.year or "",
+        }
 
     @api.onchange("type_contrat_id")
     def _onchange_type_contrat_id(self):

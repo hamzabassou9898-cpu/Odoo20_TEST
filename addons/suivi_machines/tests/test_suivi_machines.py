@@ -3,7 +3,7 @@ from dateutil.relativedelta import relativedelta
 
 from odoo import fields
 from odoo.exceptions import UserError, ValidationError
-from odoo.tests import Form, TransactionCase, tagged
+from odoo.tests import Form, HttpCase, TransactionCase, tagged
 
 
 # Periode de location obligatoire pour confirmer un contrat de location
@@ -651,3 +651,57 @@ class TestSuiviMachines(TransactionCase):
                 if len(champs) > 1 and any((c._module or "").startswith("suivi_") for c in champs):
                     doublons.append("%s : %s (%s)" % (nom_modele, libelle, ", ".join(c.name for c in champs)))
         self.assertFalse(doublons, "\n".join(doublons))
+
+    def test_contrat_qweb_rempli_et_signe_en_ligne(self):
+        """Le contrat du type (QWeb) suit le devis : PDF et page du client, rempli depuis Odoo, signé en ligne."""
+        self.client.write({"ref": "MON777", "street": "12 rue du Port", "city": "Québec", "zip": "G1K 1A1",
+                           "phone": "418-555-0100", "is_company": True})
+        lot = self.env["stock.lot"].create({"name": "SER-CONTRAT", "product_id": self.produit.id, "ref": "F999"})
+        rapport = self.env["ir.actions.report"]
+        prix = self.env.company.currency_id.format
+        attendus = {
+            "type_contrat_location": ["CONTRAT DE LOCATION / ENTREPRISE", "louera au client", prix(4000)],
+            "type_contrat_convention": ["CONVENTION", "permettra au client d’utiliser", prix(359.99), prix(125)],
+            "type_contrat_popcorn": ["CONVENTION", "HARLAN’S", prix(279.5), prix(70), prix(2500)],
+            "type_contrat_proprietaire": ["CONTRAT PROPRIÉTAIRE", "DISTRIBUTEUR", prix(105), prix(125)],
+        }
+        for xmlid, textes in attendus.items():
+            so = self.env["sale.order"].create({
+                "partner_id": self.client.id, "type_contrat_id": self.env.ref("suivi_machines." + xmlid).id,
+                "date_debut_location": PERIODE_TEST[0], "date_fin_location": PERIODE_TEST[1], "saison": "ete",
+                "prix_detail_353": 2.5,
+                "order_line": [(0, 0, {"product_id": self.produit.id, "product_uom_qty": 1, "machine_lot_id": lot.id})]})
+            self.assertTrue(so.require_signature, "le client signe le contrat en ligne")
+            html = rapport._render_qweb_html("sale.action_report_saleorder", so.ids)[0].decode()
+            with self.subTest(type=xmlid):
+                for texte in textes + ["Client", "MON777", "Dépanneur Test", "F999 (SER-CONTRAT)", "Été",
+                                       "1 janvier 2026", "31 décembre 2027", "CLAUSE PÉNALE"]:
+                    self.assertIn(texte, html)
+        # Sans type de contrat : devis normal, pas de contrat
+        simple = self.env["sale.order"].create({"partner_id": self.client.id})
+        self.assertNotIn("CLAUSE PÉNALE", rapport._render_qweb_html("sale.action_report_saleorder", simple.ids)[0].decode())
+        # Page du client : le contrat est affiché avant les adresses
+        from lxml import etree
+        arch = etree.tostring(self.env.ref("sale.sale_order_portal_content")._get_combined_arch(), encoding="unicode")
+        self.assertIn("contrat_monroy", arch)
+
+
+@tagged("post_install", "-at_install")
+class TestContratEnLigne(HttpCase):
+    """La page envoyée au client (lien du devis) affiche le contrat à signer."""
+
+    def test_page_du_client_affiche_le_contrat(self):
+        client = self.env["res.partner"].create({"name": "Client en ligne", "ref": "MON888", "email": "c@exemple.ca"})
+        categ = self.env["product.category"].create({"name": "Machines (en ligne)", "suivi_machine": True})
+        produit = self.env["product.product"].create({"name": "Machine en ligne", "categ_id": categ.id,
+                                                      "is_storable": True, "tracking": "serial"})
+        so = self.env["sale.order"].create({
+            "partner_id": client.id, "type_contrat_id": self.env.ref("suivi_machines.type_contrat_popcorn").id,
+            "date_debut_location": PERIODE_TEST[0], "date_fin_location": PERIODE_TEST[1],
+            "order_line": [(0, 0, {"product_id": produit.id, "product_uom_qty": 1})]})
+        so.action_quotation_sent()
+        reponse = self.url_open(so.get_portal_url())
+        self.assertEqual(reponse.status_code, 200)
+        self.assertIn("CLAUSE PÉNALE", reponse.text)
+        self.assertIn("HARLAN’S", reponse.text)
+        self.assertIn("MON888", reponse.text)
