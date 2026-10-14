@@ -93,6 +93,17 @@
         </field>
     </record>
 
+    <!-- Menu Action d'une vente / location : refaire le PDF dans le profil du client -->
+    <record id="action_serveur_ranger_pdf_client" model="ir.actions.server">
+        <field name="name">Ranger le PDF dans le profil du client</field>
+        <field name="model_id" ref="sale.model_sale_order"/>
+        <field name="binding_model_id" ref="sale.model_sale_order"/>
+        <field name="binding_view_types">list,form</field>
+        <field name="group_ids" eval="[(4, ref('sales_team.group_sale_salesman'))]"/>
+        <field name="state">code</field>
+        <field name="code">action = records.action_ranger_pdf_client()</field>
+    </record>
+
     <record id="view_forfait_renouvellement_form" model="ir.ui.view">
         <field name="name">suivi.forfait.renouvellement.form</field>
         <field name="model">suivi.forfait.renouvellement</field>

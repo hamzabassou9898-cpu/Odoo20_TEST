@@ -239,6 +239,36 @@ class SaleOrder(models.Model):
                 _logger.warning("%s : PDF non rangé dans le profil du client", order.name, exc_info=True)
         return resultat
 
+    def action_ranger_pdf_client(self):
+        """Action « Ranger le PDF dans le profil du client » (menu Action, ventes seulement) : refait le PDF
+        avec le site demarre et remplace celui de la fiche et des Documents du client."""
+        self.check_access("write")
+        ranges = self._archiver_pdf_client()
+        echecs = len(self) - len(ranges)
+        message = self.env._("%s PDF rangé(s) dans le profil du client.", len(ranges))
+        if echecs:
+            message += " " + self.env._("%s non rangé(s) : voir le journal.", echecs)
+        return {"type": "ir.actions.client", "tag": "display_notification",
+                "params": {"message": message, "type": "warning" if echecs else "success", "sticky": False}}
+
+    def _pdf_deja_range(self):
+        self.ensure_one()
+        noms = list({self._nom_document_client(), self._nom_document_client(signe=False)})
+        return bool(self.env["ir.attachment"].sudo().search_count([
+            ("res_model", "=", "res.partner"), ("res_id", "=", self.partner_id.commercial_partner_id.id),
+            ("name", "in", noms)], limit=1))
+
+    @api.model
+    def _cron_ranger_pdf_clients(self, jours=120, limite=30):
+        """Filet de securite (site demarre, PDF complets) : commandes recentes envoyees ou confirmees dont
+        le PDF n'est pas encore dans le profil du client. Par lots, pour ne jamais ralentir le site."""
+        depuis = fields.Datetime.now() - relativedelta(days=jours)
+        commandes = self.search([("state", "in", ("sent", "sale")), ("date_order", ">=", depuis)],
+                                order="date_order desc")
+        a_ranger = commandes.filtered(lambda o: not o._pdf_deja_range())[:limite]
+        a_ranger._archiver_pdf_client()
+        return a_ranger
+
     def _ranger_pdf_client(self):
         self.ensure_one()
         pdf = self.env["ir.actions.report"].sudo().with_context(sale_include_signature=True)._render_qweb_pdf(

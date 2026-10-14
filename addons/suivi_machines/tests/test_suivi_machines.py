@@ -682,6 +682,31 @@ class TestSuiviMachines(TransactionCase):
         self.assertEqual(len(so.order_line.filtered("est_machine")), 4)
         self.assertEqual(sum(so.order_line.mapped("product_uom_qty")), 4)
 
+    def test_tache_range_les_pdf_manquants(self):
+        """Filet de securite : une commande envoyee dont le PDF manque est rangee par la tache planifiee,
+        une seule fois."""
+        so = self.env["sale.order"].create({
+            "partner_id": self.client.id, "type_contrat_id": self.env.ref("suivi_machines.type_contrat_location").id,
+            "date_debut_location": PERIODE_TEST[0], "date_fin_location": PERIODE_TEST[1],
+            "order_line": [(0, 0, {"product_id": self.produit.id, "product_uom_qty": 1})]})
+        # Envoyee sans que le PDF ait ete range (ex. echec du rangement a l'envoi)
+        self.env.cr.execute("UPDATE sale_order SET state = 'sent' WHERE id = %s", [so.id])
+        so.invalidate_recordset(["state"])
+        self.assertFalse(so._pdf_deja_range())
+        self.assertIn(so, self.env["sale.order"]._cron_ranger_pdf_clients())
+        self.assertTrue(so._pdf_deja_range())
+        self.assertNotIn(so, self.env["sale.order"]._cron_ranger_pdf_clients(), "pas deux fois")
+        self.assertTrue(self.env.ref("suivi_machines.cron_ranger_pdf_clients").active)
+        # Action manuelle (menu Action) : refait le PDF, sans doublon
+        resultat = so.action_ranger_pdf_client()
+        self.assertEqual(resultat["params"]["type"], "success")
+        pieces = self.env["ir.attachment"].search([("res_model", "=", "res.partner"), ("res_id", "=", self.client.id),
+                                                   ("name", "ilike", so.name)])
+        self.assertEqual(len(pieces), 1)
+        action = self.env.ref("suivi_machines.action_serveur_ranger_pdf_client")
+        self.assertEqual(action.binding_model_id.model, "sale.order")
+        self.assertIn(self.env.ref("sales_team.group_sale_salesman"), action.group_ids, "ventes seulement")
+
     def test_libelles_uniques(self):
         """Odoo avertit (Test: Warning sur Odoo.sh) quand deux champs d'un modele ont le meme libelle :
         aucun doublon cree par nos modules."""
