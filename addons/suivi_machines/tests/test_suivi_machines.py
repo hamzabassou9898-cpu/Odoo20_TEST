@@ -813,8 +813,13 @@ class TestSuiviMachines(TransactionCase):
         """Nouveau contrat de location : début et fin toujours à l'écran (même avec l'application Location),
         et la date saisie est gardée à l'enregistrement."""
         arch = self.env["sale.order"].get_views([(False, "form")])["views"]["form"]["arch"]
-        self.assertIn('name="date_debut_location"', arch)
-        self.assertNotIn("date_fin_auto\"", arch.split('name="date_debut_location"')[1].split("/>")[0])
+        if "rental_start_date" in self.env["sale.order"]._fields:
+            # Application Location : sa « Période de location » native, sous Expiration
+            self.assertIn('widget="daterange"', arch)
+            self.assertIn("rental_return_date", arch)
+        else:
+            self.assertIn('name="date_debut_location"', arch)
+            self.assertNotIn("date_fin_auto\"", arch.split('name="date_debut_location"')[1].split("/>")[0])
         vals = self.env["sale.order"]._dates_vers_location({"date_debut_location": PERIODE_TEST[0]})
         if "rental_start_date" in self.env["sale.order"]._fields:
             self.assertEqual(vals["rental_start_date"], PERIODE_TEST[0])

@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """Choix du n° de serie d'une machine des la soumission, reserve ensuite sur la livraison."""
+from lxml import etree
+
 from odoo import api, fields, models
 from odoo.exceptions import ValidationError
 
@@ -38,9 +40,26 @@ class SaleOrder(models.Model):
         """Periode de location obligatoire a l'ecran (application Location si installee)."""
         arch, view = super()._get_view(view_id, view_type, **options)
         if view_type == "form":
+            debut = arch.xpath("//field[@name='date_debut_location']")
+            if debut and "rental_start_date" in self._fields:
+                # Application Location installee : sa « Periode de location » native (une seule case
+                # debut -> retour, avec son calendrier) a la place de nos deux dates, qui en sont la copie
+                periode = etree.Element("field", {
+                    "name": "rental_start_date", "string": self.env._("Période de location"),
+                    "widget": "daterange", "options": "{'end_date_field': 'rental_return_date'}",
+                    "invisible": "type_commande != 'location'"})
+                retour = etree.Element("field", {"name": "rental_return_date", "invisible": "1"})
+                if not arch.xpath("//field[@name='rental_start_date']"):   # pas deja dans la vue Location
+                    # A droite, sous « Expiration », comme dans l'application Location
+                    ancre = arch.xpath("//field[@name='validity_date']") or debut
+                    ancre[0].addnext(retour)
+                    ancre[0].addnext(periode)
+                for node in arch.xpath("//field[@name='date_debut_location' or @name='date_fin_location']"):
+                    node.set("invisible", "1")
             for node in arch.xpath("//field[@name='rental_start_date' or @name='rental_return_date' "
                                    "or @name='date_debut_location' or @name='date_fin_location']"):
-                node.set("required", "type_commande == 'location'")
+                if node.get("invisible") != "1":
+                    node.set("required", "type_commande == 'location'")
         return arch, view
 
     @api.depends(lambda self: ["rental_start_date"] if "rental_start_date" in self._fields else [])
