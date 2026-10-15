@@ -1,5 +1,8 @@
-# Nettoyage de la base de TEST : supprime les anciens contrats de location de test (numéros S…,
-# créés avec l'ancienne version) pour repartir sur une base propre. Les contrats LOC… sont gardés.
+# Nettoyage de la base de TEST, deux modes :
+#   - par défaut : supprime les anciens contrats de location de test (numéros S…, créés avec l'ancienne
+#     version). Les contrats LOC… sont gardés ;
+#   - CIBLE=demo : supprime TOUT ce que demo_monroy.py a créé (contrats « DEMO », tickets « Démo »,
+#     anciens contacts [TEST], machines TEST-…).
 #
 # Sécurités :
 #   - refuse de tourner si la base n'est pas neutralisée (donc jamais sur la production) ;
@@ -10,6 +13,7 @@ import os
 from odoo.exceptions import UserError
 
 APPLIQUER = os.environ.get("NETTOYER") == "oui"
+DEMO = os.environ.get("CIBLE") == "demo"
 
 if not env["ir.config_parameter"].sudo().get_bool("database.is_neutralized"):
     raise SystemExit("ARRÊT : cette base n'est pas neutralisée (production ?). Rien n'a été fait.")
@@ -17,11 +21,21 @@ if not env["ir.config_parameter"].sudo().get_bool("database.is_neutralized"):
 env = env(context=dict(env.context, lang="fr_CA", tracking_disable=True, mail_notrack=True,
                        disable_cancel_warning=True))
 Commande = env["sale.order"].sudo()
-contrats = Commande.search([("type_commande", "=", "location"), ("name", "not like", "LOC%")])
-print("\n=== %d ancien(s) contrat(s) de location à supprimer ===" % len(contrats))
+Ticket = env["helpdesk.ticket"].sudo().with_context(active_test=False)
+tickets = Ticket.browse()
+if DEMO:
+    test = env["res.partner"].sudo().with_context(active_test=False).search([("name", "=like", "[TEST]%")])
+    tickets = Ticket.search(["|", "|", ("tag_ids.name", "=", "Démo"), ("name", "=like", "[TEST]%"),
+                             ("partner_id", "in", test.ids)])
+    contrats = Commande.search(["|", "|", ("client_order_ref", "=", "DEMO"), ("partner_id", "in", test.ids),
+                                ("ticket_assistance_id", "in", tickets.ids)])
+else:
+    contrats = Commande.search([("type_commande", "=", "location"), ("name", "not like", "LOC%")])
+print("\n=== %d %s à supprimer ===" % (len(contrats), "contrat(s) et bon(s) de démonstration" if DEMO
+                                      else "ancien(s) contrat(s) de location"))
 for c in contrats:
     print("  %-10s %-8s %s" % (c.name, c.state, c.partner_id.display_name))
-if not contrats:
+if not contrats and not tickets:
     raise SystemExit("Rien à nettoyer.")
 
 
@@ -63,6 +77,8 @@ for _p, lignes, _a in retours:
 print("Factures à supprimer : %d" % len(factures))
 print("Tickets de reprise liés à supprimer : %d" % len(reprises))
 print("Documents (PDF) à supprimer : %d" % len(documents))
+if DEMO:
+    print("Tickets de démonstration à supprimer : %d" % len(tickets))
 
 if not APPLIQUER:
     raise SystemExit("\nAPERÇU seulement : rien n'a été modifié. Relancer avec NETTOYER=oui pour supprimer.")
@@ -126,6 +142,29 @@ for c in contrats:
     if c.state not in ("draft", "cancel"):
         c._action_cancel()
 contrats.unlink()
+
+if DEMO:
+    # Tickets de demonstration (avec leurs interventions et bons), contacts et techniciens [TEST]
+    # archivés, machines TEST-… retirées du stock (ajustement d'inventaire a 0)
+    interventions = env["machine.intervention"].sudo().search([("ticket_id", "in", tickets.ids)])
+    if "suivi.bon.intervention" in env:
+        env["suivi.bon.intervention"].sudo().search(["|", ("ticket_id", "in", tickets.ids),
+                                                     ("intervention_id", "in", interventions.ids)]).unlink()
+    ouverts = env["stock.picking"].sudo().search([("ticket_assistance_id", "in", tickets.ids),
+                                                 ("state", "not in", ("done", "cancel"))])
+    ouverts.action_cancel()
+    ouverts.unlink()
+    interventions.unlink()
+    tickets.exists().unlink()
+    env["res.users"].sudo().search([("name", "=like", "[TEST]%")]).write({"active": False})
+    test.write({"active": False})
+    quants = env["stock.quant"].sudo().search([("lot_id.name", "=like", "TEST-%"), ("quantity", ">", 0),
+                                               ("location_id.usage", "=", "internal")])
+    if quants:
+        quants.with_context(inventory_mode=True).write({"inventory_quantity": 0})
+        quants.action_apply_inventory()
+    print("Démo retirée : %d ticket(s), %d contact(s) [TEST] archivé(s), %d machine(s) TEST- sorties du stock"
+          % (len(tickets), len(test), len(quants)))
 
 env.cr.commit()
 print("\nTERMINÉ : %d ancien(s) contrat(s) supprimé(s). Les contrats LOC… n'ont pas été touchés." % len(contrats))
