@@ -462,8 +462,9 @@ class TestPilotage(TransactionCase):
             self.assertFalse(self.env.ref("suivi_machines_pilotage.indicateur_" + code, raise_if_not_found=False),
                              "carte retirée")
         self.assertNotIn("qualite", Ind._expand_sections(None, []))
-        self.assertEqual(self.env.ref("suivi_machines_pilotage.menu_pilotage_bris").parent_id,
-                         self.env.ref("suivi_machines_pilotage.menu_pilotage_entretiens"))
+        # Menu « Entretiens & réparations » retiré : les cartes du tableau de bord ouvrent les listes
+        for xmlid in ("menu_pilotage_entretiens", "menu_pilotage_bris", "menu_pilotage_entretiens_faits"):
+            self.assertFalse(self.env.ref("suivi_machines_pilotage." + xmlid, raise_if_not_found=False), xmlid)
         self.assertFalse(self.env.ref("suivi_machines_pilotage.menu_pilotage_qualite", raise_if_not_found=False))
         # Portail techniciens : entree directe de la barre de menu
         racine = self.env.ref("suivi_machines_pilotage.menu_pilotage_root")

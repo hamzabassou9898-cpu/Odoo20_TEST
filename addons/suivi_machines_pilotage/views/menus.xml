@@ -19,15 +19,7 @@
     </record>
     <menuitem id="menu_pilotage_appels" name="Appels de service" parent="menu_pilotage_root"
               action="action_pilotage_appels_assistance" sequence="5"/>
-    <menuitem id="menu_pilotage_entretiens" name="Entretiens &amp; réparations" parent="menu_pilotage_root" sequence="10"/>
-    <menuitem id="menu_pilotage_entretiens_avenir" name="Entretiens à venir" parent="menu_pilotage_entretiens"
-              action="action_pilotage_entretiens" sequence="1"/>
-    <menuitem id="menu_pilotage_entretiens_retard" name="Entretiens en retard" parent="menu_pilotage_entretiens"
-              action="action_pilotage_entretiens_retard" sequence="2"/>
-    <menuitem id="menu_pilotage_entretiens_faits" name="Entretiens faits" parent="menu_pilotage_entretiens"
-              action="action_pilotage_entretiens_faits" sequence="3"/>
-    <menuitem id="menu_pilotage_tickets_entretien" name="Tickets d'entretien" parent="menu_pilotage_entretiens"
-              action="action_pilotage_tickets_entretien" sequence="4"/>
+    <!-- Pas de menu « Entretiens & réparations » : tout s'ouvre depuis les cartes du tableau de bord -->
 
     <!-- Portail techniciens : entree directe de la barre de menu -->
     <menuitem id="menu_pilotage_planning" name="Planning" parent="menu_pilotage_root"
@@ -52,10 +44,6 @@
     <menuitem id="menu_pilotage_planifier_ramassage" name="Planifier un ramassage" parent="menu_pilotage_locations"
               action="action_pilotage_planifier_ramassage" sequence="3"/>
 
-    <menuitem id="menu_pilotage_bris" name="Bris &amp; réparations" parent="menu_pilotage_entretiens"
-              action="action_pilotage_bris" sequence="5"/>
-    <menuitem id="menu_pilotage_probleme" name="Machines à problème" parent="menu_pilotage_entretiens"
-              action="action_pilotage_machines_probleme" sequence="6"/>
 
     <menuitem id="menu_pilotage_facturation_racine" name="Facturation" parent="menu_pilotage_root" sequence="40"/>
     <menuitem id="menu_pilotage_facturation" name="Interventions à facturer" parent="menu_pilotage_facturation_racine"
