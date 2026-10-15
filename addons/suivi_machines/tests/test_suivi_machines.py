@@ -718,6 +718,13 @@ class TestSuiviMachines(TransactionCase):
         for _essai in range(2):
             resultat = so.action_ranger_pdf_client()
             self.assertEqual(resultat["params"]["type"], "success")
+        # Échec (ex. rapport impossible) : la raison s'affiche dans le message, la vente n'est pas bloquée
+        from unittest.mock import patch
+        with patch.object(type(so), "_ranger_pdf_client", side_effect=ValueError("Rapport impossible")):
+            resultat = so.action_ranger_pdf_client()
+        self.assertEqual(resultat["params"]["type"], "warning")
+        self.assertIn("Rapport impossible", resultat["params"]["message"])
+        self.assertIn(so.name, resultat["params"]["message"])
         pieces = self.env["ir.attachment"].search([("res_model", "=", "res.partner"), ("res_id", "=", self.client.id),
                                                    ("name", "ilike", so.name)])
         self.assertEqual(len(pieces), 1, "remplacé, pas de doublon")

@@ -233,26 +233,34 @@ class SaleOrder(models.Model):
         """PDF du bon de vente / de la location / du contrat range dans le profil du client : application
         Documents si installee, sinon pieces jointes de sa fiche. Mis a jour (pas de doublon). Ne bloque
         jamais la confirmation ni la signature. Retourne la piece jointe de la fiche client (ou False)."""
-        resultat = self.env["ir.attachment"]
+        return self._ranger_pdf_et_erreurs()[0]
+
+    def _ranger_pdf_et_erreurs(self):
+        """Range le PDF de chaque commande ; retourne (pieces rangees, {numero: raison de l'echec})."""
+        resultat, erreurs = self.env["ir.attachment"], {}
         for order in self:
             try:
                 with self.env.cr.savepoint():
                     resultat |= order._ranger_pdf_client()
-            except Exception:  # noqa: BLE001 - la vente passe avant tout
+            except Exception as erreur:  # noqa: BLE001 - la vente passe avant tout
                 _logger.warning("%s : PDF non rangé dans le profil du client", order.name, exc_info=True)
-        return resultat
+                erreurs[order.name] = str(erreur).strip().splitlines()[0][:200] if str(erreur).strip() \
+                    else type(erreur).__name__
+        return resultat, erreurs
 
     def action_ranger_pdf_client(self):
         """Action « Ranger le PDF dans le profil du client » (menu Action, ventes seulement) : refait le PDF
         avec le site demarre et remplace celui de la fiche et des Documents du client."""
         self.check_access("write")
-        ranges = self._archiver_pdf_client()
-        echecs = len(self) - len(ranges)
+        ranges, erreurs = self._ranger_pdf_et_erreurs()
         message = self.env._("%s PDF rangé(s) dans le profil du client.", len(ranges))
-        if echecs:
-            message += " " + self.env._("%s non rangé(s) : voir le journal.", echecs)
+        if erreurs:
+            # La raison s'affiche a l'ecran (plus besoin du journal du serveur pour comprendre)
+            message += " " + self.env._("Non rangé : %s", " ; ".join(
+                "%s (%s)" % (numero, raison) for numero, raison in erreurs.items()))
         return {"type": "ir.actions.client", "tag": "display_notification",
-                "params": {"message": message, "type": "warning" if echecs else "success", "sticky": False}}
+                "params": {"message": message, "type": "warning" if erreurs else "success",
+                           "sticky": bool(erreurs)}}
 
     def _ranger_pdf_client(self):
         self.ensure_one()
