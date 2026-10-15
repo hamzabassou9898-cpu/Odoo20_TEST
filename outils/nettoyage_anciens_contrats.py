@@ -26,19 +26,22 @@ if not contrats:
 
 
 def encore_chez_client(ligne):
-    """La machine (n° de série) de cette livraison est-elle toujours chez le client ?"""
-    return not env["stock.move.line"].sudo().search_count([
+    """La machine (n° de série) de cette livraison est-elle toujours chez le client ? Non si elle est
+    déjà en stock (revenue par un retour, un échange ou un ajustement d'inventaire) ou repartie depuis."""
+    en_stock = any(q.quantity > 0 and q.location_id.usage in ("internal", "transit") for q in ligne.lot_id.quant_ids)
+    return not en_stock and not env["stock.move.line"].sudo().search_count([
         ("lot_id", "=", ligne.lot_id.id), ("state", "=", "done"),
         ("location_id", "=", ligne.location_dest_id.id), ("date", ">", ligne.date)])
 
 
-retours, a_supprimer = [], env["stock.picking"].sudo()
+retours, a_supprimer, deja = [], env["stock.picking"].sudo(), env["stock.lot"]
 for c in contrats:
     for p in c.picking_ids:
         if p.state != "done":
             a_supprimer |= p
         elif p.location_dest_id.usage == "customer":
-            lignes = p.move_line_ids.filtered(lambda l: l.lot_id and encore_chez_client(l))
+            lignes = p.move_line_ids.filtered(lambda l: l.lot_id and l.lot_id not in deja and encore_chez_client(l))
+            deja |= lignes.lot_id
             accessoires = p.move_ids.filtered(lambda m: not m.has_tracking or m.has_tracking == "none") \
                 if not p.return_ids else env["stock.move"]
             if lignes or accessoires:
@@ -65,7 +68,7 @@ if not APPLIQUER:
     raise SystemExit("\nAPERÇU seulement : rien n'a été modifié. Relancer avec NETTOYER=oui pour supprimer.")
 
 # 1. Machines encore chez le client : retour en entrepôt (transfert de retour natif, avec l'historique)
-for picking, lignes, accessoires in retours:
+def retourner(picking, lignes, accessoires):
     retour = picking._create_return()
     lots_par_produit = {}
     for move in retour.move_ids:
@@ -78,7 +81,7 @@ for picking, lignes, accessoires in retours:
             lots_par_produit[move.id] = lots
     if not retour.move_ids:
         retour.unlink()
-        continue
+        return None
     retour.action_confirm()
     for move in retour.move_ids:
         move.move_line_ids.unlink()
@@ -90,7 +93,17 @@ for picking, lignes, accessoires in retours:
                 "uom_id": move.uom_id.id})
     retour.move_ids.picked = True
     retour._action_done()
-    print("Retour fait : %s" % retour.name)
+    return retour
+
+
+for picking, lignes, accessoires in retours:
+    try:
+        with env.cr.savepoint():   # un retour impossible n'empêche pas le reste du nettoyage
+            retour = retourner(picking, lignes, accessoires)
+        if retour:
+            print("Retour fait : %s" % retour.name)
+    except Exception as erreur:
+        print("Retour impossible pour %s (machine laissée telle quelle) : %s" % (picking.name, erreur))
 
 # 2. Transferts pas encore faits
 if a_supprimer:
