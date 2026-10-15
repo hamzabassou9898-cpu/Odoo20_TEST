@@ -426,7 +426,15 @@ class TestPortailTechnicien(HttpCase):
         self.assertFalse(self.autre.bon_intervention_ids)
         # Le bureau voit les bons signes
         self.env["suivi.bon.intervention"].get_views([(False, "list"), (False, "form")])
-        self.assertTrue(self.env.ref("suivi_machines_portail.menu_bons_intervention"))
+        # ... depuis la carte du tableau de bord (plus de menu, pour gagner de la place)
+        carte = self.env.ref("suivi_machines_portail.indicateur_bons_signes_mois")
+        carte.invalidate_recordset()
+        self.assertGreaterEqual(carte.valeur, 1)
+        action = carte.action_ouvrir()
+        self.assertEqual(action["res_model"], "suivi.bon.intervention")
+        self.assertEqual(self.env["suivi.bon.intervention"].search_count(action["domain"]), carte.valeur)
+        self.assertFalse(self.env.ref("suivi_machines_portail.menu_bons_intervention", raise_if_not_found=False))
+        self.assertFalse(self.env.ref("suivi_machines_portail.menu_notes_technicien", raise_if_not_found=False))
 
     def test_reparation_auto_signee_au_portail(self):
         """Réparation datée : intervention planifiée toute seule ; la signature du client la termine et

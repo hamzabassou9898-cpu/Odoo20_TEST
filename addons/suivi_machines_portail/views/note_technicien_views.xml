@@ -109,8 +109,7 @@
         </field>
     </record>
 
-    <menuitem id="menu_notes_technicien" name="Notes des techniciens"
-              parent="suivi_machines_pilotage.menu_pilotage_entretiens" action="action_notes_technicien" sequence="7"/>
+    <!-- Pas de menu : la carte « Notes de techniciens à lire » du tableau de bord ouvre la liste -->
 
     <!-- Tableau de bord : carte « Notes de techniciens à lire » -->
     <record id="indicateur_notes_a_lire" model="pilotage.indicateur">
@@ -120,6 +119,15 @@
         <field name="sequence">0</field>
         <field name="couleur">danger</field>
         <field name="description">Notes et photos envoyées depuis le portail</field>
+    </record>
+    <!-- Tableau de bord : carte « Bons d'intervention signés ce mois » (remplace le menu) -->
+    <record id="indicateur_bons_signes_mois" model="pilotage.indicateur">
+        <field name="code">bons_signes_mois</field>
+        <field name="name">Bons d'intervention signés ce mois</field>
+        <field name="section">appels</field>
+        <field name="sequence">1</field>
+        <field name="couleur">success</field>
+        <field name="description">Signés par le client sur le téléphone du technicien</field>
     </record>
 
     <!-- Pas d'onglet sur les fiches : la note du technicien est dans le fil de discussion, a droite -->

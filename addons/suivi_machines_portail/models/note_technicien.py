@@ -155,11 +155,18 @@ class PilotageIndicateur(models.Model):
     def _domaines(self):
         domaines = super()._domaines()
         domaines["notes_a_lire"] = ("suivi.note.technicien", [("lu", "=", False)])
+        domaines["bons_signes_mois"] = ("suivi.bon.intervention", [
+            ("date", ">=", fields.Datetime.to_datetime(self._bornes()["debut_mois"]))])
         return domaines
 
     def action_ouvrir(self):
         if self.code == "notes_a_lire":
             action = self.env["ir.actions.act_window"]._for_xml_id("suivi_machines_portail.action_notes_technicien")
             action["context"] = {"search_default_a_lire": 1}
+            return action
+        if self.code == "bons_signes_mois":
+            action = self.env["ir.actions.act_window"]._for_xml_id("suivi_machines_portail.action_bons_intervention")
+            action.update(domain=self._domaines()["bons_signes_mois"][1], name=self.name, display_name=self.name)
+            action.pop("help", None)
             return action
         return super().action_ouvrir()

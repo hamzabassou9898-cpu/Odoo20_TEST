@@ -163,6 +163,4 @@
         </field>
     </record>
 
-    <menuitem id="menu_bons_intervention" name="Bons d'intervention signés"
-              parent="suivi_machines_pilotage.menu_pilotage_entretiens" action="action_bons_intervention" sequence="8"/>
 </odoo>
