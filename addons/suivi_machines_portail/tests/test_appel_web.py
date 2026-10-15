@@ -74,7 +74,7 @@ class TestAppelWeb(HttpCase):
         self._envoyer(type_demande="entretien", type_reparation="coule")
         ticket = self._tickets_web()
         self.assertEqual(len(ticket), 1)
-        self.assertFalse(ticket.partner_id, "Josef choisira le client")
+        self.assertFalse(ticket.partner_id, "Jose choisira le client")
         self.assertTrue(ticket.est_entretien)
         self.assertFalse(ticket.type_reparation, "type de réparation ignoré hors réparation")
 

@@ -259,10 +259,10 @@ class TestPortailTechnicien(HttpCase):
         self.assertTrue(note.lu)
 
     def test_responsable_configure(self):
-        interne = self.env["res.users"].create({"name": "Josef", "login": "josef_test",
+        interne = self.env["res.users"].create({"name": "Jose", "login": "josef_test",
                                                 "group_ids": [(6, 0, [self.env.ref("base.group_user").id])]})
         self.env["ir.config_parameter"].sudo().set_int("suivi_machines_helpdesk.responsable_reprise_id", interne.id)
-        note = self._envoyer_note("Pour Josef")
+        note = self._envoyer_note("Pour Jose")
         self.assertEqual(note.activity_id.user_id, interne)
         self.assertEqual(note.responsable_id, interne)
 
@@ -352,11 +352,11 @@ class TestPortailTechnicien(HttpCase):
         self.assertTrue(rep.get("force_refresh"), rep)
         self.env.invalidate_all()
         message = notif()
-        self.assertEqual(len(message), 1, "Josef (responsable) est prévenu quand le bon est complet")
+        self.assertEqual(len(message), 1, "Jose (responsable) est prévenu quand le bon est complet")
         self.assertNotIn(self.client.id, message.partner_ids.ids, "le client n'est pas prévenu")
         # ... et il le voit DANS Odoo quand meme : une activite a faire sur le ticket
         activite = self.ticket.activity_ids.filtered(lambda a: a.summary == "Bon %s signé" % bon.name)
-        self.assertEqual(activite.user_id, self.env.ref("base.user_admin"), "activité pour Josef dans Odoo")
+        self.assertEqual(activite.user_id, self.env.ref("base.user_admin"), "activité pour Jose dans Odoo")
         self.env.invalidate_all()
         self.assertTrue(bon.signature_technicien)
         self.assertFalse(bon.doit_signer_technicien)

@@ -511,7 +511,7 @@ class TestSuiviMachines(TransactionCase):
         self.assertFalse(contrat.nb_livraisons_a_faire, "livraison normale du contrat : pas « Livraison à faire »")
         self._valider(contrat.picking_ids)
         self.assertEqual(self.lot_a.machine_statut, "chez_client")
-        # Josef ajoute une deuxieme machine au meme contrat
+        # Jose ajoute une deuxieme machine au meme contrat
         ligne = self.env["sale.order.line"].create({"order_id": contrat.id, "product_id": self.produit.id,
                                                     "product_uom_qty": 1, "price_unit": 50})
         a_livrer = contrat.picking_ids.filtered(lambda p: p.state not in ("done", "cancel"))
@@ -607,7 +607,7 @@ class TestSuiviMachines(TransactionCase):
         self.assertEqual(len(so._activites_forfait()), 1)
         self.env["sale.order"]._cron_forfaits_annuels()
         self.assertEqual(len(so._activites_forfait()), 1, "un seul rappel")
-        # Josef renouvelle : prix de l'an dernier propose, ajuste a 310
+        # Jose renouvelle : prix de l'an dernier propose, ajuste a 310
         action = so.action_renouveler_forfait()
         assistant = Form(self.env[action["res_model"]].with_context(action["context"]))
         self.assertEqual((assistant.prix_precedent, assistant.prix, assistant.nombre), (290, 290, 4))
@@ -640,7 +640,7 @@ class TestSuiviMachines(TransactionCase):
         self.assertFalse(brouillon.order_line.filtered("est_forfait"))
 
     def test_numero_de_serie_obligatoire_a_la_livraison(self):
-        """Josef choisit le n° de série de chaque machine sur le bon de livraison : obligatoire pour valider."""
+        """Jose choisit le n° de série de chaque machine sur le bon de livraison : obligatoire pour valider."""
         so = self.env["sale.order"].create({
             "partner_id": self.client.id,
             "order_line": [(0, 0, {"product_id": self.produit.id, "product_uom_qty": 2})]})
@@ -661,7 +661,7 @@ class TestSuiviMachines(TransactionCase):
         self.assertIn("machines_sans_serie", arch)
 
     def test_numero_de_serie_saisi_dans_le_bon_puis_enregistre(self):
-        """Comme Josef dans l'écran : choisir le n° de série de chaque machine, Enregistrer, puis Valider."""
+        """Comme Jose dans l'écran : choisir le n° de série de chaque machine, Enregistrer, puis Valider."""
         so = self.env["sale.order"].create({
             "partner_id": self.client.id,
             "order_line": [(0, 0, {"product_id": self.produit.id, "product_uom_qty": 2})]})

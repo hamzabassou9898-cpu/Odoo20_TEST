@@ -25,7 +25,7 @@
         </field>
     </record>
 
-    <!-- noupdate : Josef peut desactiver l'action planifiee, une mise a jour ne la reactive pas -->
+    <!-- noupdate : Jose peut desactiver l'action planifiee, une mise a jour ne la reactive pas -->
     <data noupdate="1">
     <record id="cron_rappel_veille" model="ir.cron">
         <field name="name">Pilotage : rappel au client la veille de la visite</field>

@@ -463,7 +463,7 @@ class TestTicketMachine(TransactionCase):
         ticket = f.save()
         self.assertEqual((ticket.commande_reprise_id, ticket.machines_reprise_ids), (so, lots))
         self.assertFalse(ticket.origine_auto, "créé par une personne")
-        self.assertEqual(ticket.name, "Ne refroidit pas", "le titre écrit par Josef est gardé")
+        self.assertEqual(ticket.name, "Ne refroidit pas", "le titre écrit par Jose est gardé")
         # Le cron ne renomme pas ce ticket et ne cree pas de doublon
         so.date_fin_location = fields.Datetime.now() + relativedelta(days=2)
         self.env["sale.order"]._cron_tickets_reprise()
@@ -777,7 +777,7 @@ class TestTicketMachine(TransactionCase):
             "user_id": self.env.user.id})
         self.env["helpdesk.ticket"]._cron_tickets_entretien()
         self.assertEqual(vieux.stage_id, annule)
-        self.assertNotEqual(planifie.stage_id, annule, "déjà planifié par Josef : on n'y touche pas")
+        self.assertNotEqual(planifie.stage_id, annule, "déjà planifié par Jose : on n'y touche pas")
         hs = self.env["stock.lot"].create({"name": "ENT-HS", "product_id": self.produit.id,
                                            "machine_etat": "hors_service"})
         self.env["machine.intervention"].create({

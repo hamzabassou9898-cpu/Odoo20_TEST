@@ -2,7 +2,7 @@
 """Formulaire web « Appel de service » (/appel-de-service) : le client cree lui-meme son ticket.
 
 Le code client (s'il le connait) retrouve son dossier : client, adresse, machines, contrat de location
-(ramassage)... comme quand Josef le saisit au telephone.
+(ramassage)... comme quand Jose le saisit au telephone.
 """
 from markupsafe import Markup
 
@@ -23,7 +23,7 @@ CHAMPS_FORMULAIRE = [
     ("adresse", "Adresse", SANS_CODE),
     ("ville", "Ville", SANS_CODE),
 ]
-# Types proposes au client sur le site (les autres types restent pour Josef dans le ticket)
+# Types proposes au client sur le site (les autres types restent pour Jose dans le ticket)
 TYPES_WEB = ("reparation", "ramassage", "entretien", "remplacement")
 LONGUEUR_CHAMP = 200
 LONGUEUR_MESSAGE = 5000

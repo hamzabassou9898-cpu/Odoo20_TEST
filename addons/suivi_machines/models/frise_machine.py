@@ -67,7 +67,7 @@ class StockLot(models.Model):
             elif source in ("supplier", "inventory"):
                 cle, libelle = "reception", self.env._("Entrée en stock")
             else:
-                continue   # deplacement interne : pas utile a Josef
+                continue   # deplacement interne : pas utile a Jose
             evenements.append((ligne.date, cle, libelle))
         types = dict(TYPES)
         for interv in self.sudo().intervention_ids.filtered(lambda i: i.state == "fait").sorted("date"):

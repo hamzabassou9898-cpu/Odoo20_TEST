@@ -427,7 +427,7 @@ class TestPilotage(TransactionCase):
         self.assertTrue(retard)
 
     def test_entretien_planifie_via_intervention(self):
-        """Josef planifie l'entretien depuis Interventions : le ticket ouvert de la machine devient « Planifié »."""
+        """Jose planifie l'entretien depuis Interventions : le ticket ouvert de la machine devient « Planifié »."""
         Ticket = self.env["helpdesk.ticket"]
         ticket = Ticket.create({"name": "Entretien - PIL-1", "partner_id": self.client.id, "lot_id": self.lot.id,
                                 "est_entretien": True})
@@ -479,15 +479,17 @@ class TestPilotage(TransactionCase):
         for periode in ("jour", "semaine", "mois"):
             d = Ind.donnees_tableau_moderne(periode)
             self.assertEqual(d["periode"], periode)
-            self.assertEqual(len(d["kpis"]), 7)
+            self.assertEqual(list(d["blocs"]), ["appels", "locations", "facturation", "inventaire"],
+                             "un bloc par menu, dans l'ordre de la barre")
             self.assertEqual(len(d["semaines"]), 8)
-            self.assertEqual(len(d["parc"]), 5)
             for cle in ("alertes", "techniciens", "progression", "problemes", "tournees", "bonjour", "date"):
                 self.assertIn(cle, d)
         d = Ind.donnees_tableau_moderne("jour")
-        kpi = {k["code"]: k for k in d["kpis"]}
-        self.assertEqual(kpi["appels_ouverts"]["valeur"], Ind._compte("appels_ouverts"))
-        self.assertGreaterEqual(kpi["appels_ouverts"]["valeur"], 1)
+        tuiles = {k["code"]: k for bloc in d["blocs"].values() for k in bloc}
+        self.assertEqual(tuiles["appels_ouverts"]["valeur"], Ind._compte("appels_ouverts"))
+        self.assertGreaterEqual(tuiles["appels_ouverts"]["valeur"], 1)
+        self.assertEqual(tuiles["a_facturer"]["libelle"], "Appels à facturer")
+        self.assertNotIn("sage_clients", [a["code"] for a in d["alertes"]], "Sage : dans le bloc Facturation")
         self.assertTrue(all(a["nombre"] > 0 for a in d["alertes"]), "seulement ce qui est à traiter")
         # Tout est cliquable : chaque element ouvre une liste (sans le message HTML brut)
         tag = self.env["helpdesk.tag"].create({"name": "Fait du bruit"})
@@ -498,10 +500,9 @@ class TestPilotage(TransactionCase):
         self.env["helpdesk.ticket"].create({"name": "Bruit", "code_client": "PIL1", "tag_ids": [(6, 0, tag.ids)],
                                             "user_id": tech.id, "date_planifiee": fields.Datetime.now()})
         d = Ind.donnees_tableau_moderne("semaine")
-        codes = ([k["code"] for k in d["kpis"]] + [a["code"] for a in d["alertes"]]
+        codes = ([k["code"] for bloc in d["blocs"].values() for k in bloc] + [a["code"] for a in d["alertes"]]
                  + [t["code"] for t in d["techniciens"]] + [p["code"] for p in d["problemes"]]
                  + [s["code"] for s in d["semaines"]] + [r["code"] for r in d["tournees"]]
-                 + [m["code"] for m in d["parc"]]
                  + [x["code"] for cle in ("statuts", "disponibles", "categories", "mouvements")
                     for x in d["stock"][cle]] + ["rupture", "mouvements"])
         self.assertIn("probleme:Fait du bruit", codes)
@@ -519,23 +520,8 @@ class TestPilotage(TransactionCase):
         bruit = Ind.action_par_code("probleme:Fait du bruit")
         self.assertEqual(self.env["helpdesk.ticket"].search_count(bruit["domain"]), 1)
         self.assertFalse(Ind.action_par_code("code_inconnu"))
-        # Ventes du mois et clients (Contacts)
-        prod = self.env["product.product"].create({"name": "Location machine", "type": "service", "list_price": 1500})
-        so = self.env["sale.order"].create({"partner_id": self.client.id,
-                                            "order_line": [(0, 0, {"product_id": prod.id, "price_unit": 1500})]})
-        so.action_confirm()
-        d = Ind.donnees_tableau_moderne("jour")
-        kpi = {k["code"]: k for k in d["kpis"]}
-        self.assertIn("1", kpi["ventes_mois"]["valeur"])
-        self.assertIn("500", kpi["ventes_mois"]["valeur"])
-        self.assertEqual(kpi["clients"]["valeur"], self.env["res.partner"].search_count([]),
-                         "tous les contacts, comme l'application Contacts")
-        self.assertIn(so, self.env["sale.order"].search(Ind.action_par_code("ventes_mois")["domain"]))
-        clients = Ind.action_par_code("clients")
-        self.assertEqual(clients["res_model"], "res.partner")
-        self.assertIn(self.client, self.env["res.partner"].search(clients["domain"]))
-        personne = self.env["res.partner"].create({"name": "Sans achat", "parent_id": self.client.id})
-        self.assertIn(personne, self.env["res.partner"].search(clients["domain"]), "même sans achat")
+        # Plus de tuiles « Ventes du mois » ni « Nos contacts » (aucun menu ne leur correspond)
+        self.assertFalse(Ind.action_par_code("ventes_mois"))
         # Les deux vues dans le menu Tableau de bord
         racine = self.env.ref("suivi_machines_pilotage.menu_pilotage_tableau_racine")
         self.assertEqual([m.action for m in racine.child_id.sorted("sequence")], [
@@ -653,7 +639,7 @@ class TestPortailLivreurs(TransactionCase):
         self.assertIn("action_planifier_ramassage", vue["views"]["list"]["arch"])
         self.assertEqual(pk.action_planifier_ramassage()["res_model"], "suivi.machines.planifier.ramassage")
 
-        # Suivi de Josef : en retard / fait
+        # Suivi de Jose : en retard / fait
         tache_ticket = Tache.search([("ticket_id", "=", ticket.id)])
         self.assertEqual(tache_ticket.etat_suivi, "a_faire")
         ticket.date_planifiee = fields.Datetime.now() - relativedelta(days=2)

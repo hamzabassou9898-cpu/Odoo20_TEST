@@ -171,7 +171,7 @@ class PortailTache(models.Model):
         return SQL("COALESCE(t.user_id, t.technicien_id)")
 
     def _document_a_ouvrir(self):
-        """Ce que Josef ouvre depuis le Planning : le ticket, le bon de livraison ou le bon de retour.
+        """Ce que Jose ouvre depuis le Planning : le ticket, le bon de livraison ou le bon de retour.
         Une intervention sans ticket ouvre le dernier ticket de sa machine, sinon son dernier transfert ;
         l'intervention seulement s'il n'y a ni l'un ni l'autre."""
         self.ensure_one()

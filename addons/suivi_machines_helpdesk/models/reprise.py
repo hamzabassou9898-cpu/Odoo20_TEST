@@ -124,7 +124,7 @@ class HelpdeskTicket(models.Model):
                          "location_id": source.id, "location_dest_id": destination.id,
                          "partner_id": retour.partner_id.id})
             accessoires.append("%s x %s" % (ligne.qty_delivered, produit.display_name))
-        # Le technicien du ticket fait le ramassage : Josef ne le choisit qu'une fois
+        # Le technicien du ticket fait le ramassage : Jose ne le choisit qu'une fois
         retour.write({"ticket_assistance_id": self.id, "livreur_id": self._technicien_ticket().id or False})
         retour.action_confirm()
         retour.action_assign()

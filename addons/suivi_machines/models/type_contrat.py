@@ -289,7 +289,7 @@ class SaleOrder(models.Model):
         nom_dossier = self.env._("Contrats et ventes clients")
         # Visible par tout le bureau : proprietaire interne (le vendeur, sinon l'administrateur) et acces
         # interne en modification. Sans cela, un contrat signe au portail appartient au client portail et
-        # le bouton Documents de la fiche reste a 0 pour Josef
+        # le bouton Documents de la fiche reste a 0 pour Jose
         acces = {}
         if "owner_id" in Document._fields:
             vendeur = self.user_id if self.user_id and not self.user_id.share else self.env.ref("base.user_admin")

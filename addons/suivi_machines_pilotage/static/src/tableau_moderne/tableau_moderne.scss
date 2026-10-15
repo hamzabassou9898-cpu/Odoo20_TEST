@@ -77,4 +77,19 @@
         .o_pm_parc { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
 }
-.o_pm_grid3 .o_pm_hb .o_pm_lab { width: 170px; }
+.o_pilotage_moderne {
+    // Un bloc par menu : titre numerote, tuiles, details
+    .o_pm_bloc { margin-bottom: 14px; h4 { font-size: 13.5px; font-weight: 700; margin: 0 0 10px; display: flex; justify-content: space-between;
+        small { font-weight: 500; color: #6b7280; font-size: 12px; } } }
+    .o_pm_num_bloc { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 6px; background: #714B67;
+        color: #fff; font-size: 12px; margin-right: 8px; vertical-align: 1px; }
+    .o_pm_deux { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .o_pm_trois { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+    .o_pm_sous { margin-top: 14px; }
+    .o_pm_tuiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+    .o_pm_tuile { border: 1px solid #eceef2; border-radius: 12px; padding: 12px 14px; .o_pm_v { font-size: 26px; } }
+    .o_pm_pastille { display: inline-block; margin-top: 6px; font-size: 11.5px; font-weight: 600; padding: 2px 8px; border-radius: 12px; }
+    .o_pm_boutons { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+    .o_pm_leg b { font-weight: 600; color: #374151; }
+    @media (max-width: 1100px) { .o_pm_deux, .o_pm_trois { grid-template-columns: 1fr; } }
+}

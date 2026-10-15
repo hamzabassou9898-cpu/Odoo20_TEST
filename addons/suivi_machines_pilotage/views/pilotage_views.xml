@@ -466,7 +466,7 @@
         <field name="model">helpdesk.ticket</field>
         <field name="priority">100</field>
         <field name="arch" type="xml">
-            <!-- Bouton « Nouveau » : Josef cree le ticket ici, sans aller dans Assistance -->
+            <!-- Bouton « Nouveau » : Jose cree le ticket ici, sans aller dans Assistance -->
             <list default_order="create_date desc">
                 <field name="create_date" string="Reçu le"/>
                 <field name="type_demande" widget="badge" decoration-danger="type_demande == 'reparation'"

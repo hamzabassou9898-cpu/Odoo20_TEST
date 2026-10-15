@@ -5,7 +5,7 @@ from datetime import datetime, time, timedelta
 import pytz
 
 from odoo import api, fields, models
-from odoo.tools.misc import format_amount, format_datetime
+from odoo.tools.misc import format_datetime
 
 TYPES_COULEUR = {"livraison": "success", "ramassage": "warning", "entretien": "info",
                  "reparation": "danger", "installation": "primary", "autre": "secondary"}
@@ -39,28 +39,6 @@ class PilotageIndicateur(models.Model):
         return self.env[model].search_count(domaine) + self._compte_reparations(code)
 
     @api.model
-    def _debut_mois(self, decalage=0):
-        """1er du mois (UTC), decale de n mois (-1 = mois dernier)."""
-        fuseau = self._fuseau()
-        aujourdhui = datetime.now(fuseau).date().replace(day=1)
-        mois = aujourdhui.month - 1 + decalage
-        premier = aujourdhui.replace(year=aujourdhui.year + mois // 12, month=mois % 12 + 1)
-        return fuseau.localize(datetime.combine(premier, time.min)).astimezone(pytz.UTC).replace(tzinfo=None)
-
-    @api.model
-    def _ventes(self, debut, fin):
-        commandes = self.env["sale.order"].search([("state", "=", "sale"), ("date_order", ">=", debut),
-                                                   ("date_order", "<", fin)])
-        devise = self.env.company.currency_id
-        return sum(c.currency_id._convert(c.amount_untaxed, devise, c.company_id, c.date_order.date())
-                   for c in commandes)
-
-    @api.model
-    def _domaine_clients(self):
-        # Tous les contacts actifs, exactement comme l'application Contacts
-        return []
-
-    @api.model
     def action_par_code(self, code):
         """Ouvre la liste d'une carte (meme comportement que la vue « Toutes les cartes »)."""
         action = self._action_detail(code)
@@ -83,18 +61,6 @@ class PilotageIndicateur(models.Model):
     @api.model
     def _action_detail(self, code):
         """Clics de la vue d'ensemble qui ne correspondent pas a une carte."""
-        if code == "ventes_mois":
-            return {"type": "ir.actions.act_window", "name": self.env._("Ventes du mois"),
-                    "res_model": "sale.order", "views": [(False, "list"), (False, "form")],
-                    "domain": [("state", "=", "sale"), ("date_order", ">=", self._debut_mois())],
-                    "context": {"create": False}}
-        if code == "clients":
-            xmlid = "contacts.action_contacts" if self.env.ref("contacts.action_contacts", raise_if_not_found=False) \
-                else "base.action_partner_form"
-            action = self.env["ir.actions.act_window"]._for_xml_id(xmlid)
-            action.update({"name": self.env._("Nos contacts"), "domain": self._domaine_clients(),
-                           "context": {"default_is_company": True}})
-            return action
         if code == "tournees_a_faire":
             return self._action_xml("suivi_machines_pilotage.action_pilotage_transferts",
                                     self.env._("Livraisons & ramassages à faire"),
@@ -239,48 +205,48 @@ class PilotageIndicateur(models.Model):
                                                       ("create_date", "<", maintenant - timedelta(days=7))])
         ecart = cette_semaine - semaine_avant
         a_facturer = self.search([("code", "=", "a_facturer")], limit=1)
+        Lot = self.env["stock.lot"]
+        chez_clients = Lot.search_count([("est_machine", "=", True),
+                                         ("machine_statut", "in", ("chez_client", "livree", "vendue"))])
+        en_entrepot = Lot.search_count([("est_machine", "=", True), ("machine_statut", "=", "entrepot")])
 
-        # Ventes du mois (confirmees, hors taxes) vs meme periode le mois dernier
-        devise = self.env.company.currency_id
-        debut_mois, debut_mois_dernier = self._debut_mois(), self._debut_mois(-1)
-        ventes = self._ventes(debut_mois, maintenant + timedelta(seconds=1))
-        ventes_avant = self._ventes(debut_mois_dernier, debut_mois_dernier + (maintenant - debut_mois))
-        if ventes_avant:
-            pct = round(100 * (ventes - ventes_avant) / ventes_avant)
-            tendance_ventes, couleur_ventes = "%+d %% vs mois dernier" % pct, "success" if pct >= 0 else "danger"
-        else:
-            tendance_ventes, couleur_ventes = "ce mois", "secondary"
-        Partner = self.env["res.partner"]
-        nb_clients = Partner.search_count(self._domaine_clients())
-        nouveaux = Partner.search_count(self._domaine_clients() + [("create_date", ">=", debut_mois)])
+        def tuile(code, libelle, valeur=None, pastille="", couleur="secondary", alerte=False):
+            return {"code": code, "libelle": libelle, "valeur": c.get(code, 0) if valeur is None else valeur,
+                    "pastille": pastille, "pastille_couleur": couleur, "alerte": alerte}
 
-        kpis = [
-            {"code": "ventes_mois", "valeur": format_amount(self.env, round(ventes), devise, trailing_zeroes=False),
-             "libelle": "Ventes du mois (hors taxes)", "icone": "payments", "couleur": "success",
-             "tendance": tendance_ventes, "tendance_couleur": couleur_ventes},
-            {"code": "clients", "valeur": nb_clients, "libelle": "Nos contacts", "icone": "person",
-             "couleur": "primary", "tendance": "+%s ce mois" % nouveaux if nouveaux else "",
-             "tendance_couleur": "success"},
-            {"code": "appels_ouverts", "valeur": c.get("appels_ouverts", 0), "libelle": "Appels de service ouverts",
-             "icone": "build", "couleur": "danger",
-             "tendance": "%+d vs sem. dern." % ecart, "tendance_couleur": "danger" if ecart > 0 else "success"},
-            {"code": "entretiens_ouverts", "valeur": c.get("entretiens_ouverts", 0),
-             "libelle": "Entretiens & réparations à faire", "icone": "schedule", "couleur": "info",
-             "tendance": "%s en retard" % c.get("entretien_retard", 0),
-             "tendance_couleur": "danger" if c.get("entretien_retard") else "secondary"},
-            {"code": "tournees_a_faire",
-             "valeur": c.get("livraisons_a_faire", 0) + c.get("ramassages_a_faire", 0),
-             "libelle": "Livraisons & ramassages à faire", "icone": "local_shipping", "couleur": "primary",
-             "tendance": "%s faites ce mois" % c.get("livraisons_faites", 0), "tendance_couleur": "success"},
-            {"code": "locations_actives", "valeur": c.get("locations_actives", 0), "libelle": "Locations en cours",
-             "icone": "calendar_today", "couleur": "warning",
-             "tendance": "%s reprises ≤ 30 j" % c.get("reprises_30j", 0), "tendance_couleur": "secondary"},
-            {"code": "a_facturer", "valeur": c.get("a_facturer", 0), "libelle": "Interventions à facturer",
-             "icone": "attach_money", "couleur": "success",
-             "tendance": (a_facturer.sous_titre or "").replace("Total : ", ""), "tendance_couleur": "success"},
-        ]
+        # Un bloc par menu de la barre, dans le meme ordre (lien « Tout voir » vers le menu)
+        retard = c.get("entretien_retard", 0)
+        blocs = {
+            "appels": [
+                tuile("appels_ouverts", self.env._("Appels ouverts"),
+                      pastille="%+d vs sem. dern." % ecart if ecart else "", couleur="danger" if ecart > 0 else "success"),
+                tuile("entretiens_ouverts", self.env._("Entretiens & réparations à faire"),
+                      pastille=self.env._("%s en retard", retard) if retard else "", couleur="danger"),
+                tuile("appels_mois", self.env._("Appels reçus ce mois")),
+            ],
+            "locations": [
+                tuile("locations_actives", self.env._("Locations en cours")),
+                tuile("reprises_30j", self.env._("Reprises dans 30 jours")),
+                tuile("locations_depassees", self.env._("Locations dépassées"),
+                      alerte=bool(c.get("locations_depassees"))),
+            ],
+            "facturation": [
+                tuile("a_facturer", self.env._("Appels à facturer"),
+                      pastille=(a_facturer.sous_titre or "").replace("Total : ", ""), couleur="success"),
+                tuile("sage_clients", self.env._("Factures clients à enregistrer dans Sage")),
+                tuile("sage_fournisseurs", self.env._("Factures fournisseurs à enregistrer dans Sage")),
+            ],
+            "inventaire": [
+                tuile("statut:entrepot", self.env._("Machines en entrepôt"), en_entrepot),
+                tuile("machines_chez_client", self.env._("Machines chez les clients"), chez_clients),
+                tuile("tournees_a_faire", self.env._("Livraisons & ramassages à faire"),
+                      c.get("livraisons_a_faire", 0) + c.get("ramassages_a_faire", 0)),
+                tuile("livraisons_faites", self.env._("Livraisons & ramassages faits ce mois")),
+            ],
+        }
 
-        # A traiter maintenant : du plus urgent au moins urgent, seulement ce qui est > 0
+        # A traiter maintenant : du plus urgent au moins urgent, seulement ce qui est > 0 (les factures a
+        # enregistrer dans Sage sont dans le bloc Facturation)
         a_traiter = [
             ("locations_depassees", "danger", "Locations dépassées", "Machines à reprendre chez le client",
              "Planifier le ramassage"),
@@ -294,10 +260,6 @@ class PilotageIndicateur(models.Model):
             ("appels_sans_machine", "warning", "Appels sans machine", "Numéro de série à préciser", "Compléter"),
             ("reprises_ouvertes", "info", "Tickets de reprise ouverts", "Fin de location : machines à récupérer",
              "Ouvrir"),
-            ("sage_clients", "primary", "Factures clients à enregistrer dans Sage", "À cocher une fois saisies",
-             "Enregistrer"),
-            ("sage_fournisseurs", "primary", "Factures fournisseurs à enregistrer dans Sage",
-             "À cocher une fois saisies", "Enregistrer"),
         ]
         # Nouveaux tickets (etape « Nouveau ») : tout en haut, avec le dernier arrive
         model, domaine = self._domaines()["tickets_nouveaux"]
@@ -358,29 +320,15 @@ class PilotageIndicateur(models.Model):
                      "client": t.partner_id.display_name or "", "titre": t.titre or "",
                      "technicien": t.technicien_id.name or "Sans technicien"} for t in prochaines]
 
-        Lot = self.env["stock.lot"]
-        parc = [
-            {"code": "machines_chez_client", "valeur": Lot.search_count([("est_machine", "=", True),
-                                                                          ("machine_statut", "in",
-                                                                           ("chez_client", "livree", "vendue"))]),
-             "libelle": "Machines chez les clients"},
-            {"code": "livraisons_faites", "valeur": c.get("livraisons_faites", 0), "libelle": "Livraisons & ramassages faits"},
-            {"code": "entretiens_faits", "valeur": c.get("entretiens_faits", 0), "libelle": "Entretiens & réparations faits"},
-            {"code": "appels_mois", "valeur": c.get("appels_mois", 0), "libelle": "Appels reçus"},
-            {"code": "statut:entrepot", "valeur": Lot.search_count([("est_machine", "=", True),
-                                                                     ("machine_statut", "=", "entrepot")]),
-             "libelle": "Machines disponibles en entrepôt"},
-        ]
-
         prenom = (self.env.user.name or "").split()[0] if self.env.user.name else ""
         aujourdhui = format_datetime(self.env(context=dict(self.env.context, tz=fuseau)), maintenant,
                                      dt_format="EEEE d MMMM")
         return {
             "bonjour": prenom, "date": aujourdhui[:1].upper() + aujourdhui[1:], "periode": periode,
-            "kpis": kpis, "alertes": alertes, "techniciens": techniciens,
+            "blocs": blocs, "alertes": alertes, "techniciens": techniciens,
             "progression": {"total": total, "faits": faits, "retards": retards,
                             "pourcentage": round(100 * faits / total) if total else 0},
             "problemes": problemes, "max_probleme": max([p["nombre"] for p in problemes] or [1]),
             "semaines": semaines, "max_semaine": max([s["nombre"] for s in semaines] or [1]) or 1,
-            "tournees": tournees, "parc": parc, "stock": self._donnees_stock(),
+            "tournees": tournees, "stock": self._donnees_stock(),
         }

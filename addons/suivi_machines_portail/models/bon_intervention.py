@@ -119,7 +119,7 @@ class BonIntervention(models.Model):
         return True
 
     def _prevenir_bureau(self):
-        """Bon complet (client, et technicien pour un entretien / une reparation) : le responsable (Josef)
+        """Bon complet (client, et technicien pour un entretien / une reparation) : le responsable (Jose)
         est prevenu DANS Odoo, quelle que soit sa preference (courriel ou Odoo) et meme sans envoi de
         courriel (base de test neutralisee) : activite a faire sur le ticket d'origine, message dans le ticket et
         notification a l'ecran. Ni le client ni les abonnes du document ne sont prevenus."""
