@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """Choix du n° de serie d'une machine des la soumission, reserve ensuite sur la livraison."""
+import pytz
+from dateutil.relativedelta import relativedelta
 from lxml import etree
 
 from odoo import api, fields, models
@@ -141,6 +143,14 @@ class SaleOrder(models.Model):
         (dates d'enlevement / retour), sinon la page de commande, deja en location."""
         vue_location = self.env.ref("sale_renting.rental_order_primary_form_view", raise_if_not_found=False)
         contexte = {"default_type_commande": "location"}
+        # Periode proposee : aujourd'hui 9 h -> dans un an (contrat annuel), modifiable
+        debut_local = fields.Datetime.context_timestamp(self, fields.Datetime.now()).replace(
+            hour=9, minute=0, second=0, microsecond=0)
+        debut = fields.Datetime.to_string(debut_local.astimezone(pytz.utc).replace(tzinfo=None))
+        fin = fields.Datetime.to_string(fields.Datetime.to_datetime(debut) + relativedelta(years=1))
+        contexte.update(default_date_debut_location=debut, default_date_fin_location=fin)
+        if "rental_start_date" in self._fields:
+            contexte.update(default_rental_start_date=debut, default_rental_return_date=fin)
         if vue_location:
             contexte.update(in_rental_app=True, default_is_rental_order=True)
         return {"type": "ir.actions.act_window", "name": self.env._("Nouveau contrat de location"),

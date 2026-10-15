@@ -42,6 +42,9 @@ class TestPilotage(TransactionCase):
         nouveau = self.env["sale.order"].with_context(**action["context"]).create({"partner_id": self.client.id})
         self.assertEqual(nouveau.type_commande, "location")
         self.assertTrue(nouveau.name.startswith("LOC"), nouveau.name)
+        # Periode proposee : aujourd'hui -> dans un an (modifiable)
+        self.assertTrue(nouveau.date_debut_location and nouveau.date_fin_location)
+        self.assertEqual(nouveau.date_fin_location.year - nouveau.date_debut_location.year, 1)
 
     def test_menus_inventaire_et_appels(self):
         """Inventaire : Parc machines, mouvements de stock et inventaire physique ; Appels de service ouvre
