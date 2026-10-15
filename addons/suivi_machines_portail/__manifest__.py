@@ -3,7 +3,7 @@
     "name": "Suivi des machines - Portail des techniciens",
     "summary": "Les techniciens deviennent des utilisateurs portail (gratuits) : leur journée sur le portail web "
                "(livraisons, ramassages, entretiens, réparations)",
-    "version": "20.0.1.26.0",
+    "version": "20.0.1.27.0",
     "category": "Productivity",
     "author": "Volcan",
     "website": "https://volcan.ca/",

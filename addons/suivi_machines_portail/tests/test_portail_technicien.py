@@ -388,6 +388,9 @@ class TestPortailTechnicien(HttpCase):
         action = carte.action_ouvrir()
         self.assertEqual(action["res_model"], "suivi.bon.intervention")
         self.assertEqual(self.env["suivi.bon.intervention"].search_count(action["domain"]), carte.valeur)
+        # ... et dans « À traiter maintenant » de la vue d'ensemble
+        alertes = self.env["pilotage.indicateur"].donnees_tableau_moderne("jour")["alertes"]
+        self.assertIn("bons_signes_mois", [a["code"] for a in alertes])
         self.assertFalse(self.env.ref("suivi_machines_portail.menu_bons_intervention", raise_if_not_found=False))
         self.assertFalse(self.env.ref("suivi_machines_portail.menu_notes_technicien", raise_if_not_found=False))
 

@@ -91,6 +91,9 @@ class PilotageIndicateur(models.Model):
             "reparations_planifiees": ("helpdesk.ticket", [("est_entretien", "=", False),
                                                            ("statut_entretien", "=", "planifie")]),
             "reprises_ouvertes": ("helpdesk.ticket", [("type_ticket", "=", "reprise")] + ouverts),
+            # Tous les tickets pas encore resolus/annules : le meme nombre que les colonnes ouvertes de
+            # l'Assistance (vue d'ensemble « Appels ouverts »)
+            "tickets_ouverts": ("helpdesk.ticket", list(ouverts)),
             "appels_mois": ("helpdesk.ticket", appels + [
                 ("create_date", ">=", fields.Datetime.to_datetime(b["debut_mois"]))]),
             "appels_sans_machine": ("helpdesk.ticket", appels + ouverts + [("lot_id", "=", False)]),
@@ -100,6 +103,8 @@ class PilotageIndicateur(models.Model):
             # Toutes les livraisons ET tous les ramassages termines ce mois (une etiquette chacun)
             "livraisons_faites": ("stock.picking", self._fait_ce_mois(b) + [
                 ("type_tournee", "in", ("livraison", "ramassage"))]),
+            # Contrats Monroy signes en ligne par le client depuis le 1er du mois (notification verte)
+            "contrats_signes_mois": ("sale.order", [("type_contrat_id", "!=", False), ("signed_on", ">=", fields.Datetime.to_datetime(b["debut_mois"]))]),
             "bris_mois": ("machine.intervention", [("type", "=", "bris"), ("state", "!=", "annule"),
                                                    ("date", ">=", fields.Datetime.to_datetime(b["debut_mois"]))]),
             "machines_probleme": ("stock.lot", [("est_machine", "=", True),
@@ -279,14 +284,13 @@ class PilotageIndicateur(models.Model):
 
     def action_ouvrir(self):
         self.ensure_one()
+        if self.code == "contrats_signes_mois":
+            return self._action_detail(self.code)
         if self.code in ("entretien_retard", "entretien_semaine", "entretien_mois"):
             action = self._action_entretiens_et_reparations()
             if action:
                 return action
-        action = self._action_pour_code(self.code, self.name)
-        if action and self.code == "livraisons_faites":
-            action["domain"] = []   # toutes les livraisons et tous les ramassages, pas seulement les machines
-        return action
+        return self._action_pour_code(self.code, self.name)
 
     @api.model
     def action_appels_de_service(self):
@@ -344,11 +348,13 @@ class PilotageIndicateur(models.Model):
             contexte["search_default_" + filtre_nom] = 1
         # Carte regroupee sur un seul modele (ex. entretiens + reparations + machines a remplacer faits ce
         # mois) : la liste montre exactement ce que la carte compte
+        # La liste montre EXACTEMENT ce que le chiffre compte : le critere de la carte (et ses etiquettes du
+        # meme modele), sans filtre de recherche qui pourrait compter autrement ; les regroupements restent
         model, domaine = self._domaines().get(code, (None, None))
         model_parts, domaine_parts = self._parts_reparation().get(code, (None, None))
-        if model and model == model_parts == action.get("res_model"):
-            action["domain"] = list(Domain.OR([domaine, domaine_parts]))
-            contexte = {}   # liste a plat : la colonne Type distingue entretien, reparation, remplacement
+        if model and model == action.get("res_model"):
+            action["domain"] = list(Domain.OR([domaine, domaine_parts])) if model_parts == model else domaine
+            contexte = {cle: val for cle, val in contexte.items() if cle.startswith("search_default_grp")}
         action["context"] = contexte
         if nom:
             action["display_name"] = action["name"] = nom

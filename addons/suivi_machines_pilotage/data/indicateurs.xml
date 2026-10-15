@@ -48,6 +48,14 @@
         <field name="couleur">warning</field>
         <field name="description">Fin de location à venir</field>
     </record>
+    <record id="indicateur_contrats_signes_mois" model="pilotage.indicateur">
+        <field name="code">contrats_signes_mois</field>
+        <field name="name">Contrats signés ce mois</field>
+        <field name="section">locations</field>
+        <field name="sequence">0</field>
+        <field name="couleur">success</field>
+        <field name="description">Signés en ligne par le client : rangés dans son dossier</field>
+    </record>
     <record id="indicateur_locations_depassees" model="pilotage.indicateur">
         <field name="code">locations_depassees</field>
         <field name="name">Locations dépassées</field>

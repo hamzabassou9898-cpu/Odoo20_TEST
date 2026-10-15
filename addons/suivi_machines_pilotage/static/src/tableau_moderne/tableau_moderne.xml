@@ -126,6 +126,15 @@
                             <div class="o_pm_bar"><i t-attf-class="o_pm_{{ x.couleur }}" t-att-style="'width:' + this.largeur(x.nombre, d.stock.max_statut)"/></div>
                             <span class="o_pm_num" t-out="x.nombre"/>
                         </div>
+                        <h4 class="mt-3">Produits par catégorie
+                            <a class="o_pm_more" t-if="d.stock.rupture" t-on-click="() => this.ouvrir('rupture')"><t t-out="d.stock.rupture"/> en rupture →</a>
+                            <a class="o_pm_more" t-else="" t-on-click="() => this.ouvrirAction('suivi_machines_pilotage.action_pilotage_produits_categorie')">Tout voir →</a></h4>
+                        <div t-if="!d.stock.categories.length" class="o_pm_vide">Aucun stock.</div>
+                        <div t-foreach="d.stock.categories" t-as="x" t-key="x.code" class="o_pm_hb o_pm_survol" t-on-click="() => this.ouvrir(x.code)" t-att-title="'Voir les produits : ' + x.nom">
+                            <span class="o_pm_lab" t-out="x.nom"/>
+                            <div class="o_pm_bar"><i class="o_pm_violet" t-att-style="'width:' + this.largeur(x.nombre, d.stock.max_categorie)"/></div>
+                            <span class="o_pm_num" t-out="x.nombre"/>
+                        </div>
                     </div>
                     <div>
                         <h4>Disponibles en entrepôt <small>par modèle</small></h4>

@@ -26,12 +26,33 @@ export class TableauModerne extends Component {
         }
         this.state.periode = periode;
         try {
-            this.state.donnees = await this.orm.call("pilotage.indicateur", "donnees_tableau_moderne", [periode]);
+            const donnees = await this.orm.call("pilotage.indicateur", "donnees_tableau_moderne", [periode]);
+            this.state.donnees = this.completer(donnees);
             const maintenant = new Date();
             this.state.majA = maintenant.toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" });
         } finally {
             this.state.chargement = false;
         }
+    }
+
+    /** Listes manquantes (serveur pas encore a jour pendant une mise a jour) : vides, jamais d'erreur. */
+    completer(d) {
+        d = d || {};
+        const listes = ["alertes", "techniciens", "problemes", "semaines", "tournees"];
+        for (const cle of listes) {
+            d[cle] = d[cle] || [];
+        }
+        d.blocs = Object.assign({ appels: [], locations: [], facturation: [], inventaire: [] }, d.blocs || {});
+        d.progression = d.progression || { total: 0, faits: 0, retards: 0, pourcentage: 0 };
+        if (d.stock) {
+            for (const cle of ["statuts", "disponibles", "categories", "mouvements"]) {
+                d.stock[cle] = d.stock[cle] || [];
+            }
+        }
+        if (!d.semaines.length) {
+            d.semaines = [{ libelle: "", code: "", nombre: 0 }];
+        }
+        return d;
     }
 
     async ouvrir(code) {

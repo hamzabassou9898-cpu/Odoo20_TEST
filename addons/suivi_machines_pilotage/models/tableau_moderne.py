@@ -5,6 +5,7 @@ from datetime import datetime, time, timedelta
 import pytz
 
 from odoo import api, fields, models
+from odoo.fields import Domain
 from odoo.tools.misc import format_datetime
 
 TYPES_COULEUR = {"livraison": "success", "ramassage": "warning", "entretien": "info",
@@ -61,10 +62,19 @@ class PilotageIndicateur(models.Model):
     @api.model
     def _action_detail(self, code):
         """Clics de la vue d'ensemble qui ne correspondent pas a une carte."""
+        if code == "tickets_ouverts":
+            return self._action_xml("suivi_machines_pilotage.action_pilotage_appels", self.env._("Appels ouverts"),
+                                    {}, self._domaines()[code][1])
+        if code == "contrats_signes_mois":
+            return {"type": "ir.actions.act_window", "name": self.env._("Contrats signés ce mois"),
+                    "res_model": "sale.order", "views": [(False, "list"), (False, "form")],
+                    "domain": self._domaines()[code][1], "context": {"create": False}}
         if code == "tournees_a_faire":
+            domaines = self._domaines()
             return self._action_xml("suivi_machines_pilotage.action_pilotage_transferts",
-                                    self.env._("Livraisons & ramassages à faire"),
-                                    {"search_default_livraisons_a_faire": 1, "search_default_ramassages_a_faire": 1})
+                                    self.env._("Livraisons & ramassages à faire"), {},
+                                    list(Domain.OR([domaines["livraisons_a_faire"][1],
+                                                    domaines["ramassages_a_faire"][1]])))
         if code == "machines_chez_client":
             return self._action_xml("suivi_machines.action_machines", self.env._("Machines chez les clients"), {},
                                     [("est_machine", "=", True),
@@ -218,11 +228,13 @@ class PilotageIndicateur(models.Model):
         retard = c.get("entretien_retard", 0)
         blocs = {
             "appels": [
-                tuile("appels_ouverts", self.env._("Appels ouverts"),
-                      pastille="%+d vs sem. dern." % ecart if ecart else "", couleur="danger" if ecart > 0 else "success"),
+                tuile("tickets_ouverts", self.env._("Appels ouverts"),
+                      pastille=self.env._("%s sans technicien", c.get("appels_ouverts")) if c.get("appels_ouverts") else "",
+                      couleur="warning"),
                 tuile("entretiens_ouverts", self.env._("Entretiens & réparations à faire"),
                       pastille=self.env._("%s en retard", retard) if retard else "", couleur="danger"),
-                tuile("appels_mois", self.env._("Appels reçus ce mois")),
+                tuile("appels_mois", self.env._("Appels reçus ce mois"),
+                      pastille="%+d vs sem. dern." % ecart if ecart else "", couleur="danger" if ecart > 0 else "success"),
             ],
             "locations": [
                 tuile("locations_actives", self.env._("Locations en cours")),
@@ -260,6 +272,10 @@ class PilotageIndicateur(models.Model):
             ("appels_sans_machine", "warning", "Appels sans machine", "Numéro de série à préciser", "Compléter"),
             ("reprises_ouvertes", "info", "Tickets de reprise ouverts", "Fin de location : machines à récupérer",
              "Ouvrir"),
+            ("contrats_signes_mois", "success", "Contrats signés ce mois",
+             "Signés en ligne par le client : rangés dans son dossier", "Voir"),
+            ("bons_signes_mois", "success", "Bons d'intervention signés ce mois",
+             "Signés par le client et le technicien sur le téléphone", "Voir"),
         ]
         # Nouveaux tickets (etape « Nouveau ») : tout en haut, avec le dernier arrive
         model, domaine = self._domaines()["tickets_nouveaux"]

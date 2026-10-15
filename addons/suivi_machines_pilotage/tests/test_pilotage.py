@@ -121,8 +121,10 @@ class TestPilotage(TransactionCase):
         self.assertIn(ramassage, Picking.search(self.env["pilotage.indicateur"]._parts_transferts_faits()["ramassage"]))
         self.assertIn("search_default_ramassees_mois", ind.action_ouvrir_ramassees()["context"])
         self.assertIn("search_default_livrees_mois", ind.action_ouvrir_livrees()["context"])
-        contexte = ind.action_ouvrir()["context"]
-        self.assertTrue(contexte.get("search_default_livrees_mois") and contexte.get("search_default_ramassees_mois"))
+        action = ind.action_ouvrir()
+        ind.invalidate_recordset()
+        self.assertEqual(Picking.search_count(action["domain"]), ind.valeur, "la liste = le chiffre de la carte")
+        self.assertTrue((livraison | ramassage) <= Picking.search(action["domain"]))
         arch = self.env["pilotage.indicateur"].get_views([(False, "kanban")])["views"]["kanban"]["arch"]
         self.assertIn("action_ouvrir_ramassees", arch)
         # Les filtres existent dans la recherche des transferts
@@ -133,7 +135,6 @@ class TestPilotage(TransactionCase):
             [(self.env.ref("suivi_machines_pilotage.view_pilotage_transfert_list").id, "list")])
         self.assertIn('name="type_tournee"', liste["views"]["list"]["arch"], "étiquette Livraison / Ramassage")
         # Toutes les livraisons, pas seulement les machines : un accessoire livre compte aussi
-        self.assertEqual(ind.action_ouvrir()["domain"], [])
         self.assertEqual(ind.action_ouvrir_livrees()["domain"], [])
         accessoire = self.env["product.product"].create({"name": "Pompe livrée", "is_storable": True})
         self.env["stock.quant"]._update_available_quantity(accessoire, stock, 5)
@@ -193,8 +194,10 @@ class TestPilotage(TransactionCase):
         tache = self.env["portail.tache"].search([("ticket_id", "=", entretien.id)])
         self.assertEqual((tache.technicien_id, tache.type_tache), (tech, "entretien"), "dans sa journée")
         # Clic sur la carte : la liste s'ouvre filtree sur le type + ouverts
-        action = self._ind("reprises_ouvertes").action_ouvrir()
-        self.assertEqual(action["context"], {"search_default_type_reprise": 1, "search_default_ouverts": 1})
+        carte = self._ind("reprises_ouvertes")
+        action = carte.action_ouvrir()
+        self.assertEqual(action["domain"], self.env["pilotage.indicateur"]._domaines()["reprises_ouvertes"][1],
+                         "le critère de la carte")
         # La liste « Appels de service » montre tous les types, regroupes par type
         liste = self.env["ir.actions.act_window"]._for_xml_id("suivi_machines_pilotage.action_pilotage_appels")
         self.assertFalse(liste.get("domain"))
@@ -265,8 +268,8 @@ class TestPilotage(TransactionCase):
                          [("Entretien", 0), ("Réparation", 0), ("Machine à remplacer", 0)], "toujours les 3 types")
         self.assertIn(entretien, self.env[model].search(domaine))
         action = ind.action_ouvrir()
-        self.assertEqual(action["context"], {"search_default_planifies_a_faire": 1,
-                                             "search_default_grp_type_demande": 1})
+        self.assertEqual(action["context"], {"search_default_grp_type_demande": 1}, "regroupé par type")
+        self.assertEqual(self.env[model].search_count(action["domain"]), ind.valeur, "la liste = le chiffre")
         self.assertNotIn("help", action)
         arch = self.env["pilotage.indicateur"].get_views([(False, "kanban")])["views"]["kanban"]["arch"]
         self.assertIn("repartition", arch)
@@ -486,8 +489,12 @@ class TestPilotage(TransactionCase):
                 self.assertIn(cle, d)
         d = Ind.donnees_tableau_moderne("jour")
         tuiles = {k["code"]: k for bloc in d["blocs"].values() for k in bloc}
-        self.assertEqual(tuiles["appels_ouverts"]["valeur"], Ind._compte("appels_ouverts"))
-        self.assertGreaterEqual(tuiles["appels_ouverts"]["valeur"], 1)
+        # « Appels ouverts » : tous les tickets pas résolus (comme les colonnes de l'Assistance)
+        self.assertEqual(tuiles["tickets_ouverts"]["valeur"], Ind._compte("tickets_ouverts"))
+        self.assertGreaterEqual(tuiles["tickets_ouverts"]["valeur"], Ind._compte("appels_ouverts"))
+        self.assertGreaterEqual(tuiles["tickets_ouverts"]["valeur"], 1)
+        action = Ind.action_par_code("tickets_ouverts")
+        self.assertEqual(self.env["helpdesk.ticket"].search_count(action["domain"]), tuiles["tickets_ouverts"]["valeur"])
         self.assertEqual(tuiles["a_facturer"]["libelle"], "Appels à facturer")
         self.assertNotIn("sage_clients", [a["code"] for a in d["alertes"]], "Sage : dans le bloc Facturation")
         self.assertTrue(all(a["nombre"] > 0 for a in d["alertes"]), "seulement ce qui est à traiter")
@@ -515,18 +522,59 @@ class TestPilotage(TransactionCase):
             domaine = action.get("domain") or []
             self.env[action["res_model"]].search_count(eval(domaine) if isinstance(domaine, str) else domaine)
         # Le chiffre « Livraisons & ramassages » ouvre les deux (pas seulement les livraisons)
-        self.assertEqual(Ind.action_par_code("tournees_a_faire")["context"],
-                         {"search_default_livraisons_a_faire": 1, "search_default_ramassages_a_faire": 1})
+        tournees = Ind.action_par_code("tournees_a_faire")
+        self.assertEqual(self.env["stock.picking"].search_count(tournees["domain"]),
+                         Ind._compte("livraisons_a_faire") + Ind._compte("ramassages_a_faire"))
         bruit = Ind.action_par_code("probleme:Fait du bruit")
         self.assertEqual(self.env["helpdesk.ticket"].search_count(bruit["domain"]), 1)
         self.assertFalse(Ind.action_par_code("code_inconnu"))
         # Plus de tuiles « Ventes du mois » ni « Nos contacts » (aucun menu ne leur correspond)
         self.assertFalse(Ind.action_par_code("ventes_mois"))
+        # Contrat signé en ligne ce mois : notification verte dans « À traiter maintenant »
+        contrat = self.env["sale.order"].create({
+            "partner_id": self.client.id, "type_contrat_id": self.env.ref("suivi_machines.type_contrat_location").id})
+        contrat.write({"signature": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==", "signed_by": "Client", "signed_on": fields.Datetime.now()})
+        alertes = {a["code"]: a for a in Ind.donnees_tableau_moderne("jour")["alertes"]}
+        self.assertEqual(alertes["contrats_signes_mois"]["niveau"], "success")
+        action = Ind.action_par_code("contrats_signes_mois")
+        self.assertIn(contrat, self.env["sale.order"].search(action["domain"]))
+        carte = self.env.ref("suivi_machines_pilotage.indicateur_contrats_signes_mois")
+        carte.invalidate_recordset()
+        self.assertGreaterEqual(carte.valeur, 1, "aussi dans Toutes les cartes")
+        self.assertIn(contrat, self.env["sale.order"].search(carte.action_ouvrir()["domain"]))
         # Les deux vues dans le menu Tableau de bord
         racine = self.env.ref("suivi_machines_pilotage.menu_pilotage_tableau_racine")
         self.assertEqual([m.action for m in racine.child_id.sorted("sequence")], [
             self.env.ref("suivi_machines_pilotage.action_pilotage_vue_ensemble"),
             self.env.ref("suivi_machines_pilotage.action_pilotage_tableau_bord")])
+
+    def test_chaque_chiffre_egal_a_sa_liste(self):
+        """Vue d'ensemble : chaque chiffre (tuiles et « À traiter maintenant ») est égal au nombre de lignes
+        de la liste qu'il ouvre."""
+        Ind = self.env["pilotage.indicateur"]
+        nouveau = self.env["helpdesk.stage"].create({"name": "Nouveau"})
+        tech = self.env["res.users"].create({"name": "Tech chiffres", "login": "tech_chiffres"})
+        self.env["helpdesk.ticket"].create([
+            {"name": "Ouvert sans tech", "code_client": "PIL1", "stage_id": nouveau.id},
+            {"name": "Ouvert avec tech", "code_client": "PIL1", "stage_id": nouveau.id, "user_id": tech.id,
+             "type_demande": "reparation", "date_planifiee": fields.Datetime.now()}])
+        d = Ind.donnees_tableau_moderne("jour")
+        chiffres = [(k["code"], k["valeur"]) for bloc in d["blocs"].values() for k in bloc]
+        chiffres += [(a["code"], a["nombre"]) for a in d["alertes"]]
+        verifies = 0
+        for code, valeur in chiffres:
+            action = Ind.action_par_code(code)
+            self.assertTrue(action, code)
+            contexte = action.get("context") or {}
+            if isinstance(contexte, str) or any(k.startswith("search_default_") and k != "search_default_grp_type_demande"
+                                                for k in contexte):
+                continue   # liste filtree par un filtre de recherche (verifie par d'autres tests)
+            domaine = action.get("domain") or []
+            if isinstance(domaine, str):
+                continue
+            self.assertEqual(self.env[action["res_model"]].search_count(domaine), valeur, code)
+            verifies += 1
+        self.assertGreaterEqual(verifies, 8)
 
     def test_nouveau_ticket_dans_a_traiter(self):
         Ind = self.env["pilotage.indicateur"]
@@ -542,7 +590,8 @@ class TestPilotage(TransactionCase):
         self.assertIn("La vis ne tourne pas", alerte["detail"])
         self.assertIn("Client pilotage", alerte["detail"])
         action = Ind.action_par_code("tickets_nouveaux")
-        self.assertEqual(action["context"], {"search_default_nouveaux": 1})
+        self.assertIn(ticket, self.env["helpdesk.ticket"].search(action["domain"]))
+        self.assertEqual(self.env["helpdesk.ticket"].search_count(action["domain"]), avant + 1)
         # Pris en charge (etape suivante) : il quitte la liste
         ticket.stage_id = en_cours
         self.assertEqual(Ind._compte("tickets_nouveaux"), avant)

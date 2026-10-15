@@ -162,7 +162,7 @@ class PilotageIndicateur(models.Model):
     def action_ouvrir(self):
         if self.code == "notes_a_lire":
             action = self.env["ir.actions.act_window"]._for_xml_id("suivi_machines_portail.action_notes_technicien")
-            action["context"] = {"search_default_a_lire": 1}
+            action.update(context={}, domain=self._domaines()["notes_a_lire"][1])   # = le chiffre de la carte
             return action
         if self.code == "bons_signes_mois":
             action = self.env["ir.actions.act_window"]._for_xml_id("suivi_machines_portail.action_bons_intervention")
