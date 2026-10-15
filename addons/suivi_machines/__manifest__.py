@@ -3,7 +3,7 @@
     "name": "Suivi des machines",
     "summary": "Dossier de chaque machine (numéro de série) : interventions, "
                "historique, santé et tableau de bord",
-    "version": "20.0.1.43.0",
+    "version": "20.0.1.44.0",
     "category": "Inventory/Inventory",
     "author": "Volcan",
     "website": "https://volcan.ca/",
@@ -14,6 +14,7 @@
         "data/ir_sequence.xml",
         "data/produits_frais.xml",
         "data/types_contrat.xml",
+        "data/mail_template_contrat.xml",
         "views/machine_intervention_views.xml",
         "views/machine_historique_views.xml",
         "views/stock_lot_views.xml",

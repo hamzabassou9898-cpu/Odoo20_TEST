@@ -368,6 +368,17 @@ class SaleOrder(models.Model):
             self._archiver_pdf_client()
         return res
 
+    def _find_mail_template(self):
+        """« Envoyer » un contrat de location pas encore signe : courriel Monroy en francais avec le bouton
+        « Lire et signer mon contrat » (le lien securise du client)."""
+        self.ensure_one()
+        if (self.state in ("draft", "sent") and not self.env.context.get("proforma")
+                and (self.type_commande == "location" or self.type_contrat_id)):
+            modele = self.env.ref("suivi_machines.mail_template_contrat_location", raise_if_not_found=False)
+            if modele:
+                return modele
+        return super()._find_mail_template()
+
     def action_confirm(self):
         res = super().action_confirm()
         self.filtered(lambda o: o.state == "sale")._archiver_pdf_client()

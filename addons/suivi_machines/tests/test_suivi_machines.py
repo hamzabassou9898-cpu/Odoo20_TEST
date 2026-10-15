@@ -809,6 +809,25 @@ class TestSuiviMachines(TransactionCase):
         arch = etree.tostring(self.env.ref("sale.sale_order_portal_content")._get_combined_arch(), encoding="unicode")
         self.assertIn("contrat_monroy", arch)
 
+    def test_courriel_contrat_a_signer(self):
+        """« Envoyer » un contrat de location : courriel Monroy en français avec le lien sécurisé du client
+        dans le texte ; une vente garde le courriel standard."""
+        modele = self.env.ref("suivi_machines.mail_template_contrat_location")
+        so = self.env["sale.order"].create({
+            "partner_id": self.client.id, "type_commande": "location",
+            "date_debut_location": PERIODE_TEST[0], "date_fin_location": PERIODE_TEST[1],
+            "order_line": [(0, 0, {"product_id": self.produit.id, "product_uom_qty": 1})]})
+        self.assertEqual(so._find_mail_template(), modele)
+        corps = modele._render_field("body_html", so.ids)[so.id]
+        self.assertIn("Lire et signer mon contrat", corps)
+        self.assertIn(so.get_portal_url(), corps, "lien sécurisé du client (avec son jeton)")
+        self.assertIn("access_token=", corps)
+        self.assertIn(so.name, modele._render_field("subject", so.ids)[so.id])
+        vente = self.env["sale.order"].create({"partner_id": self.client.id, "type_commande": "vente"})
+        self.assertNotEqual(vente._find_mail_template(), modele)
+        so.state = "sale"
+        self.assertNotEqual(so._find_mail_template(), modele, "contrat signé : courriel de confirmation")
+
 
 @tagged("post_install", "-at_install")
 class TestContratEnLigne(HttpCase):
@@ -899,3 +918,4 @@ class TestContratEnLigne(HttpCase):
             self.assertTrue(document.name.endswith("signé.pdf"))
             if "owner_id" in document._fields:
                 self.assertFalse(document.owner_id.share, "propriétaire interne : visible par le bureau")
+
