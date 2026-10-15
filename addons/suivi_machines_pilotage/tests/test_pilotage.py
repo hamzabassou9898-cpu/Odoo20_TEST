@@ -675,30 +675,6 @@ class TestPortailLivreurs(TransactionCase):
 
 
 
-@tagged("post_install", "-at_install")
-class TestDonneesTest(TransactionCase):
-
-    def test_generer_et_supprimer(self):
-        env = self.env(context=dict(self.env.context, tracking_disable=True))
-        client = env["res.partner"].create({"name": "Client test", "street": "1 rue", "city": "Québec"})
-        categ = env["product.category"].create({"name": "Mach test", "suivi_machine": True})
-        prod = env["product.product"].create({"name": "F test", "categ_id": categ.id, "is_storable": True,
-                                              "tracking": "serial"})
-        env["sale.order"].create({"partner_id": client.id})
-        env["stock.lot"].create({"name": "TST-1", "product_id": prod.id})
-        wiz = env["pilotage.donnees.test"].create({"nb_entretiens": 3, "nb_reparations": 4})
-        wiz.action_generer()
-        test = env.ref("suivi_machines_pilotage.tag_donnees_test")
-        tickets = env["helpdesk.ticket"].search([("tag_ids", "in", test.ids)])
-        self.assertEqual(len(tickets), 7)
-        self.assertEqual(len(tickets.filtered("est_entretien")), 3)
-        self.assertTrue(all(tickets.mapped("date_planifiee")))
-        self.assertTrue(all(env["portail.tache"].search([("ticket_id", "in", tickets.ids)]).mapped("technicien_id")))
-        self.assertEqual(len(env["portail.tache"].search([("ticket_id", "in", tickets.ids)])), 7)
-        env["pilotage.donnees.test"].create({}).action_supprimer()
-        self.assertFalse(env["helpdesk.ticket"].search([("tag_ids", "in", test.ids)]))
-
-
 class TestTableauStock(TransactionCase):
     """Vue d'ensemble : la partie Stock & inventaire."""
 

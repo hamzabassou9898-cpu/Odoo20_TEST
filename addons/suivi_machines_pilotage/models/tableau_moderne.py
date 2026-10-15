@@ -334,7 +334,7 @@ class PilotageIndicateur(models.Model):
         tickets_30j = Ticket.search(appels + [("create_date", ">=", maintenant - timedelta(days=30))])
         par_tag = {}
         for ticket in tickets_30j:
-            for tag in ticket.tag_ids.filtered(lambda t: (t.name or "").upper() != "TEST"):
+            for tag in ticket.tag_ids:
                 par_tag[tag.name] = par_tag.get(tag.name, 0) + 1
         problemes = [{"nom": nom, "nombre": n, "code": "probleme:%s" % nom}
                      for nom, n in sorted(par_tag.items(), key=lambda x: -x[1])[:5]]
