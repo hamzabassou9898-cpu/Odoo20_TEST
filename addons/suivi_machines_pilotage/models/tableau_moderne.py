@@ -75,6 +75,9 @@ class PilotageIndicateur(models.Model):
                                     self.env._("Livraisons & ramassages à faire"), {},
                                     list(Domain.OR([domaines["livraisons_a_faire"][1],
                                                     domaines["ramassages_a_faire"][1]])))
+        if code == "produits_categorie":
+            return self._action_xml("suivi_machines_pilotage.action_pilotage_produits_categorie",
+                                    self.env._("Produits par catégorie"), {"search_default_group_by_categ_id": 1}, [])
         if code == "machines_chez_client":
             return self._action_xml("suivi_machines.action_machines", self.env._("Machines chez les clients"), {},
                                     [("est_machine", "=", True),
@@ -220,6 +223,8 @@ class PilotageIndicateur(models.Model):
                                          ("machine_statut", "in", ("chez_client", "livree", "vendue"))])
         en_entrepot = Lot.search_count([("est_machine", "=", True), ("machine_statut", "=", "entrepot")])
 
+        rupture = len(self._produits_en_rupture())
+
         def tuile(code, libelle, valeur=None, pastille="", couleur="secondary", alerte=False):
             return {"code": code, "libelle": libelle, "valeur": c.get(code, 0) if valeur is None else valeur,
                     "pastille": pastille, "pastille_couleur": couleur, "alerte": alerte}
@@ -254,6 +259,9 @@ class PilotageIndicateur(models.Model):
                 tuile("tournees_a_faire", self.env._("Livraisons & ramassages à faire"),
                       c.get("livraisons_a_faire", 0) + c.get("ramassages_a_faire", 0)),
                 tuile("livraisons_faites", self.env._("Livraisons & ramassages faits ce mois")),
+                tuile("produits_categorie", self.env._("Produits par catégorie"),
+                      self.env["product.template"].search_count([]),
+                      pastille=self.env._("%s en rupture", rupture) if rupture else "", couleur="danger"),
             ],
         }
 

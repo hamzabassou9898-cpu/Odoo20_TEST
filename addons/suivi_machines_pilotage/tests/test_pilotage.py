@@ -521,6 +521,12 @@ class TestPilotage(TransactionCase):
             self.assertNotIn("help", action, code)
             domaine = action.get("domain") or []
             self.env[action["res_model"]].search_count(eval(domaine) if isinstance(domaine, str) else domaine)
+        # « Produits par catégorie » : aussi en tuile du bloc Inventaire, chiffre = liste groupée par catégorie
+        produits = Ind.action_par_code("produits_categorie")
+        self.assertEqual(produits["res_model"], "product.template")
+        self.assertIn("search_default_group_by_categ_id", produits["context"])
+        self.assertEqual(self.env["product.template"].search_count(produits["domain"]),
+                         {k["code"]: k for k in d["blocs"]["inventaire"]}["produits_categorie"]["valeur"])
         # Le chiffre « Livraisons & ramassages » ouvre les deux (pas seulement les livraisons)
         tournees = Ind.action_par_code("tournees_a_faire")
         self.assertEqual(self.env["stock.picking"].search_count(tournees["domain"]),
