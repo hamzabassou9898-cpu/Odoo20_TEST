@@ -49,11 +49,16 @@ class SaleOrder(models.Model):
                     "widget": "daterange", "options": "{'end_date_field': 'rental_return_date'}",
                     "invisible": "type_commande != 'location'"})
                 retour = etree.Element("field", {"name": "rental_return_date", "invisible": "1"})
-                if not arch.xpath("//field[@name='rental_start_date']"):   # pas deja dans la vue Location
-                    # A droite, sous « Expiration », comme dans l'application Location
-                    ancre = arch.xpath("//field[@name='validity_date']") or debut
-                    ancre[0].addnext(retour)
-                    ancre[0].addnext(periode)
+                # La periode deja dans la vue (application Location) n'est visible que pour ses propres
+                # commandes : on la remplace par la notre, visible pour tout contrat de location
+                for node in arch.xpath("//field[@name='rental_start_date' or @name='rental_return_date'] | "
+                                       "//label[@for='rental_start_date' or @for='rental_return_date']"):
+                    node.set("invisible", "1")
+                    node.attrib.pop("required", None)
+                # A droite, sous « Expiration », comme dans l'application Location
+                ancre = arch.xpath("//field[@name='validity_date']") or debut
+                ancre[0].addnext(retour)
+                ancre[0].addnext(periode)
                 for node in arch.xpath("//field[@name='date_debut_location' or @name='date_fin_location']"):
                     node.set("invisible", "1")
             for node in arch.xpath("//field[@name='rental_start_date' or @name='rental_return_date' "
