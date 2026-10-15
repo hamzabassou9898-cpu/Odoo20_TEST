@@ -61,6 +61,17 @@ class TestPilotage(TransactionCase):
         self.assertEqual(pret["context"], {"default_team_id": equipe.id})
         self.assertEqual(pret["domain"], [("team_id", "=", equipe.id)])
 
+    def test_barre_de_menus(self):
+        """Barre du Pilotage : Contacts avant Appels de service ; Ventes puis CRM avant Locations (vues natives)."""
+        racine = self.env.ref("suivi_machines_pilotage.menu_pilotage_root")
+        noms = racine.child_id.sorted("sequence").mapped("name")
+        self.assertEqual(noms, ["Tableau de bord", "Contacts", "Appels de service", "Portail techniciens", "Planning",
+                                "Ventes", "CRM", "Locations", "Facturation", "Inventaire"])
+        for xmlid, action in (("menu_pilotage_contacts", "contacts.action_contacts"),
+                              ("menu_pilotage_ventes", "sale.action_quotations_with_onboarding"),
+                              ("menu_pilotage_crm", "crm.crm_lead_action_pipeline")):
+            self.assertEqual(self.env.ref("suivi_machines_pilotage." + xmlid).action, self.env.ref(action), xmlid)
+
     def test_planning_ouvre_le_ticket(self):
         """Planning : une tache d'intervention ouvre le ticket de la machine (jamais l'intervention quand un
         ticket existe)."""

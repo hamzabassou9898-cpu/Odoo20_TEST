@@ -2,12 +2,12 @@
 {
     "name": "Suivi des machines - Pilotage",
     "summary": "Tableau de bord du suivi des machines : entretiens, locations, reprises, bris, facturation",
-    "version": "20.0.1.50.0",
+    "version": "20.0.1.51.0",
     "category": "Productivity",
     "author": "Volcan",
     "website": "https://volcan.ca/",
     "license": "LGPL-3",
-    "depends": ["suivi_machines_helpdesk", "suivi_sage"],
+    "depends": ["suivi_machines_helpdesk", "suivi_sage", "contacts", "crm"],
     "data": [
         "security/groups.xml",
         "security/ir.access.csv",

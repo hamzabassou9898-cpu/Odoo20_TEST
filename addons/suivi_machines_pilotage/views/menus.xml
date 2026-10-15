@@ -10,6 +10,14 @@
     <menuitem id="menu_pilotage_tableau" name="Toutes les cartes" parent="menu_pilotage_tableau_racine"
               action="action_pilotage_tableau_bord" sequence="2"/>
 
+    <!-- Contacts, Ventes et CRM : les vues natives d'Odoo, telles quelles -->
+    <menuitem id="menu_pilotage_contacts" name="Contacts" parent="menu_pilotage_root"
+              action="contacts.action_contacts" sequence="3"/>
+    <menuitem id="menu_pilotage_ventes" name="Ventes" parent="menu_pilotage_root"
+              action="sale.action_quotations_with_onboarding" sequence="16"/>
+    <menuitem id="menu_pilotage_crm" name="CRM" parent="menu_pilotage_root"
+              action="crm.crm_lead_action_pipeline" sequence="18"/>
+
     <!-- Appels de service : la vue complete de l'Assistance (colonnes par etape) -->
     <record id="action_pilotage_appels_assistance" model="ir.actions.server">
         <field name="name">Appels de service</field>
