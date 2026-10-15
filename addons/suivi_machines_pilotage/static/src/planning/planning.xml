@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
-    <div t-name="suivi_machines_pilotage.PlanningSemaine" t-attf-class="o_action o_pilotage_planning {{ this.state.chargement ? 'o_pp_charge' : '' }}">
+    <div t-name="suivi_machines_pilotage.PlanningSemaine" t-translation="off" t-attf-class="o_action o_pilotage_planning {{ this.state.chargement ? 'o_pp_charge' : '' }}">
         <t t-set="d" t-value="this.state.donnees"/>
         <div class="o_content o_pp_defile">
         <div class="o_pp_wrap" t-if="d">

@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
-    <div t-name="suivi_machines_pilotage.TableauModerne" t-attf-class="o_action o_pilotage_moderne {{ this.state.chargement ? 'o_pm_charge' : '' }}">
+    <!-- t-translation="off" : textes deja en francais ; sinon Odoo prend « Locations », « Planning »...
+         pour de l'anglais et les traduit (« Lieux », « Planification ») -->
+    <div t-name="suivi_machines_pilotage.TableauModerne" t-translation="off" t-attf-class="o_action o_pilotage_moderne {{ this.state.chargement ? 'o_pm_charge' : '' }}">
         <t t-set="d" t-value="this.state.donnees"/>
         <div class="o_content o_pm_defile">
         <div class="o_pm_wrap" t-if="d">
@@ -166,7 +168,7 @@
     </div>
     <!-- Tuiles d'un bloc : chiffre, libelle, pastille ; un clic ouvre la liste -->
     <t t-name="suivi_machines_pilotage.TableauModerneTuiles">
-        <div class="o_pm_tuiles">
+        <div class="o_pm_tuiles" t-translation="off">
             <div t-foreach="tuiles" t-as="k" t-key="k.code" class="o_pm_tuile o_pm_clic" t-on-click="() => this.ouvrir(k.code)">
                 <div t-attf-class="o_pm_v {{ k.alerte ? 'text-danger' : '' }}" t-out="k.valeur"/>
                 <div class="o_pm_l" t-out="k.libelle"/>
