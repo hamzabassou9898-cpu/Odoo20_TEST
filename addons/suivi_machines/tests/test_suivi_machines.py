@@ -809,6 +809,22 @@ class TestSuiviMachines(TransactionCase):
         arch = etree.tostring(self.env.ref("sale.sale_order_portal_content")._get_combined_arch(), encoding="unicode")
         self.assertIn("contrat_monroy", arch)
 
+    def test_dates_de_location_toujours_visibles(self):
+        """Nouveau contrat de location : début et fin toujours à l'écran (même avec l'application Location),
+        et la date saisie est gardée à l'enregistrement."""
+        arch = self.env["sale.order"].get_views([(False, "form")])["views"]["form"]["arch"]
+        self.assertIn('name="date_debut_location"', arch)
+        self.assertNotIn("date_fin_auto\"", arch.split('name="date_debut_location"')[1].split("/>")[0])
+        vals = self.env["sale.order"]._dates_vers_location({"date_debut_location": PERIODE_TEST[0]})
+        if "rental_start_date" in self.env["sale.order"]._fields:
+            self.assertEqual(vals["rental_start_date"], PERIODE_TEST[0])
+        so = self.env["sale.order"].create({"partner_id": self.client.id, "type_commande": "location",
+                                            "date_debut_location": PERIODE_TEST[0],
+                                            "date_fin_location": PERIODE_TEST[1]})
+        so.write({"date_fin_location": PERIODE_TEST[1] + relativedelta(months=1)})
+        self.assertEqual(so.date_debut_location, PERIODE_TEST[0])
+        self.assertEqual(so.date_fin_location, PERIODE_TEST[1] + relativedelta(months=1))
+
     def test_courriel_contrat_a_signer(self):
         """« Envoyer » un contrat de location : courriel Monroy en français avec le lien sécurisé du client
         dans le texte ; une vente garde le courriel standard."""

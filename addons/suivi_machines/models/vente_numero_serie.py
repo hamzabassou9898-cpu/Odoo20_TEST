@@ -131,10 +131,22 @@ class SaleOrder(models.Model):
             return ctx["default_type_commande"]
         return "location" if ctx.get("in_rental_app") or ctx.get("default_is_rental_order") else "vente"
 
+    # Application Location (Enterprise) : nos dates de debut / fin sont aussi ses dates d'enlevement / retour
+    DATES_LOCATION = {"date_debut_location": "rental_start_date", "date_fin_location": "rental_return_date"}
+
+    def _dates_vers_location(self, vals):
+        """Date saisie dans « Début / Fin de la location » : recopiee dans la date de l'application Location
+        (sinon, a l'enregistrement, la date de l'application Location remplacerait celle saisie)."""
+        for notre, location in self.DATES_LOCATION.items():
+            if notre in vals and location in self._fields and location not in vals:
+                vals[location] = vals[notre]
+        return vals
+
     @api.model_create_multi
     def create(self, vals_list):
         nouveau = self.env._("New")
         for vals in vals_list:
+            self._dates_vers_location(vals)
             if vals.get("is_rental_order"):
                 vals["type_commande"] = "location"
             location = (vals.get("type_commande") or self._default_type_commande()) == "location"
@@ -177,6 +189,7 @@ class SaleOrder(models.Model):
                 order.name = numero
 
     def write(self, vals):
+        vals = self._dates_vers_location(dict(vals))
         if vals.get("is_rental_order"):
             vals = dict(vals, type_commande="location")
         res = super().write(vals)
