@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """Choix du n° de serie d'une machine des la soumission, reserve ensuite sur la livraison."""
+import re
+
 import pytz
 from dateutil.relativedelta import relativedelta
 from lxml import etree
@@ -39,34 +41,37 @@ class SaleOrder(models.Model):
 
     @api.model
     def _get_view(self, view_id=None, view_type="form", **options):
-        """Periode de location obligatoire a l'ecran (application Location si installee)."""
+        """Periode de location a l'ecran, obligatoire pour une location.
+        Application Location installee : ses champs natifs (rental_start_date / rental_return_date).
+        - ses propres contrats (is_rental_order) gardent sa « Periode de location » telle quelle ;
+        - un contrat qui n'en vient pas affiche la meme periode native, sous « Expiration » ;
+        - la « Date de livraison », qu'elle cache sur ses contrats, reste visible ;
+        - nos deux dates (copie de la periode) sont cachees.
+        Sans l'application : nos deux dates."""
         arch, view = super()._get_view(view_id, view_type, **options)
-        if view_type == "form":
-            debut = arch.xpath("//field[@name='date_debut_location']")
-            if debut and "rental_start_date" in self._fields:
-                # Application Location installee : sa « Periode de location » native (une seule case
-                # debut -> retour, avec son calendrier) a la place de nos deux dates, qui en sont la copie
-                periode = etree.Element("field", {
-                    "name": "rental_start_date", "string": self.env._("Période de location"),
-                    "widget": "daterange", "options": "{'end_date_field': 'rental_return_date', 'show_time': False}",
-                    "invisible": "type_commande != 'location'"})
-                retour = etree.Element("field", {"name": "rental_return_date", "invisible": "1"})
-                # La periode deja dans la vue (application Location) n'est visible que pour ses propres
-                # commandes : on la remplace par la notre, visible pour tout contrat de location
-                for node in arch.xpath("//field[@name='rental_start_date' or @name='rental_return_date'] | "
-                                       "//label[@for='rental_start_date' or @for='rental_return_date']"):
-                    node.set("invisible", "1")
-                    node.attrib.pop("required", None)
-                # A droite, sous « Expiration », comme dans l'application Location
-                ancre = arch.xpath("//field[@name='validity_date']") or debut
-                ancre[0].addnext(retour)
-                ancre[0].addnext(periode)
-                for node in arch.xpath("//field[@name='date_debut_location' or @name='date_fin_location']"):
-                    node.set("invisible", "1")
-            for node in arch.xpath("//field[@name='rental_start_date' or @name='rental_return_date' "
-                                   "or @name='date_debut_location' or @name='date_fin_location']"):
-                if node.get("invisible") != "1":
-                    node.set("required", "type_commande == 'location'")
+        if view_type != "form":
+            return arch, view
+        nos_dates = arch.xpath("//field[@name='date_debut_location' or @name='date_fin_location']")
+        if nos_dates and "rental_start_date" in self._fields:
+            for node in nos_dates:
+                node.set("invisible", "1")
+            if not arch.xpath("//field[@name='is_rental_order']"):
+                nos_dates[0].addprevious(etree.Element("field", {"name": "is_rental_order", "invisible": "1"}))
+            ancre = arch.xpath("//field[@name='validity_date']") or nos_dates
+            ancre[0].addnext(etree.Element("field", {"name": "rental_return_date", "invisible": "1"}))
+            ancre[0].addnext(etree.Element("field", {
+                "name": "rental_start_date", "string": self.env._("Période de location"), "widget": "daterange",
+                "options": "{'end_date_field': 'rental_return_date', 'show_time': False}",
+                "invisible": "type_commande != 'location' or is_rental_order",
+                "required": "type_commande == 'location' and not is_rental_order"}))
+            for node in arch.xpath("//field[@name='commitment_date'] | //label[@for='commitment_date']"):
+                for element in (node, node.getparent()):
+                    condition = element.get("invisible") or ""
+                    if "is_rental_order" in condition:
+                        element.set("invisible", re.sub(r"\bis_rental_order\b", "False", condition))
+        else:
+            for node in nos_dates:
+                node.set("required", "type_commande == 'location'")
         return arch, view
 
     @api.depends(lambda self: ["rental_start_date"] if "rental_start_date" in self._fields else [])
