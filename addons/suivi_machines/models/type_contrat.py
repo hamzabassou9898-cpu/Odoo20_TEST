@@ -363,9 +363,6 @@ class SaleOrder(models.Model):
         if not self.env.context.get("synchro_forfait") and (
                 {"order_line", "type_contrat_id", "forfait_montant"} & set(vals)):
             self._synchroniser_forfait(prix=bool({"type_contrat_id", "forfait_montant"} & set(vals)))
-        if vals.get("state") == "sent":
-            # Devis envoye : son PDF est deja range dans le profil du client (mis a jour a la confirmation)
-            self._archiver_pdf_client()
         return res
 
     def _find_mail_template(self):
@@ -381,7 +378,8 @@ class SaleOrder(models.Model):
 
     def action_confirm(self):
         res = super().action_confirm()
-        self.filtered(lambda o: o.state == "sale")._archiver_pdf_client()
+        # Seul le document SIGNE va dans le profil du client (rien a l'envoi du devis)
+        self.filtered(lambda o: o.state == "sale" and o.signature)._archiver_pdf_client()
         # Clause 8.2 : forfait paye a la signature (ligne du contrat), puis tous les 12 mois
         aujourdhui = fields.Date.context_today(self)
         for contrat in self.filtered(lambda o: o.state == "sale" and o.forfait_montant > 0

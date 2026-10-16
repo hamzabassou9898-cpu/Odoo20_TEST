@@ -687,8 +687,18 @@ class TestSuiviMachines(TransactionCase):
         self.assertEqual(livraison.move_ids.move_line_ids.lot_id, self.lot_a | self.lot_b)
 
     def test_bon_de_vente_confirme_dans_le_profil_du_client(self):
-        """Chaque bon de vente / location confirmé : son PDF va dans le profil du client (Documents)."""
+        """Seul le document SIGNÉ va dans le profil du client : une vente confirmée sans signature n'y va pas,
+        une vente signée oui."""
         so = self._commande(self.lot_a)
+        pieces = self.env["ir.attachment"].search([("res_model", "=", "res.partner"),
+                                                   ("res_id", "=", self.client.commercial_partner_id.id)])
+        self.assertFalse(pieces.filtered(lambda a: so.name in a.name), "pas signé : rien dans le profil")
+        signee = self.env["sale.order"].create({
+            "partner_id": self.client.id, "signature": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+            "signed_by": "Client", "signed_on": fields.Datetime.now(),
+            "order_line": [(0, 0, {"product_id": self.produit.id, "product_uom_qty": 1, "machine_lot_id": self.lot_b.id})]})
+        signee.action_confirm()
+        so = signee
         pieces = self.env["ir.attachment"].search([("res_model", "=", "res.partner"),
                                                    ("res_id", "=", self.client.commercial_partner_id.id)])
         self.assertTrue(pieces.filtered(lambda a: a.name == "Bon de vente %s.pdf" % so.name))
@@ -851,9 +861,9 @@ class TestSuiviMachines(TransactionCase):
         for champ in ("x_nom_legal", "x_autres_numeros", "x_code_societe"):
             self.assertIn('name="%s"' % champ, arch)
 
-    def test_bouton_envoyer_range_le_pdf_tout_seul(self):
-        """Comme Jose : bouton « Envoyer » puis « Envoyer » dans la fenêtre du courriel -> le PDF du contrat est
-        rangé tout seul dans la fiche du client (et dans Documents si installé), sans action manuelle."""
+    def test_bouton_envoyer_ne_range_rien(self):
+        """Comme Jose : bouton « Envoyer » puis « Envoyer » dans la fenêtre du courriel -> rien n'est rangé dans
+        le profil du client : seul le contrat signé y va (voir test_contrat_signe_range_dans_le_dossier_du_client)."""
         client = self.env["res.partner"].create({"name": "Client Envoyer", "email": "envoyer@exemple.ca"})
         so = self.env["sale.order"].create({
             "partner_id": client.id, "type_contrat_id": self.env.ref("suivi_machines.type_contrat_convention").id,
@@ -864,9 +874,9 @@ class TestSuiviMachines(TransactionCase):
         composer.action_send_mail()
         self.assertEqual(so.state, "sent")
         pieces = self.env["ir.attachment"].search([("res_model", "=", "res.partner"), ("res_id", "=", client.id)])
-        self.assertEqual(len(pieces.filtered(lambda a: so.name in a.name)), 1, "PDF rangé tout seul à l'envoi")
+        self.assertFalse(pieces.filtered(lambda a: so.name in a.name), "pas encore signé : rien dans le profil")
         if "documents.document" in self.env:
-            self.assertTrue(self.env["documents.document"].search([("partner_id", "=", client.id)]))
+            self.assertFalse(self.env["documents.document"].search([("partner_id", "=", client.id)]))
 
     def test_courriel_contrat_a_signer(self):
         """« Envoyer » un contrat de location : courriel Monroy en français avec le lien sécurisé du client
@@ -956,7 +966,7 @@ class TestContratEnLigne(HttpCase):
         so.write({"require_signature": True, "prepayment_percent": 0})
         so.action_quotation_sent()
         envoye = self.env["ir.attachment"].search([("res_model", "=", "res.partner"), ("res_id", "=", client.id)])
-        self.assertEqual(len(envoye.filtered(lambda a: so.name in a.name)), 1, "devis envoyé rangé dans la fiche")
+        self.assertFalse(envoye.filtered(lambda a: so.name in a.name), "devis envoyé : rien tant qu'il n'est pas signé")
         jeton = so._portal_ensure_token()
         signature = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
         resultat = self.make_jsonrpc_request("/my/orders/%s/accept?access_token=%s" % (so.id, jeton),
