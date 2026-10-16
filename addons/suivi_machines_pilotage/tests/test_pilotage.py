@@ -513,7 +513,8 @@ class TestPilotage(TransactionCase):
         self.assertNotIn("sage_clients", [a["code"] for a in d["alertes"]], "Sage : dans le bloc Facturation")
         self.assertTrue(all(a["nombre"] > 0 for a in d["alertes"]), "seulement ce qui est à traiter")
         # Tout est cliquable : chaque element ouvre une liste (sans le message HTML brut)
-        tag = self.env["helpdesk.tag"].create({"name": "Fait du bruit"})
+        Tag = self.env["helpdesk.tag"]   # l'Assistance Enterprise a peut-etre deja l'etiquette (nom unique)
+        tag = Tag.search([("name", "=", "Fait du bruit")], limit=1) or Tag.create({"name": "Fait du bruit"})
         tech = self.env["res.users"].create({"name": "Tech vue", "login": "tech_vue",
                                              "group_ids": [(6, 0, self.env.ref("base.group_portal").ids)]})
         if "est_technicien" in tech.partner_id._fields:   # module Portail : techniciens portail seulement
@@ -679,7 +680,8 @@ class TestPortailLivreurs(TransactionCase):
         self.assertEqual(len(taches), 3)
         tache_ticket = taches.filtered(lambda t: t.ticket_id == ticket)
         self.assertIn("1 rue", tache_ticket.route)
-        etiquette = env["helpdesk.tag"].create({"name": "Ne refroidit pas", "color": 1})
+        etiquette = env["helpdesk.tag"].search([("name", "=", "Ne refroidit pas")], limit=1) \
+            or env["helpdesk.tag"].create({"name": "Ne refroidit pas", "color": 1})
         ticket.tag_ids = etiquette
         Tache.invalidate_model()
         self.assertEqual(tache_ticket.tag_ids, etiquette)

@@ -74,14 +74,18 @@ class TestAppelWeb(HttpCase):
         self._envoyer(type_demande="entretien", type_reparation="coule")
         ticket = self._tickets_web()
         self.assertEqual(len(ticket), 1)
-        self.assertFalse(ticket.partner_id, "Jose choisira le client")
+        # Aucun client existant choisi : Jose choisira le client (l'Assistance Enterprise peut creer un
+        # simple contact a partir du courriel, sans code client)
+        self.assertFalse(ticket.partner_id.ref, "Jose choisira le client")
+        self.assertNotEqual(ticket.partner_id, self.client)
         self.assertTrue(ticket.est_entretien)
         self.assertFalse(ticket.type_reparation, "type de réparation ignoré hors réparation")
 
     def test_code_inconnu_garde_dans_la_description(self):
         self._envoyer(code_client="XYZ999", type_demande="entretien")
         ticket = self._tickets_web()
-        self.assertFalse(ticket.partner_id)
+        self.assertFalse(ticket.partner_id.ref, "aucun client existant choisi")
+        self.assertNotEqual(ticket.partner_id, self.client)
         self.assertFalse(ticket.code_client)
         self.assertIn("XYZ999", ticket.description)
 
