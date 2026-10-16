@@ -1262,3 +1262,16 @@ class TestTicketMachine(TransactionCase):
         self.assertTrue(badge, "étiquette du type sur la carte")
         for decoration in ("decoration-danger", "decoration-info", "decoration-warning"):
             self.assertTrue(badge[0].get(decoration), decoration)
+
+    def test_disposition_client_a_gauche(self):
+        """Fiche du ticket : client (code client...) en haut a gauche, puis equipe et planification ;
+        type de ticket a droite."""
+        from lxml import etree
+        arch = etree.fromstring(self.env["helpdesk.ticket"].get_views([(False, "form")])["views"]["form"]["arch"])
+        gauche = arch.xpath("//field[@name='code_client']/ancestor::group[1]")[0]
+        droite = arch.xpath("//field[@name='type_demande']/ancestor::group[1]")[0]
+        self.assertIsNot(gauche, droite)
+        self.assertTrue(gauche.xpath(".//field[@name='user_id']"), "assigne et planification sous le client")
+        self.assertIs(gauche.getnext(), droite, "client a gauche, type a droite")
+        noms = [n.get("name") for n in gauche.iter("field")]
+        self.assertLess(noms.index("code_client"), noms.index("user_id"))
