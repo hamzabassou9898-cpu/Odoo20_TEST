@@ -883,6 +883,8 @@ class TestSuiviMachines(TransactionCase):
         arch = self.env["stock.picking"].get_views([(False, "form")])["views"]["form"]["arch"]
         self.assertEqual(arch.count("Confirmez-vous que cette livraison est bien terminée ?"), 2, "les deux boutons Valider")
         self.assertIn('confirm-label="Oui, valider"', arch)
+        self.assertRegex(arch, r'name="description_picking"[^>]*invisible="(1|True)"',
+                         "description cachée sous le produit")
         sans_suivi = self.env["product.product"].create({"name": "Machine sans suivi", "categ_id": self.categ.id,
                                                          "is_storable": True, "tracking": False})
         self.env["stock.quant"]._update_available_quantity(sans_suivi, self.stock, 1)

@@ -2,7 +2,7 @@
 {
     "name": "Suivi des machines - Pilotage",
     "summary": "Tableau de bord du suivi des machines : entretiens, locations, reprises, bris, facturation",
-    "version": "20.0.1.52.0",
+    "version": "20.0.1.53.0",
     "category": "Productivity",
     "author": "Volcan",
     "website": "https://volcan.ca/",
@@ -23,6 +23,7 @@
         "web.assets_backend": [
             "suivi_machines_pilotage/static/src/tableau_moderne/*",
             "suivi_machines_pilotage/static/src/planning/*",
+            "suivi_machines_pilotage/static/src/activites/*",
         ],
     },
     "application": True,
