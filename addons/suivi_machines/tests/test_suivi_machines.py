@@ -851,6 +851,23 @@ class TestSuiviMachines(TransactionCase):
         for champ in ("x_nom_legal", "x_autres_numeros", "x_code_societe"):
             self.assertIn('name="%s"' % champ, arch)
 
+    def test_bouton_envoyer_range_le_pdf_tout_seul(self):
+        """Comme Jose : bouton « Envoyer » puis « Envoyer » dans la fenêtre du courriel -> le PDF du contrat est
+        rangé tout seul dans la fiche du client (et dans Documents si installé), sans action manuelle."""
+        client = self.env["res.partner"].create({"name": "Client Envoyer", "email": "envoyer@exemple.ca"})
+        so = self.env["sale.order"].create({
+            "partner_id": client.id, "type_contrat_id": self.env.ref("suivi_machines.type_contrat_convention").id,
+            "date_debut_location": PERIODE_TEST[0], "date_fin_location": PERIODE_TEST[1],
+            "order_line": [(0, 0, {"product_id": self.produit.id, "product_uom_qty": 1})]})
+        action = so.action_quotation_send()
+        composer = self.env["mail.compose.message"].with_context(**action["context"]).create({})
+        composer.action_send_mail()
+        self.assertEqual(so.state, "sent")
+        pieces = self.env["ir.attachment"].search([("res_model", "=", "res.partner"), ("res_id", "=", client.id)])
+        self.assertEqual(len(pieces.filtered(lambda a: so.name in a.name)), 1, "PDF rangé tout seul à l'envoi")
+        if "documents.document" in self.env:
+            self.assertTrue(self.env["documents.document"].search([("partner_id", "=", client.id)]))
+
     def test_courriel_contrat_a_signer(self):
         """« Envoyer » un contrat de location : courriel Monroy en français avec le lien sécurisé du client
         dans le texte ; une vente garde le courriel standard."""
