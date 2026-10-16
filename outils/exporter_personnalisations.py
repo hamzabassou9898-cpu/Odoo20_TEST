@@ -56,6 +56,14 @@ for v in env["ir.ui.view"].sudo().with_context(active_test=False).search([], ord
                              "herite_de": v.inherit_id.xml_id or (v.inherit_id.name or ""),
                              "xmlid": autre, "arch": v.arch_db})
 
+# Vues d'origine (Odoo ou autre module) modifiees a la main dans l'interface : Odoo le note (arch_updated)
+resultat["vues_modifiees"] = []
+if "arch_updated" in env["ir.ui.view"]._fields:
+    for v in env["ir.ui.view"].sudo().with_context(active_test=False).search([("arch_updated", "=", True)]):
+        module, _autre = origine(v)
+        resultat["vues_modifiees"].append({"id": v.id, "nom": v.name, "modele": v.model, "module": module,
+                                           "xmlid": v.xml_id or "", "arch": v.arch_db})
+
 for a in env["ir.actions.server"].sudo().with_context(active_test=False).search([]):
     module, autre = origine(a)
     if module:
@@ -87,6 +95,7 @@ with open(chemin, "w", encoding="utf-8") as fichier:
 
 print("\n=== Ajouts faits directement dans la base (à intégrer dans les modules) ===")
 for cle, titre in (("champs", "Champs personnalisés"), ("modeles", "Modèles personnalisés"), ("vues", "Vues"),
+                   ("vues_modifiees", "Vues d'origine modifiées à la main"),
                    ("actions_serveur", "Actions serveur"), ("automatisations", "Automatisations"),
                    ("actions_planifiees", "Actions planifiées")):
     print("\n%s : %d" % (titre, len(resultat[cle])))
