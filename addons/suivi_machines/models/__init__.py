@@ -10,3 +10,4 @@ from . import stock_picking
 from . import ramassage
 from . import frise_machine
 from . import type_contrat
+from . import res_partner

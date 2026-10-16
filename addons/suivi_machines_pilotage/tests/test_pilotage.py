@@ -74,6 +74,8 @@ class TestPilotage(TransactionCase):
                               ("menu_pilotage_ventes", "sale.action_quotations_with_onboarding"),
                               ("menu_pilotage_crm", "crm.crm_lead_action_pipeline")):
             self.assertEqual(self.env.ref("suivi_machines_pilotage." + xmlid).action, self.env.ref(action), xmlid)
+        # Contacts : vue « Hiérarchie » par défaut
+        self.assertTrue(self.env.ref("contacts.action_contacts").view_mode.startswith("hierarchy,"))
 
     def test_planning_ouvre_le_ticket(self):
         """Planning : une tache d'intervention ouvre le ticket de la machine (jamais l'intervention quand un

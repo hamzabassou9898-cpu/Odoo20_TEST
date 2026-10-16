@@ -838,6 +838,19 @@ class TestSuiviMachines(TransactionCase):
             self.assertIn('name="%s"' % champ, arch)
         self.assertIn("type_commande != 'location'", arch.split('name="saison"')[1].split("/>")[0])
 
+    def test_fiche_contact_monroy(self):
+        """Fiche contact : nom légal, autres numéros, code client de la société sur un contact rattaché,
+        cadre « Code client » et onglet « Autres informations »."""
+        societe = self.env["res.partner"].create({"name": "Société Test", "ref": "SOC01",
+                                                  "x_nom_legal": "SOCIETE TEST INC.", "x_autres_numeros": "418 555-0001"})
+        contact = self.env["res.partner"].create({"name": "Personne", "parent_id": societe.id, "type": "contact"})
+        self.assertEqual(contact.x_code_societe, "SOC01")
+        self.assertEqual(societe.x_nom_legal, "SOCIETE TEST INC.")
+        arch = self.env["res.partner"].get_views([(False, "form")])["views"]["form"]["arch"]
+        self.assertEqual(arch.count('name="autres_informations"'), 1)
+        for champ in ("x_nom_legal", "x_autres_numeros", "x_code_societe"):
+            self.assertIn('name="%s"' % champ, arch)
+
     def test_courriel_contrat_a_signer(self):
         """« Envoyer » un contrat de location : courriel Monroy en français avec le lien sécurisé du client
         dans le texte ; une vente garde le courriel standard."""

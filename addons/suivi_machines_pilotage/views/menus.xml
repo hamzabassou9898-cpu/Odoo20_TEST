@@ -10,6 +10,11 @@
     <menuitem id="menu_pilotage_tableau" name="Toutes les cartes" parent="menu_pilotage_tableau_racine"
               action="action_pilotage_tableau_bord" sequence="2"/>
 
+    <!-- Contacts : s'ouvre sur la vue native « Hiérarchie » (chaque société avec ses contacts) -->
+    <record id="contacts.action_contacts" model="ir.actions.act_window">
+        <field name="view_mode">hierarchy,list,kanban,form,activity</field>
+    </record>
+
     <!-- Contacts, Ventes et CRM : les vues natives d'Odoo, telles quelles -->
     <menuitem id="menu_pilotage_contacts" name="Contacts" parent="menu_pilotage_root"
               action="contacts.action_contacts" sequence="3"/>

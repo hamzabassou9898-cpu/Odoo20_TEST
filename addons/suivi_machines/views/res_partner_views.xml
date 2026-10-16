@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Fiche contact : code client en grand en haut a droite, onglet « Autres informations » -->
+    <record id="view_partner_form_monroy" model="ir.ui.view">
+        <field name="name">res.partner.form.monroy</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='image_1920']/.." position="inside">
+                <div class="border border-2 border-dark rounded-3 px-3 py-2 text-center flex-shrink-0" style="width: 210px;">
+                    <div class="text-muted text-uppercase small fw-bold">Code client</div>
+                    <h2 class="mb-0 fw-bold" invisible="parent_id and type == 'contact'">
+                        <field name="ref" class="text-center fw-bold" placeholder="Code"/>
+                    </h2>
+                    <h2 class="mb-0 fw-bold" invisible="not parent_id or type != 'contact'">
+                        <field name="x_code_societe" class="text-center fw-bold" placeholder="Code"/>
+                    </h2>
+                </div>
+            </xpath>
+            <xpath expr="//notebook" position="inside">
+                <page string="Autres informations" name="autres_informations">
+                    <group>
+                        <group>
+                            <field name="x_nom_legal"/>
+                        </group>
+                        <group>
+                            <field name="x_autres_numeros"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>
