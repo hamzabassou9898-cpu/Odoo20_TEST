@@ -48,10 +48,13 @@
                        readonly="state not in ('draft', 'sent')"/>
                 <field name="forfait_prochaine_date" invisible="not forfait_montant or state != 'sale'"/>
                 <field name="contrat_modele" invisible="1"/>
-                <field name="saison" invisible="not type_contrat_id"/>
+                <!-- Contrat original : saison et prix de detail des que c'est une location (avant meme le
+                     choix du type de contrat) -->
+                <field name="saison" invisible="not type_contrat_id and type_commande != 'location'"/>
                 <label for="prix_detail_353" string="Prix de détail (353 / 510 / 775 ml)"
-                       invisible="not type_contrat_id or contrat_modele == 'popcorn'"/>
-                <div class="d-flex gap-2" invisible="not type_contrat_id or contrat_modele == 'popcorn'">
+                       invisible="(not type_contrat_id and type_commande != 'location') or contrat_modele == 'popcorn'"/>
+                <div class="d-flex gap-2"
+                     invisible="(not type_contrat_id and type_commande != 'location') or contrat_modele == 'popcorn'">
                     <field name="prix_detail_353" class="oe_inline"/>
                     <field name="prix_detail_510" class="oe_inline"/>
                     <field name="prix_detail_775" class="oe_inline"/>

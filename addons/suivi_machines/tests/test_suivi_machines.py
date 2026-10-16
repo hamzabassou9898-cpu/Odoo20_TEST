@@ -830,6 +830,14 @@ class TestSuiviMachines(TransactionCase):
         self.assertEqual(so.date_debut_location, PERIODE_TEST[0])
         self.assertEqual(so.date_fin_location, PERIODE_TEST[1] + relativedelta(months=1))
 
+    def test_prix_de_detail_visibles_sur_un_nouveau_contrat(self):
+        """Contrat original : saison et prix de détail affichés dès que c'est une location, même avant de
+        choisir le type de contrat (cachés seulement pour le popcorn)."""
+        arch = self.env["sale.order"].get_views([(False, "form")])["views"]["form"]["arch"]
+        for champ in ("prix_detail_353", "prix_detail_510", "prix_detail_775", "saison"):
+            self.assertIn('name="%s"' % champ, arch)
+        self.assertIn("type_commande != 'location'", arch.split('name="saison"')[1].split("/>")[0])
+
     def test_courriel_contrat_a_signer(self):
         """« Envoyer » un contrat de location : courriel Monroy en français avec le lien sécurisé du client
         dans le texte ; une vente garde le courriel standard."""
