@@ -378,8 +378,10 @@ class SaleOrder(models.Model):
 
     def action_confirm(self):
         res = super().action_confirm()
-        # Seul le document SIGNE va dans le profil du client (rien a l'envoi du devis)
-        self.filtered(lambda o: o.state == "sale" and o.signature)._archiver_pdf_client()
+        # Profil du client : une vente confirmee (signee ou non) ; un contrat seulement une fois signe
+        # (rien a l'envoi du devis)
+        self.filtered(lambda o: o.state == "sale" and (
+            o.signature or (o.type_commande == "vente" and not o.type_contrat_id)))._archiver_pdf_client()
         # Clause 8.2 : forfait paye a la signature (ligne du contrat), puis tous les 12 mois
         aujourdhui = fields.Date.context_today(self)
         for contrat in self.filtered(lambda o: o.state == "sale" and o.forfait_montant > 0

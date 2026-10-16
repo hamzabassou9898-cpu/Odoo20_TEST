@@ -687,12 +687,11 @@ class TestSuiviMachines(TransactionCase):
         self.assertEqual(livraison.move_ids.move_line_ids.lot_id, self.lot_a | self.lot_b)
 
     def test_bon_de_vente_confirme_dans_le_profil_du_client(self):
-        """Seul le document SIGNÉ va dans le profil du client : une vente confirmée sans signature n'y va pas,
-        une vente signée oui."""
+        """Profil du client : une vente confirmée y va, signée ou non (un contrat, seulement une fois signé)."""
         so = self._commande(self.lot_a)
         pieces = self.env["ir.attachment"].search([("res_model", "=", "res.partner"),
                                                    ("res_id", "=", self.client.commercial_partner_id.id)])
-        self.assertFalse(pieces.filtered(lambda a: so.name in a.name), "pas signé : rien dans le profil")
+        self.assertTrue(pieces.filtered(lambda a: a.name == "Bon de vente %s.pdf" % so.name), "vente non signée")
         signee = self.env["sale.order"].create({
             "partner_id": self.client.id, "signature": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
             "signed_by": "Client", "signed_on": fields.Datetime.now(),
