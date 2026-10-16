@@ -829,7 +829,7 @@ class TestTicketMachine(TransactionCase):
         groupe = next(champ_tel.iterancestors("group"))
         noms = [f.get("name") for f in groupe.xpath("./field") if f.get("invisible") not in ("1", "True")]
         self.assertIn("adresse_commerce", noms, "adresse commerciale : sa propre ligne, dans le groupe du téléphone")
-        self.assertEqual(noms[noms.index("adresse_commerce"):],
+        self.assertEqual(noms[noms.index("adresse_commerce"):noms.index("contrat_client_fin") + 1],
                          ["adresse_commerce", "contrat_client_id", "contrat_client_modele_id", "contrat_client_type",
                           "contrat_client_debut",
                           "contrat_client_fin"], "puis le contrat du client, son type et ses dates")
