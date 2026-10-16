@@ -48,7 +48,7 @@ class SaleOrder(models.Model):
                 # debut -> retour, avec son calendrier) a la place de nos deux dates, qui en sont la copie
                 periode = etree.Element("field", {
                     "name": "rental_start_date", "string": self.env._("Période de location"),
-                    "widget": "daterange", "options": "{'end_date_field': 'rental_return_date'}",
+                    "widget": "daterange", "options": "{'end_date_field': 'rental_return_date', 'show_time': False}",
                     "invisible": "type_commande != 'location'"})
                 retour = etree.Element("field", {"name": "rental_return_date", "invisible": "1"})
                 # La periode deja dans la vue (application Location) n'est visible que pour ses propres

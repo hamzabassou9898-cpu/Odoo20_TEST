@@ -53,11 +53,13 @@
                 <field name="saison" invisible="not type_contrat_id and type_commande != 'location'"/>
                 <label for="prix_detail_353" string="Prix de détail (353 / 510 / 775 ml)"
                        invisible="(not type_contrat_id and type_commande != 'location') or contrat_modele == 'popcorn'"/>
-                <div class="d-flex gap-2"
+                <div class="o_row"
                      invisible="(not type_contrat_id and type_commande != 'location') or contrat_modele == 'popcorn'">
-                    <field name="prix_detail_353" class="oe_inline"/>
-                    <field name="prix_detail_510" class="oe_inline"/>
-                    <field name="prix_detail_775" class="oe_inline"/>
+                    <field name="prix_detail_353" class="oe_inline" style="max-width: 5.5rem;" placeholder="353 ml"/>
+                    <span class="text-muted">/</span>
+                    <field name="prix_detail_510" class="oe_inline" style="max-width: 5.5rem;" placeholder="510 ml"/>
+                    <span class="text-muted">/</span>
+                    <field name="prix_detail_775" class="oe_inline" style="max-width: 5.5rem;" placeholder="775 ml"/>
                 </div>
             </field>
             <xpath expr="//header" position="inside">
