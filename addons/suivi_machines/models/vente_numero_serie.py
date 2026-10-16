@@ -353,11 +353,16 @@ class StockMove(models.Model):
         "N° de série requis", compute="_compute_serie_requise",
         help="Machine livrée chez le client sans n° de série réservé : à choisir avant d'enregistrer.")
 
-    @api.depends("est_machine", "state", "location_dest_id", "move_line_ids.lot_id")
+    def _serie_obligatoire(self):
+        """N° de serie a choisir : seulement une machine suivie par n° de serie (sinon on peut valider sans)."""
+        self.ensure_one()
+        return self.est_machine and self.product_id.tracking == "serial"
+
+    @api.depends("est_machine", "product_id.tracking", "state", "location_dest_id", "move_line_ids.lot_id")
     def _compute_serie_requise(self):
         for move in self:
             move.serie_requise = bool(
-                move.est_machine and move.state not in ("done", "cancel") and move.location_dest_id
+                move._serie_obligatoire() and move.state not in ("done", "cancel") and move.location_dest_id
                 and move._vers_client() and not move.move_line_ids.lot_id)
 
     @api.constrains("machine_lot_id", "product_id")

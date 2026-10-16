@@ -877,6 +877,28 @@ class TestSuiviMachines(TransactionCase):
         if "documents.document" in self.env:
             self.assertFalse(self.env["documents.document"].search([("partner_id", "=", client.id)]))
 
+    def test_valider_livraison_confirmation_et_serie_si_suivie(self):
+        """Valider : fenêtre « Confirmez-vous que cette livraison est bien terminée ? » (Oui, valider / Non). N° de série
+        obligatoire seulement pour une machine suivie par n° de série."""
+        arch = self.env["stock.picking"].get_views([(False, "form")])["views"]["form"]["arch"]
+        self.assertEqual(arch.count("Confirmez-vous que cette livraison est bien terminée ?"), 2, "les deux boutons Valider")
+        self.assertIn('confirm-label="Oui, valider"', arch)
+        sans_suivi = self.env["product.product"].create({"name": "Machine sans suivi", "categ_id": self.categ.id,
+                                                         "is_storable": True, "tracking": False})
+        self.env["stock.quant"]._update_available_quantity(sans_suivi, self.stock, 1)
+        so = self.env["sale.order"].create({"partner_id": self.client.id,
+                                            "order_line": [(0, 0, {"product_id": sans_suivi.id, "product_uom_qty": 1})]})
+        so.action_confirm()
+        livraison = so.picking_ids
+        self.assertFalse(livraison.move_ids.serie_requise)
+        self.assertFalse(livraison.machines_sans_serie, "pas de n° de série à choisir")
+        livraison.action_assign()
+        livraison.move_ids.picked = True
+        livraison.write({"livreur_id": self.env.user.id, "frequence_entretien": "12",
+                         "prochain_entretien": fields.Date.today() + relativedelta(months=12)})
+        livraison.button_validate()
+        self.assertEqual(livraison.state, "done", "validée sans n° de série")
+
     def test_courriel_contrat_a_signer(self):
         """« Envoyer » un contrat de location : courriel Monroy en français avec le lien sécurisé du client
         dans le texte ; une vente garde le courriel standard."""

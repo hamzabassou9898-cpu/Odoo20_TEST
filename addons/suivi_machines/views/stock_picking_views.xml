@@ -47,6 +47,19 @@
                     livraison ou ce ramassage.
                 </div>
             </xpath>
+            <!-- Valider : confirmation avant de terminer la livraison (fenetre native d'Odoo) -->
+            <xpath expr="//button[@name='button_validate']" position="attributes">
+                <attribute name="confirm">Confirmez-vous que cette livraison est bien terminée ? Une fois validée, elle ne pourra plus être modifiée et le stock sera mis à jour.</attribute>
+                <attribute name="confirm-title">Valider la livraison</attribute>
+                <attribute name="confirm-label">Oui, valider</attribute>
+                <attribute name="cancel-label">Non</attribute>
+            </xpath>
+            <xpath expr="(//button[@name='button_validate'])[2]" position="attributes">
+                <attribute name="confirm">Confirmez-vous que cette livraison est bien terminée ? Une fois validée, elle ne pourra plus être modifiée et le stock sera mis à jour.</attribute>
+                <attribute name="confirm-title">Valider la livraison</attribute>
+                <attribute name="confirm-label">Oui, valider</attribute>
+                <attribute name="cancel-label">Non</attribute>
+            </xpath>
             <field name="origin" position="before">
                 <field name="livreur_id" widget="many2one_avatar_user"
                        readonly="state in ('done', 'cancel')"/>
@@ -58,8 +71,9 @@
             <xpath expr="//field[@name='move_ids']/list/column[field[@name='product_id']]" position="after">
                 <field name="est_machine" column_invisible="1"/>
                 <field name="serie_requise" column_invisible="1"/>
+                <field name="has_tracking" column_invisible="1"/>
                 <field name="machine_lot_id" string="N° de série (machine)"
-                       invisible="not est_machine" readonly="state in ('done', 'cancel')"
+                       invisible="not est_machine or has_tracking != 'serial'" readonly="state in ('done', 'cancel')"
                        required="serie_requise"
                        options="{'no_create': True}"/>
             </xpath>

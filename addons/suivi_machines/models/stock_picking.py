@@ -112,7 +112,7 @@ class StockPicking(models.Model):
     def _machines_sans_serie(self):
         """Livraison chez le client : chaque machine doit avoir SON n° de serie (une ligne par machine)."""
         self.ensure_one()
-        for move in self.move_ids.filtered(lambda m: m.est_machine and m.state != "cancel" and m._vers_client()):
+        for move in self.move_ids.filtered(lambda m: m._serie_obligatoire() and m.state != "cancel" and m._vers_client()):
             lots = move.move_line_ids.filtered(lambda l: l.quantity > 0).lot_id | move.machine_lot_id
             if len(lots) < int(move.product_uom_qty):
                 return True
