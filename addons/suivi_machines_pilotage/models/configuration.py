@@ -38,3 +38,30 @@ class CrmLead(models.Model):
         for _xmlid, nom in PROPOSITIONS + (LIVRE,):
             etapes |= trouver_par_nom(Etape, nom)
         return etapes
+
+
+class ResPartner(models.Model):
+    _inherit = "res.partner"
+
+    @api.model
+    def _configuration_vue_contacts(self):
+        """Contacts s'ouvre sur la vue Hierarchie. Odoo n'accepte qu'une vue par mode et par action : la vue
+        Hierarchie deja ajoutee a la main (script du 7 octobre, Monroy_test, production) est reutilisee et
+        placee en premier ; sinon elle est creee. Le xmlid « noupdate » la garde aux mises a jour."""
+        action = self.env.ref("contacts.action_contacts", raise_if_not_found=False)
+        if not action:
+            return
+        Vue = self.env["ir.actions.act_window.view"].sudo()
+        vue = Vue.search([("act_window_id", "=", action.id), ("view_mode", "=", "hierarchy")], limit=1)
+        premiere = min((action.view_ids - vue).mapped("sequence") or [0])
+        if not vue:
+            vue = Vue.create({"act_window_id": action.id, "view_mode": "hierarchy", "sequence": premiere - 1})
+        elif vue.sequence >= premiere:
+            vue.sequence = premiere - 1
+        Data = self.env["ir.model.data"].sudo()
+        donnee = Data.search([("module", "=", MODULE), ("name", "=", "action_contacts_vue_hierarchie")], limit=1)
+        valeurs = {"model": "ir.actions.act_window.view", "res_id": vue.id, "noupdate": True}
+        if donnee:
+            donnee.write(valeurs)
+        else:
+            Data.create(dict(valeurs, module=MODULE, name="action_contacts_vue_hierarchie"))

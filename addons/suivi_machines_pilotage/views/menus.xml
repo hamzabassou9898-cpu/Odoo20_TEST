@@ -15,12 +15,9 @@
         <field name="view_mode">hierarchy,list,kanban,form,activity</field>
     </record>
     <!-- L'action fixe deja ses vues liste, kanban et formulaire (view_ids), qui passent avant view_mode :
-         la Hierarchie doit donc etre placee devant elles pour s'ouvrir en premier -->
-    <record id="action_contacts_vue_hierarchie" model="ir.actions.act_window.view">
-        <field name="sequence" eval="-1"/>
-        <field name="view_mode">hierarchy</field>
-        <field name="act_window_id" ref="contacts.action_contacts"/>
-    </record>
+         la Hierarchie est placee devant elles. Une seule vue par mode : celle deja ajoutee a la main dans
+         une base est reutilisee (voir _configuration_vue_contacts) -->
+    <function model="res.partner" name="_configuration_vue_contacts"/>
 
     <!-- Contacts, Ventes et CRM : les vues natives d'Odoo, telles quelles -->
     <menuitem id="menu_pilotage_contacts" name="Contacts" parent="menu_pilotage_root"
