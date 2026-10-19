@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Reglages de Monroy (etape et etiquette « Machine a remplacer ») : crees seulement s'ils manquent -->
+    <function model="helpdesk.ticket" name="_configuration_monroy"/>
+</odoo>

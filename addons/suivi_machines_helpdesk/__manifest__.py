@@ -3,7 +3,7 @@
     "name": "Suivi des machines - Assistance",
     "summary": "Ticket d'assistance relié au code client et au dossier de la machine "
                "(série, location, entretien, historique, interventions)",
-    "version": "20.0.1.66.0",
+    "version": "20.0.1.67.0",
     "category": "Services/Helpdesk",
     "author": "Volcan",
     "website": "https://volcan.ca/",
@@ -14,6 +14,7 @@
         "data/cron_reprise.xml",
         "data/entretien.xml",
         "data/tags_problemes.xml",
+        "data/configuration.xml",
         "views/helpdesk_ticket_views.xml",
         "views/res_partner_views.xml",
         "views/stock_lot_views.xml",

@@ -9,3 +9,4 @@ from . import res_partner
 from . import planification_auto
 from . import echange_machine
 from . import disposition
+from . import configuration

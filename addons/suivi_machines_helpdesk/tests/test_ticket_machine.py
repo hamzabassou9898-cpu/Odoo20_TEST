@@ -1094,7 +1094,9 @@ class TestTicketMachine(TransactionCase):
         Etape = self.env["helpdesk.stage"]
         nouveau = Etape.create({"name": "Nouveau"})
         entretien_rep = Etape.create({"name": "Entretien & Réparation"})
-        remplacer = Etape.create({"name": "Machine à remplacer"})
+        # Creee par le module (configuration de Monroy) : on la reutilise, comme l'etape de reprise
+        remplacer = Etape.search([("name", "ilike", "remplacer")], limit=1) or \
+            Etape.create({"name": "Machine à remplacer"})
         reprise = Etape.search([("name", "ilike", "reprise")], limit=1) or \
             Etape.create({"name": "Installation de machine / Reprise de machine"})
         tech = self.env["res.users"].create({"name": "Tech étape", "login": "tech_etape"})

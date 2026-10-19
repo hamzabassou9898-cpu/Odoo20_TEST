@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Etapes du CRM de Monroy (1re et 2e proposition, Livre / Termine) : creees seulement si elles manquent -->
+    <function model="crm.lead" name="_configuration_monroy"/>
+</odoo>

@@ -7,3 +7,4 @@ from . import tableau_moderne
 from . import product_template
 from . import rappel
 from . import planning
+from . import configuration
