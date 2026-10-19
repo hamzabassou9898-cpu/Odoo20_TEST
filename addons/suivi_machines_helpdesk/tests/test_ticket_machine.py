@@ -907,7 +907,7 @@ class TestTicketMachine(TransactionCase):
         arch = etree.fromstring(self.env["helpdesk.ticket"].get_views([(False, "form")])["views"]["form"]["arch"])
         champ = arch.xpath("//field[@name='type_reparation']")[0]
         self.assertEqual((champ.get("widget"), champ.get("invisible")), ("radio", "type_demande != 'reparation'"))
-        # Ticket sans formulaire (cree par Odoo, formulaire web) : accepte sans type de reparation
+        # Ticket sans formulaire (cree par Odoo) : accepte sans type de reparation
         self.env["helpdesk.ticket"].create({"name": "Web", "type_demande": "reparation"})
 
     def test_reparation_planifiee_toute_seule(self):

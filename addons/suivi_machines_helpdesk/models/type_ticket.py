@@ -13,7 +13,7 @@ TYPES_DEMANDE = [
     ("commande", "Passer une commande"),
     ("ajustement", "Ajuster un contrat"),
 ]
-# Type de reparation (comme le formulaire web) : choix a cocher quand le ticket est une reparation
+# Type de reparation : choix a cocher quand le ticket est une reparation
 TYPES_REPARATION = [
     ("coule", "Coule"),
     ("ne_gele_pas", "Ne gèle pas"),
