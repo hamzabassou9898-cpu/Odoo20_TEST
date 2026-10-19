@@ -1,14 +1,9 @@
 # -*- coding: utf-8 -*-
-"""Fiche contact : la vue ajoutee a la main dans la base (« res.partner.form.autres.informations ») est
-remplacee par celle du module ; la garder afficherait deux fois le code client et l'onglet. Les champs
-x_nom_legal, x_autres_numeros et x_code_societe sont maintenant ceux du module (valeurs gardees)."""
+"""Fiche contact : la vue faite a la main est remplacee par celle du module (voir retirer_vue_contact_a_la_main)."""
 from odoo import SUPERUSER_ID, api
+
+from odoo.addons.suivi_machines import retirer_vue_contact_a_la_main
 
 
 def migrate(cr, version):
-    env = api.Environment(cr, SUPERUSER_ID, {})
-    vues = env["ir.ui.view"].with_context(active_test=False).search(
-        [("name", "=", "res.partner.form.autres.informations"), ("model", "=", "res.partner")])
-    a_la_main = vues.filtered(lambda v: not env["ir.model.data"].search_count(
-        [("model", "=", "ir.ui.view"), ("res_id", "=", v.id), ("module", "not in", ("__export__", "studio_customization"))]))
-    a_la_main.unlink()
+    retirer_vue_contact_a_la_main(api.Environment(cr, SUPERUSER_ID, {}))
