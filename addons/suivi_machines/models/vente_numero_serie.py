@@ -57,9 +57,12 @@ class SaleOrder(models.Model):
                 node.set("invisible", "1")
             # Periode native (etiquette comprise) : seulement sur les contrats de l'application Location. Sinon
             # son etiquette restait affichee a vide au-dessus de la notre (« Periode de location » en double).
-            for node in arch.xpath("//label[@for='rental_start_date'] | //field[@name='rental_start_date']"):
+            # (Location Enterprise : etiquette + boite « rental_dates » qui contient le champ, chacune avec sa condition)
+            natifs = arch.xpath("//label[@for='rental_start_date'] | //field[@name='rental_start_date']")
+            natifs += [n.getparent() for n in natifs if n.tag == "field" and n.getparent().tag == "div"]
+            for node in natifs:
                 condition = (node.get("invisible") or "").strip()
-                if "is_rental_order" not in condition:
+                if not re.search(r"\bnot is_rental_order\b", condition):
                     node.set("invisible", "(%s) or not is_rental_order" % condition
                              if condition not in ("", "0", "False") else "not is_rental_order")
             if not arch.xpath("//field[@name='is_rental_order']"):
@@ -68,7 +71,7 @@ class SaleOrder(models.Model):
             ancre[0].addnext(etree.Element("field", {"name": "rental_return_date", "invisible": "1"}))
             ancre[0].addnext(etree.Element("field", {
                 "name": "rental_start_date", "string": self.env._("Période de location"), "widget": "daterange",
-                "options": "{'end_date_field': 'rental_return_date', 'show_time': False}",
+                "options": "{'end_date_field': 'rental_return_date', 'always_range': True, 'show_time': False}",
                 "invisible": "type_commande != 'location' or is_rental_order",
                 "required": "type_commande == 'location' and not is_rental_order"}))
             for node in arch.xpath("//field[@name='commitment_date'] | //label[@for='commitment_date']"):

@@ -832,11 +832,14 @@ class TestSuiviMachines(TransactionCase):
             # Application Location : sa « Période de location » native, sous Expiration
             self.assertIn('widget="daterange"', arch)
             self.assertIn("rental_return_date", arch)
+            # Debut et fin toujours affiches (deux cases), comme la periode de l'application Location
+            self.assertIn("'always_range': True", arch.split('string="Période de location"')[1].split("/>")[0])
             # Une seule « Période de location » a l'ecran : celle de l'application seulement sur ses contrats
             # (etiquette comprise), la notre sur les autres
             from lxml import etree
             noeuds = etree.fromstring(arch).xpath(
-                "//label[@for='rental_start_date'] | //field[@name='rental_start_date']")
+                "//label[@for='rental_start_date'] | //field[@name='rental_start_date']"
+                " | //div[field[@name='rental_start_date']]")
             self.assertTrue(noeuds)
             for noeud in noeuds:
                 self.assertIn("is_rental_order", noeud.get("invisible") or "", etree.tostring(noeud))
