@@ -19,10 +19,13 @@ RACINE = ("guide_racine", "Guide de l'utilisation", "📘")
 # (xmlid, dossier dans static/guides, titre, icone) : l'ordre est celui du menu des guides
 GUIDES = [
     ("guide_contacts", "contacts", "Contacts", "👥"),
+    ("guide_contrat_location", "contrat_location", "Contrat de location", "📝"),
 ]
 # Exemples de la base de demonstration (si la base n'a pas de banniere avec des commerces)
 EXEMPLES_DEMO = {"banniere": "Dépanneurs Bonjour", "nb": "4", "commerces": "ses commerces",
-                 "commerce": "Dépanneur Bonjour Sainte-Foy", "code": "MON502", "ville": "Québec"}
+                 "commerce": "Dépanneur Bonjour Sainte-Foy", "code": "MON502", "ville": "Québec",
+                 "types_contrat": "Location / entreprise, Convention slush, Convention popcorn, Propriétaire",
+                 "contrat": "LOC00077", "contrat_client": "Dépanneur Bonjour Limoilou"}
 
 
 class KnowledgeArticle(models.Model):
@@ -62,7 +65,25 @@ class KnowledgeArticle(models.Model):
                 "banniere": banniere.name, "nb": str(len(siens)),
                 "commerces": ", ".join(siens[:4].mapped("name")) + (" et %d autres" % reste if reste > 0 else ""),
                 "commerce": exemple.name, "code": exemple.ref, "ville": exemple.city or ""})
+        valeurs.update(self._monroy_exemples_contrats())
         return {cle: str(escape(valeur)) for cle, valeur in valeurs.items()}
+
+    @api.model
+    def _monroy_exemples_contrats(self):
+        """Types de contrat de la base et le contrat de location confirme le plus recent (hors demonstration)."""
+        valeurs = {}
+        if "suivi.type.contrat" in self.env:
+            types = self.env["suivi.type.contrat"].sudo().search([])
+            if types:
+                valeurs["types_contrat"] = ", ".join(types.mapped("name"))
+        Commande = self.env["sale.order"].sudo() if "sale.order" in self.env else None
+        if Commande is not None and "type_commande" in Commande._fields:
+            contrats = Commande.search([("type_commande", "=", "location"), ("state", "=", "sale")],
+                                       order="date_order desc, id desc", limit=20)
+            contrat = contrats.filtered(lambda c: (c.client_order_ref or "").upper() != "DEMO")[:1] or contrats[:1]
+            if contrat:
+                valeurs.update({"contrat": contrat.name, "contrat_client": contrat.partner_id.name})
+        return valeurs
 
     # ------------------------------------------------------------ articles
     @api.model

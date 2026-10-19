@@ -59,3 +59,17 @@ class TestGuides(TransactionCase):
         self.env["knowledge.article"]._monroy_installer_guides()
         self.assertEqual(Article.search_count([]), avant)
         self.assertEqual(self._racine().name, "Guide de l'utilisation")
+
+    def test_exemple_de_contrat(self):
+        """Le contrat de location confirme le plus recent sert d'exemple (sauf ceux de demonstration)."""
+        valeurs = self.env["knowledge.article"]._monroy_exemples()
+        self.assertTrue(valeurs["types_contrat"])
+        if "type_commande" not in self.env["sale.order"]._fields:
+            return
+        client = self.env["res.partner"].create({"name": "Client contrat guides"})
+        commande = self.env["sale.order"].create({
+            "partner_id": client.id, "type_commande": "location",
+            "date_debut_location": "2026-01-01 12:00:00", "date_fin_location": "2027-01-01 12:00:00"})
+        commande.write({"state": "sale"})
+        valeurs = self.env["knowledge.article"]._monroy_exemples()
+        self.assertEqual((valeurs["contrat"], valeurs["contrat_client"]), (commande.name, "Client contrat guides"))
