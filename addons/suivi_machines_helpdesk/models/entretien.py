@@ -5,6 +5,7 @@ from datetime import datetime, time, timedelta
 from odoo import api, fields, models
 from odoo.exceptions import UserError
 
+from .etapes import domaine_nom
 from .reprise import _param_int
 
 PARAM_JOURS_ENTRETIEN = "suivi_machines_helpdesk.jours_avant_entretien"
@@ -34,7 +35,7 @@ class HelpdeskTicket(models.Model):
     @api.model
     def _etape_contenant(self, mot, equipe=None):
         Etape = self.env["helpdesk.stage"]
-        etapes = Etape.search([("name", "ilike", mot)])
+        etapes = Etape.search(domaine_nom(mot))
         if equipe and "team_ids" in Etape._fields:
             etapes = etapes.filtered(lambda e: equipe in e.team_ids) or etapes
         return etapes[:1]

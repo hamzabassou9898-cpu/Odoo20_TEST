@@ -226,6 +226,8 @@ class TestPortailTechnicien(HttpCase):
 
     def test_admin_prevenu_par_une_activite(self):
         admin = self.env.ref("base.user_admin")
+        # Base avec des donnees (staging) : on compte a partir des notes deja a lire
+        self.notes_a_lire_avant = self.env.ref("suivi_machines_portail.indicateur_notes_a_lire").valeur
         note = self._envoyer_note(fichiers=[("pieces_jointes", ("p.jpg", b"\xff\xd8", "image/jpeg"))])
         self.assertFalse(note.lu)
         activite = note.activity_id
@@ -237,13 +239,13 @@ class TestPortailTechnicien(HttpCase):
         # Carte du tableau de bord
         ind = self.env.ref("suivi_machines_portail.indicateur_notes_a_lire")
         ind.invalidate_recordset()
-        self.assertEqual(ind.valeur, 1)
+        self.assertEqual(ind.valeur, self.notes_a_lire_avant + 1)
         self.assertEqual(ind.action_ouvrir()["res_model"], "suivi.note.technicien")
         # L'admin marque l'activite « Fait » (horloge) : la note devient « Lue »
         activite.with_user(admin).action_done()
         self.assertTrue(note.lu)
         ind.invalidate_recordset()
-        self.assertEqual(ind.valeur, 0)
+        self.assertEqual(ind.valeur, self.notes_a_lire_avant)
 
     def test_marquer_lue_ferme_l_activite(self):
         note = self._envoyer_note("Client absent")
@@ -269,7 +271,8 @@ class TestPortailTechnicien(HttpCase):
 
     # ------------------------------------------------------------ parcours entretien complet (synchronisation)
     def test_entretien_planifie_journee_et_pilotage(self):
-        resolu = self.env["helpdesk.stage"].create({"name": "Résolu"})
+        if not self.env["helpdesk.ticket"]._etape_contenant("résolu"):
+            self.env["helpdesk.stage"].create({"name": "Résolu"})
         categ = self.env["product.category"].create({"name": "Mach entretien", "suivi_machine": True})
         prod = self.env["product.product"].create({"name": "F ent", "categ_id": categ.id, "is_storable": True,
                                                    "tracking": "serial"})
@@ -299,7 +302,8 @@ class TestPortailTechnicien(HttpCase):
         wiz.action_valider()
         self.assertEqual(interv.state, "fait")
         self.assertEqual(len(ticket.intervention_ticket_ids), 1)
-        self.assertEqual(ticket.stage_id, resolu)
+        equipe = ticket.team_id if "team_id" in ticket._fields else None
+        self.assertEqual(ticket.stage_id, ticket._etape_contenant("résolu", equipe), "ticket résolu")
         self.assertNotIn(ticket, self.env[model].search(domaine), "plus dans les entretiens à faire")
         self.env.invalidate_all()
         self.assertEqual(self.env["portail.tache"].search([("ticket_id", "=", ticket.id)]).etat_suivi, "fait")

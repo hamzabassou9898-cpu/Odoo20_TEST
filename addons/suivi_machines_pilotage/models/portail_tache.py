@@ -10,6 +10,8 @@ from odoo.exceptions import UserError
 from odoo.tools import SQL
 from odoo.tools.misc import format_datetime
 
+from odoo.addons.suivi_machines_helpdesk.models.etapes import REGEX_ANNULE, REGEX_FERME
+
 TYPES_TACHE = [
     ("livraison", "Livraison"),
     ("ramassage", "Ramassage"),
@@ -68,7 +70,7 @@ class PortailTache(models.Model):
 
     def init(self):
         tools.drop_view_if_exists(self.env.cr, self._table)
-        ferme = "(résolu|resolu|annul|clôtur|clotur)"
+        ferme = REGEX_FERME
         societe_ticket = SQL("t.company_id") if "company_id" in self.env["helpdesk.ticket"]._fields \
             else SQL("NULL::integer")
         self.env.cr.execute(SQL("""
@@ -102,7 +104,7 @@ class PortailTache(models.Model):
                   FROM helpdesk_ticket t
              LEFT JOIN helpdesk_stage s ON s.id = t.stage_id
                  WHERE t.commande_reprise_id IS NULL
-                   AND COALESCE(s.name::text, '') !~* 'annul'
+                   AND COALESCE(s.name::text, '') !~* %(annule)s
                 UNION ALL
                 SELECT i.id * 10 + 3, CASE WHEN i.type IN ('entretien', 'installation') THEN i.type
                                            WHEN i.type IN ('bris', 'reparation', 'remplacement') THEN 'reparation'
@@ -112,7 +114,7 @@ class PortailTache(models.Model):
                   FROM machine_intervention i
                  WHERE i.state IN ('planifie', 'fait') AND i.ticket_id IS NULL AND i.type != 'ramassage'
                 ) u
-            )""", table=SQL.identifier(self._table), ferme=ferme,
+            )""", table=SQL.identifier(self._table), ferme=ferme, annule=REGEX_ANNULE,
             societe_ticket=societe_ticket, fuseau=FUSEAU,
             technicien_ticket=self._sql_technicien_ticket()))
 

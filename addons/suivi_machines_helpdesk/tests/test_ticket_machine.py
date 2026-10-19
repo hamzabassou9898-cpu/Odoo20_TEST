@@ -125,7 +125,8 @@ class TestTicketMachine(TransactionCase):
     def test_valider_entretien_met_a_jour_l_intervention_planifiee(self):
         from datetime import datetime
         tech = self._tech("tech_synchro_e")
-        resolu = self.env["helpdesk.stage"].create({"name": "Résolu"})
+        if not self.env["helpdesk.ticket"]._etape_contenant("résolu"):
+            self.env["helpdesk.stage"].create({"name": "Résolu"})
         ticket = self.env["helpdesk.ticket"].create({
             "name": "ENTRETIEN - M0", "partner_id": self.commerce.id, "lot_id": self.lots[0].id,
             "est_entretien": True, "user_id": tech.id, "date_planifiee": datetime(2020, 5, 4, 13, 0)})
@@ -142,7 +143,8 @@ class TestTicketMachine(TransactionCase):
         self.assertEqual(len(ticket.intervention_ticket_ids), avant, "pas de doublon")
         self.assertEqual(planifiee.state, "fait")
         self.assertEqual(planifiee.description, "Nettoyage complet")
-        self.assertEqual(ticket.stage_id, resolu, "le ticket ne reste pas ouvert")
+        equipe = ticket.team_id if "team_id" in ticket._fields else None
+        self.assertEqual(ticket.stage_id, ticket._etape_contenant("résolu", equipe), "le ticket ne reste pas ouvert")
 
     def test_entretien_valide_deux_fois_sans_doublon(self):
         """Meme machine validee deux fois le meme jour (deux tickets) : un seul entretien fait ; la visite
@@ -697,9 +699,12 @@ class TestTicketMachine(TransactionCase):
         # lots[2] : entretien fait il y a 2 mois -> rien
         Interv.create({"lot_id": self.lots[2].id, "type": "entretien", "state": "fait",
                        "date": fields.Datetime.now() - relativedelta(months=2)})
+        avant = T.search_count([("est_entretien", "=", True)])
         action = T._action_verifier_entretiens()
-        self.assertIn("2 ticket(s)", action["params"]["message"])
-        tickets = T.search([("est_entretien", "=", True)])
+        # Base avec des donnees (staging) : d'autres machines peuvent aussi etre dues ; on regarde les notres
+        self.assertIn("ticket(s)", action["params"]["message"])
+        self.assertGreaterEqual(T.search_count([("est_entretien", "=", True)]), avant + 2)
+        tickets = T.search([("est_entretien", "=", True), ("lot_id", "in", self.lots.ids)])
         self.assertEqual(set(tickets.lot_id.ids), {self.lots[0].id, self.lots[1].id})
         t0 = tickets.filtered(lambda t: t.lot_id == self.lots[0])
         t1 = tickets.filtered(lambda t: t.lot_id == self.lots[1])
@@ -1091,30 +1096,32 @@ class TestTicketMachine(TransactionCase):
 
     def test_ticket_assigne_va_dans_son_etape(self):
         """Ticket « Nouveau » assigné à quelqu'un (planifié) : il passe dans l'étape de son type."""
-        Etape = self.env["helpdesk.stage"]
-        nouveau = Etape.create({"name": "Nouveau"})
-        entretien_rep = Etape.create({"name": "Entretien & Réparation"})
-        # Creee par le module (configuration de Monroy) : on la reutilise, comme l'etape de reprise
-        remplacer = Etape.search([("name", "ilike", "remplacer")], limit=1) or \
-            Etape.create({"name": "Machine à remplacer"})
-        reprise = Etape.search([("name", "ilike", "reprise")], limit=1) or \
-            Etape.create({"name": "Installation de machine / Reprise de machine"})
+        Etape, T = self.env["helpdesk.stage"], self.env["helpdesk.ticket"]
+        # Etapes existantes reutilisees (base de staging, etapes en francais ou en anglais), sinon creees
+        nouveau = T._etape_contenant("nouveau") or Etape.create({"name": "Nouveau"})
+        for mot, nom in (("réparation", "Entretien & Réparation"), ("entretien", "Entretien & Réparation"),
+                         ("remplacer", "Machine à remplacer"),
+                         ("reprise", "Installation de machine / Reprise de machine")):
+            if not T._etape_contenant(mot):
+                Etape.create({"name": nom})
         tech = self.env["res.users"].create({"name": "Tech étape", "login": "tech_etape"})
-        T = self.env["helpdesk.ticket"]
-        cas = [("reparation", entretien_rep), ("entretien", entretien_rep), ("remplacement", remplacer),
-               ("ramassage", reprise)]
-        for type_demande, etape in cas:
+        mots = {"reparation": "réparation", "entretien": "entretien", "remplacement": "remplacer",
+                "ramassage": "reprise"}
+        for type_demande, mot in mots.items():
             with self.subTest(type_demande=type_demande):
                 ticket = T.create({"name": "Étape %s" % type_demande, "partner_id": self.commerce.id,
                                    "type_demande": type_demande, "stage_id": nouveau.id})
                 self.assertEqual(ticket.stage_id, nouveau, "personne assigné : reste dans Nouveau")
                 ticket.user_id = tech
-                self.assertEqual(ticket.stage_id, etape)
+                equipe = ticket.team_id if "team_id" in ticket._fields else None
+                self.assertEqual(ticket.stage_id, ticket._etape_contenant(mot, equipe))
+                self.assertNotEqual(ticket.stage_id, nouveau)
         # Assigne des la creation ; un ticket deja plus loin (ex. Resolu) ne recule pas
         direct = T.create({"name": "Direct", "partner_id": self.commerce.id, "type_demande": "reparation",
                            "stage_id": nouveau.id, "user_id": tech.id})
-        self.assertEqual(direct.stage_id, entretien_rep)
-        resolu = Etape.search([("name", "ilike", "résolu")], limit=1) or Etape.create({"name": "Résolu"})
+        equipe = direct.team_id if "team_id" in direct._fields else None
+        self.assertEqual(direct.stage_id, direct._etape_contenant("réparation", equipe))
+        resolu = T._etape_contenant("résolu") or Etape.create({"name": "Résolu"})
         fini = T.create({"name": "Fini", "partner_id": self.commerce.id, "type_demande": "reparation",
                          "stage_id": resolu.id})
         fini.user_id = tech
@@ -1179,7 +1186,7 @@ class TestTicketMachine(TransactionCase):
         self.assertEqual(ticket.contrat_couverture, "couvert")
         note = ticket.message_ids.filtered(lambda m: "Contrat du client" in (m.body or ""))
         self.assertEqual(len(note), 1, "note automatique dans le ticket")
-        self.assertIn("Convention slush", note.body)
+        self.assertIn(convention.name, note.body)
         self.assertIn("couverts par le contrat", ticket.contrat_couverture_texte)
         produits = commande.order_line.filtered(lambda l: not l.display_type)
         self.assertEqual(produits.product_id, self.env.ref("suivi_machines.produit_appel_inutile"))

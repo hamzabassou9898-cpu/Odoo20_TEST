@@ -5,6 +5,8 @@ from datetime import timedelta
 from odoo import api, fields, models
 from odoo.exceptions import UserError
 
+from .etapes import est_ferme
+
 PARAM_JOURS = "suivi_machines_helpdesk.jours_avant_reprise"
 PARAM_EQUIPE = "suivi_machines_helpdesk.equipe_reprise_id"
 PARAM_ETAPE = "suivi_machines_helpdesk.etape_reprise"
@@ -54,8 +56,7 @@ class HelpdeskTicket(models.Model):
                 ticket.stage_id = etape
 
     def _est_ferme(self):
-        nom = (self.stage_id.name or "").lower()
-        return any(mot in nom for mot in ("résolu", "resolu", "annul", "clôtur", "clotur"))
+        return est_ferme(self.stage_id.name)
 
     def _nommer_reprise(self):
         for ticket in self:

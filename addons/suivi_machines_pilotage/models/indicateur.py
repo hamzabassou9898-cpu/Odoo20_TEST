@@ -6,6 +6,8 @@ from odoo import api, fields, models
 from odoo.fields import Domain
 from odoo.tools.safe_eval import safe_eval
 
+from odoo.addons.suivi_machines_helpdesk.models.etapes import domaine_ferme, domaine_nom
+
 SECTIONS = [("appels", "Appels de service"), ("entretiens", "Entretiens & réparations"),
             ("livraisons", "Livraisons & ramassages"), ("locations", "Locations"),
             ("qualite", "Bris & réparations"), ("facturation", "Facturation")]
@@ -54,8 +56,7 @@ class PilotageIndicateur(models.Model):
         location = [("type_commande", "=", "location"), ("state", "=", "sale")]
         appels = [("est_entretien", "=", False), ("commande_reprise_id", "=", False)]
         # Ouvert = pas dans une etape Resolu / Annule / Cloture (un ticket sans etape compte)
-        ouverts = ["!", "|", "|", ("stage_id.name", "ilike", "résolu"), ("stage_id.name", "ilike", "annul"),
-                   ("stage_id.name", "ilike", "clôtur")]
+        ouverts = ["!"] + domaine_ferme()
         transfert = [("move_ids.product_id.categ_id.suivi_machine", "=", True)]
         a_faire = [("state", "not in", ("done", "cancel"))]
         livraison = [("location_id.usage", "=", "internal"), ("location_dest_id.usage", "=", "customer")]
@@ -81,9 +82,9 @@ class PilotageIndicateur(models.Model):
                                                            ("statut_entretien", "=", "a_planifier")]),
             # Ticket qui vient d'arriver : etape « Nouveau » (ou pas d'etape), personne ne l'a encore pris en
             # charge (aucun technicien assigne, rien de planifie)
-            "tickets_nouveaux": ("helpdesk.ticket", ["|", ("stage_id", "=", False), ("stage_id.name", "ilike", "nouveau"),
-                                                     ("user_id", "=", False),
-                                                     ("statut_entretien", "not in", ["planifie", "fait"])]),
+            "tickets_nouveaux": ("helpdesk.ticket", ["|", ("stage_id", "=", False)]
+                                 + domaine_nom("nouveau", "stage_id.name")
+                                 + [("user_id", "=", False), ("statut_entretien", "not in", ["planifie", "fait"])]),
             # Planifie = assigne a un technicien (ou intervention planifiee) : dans sa journee
             # Entretiens + reparations + machines a remplacer assignes a un technicien, pas encore valides
             "entretiens_ouverts": ("helpdesk.ticket", [("statut_entretien", "=", "planifie")]),
@@ -319,19 +320,27 @@ class PilotageIndicateur(models.Model):
                     action[cle] = defaut
         return action
 
-    def _action_entretiens_et_reparations(self):
-        """Carte d'echeance (en retard, semaine, 30 jours) avec des reparations / machines a remplacer :
-        une seule liste de tickets (reparations + tickets d'entretien des machines comptees). Sans
-        reparation, False : la liste des machines a entretenir s'ouvre comme avant."""
-        _modele, domaine_tickets = self._parts_reparation()[self.code]
-        Ticket = self.env["helpdesk.ticket"]
-        if not Ticket.search_count(domaine_tickets):
-            return False
-        lots = self.env["stock.lot"].search(self._domaines()[self.code][1])
+    @api.model
+    def _liste_echeance(self, code):
+        """Ce que montre une carte d'echeance (en retard, semaine, 30 jours) : (modele, domaine). Avec des
+        reparations / machines a remplacer : une seule liste de tickets (reparations + tickets d'entretien
+        des machines comptees) ; sinon la liste des machines a entretenir. Le chiffre compte la meme chose."""
+        modele_lots, domaine_lots = self._domaines()[code]
+        _modele, domaine_tickets = self._parts_reparation()[code]
+        if not self.env["helpdesk.ticket"].search_count(domaine_tickets):
+            return modele_lots, domaine_lots
+        lots = self.env["stock.lot"].search(domaine_lots)
         if lots:
             entretiens = [("est_entretien", "=", True), ("lot_id", "in", lots.ids),
                           ("statut_entretien", "in", ("a_planifier", "planifie"))]
             domaine_tickets = list(Domain.OR([domaine_tickets, entretiens]))
+        return "helpdesk.ticket", domaine_tickets
+
+    def _action_entretiens_et_reparations(self):
+        """Carte d'echeance avec des reparations : la liste des tickets ; sinon False (liste des machines)."""
+        modele, domaine_tickets = self._liste_echeance(self.code)
+        if modele != "helpdesk.ticket":
+            return False
         action = self._action_xml("suivi_machines_pilotage.action_pilotage_appels", self.name, {}, domaine_tickets)
         action.pop("help", None)
         return action

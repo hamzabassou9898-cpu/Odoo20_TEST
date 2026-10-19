@@ -3,6 +3,8 @@
 from odoo import api, fields, models
 from odoo.exceptions import UserError, ValidationError
 
+from .etapes import est_ferme
+
 TYPES_DEMANDE = [
     ("reparation", "Réparation"),
     ("ramassage", "Ramassage"),
@@ -23,8 +25,6 @@ TYPES_REPARATION = [
 # Tickets qui se planifient (technicien a envoyer chez le client)
 TYPES_A_PLANIFIER = ("entretien", "reparation", "remplacement")
 STATUTS_ENTRETIEN = [("a_planifier", "À planifier"), ("planifie", "Planifié"), ("fait", "Fait")]
-# Etapes qui ferment un ticket (Resolu, Cloture, Annule)
-MOTS_FERME = ("résolu", "resolu", "clôtur", "clotur", "annul")
 # Tickets crees par les actions planifiees d'Odoo (bandeau en haut du ticket)
 ORIGINES_AUTO = [("entretien", "Entretien à échéance"), ("reprise", "Fin de location")]
 
@@ -89,7 +89,7 @@ class HelpdeskTicket(models.Model):
             if ticket.commande_reprise_id or not (ticket.est_entretien
                                                   or ticket.type_demande in TYPES_A_PLANIFIER):
                 ticket.statut_entretien = False
-            elif any(mot in (ticket.stage_id.name or "").lower() for mot in MOTS_FERME):
+            elif est_ferme(ticket.stage_id.name):
                 ticket.statut_entretien = "fait"
             elif ticket.user_id or "planifie" in ticket.sudo().intervention_ticket_ids.mapped("state"):
                 ticket.statut_entretien = "planifie"

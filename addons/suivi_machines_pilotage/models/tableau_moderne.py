@@ -35,8 +35,11 @@ class PilotageIndicateur(models.Model):
         domaines = self._domaines()
         if code not in domaines:
             return 0
+        if code in ("entretien_retard", "entretien_semaine", "entretien_mois"):
+            # Cartes d'echeance : le chiffre compte exactement les lignes de la liste qu'elles ouvrent
+            model, domaine = self._liste_echeance(code)
+            return self.env[model].search_count(domaine)
         model, domaine = domaines[code]
-        # Cartes d'entretien regroupees : les reparations comptent aussi
         return self.env[model].search_count(domaine) + self._compte_reparations(code)
 
     @api.model

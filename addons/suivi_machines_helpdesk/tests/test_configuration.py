@@ -1,42 +1,42 @@
 # -*- coding: utf-8 -*-
 from odoo.tests import TransactionCase, tagged
 
+from odoo.addons.suivi_machines_helpdesk.models.configuration import creer_si_absent
+
+MODULE = "suivi_machines_helpdesk"
+
 
 @tagged("post_install", "-at_install")
 class TestConfigurationMonroy(TransactionCase):
-    """Reglages de Monroy repris dans le module : presents, jamais en double, jamais retouches."""
+    """Reglages de Monroy repris dans le module : presents, jamais en double, jamais retouches.
+    Les tests fonctionnent sur une base neuve comme sur une base ou les reglages ont ete faits a la main."""
 
     def _nb(self, modele, nom):
         return self.env[modele].with_context(active_test=False).search_count([("name", "=", nom)])
 
     def test_etape_et_etiquette_presentes(self):
-        etape = self.env["helpdesk.stage"].search([("name", "=", "Machine à remplacer")])
-        self.assertEqual(len(etape), 1)
-        self.assertEqual(self._nb("helpdesk.tag", "Machine à remplacer"), 1)
+        self.assertTrue(self._nb("helpdesk.stage", "Machine à remplacer"))
+        self.assertTrue(self._nb("helpdesk.tag", "Machine à remplacer"))
 
     def test_relance_sans_doublon(self):
         """Chaque mise a jour du module relance la configuration : rien n'est cree une 2e fois."""
+        avant = (self._nb("helpdesk.stage", "Machine à remplacer"), self._nb("helpdesk.tag", "Machine à remplacer"))
         self.env["helpdesk.ticket"]._configuration_monroy()
         self.env["helpdesk.ticket"]._configuration_monroy()
-        self.assertEqual(self._nb("helpdesk.stage", "Machine à remplacer"), 1)
-        self.assertEqual(self._nb("helpdesk.tag", "Machine à remplacer"), 1)
+        self.assertEqual((self._nb("helpdesk.stage", "Machine à remplacer"),
+                          self._nb("helpdesk.tag", "Machine à remplacer")), avant)
 
-    def test_reglage_fait_a_la_main_garde(self):
-        """Base ou l'etape a ete creee a la main (ex. Monroy_test) : on la garde telle quelle, sans doublon."""
-        self.env.ref("suivi_machines_helpdesk.etape_machine_a_remplacer").unlink()
-        self.env.ref("suivi_machines_helpdesk.tag_machine_a_remplacer").unlink()
-        Etape = self.env["helpdesk.stage"]
-        archivable, ordonnable = "active" in Etape._fields, "sequence" in Etape._fields
-        valeurs = {"name": "Machine à remplacer"}
-        if archivable:
-            valeurs["active"] = False
-        if ordonnable:
-            valeurs["sequence"] = 9
-        a_la_main = Etape.create(valeurs)
-        self.env["helpdesk.ticket"]._configuration_monroy()
-        self.assertEqual(self._nb("helpdesk.stage", "Machine à remplacer"), 1)
-        if archivable:
-            self.assertFalse(a_la_main.active, "un reglage archive a la main reste archive")
-        if ordonnable:
-            self.assertEqual(a_la_main.sequence, 9)
-        self.assertEqual(self._nb("helpdesk.tag", "Machine à remplacer"), 1, "l'etiquette manquante est recreee")
+    def test_creer_si_absent(self):
+        """Absent -> cree une seule fois (xmlid pose) ; deja fait a la main -> garde tel quel, sans xmlid."""
+        nom = "Réglage de test Monroy"
+        tag, cree = creer_si_absent(self.env, MODULE, "tag_test_configuration", "helpdesk.tag", nom)
+        self.assertTrue(cree)
+        self.assertEqual(self.env.ref(MODULE + ".tag_test_configuration"), tag)
+        encore, cree = creer_si_absent(self.env, MODULE, "tag_test_configuration", "helpdesk.tag", nom)
+        self.assertEqual((encore, cree), (tag, False))
+        a_la_main = self.env["helpdesk.tag"].create({"name": "Réglage fait à la main"})
+        trouve, cree = creer_si_absent(self.env, MODULE, "tag_test_main", "helpdesk.tag", "Réglage fait à la main",
+                                       {"champ_inexistant": 1})
+        self.assertEqual((trouve, cree), (a_la_main, False))
+        self.assertFalse(self.env.ref(MODULE + ".tag_test_main", raise_if_not_found=False))
+        self.assertEqual(self._nb("helpdesk.tag", "Réglage fait à la main"), 1)

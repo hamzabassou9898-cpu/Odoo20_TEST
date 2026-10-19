@@ -22,6 +22,8 @@ class TestAppelWeb(HttpCase):
         cls.lot = env["stock.lot"].create({"name": "WEB-1", "product_id": produit.id, "ref": "W1"})
         env["machine.intervention"].create({"lot_id": cls.lot.id, "type": "installation", "state": "fait",
                                             "partner_id": cls.client.id})
+        # Base avec des donnees (staging) : les tickets web deja la ne comptent pas
+        cls.tickets_web_avant = env["helpdesk.ticket"].search([("recu_par_web", "=", True)])
 
     def _post(self, **valeurs):
         base = {"prenom": "Julie", "nom": "Tremblay", "courriel": "julie@exemple.ca", "entreprise": "Café Web",
@@ -35,7 +37,7 @@ class TestAppelWeb(HttpCase):
         return self.url_open("/appel-de-service", data=dict(self._post(**valeurs), csrf_token=jeton))
 
     def _tickets_web(self):
-        return self.env["helpdesk.ticket"].search([("recu_par_web", "=", True)])
+        return self.env["helpdesk.ticket"].search([("recu_par_web", "=", True)]) - self.tickets_web_avant
 
     def test_page_publique(self):
         page = self.url_open("/appel-de-service")
