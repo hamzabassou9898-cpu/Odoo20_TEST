@@ -501,8 +501,14 @@ class TestSuiviMachines(TransactionCase):
         vente = self._commande(self.lot_a)
         self.assertEqual(vente.state, "sale", "une vente n'a pas de période")
         arch = etree.fromstring(self.env["sale.order"].get_views([(False, "form")])["views"]["form"]["arch"])
-        for nom in ("date_debut_location", "date_fin_location"):
-            self.assertEqual(arch.xpath("//field[@name='%s']" % nom)[0].get("required"), "type_commande == 'location'")
+        if "rental_start_date" in self.env["sale.order"]._fields:
+            # Application Location : sa periode, obligatoire sur nos contrats de location (les siens l'exigent deja)
+            requis = [n.get("required") for n in arch.xpath("//field[@name='rental_start_date']")]
+            self.assertIn("type_commande == 'location' and not is_rental_order", requis)
+        else:
+            for nom in ("date_debut_location", "date_fin_location"):
+                self.assertEqual(arch.xpath("//field[@name='%s']" % nom)[0].get("required"),
+                                 "type_commande == 'location'")
 
     def test_ajout_au_contrat_de_location(self):
         """Upgrade : une machine (ou un accessoire) ajoutée au contrat déjà livré part en livraison ;
@@ -826,6 +832,14 @@ class TestSuiviMachines(TransactionCase):
             # Application Location : sa « Période de location » native, sous Expiration
             self.assertIn('widget="daterange"', arch)
             self.assertIn("rental_return_date", arch)
+            # Une seule « Période de location » a l'ecran : celle de l'application seulement sur ses contrats
+            # (etiquette comprise), la notre sur les autres
+            from lxml import etree
+            noeuds = etree.fromstring(arch).xpath(
+                "//label[@for='rental_start_date'] | //field[@name='rental_start_date']")
+            self.assertTrue(noeuds)
+            for noeud in noeuds:
+                self.assertIn("is_rental_order", noeud.get("invisible") or "", etree.tostring(noeud))
         else:
             self.assertIn('name="date_debut_location"', arch)
             self.assertNotIn("date_fin_auto\"", arch.split('name="date_debut_location"')[1].split("/>")[0])

@@ -55,6 +55,13 @@ class SaleOrder(models.Model):
         if nos_dates and "rental_start_date" in self._fields:
             for node in nos_dates:
                 node.set("invisible", "1")
+            # Periode native (etiquette comprise) : seulement sur les contrats de l'application Location. Sinon
+            # son etiquette restait affichee a vide au-dessus de la notre (« Periode de location » en double).
+            for node in arch.xpath("//label[@for='rental_start_date'] | //field[@name='rental_start_date']"):
+                condition = (node.get("invisible") or "").strip()
+                if "is_rental_order" not in condition:
+                    node.set("invisible", "(%s) or not is_rental_order" % condition
+                             if condition not in ("", "0", "False") else "not is_rental_order")
             if not arch.xpath("//field[@name='is_rental_order']"):
                 nos_dates[0].addprevious(etree.Element("field", {"name": "is_rental_order", "invisible": "1"}))
             ancre = arch.xpath("//field[@name='validity_date']") or nos_dates
