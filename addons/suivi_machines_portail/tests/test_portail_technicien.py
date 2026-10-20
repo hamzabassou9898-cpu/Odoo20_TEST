@@ -531,6 +531,19 @@ class TestPortailTechnicien(HttpCase):
         self.assertIn("Tech portail B", noms)
         self.assertEqual(noms[-1], "Sans technicien")
 
+    def test_planning_seulement_techniciens_portail(self):
+        """Planning : ni ligne ni tâche pour un utilisateur interne (Administrator, API...)."""
+        admin = self.env.ref("base.user_admin")
+        interne = self.env["helpdesk.ticket"].create({
+            "name": "Ticket de l'admin au planning", "partner_id": self.client.id, "user_id": admin.id,
+            "date_planifiee": fields.Datetime.now()})
+        donnees = self.env["portail.tache"].donnees_planning(False)
+        self.assertNotIn(admin.id, [ligne["id"] for ligne in donnees["lignes"]])
+        titres = [carte["titre"] for carte in donnees["cartes"]]
+        self.assertNotIn(interne.name, titres)
+        self.assertIn(self.ticket.name, titres, "tâche du technicien portail")
+        self.assertNotIn(admin.id, [t["id"] for t in donnees["filtres"]["techniciens"]])
+
 
     def test_portail_techniciens_seulement_techniciens(self):
         """Pilotage > Portail techniciens : colonnes des techniciens portail seulement."""

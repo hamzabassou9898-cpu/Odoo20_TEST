@@ -61,9 +61,14 @@ class PortailTache(models.Model):
 
     @api.model
     def _techniciens_planning(self, taches):
-        """Planning : tous les techniciens portail (meme sans tache cette semaine) + ceux qui ont des taches."""
-        portail = self.env["res.users"].sudo().search([("partner_id.est_technicien", "=", True)])
-        return super()._techniciens_planning(taches) | portail.sudo(False)
+        """Planning : seulement les techniciens portail, meme sans tache cette semaine."""
+        return self.env["res.users"].sudo().search(self._domaine_techniciens_portail()).sudo(False)
+
+    @api.model
+    def _domaine_techniciens_planning(self):
+        """Planning : taches des techniciens portail et taches sans technicien (comme le Portail techniciens)."""
+        return ["|", ("technicien_id", "=", False), "&", ("technicien_id.share", "=", True),
+                ("technicien_id.partner_id.est_technicien", "=", True)]
 
 
 class PortalEntry(models.Model):

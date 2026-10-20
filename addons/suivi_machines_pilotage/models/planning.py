@@ -61,7 +61,12 @@ class PortailTache(models.Model):
             domaine = [*domaine, ("technicien_id", "=", technicien_id if technicien_id > 0 else False)]
         if type_tache:
             domaine = [*domaine, ("type_tache", "=", type_tache)]
-        return domaine
+        return [*domaine, *self._domaine_techniciens_planning()]
+
+    @api.model
+    def _domaine_techniciens_planning(self):
+        """Taches montrees au Planning selon leur technicien (crochet du portail : techniciens portail)."""
+        return []
 
     @api.model
     def donnees_planning(self, jour_iso=None, periode="semaine", technicien_id=False, type_tache=False):

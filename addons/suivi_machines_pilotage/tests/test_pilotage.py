@@ -373,6 +373,15 @@ class TestPilotage(TransactionCase):
         self.assertIn("action_ouvrir_reparations", arch)
         self.assertIn("action_ouvrir_remplacements", arch)
 
+    def _technicien_planning(self, nom, login):
+        """Technicien comme au Planning : utilisateur portail coche « Technicien » si le portail est installe."""
+        if "est_technicien" not in self.env["res.partner"]._fields:
+            return self.env["res.users"].create({"name": nom, "login": login})
+        user = self.env["res.users"].create({"name": nom, "login": login,
+                                             "group_ids": [(6, 0, [self.env.ref("base.group_portal").id])]})
+        user.partner_id.est_technicien = True
+        return user
+
     def _demain_14h(self):
         import pytz
         from datetime import datetime, time, timedelta
@@ -410,8 +419,8 @@ class TestPilotage(TransactionCase):
     def test_planning_glisser_deposer(self):
         import pytz
         Ticket = self.env["helpdesk.ticket"]
-        tech_a = self.env["res.users"].create({"name": "Tech Alpha", "login": "tech_alpha"})
-        tech_b = self.env["res.users"].create({"name": "Tech Bravo", "login": "tech_bravo"})
+        tech_a = self._technicien_planning("Tech Alpha", "tech_alpha")
+        tech_b = self._technicien_planning("Tech Bravo", "tech_bravo")
         date = self._demain_14h()
         ticket = Ticket.create({"name": "Fuit", "partner_id": self.client.id, "type_demande": "reparation",
                                 "user_id": tech_a.id, "date_planifiee": date})
@@ -460,8 +469,8 @@ class TestPilotage(TransactionCase):
         def quand(jours, heure=14):
             return fuseau.localize(datetime.combine(lundi + timedelta(days=jours), time(heure))).astimezone(
                 pytz.UTC).replace(tzinfo=None)
-        tech_a = self.env["res.users"].create({"name": "Tech Planning A", "login": "tech_planning_a"})
-        tech_b = self.env["res.users"].create({"name": "Tech Planning B", "login": "tech_planning_b"})
+        tech_a = self._technicien_planning("Tech Planning A", "tech_planning_a")
+        tech_b = self._technicien_planning("Tech Planning B", "tech_planning_b")
         Ticket.create([
             {"name": "Plan A1", "partner_id": self.client.id, "type_demande": "reparation", "user_id": tech_a.id,
              "date_planifiee": quand(0)},
