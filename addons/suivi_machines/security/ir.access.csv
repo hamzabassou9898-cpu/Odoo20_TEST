@@ -9,3 +9,4 @@ access_planifier_ramassage_user,Planifier le ramassage,suivi.machines.planifier.
 access_type_contrat_employe,Types de contrat : lecture,suivi.type.contrat,base.group_user,r,
 access_type_contrat_vente,Types de contrat : responsables ventes,suivi.type.contrat,sales_team.group_sale_manager,crud,
 access_forfait_renouvellement_user,Renouveler le forfait,suivi.forfait.renouvellement,sales_team.group_sale_salesman,crud,
+access_prolonger_contrat_vente,Prolonger un contrat,suivi.machines.prolonger.contrat,sales_team.group_sale_salesman,crud,

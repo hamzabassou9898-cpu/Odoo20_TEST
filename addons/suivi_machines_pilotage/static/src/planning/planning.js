@@ -2,9 +2,12 @@ import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
 import { useChart } from "@web/core/utils/chart_hook";
 import { standardActionServiceProps } from "@web/webclient/actions/action_plugin";
-import { Component, onWillStart, proxy, t, useProps } from "@odoo/owl";
+import { Component, onMounted, onWillStart, onWillUnmount, proxy, t, useProps } from "@odoo/owl";
 
 const GRILLE = { color: "#eef0f4" };
+// Glisser une tache contre le bord droit (gauche) de l'ecran : periode suivante (precedente) apres ce delai
+const MARGE_BORD = 70;
+const DELAI_BORD = 700;
 const AXE = { color: "#94a3b8", font: { size: 11 } };
 
 /** Un graphique Chart.js (natif Odoo) : redessine seulement quand ses donnees changent. */
@@ -66,19 +69,41 @@ export class PlanningSemaine extends Component {
         this.actionService = useService("action");
         this.notification = useService("notification");
         this.state = proxy({ donnees: null, chargement: true, survol: "", periode: "semaine",
-                             technicien_id: 0, type_tache: "" });
+                             technicien_id: 0, type_tache: "", bord: "" });
         this.glissee = null;
+        this.minuterieBord = null;
+        this.surBord = (ev) => this.glisserVersBord(ev);
         onWillStart(() => this.charger());
+        // Fin du glisser n'importe ou (la carte d'origine peut avoir disparu en changeant de semaine)
+        this.surFin = () => setTimeout(() => this.finGlisser());
+        onMounted(() => {
+            window.addEventListener("dragover", this.surBord);
+            window.addEventListener("dragend", this.surFin);
+            window.addEventListener("drop", this.surFin);
+        });
+        onWillUnmount(() => {
+            window.removeEventListener("dragover", this.surBord);
+            window.removeEventListener("dragend", this.surFin);
+            window.removeEventListener("drop", this.surFin);
+            this.arreterBord();
+        });
     }
 
     async charger(jour = null) {
         this.state.chargement = true;
+        // Seule la derniere demande s'affiche (un changement de semaine en cours ne remplace pas la suivante)
+        const numero = (this.numeroChargement = (this.numeroChargement || 0) + 1);
         try {
-            this.state.donnees = await this.orm.call("portail.tache", "donnees_planning", [
+            const donnees = await this.orm.call("portail.tache", "donnees_planning", [
                 jour || false, this.state.periode, this.state.technicien_id || false, this.state.type_tache || false,
             ]);
+            if (numero === this.numeroChargement) {
+                this.state.donnees = donnees;
+            }
         } finally {
-            this.state.chargement = false;
+            if (numero === this.numeroChargement) {
+                this.state.chargement = false;
+            }
         }
     }
 
@@ -121,6 +146,7 @@ export class PlanningSemaine extends Component {
         const carte = this.glissee;
         this.glissee = null;
         this.state.survol = "";
+        this.arreterBord();
         if (!carte || (carte.technicien_id === ligne.id && carte.jour === jour.iso)) {
             return;
         }
@@ -128,13 +154,53 @@ export class PlanningSemaine extends Component {
             await this.orm.call("portail.tache", "deplacer_planning", [carte.id, ligne.id, jour.iso]);
             this.notification.add(`« ${carte.titre} » → ${ligne.nom}, ${jour.titre}`, { type: "success" });
         } finally {
-            await this.charger(this.state.donnees.debut);
+            // On reste sur la periode ou la tache vient d'etre posee
+            await this.charger(jour.iso);
         }
     }
 
     finGlisser() {
         this.glissee = null;
         this.state.survol = "";
+        this.arreterBord();
+    }
+
+    /** Tache tenue contre un bord de l'ecran : on passe a la periode suivante / precedente, et on continue
+     * tant qu'elle y reste ; la tache se depose ensuite dans la nouvelle semaine. */
+    glisserVersBord(ev) {
+        if (!this.glissee) {
+            return;
+        }
+        const bord = ev.clientX >= window.innerWidth - MARGE_BORD ? "suivante"
+            : ev.clientX <= MARGE_BORD ? "precedente" : "";
+        if (bord === this.state.bord) {
+            return;
+        }
+        this.arreterBord();
+        this.state.bord = bord;
+        if (bord) {
+            this.minuterieBord = setTimeout(() => this.changerDeSemaine(bord), DELAI_BORD);
+        }
+    }
+
+    async changerDeSemaine(bord) {
+        this.minuterieBord = null;
+        const jeton = this.jetonBord;
+        if (!this.glissee || this.state.bord !== bord) {
+            return;
+        }
+        await this.charger(this.state.donnees[bord]);
+        // Toujours contre le meme bord (et pas lachee entre-temps) : on continue
+        if (jeton === this.jetonBord && this.glissee && this.state.bord === bord) {
+            this.minuterieBord = setTimeout(() => this.changerDeSemaine(bord), DELAI_BORD * 2);
+        }
+    }
+
+    arreterBord() {
+        clearTimeout(this.minuterieBord);
+        this.minuterieBord = null;
+        this.jetonBord = (this.jetonBord || 0) + 1;
+        this.state.bord = "";
     }
 
     async ouvrir(carte) {

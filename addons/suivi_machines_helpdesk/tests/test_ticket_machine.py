@@ -479,6 +479,37 @@ class TestTicketMachine(TransactionCase):
                                                    "type_demande": "ramassage"})
         self.assertFalse(sans.commande_reprise_id)
 
+    def test_prolongation_ferme_la_reprise(self):
+        """Contrat prolonge : le ticket de reprise de l'ancienne fin est ferme ; rien de nouveau avant la
+        nouvelle fin - 30 jours."""
+        stock = self.env.ref("stock.stock_location_stock")
+        lot = self.env["stock.lot"].create({"name": "PROL-1", "product_id": self.produit.id, "ref": "P1"})
+        self.env["stock.quant"]._update_available_quantity(self.produit, stock, 1, lot_id=lot)
+        so = self.env["sale.order"].create({
+            "partner_id": self.commerce.id, "type_commande": "location", "date_debut_location": PERIODE_TEST[0],
+            "date_fin_location": PERIODE_TEST[1],
+            "order_line": [(0, 0, {"product_id": self.produit.id, "product_uom_qty": 1, "machine_lot_id": lot.id})]})
+        so.action_confirm()
+        pk = so.picking_ids
+        pk.action_assign()
+        pk.move_ids.picked = True
+        pk.livreur_id = pk.livreur_id or self.env.user
+        pk.prochain_entretien = pk.prochain_entretien or fields.Date.today() + relativedelta(months=12)
+        pk.frequence_entretien = pk.frequence_entretien or "12"
+        pk.with_context(skip_sms=True).button_validate()
+        so.date_fin_location = fields.Datetime.now() + relativedelta(days=10)
+        SO = self.env["sale.order"]
+        ticket = SO._cron_tickets_reprise().filtered(lambda t: t.commande_reprise_id == so)
+        self.assertEqual(len(ticket), 1)
+        annule = self.env["helpdesk.ticket"]._etape_contenant("annul") \
+            or self.env["helpdesk.stage"].create({"name": "Annulé"})
+        so._prolonger(so.date_fin_location + relativedelta(years=1))
+        self.assertTrue(ticket._est_ferme() or not ticket.active, "reprise de l'ancienne fin fermée")
+        self.assertEqual(ticket.stage_id, annule)
+        self.assertIn("prolongé", ticket.message_ids[:1].body)
+        self.assertFalse(SO._cron_tickets_reprise().filtered(lambda t: t.commande_reprise_id == so),
+                         "nouvelle fin dans un an : pas de nouveau ticket")
+
     def test_tickets_de_reprise(self):
         stock = self.env.ref("stock.stock_location_stock")
         lot = self.env["stock.lot"].create({"name": "REP-1", "product_id": self.produit.id, "ref": "R1"})

@@ -54,6 +54,8 @@
               action="action_pilotage_nouveau_contrat" sequence="0"/>
     <menuitem id="menu_pilotage_contrats" name="Contrats de location" parent="menu_pilotage_locations"
               action="action_pilotage_locations" sequence="1"/>
+    <menuitem id="menu_pilotage_prolongation" name="Prolongation de contrat" parent="menu_pilotage_locations"
+              action="action_pilotage_prolongation" sequence="1"/>
     <menuitem id="menu_pilotage_types_contrat" name="Types de contrat" parent="menu_pilotage_locations"
               action="suivi_machines.action_types_contrat" sequence="9"/>
     <menuitem id="menu_pilotage_reprises" name="Tickets de reprise" parent="menu_pilotage_locations"

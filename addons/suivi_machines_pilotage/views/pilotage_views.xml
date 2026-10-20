@@ -313,6 +313,42 @@
             (0, 0, {'view_mode': 'graph', 'view_id': ref('view_pilotage_location_graph')})]"/>
     </record>
 
+    <!-- Prolongation de contrat : tous les contrats de location confirmes, par client, bouton Prolonger -->
+    <record id="view_pilotage_prolongation_list" model="ir.ui.view">
+        <field name="name">pilotage.sale.order.prolongation.list</field>
+        <field name="model">sale.order</field>
+        <field name="priority">101</field>
+        <field name="arch" type="xml">
+            <list create="false" default_order="date_fin_location asc"
+                  decoration-danger="date_fin_location and date_fin_location &lt; now"
+                  decoration-warning="date_fin_location and date_fin_location &gt;= now and date_fin_location &lt;= (context_today() + relativedelta(days=30)).strftime('%Y-%m-%d')">
+                <field name="name" string="Contrat"/>
+                <field name="partner_id" string="Client"/>
+                <field name="type_contrat_id" optional="show"/>
+                <field name="machine_ids" widget="many2many_tags" string="Machines"/>
+                <field name="date_debut_location" string="Début" widget="date"/>
+                <field name="date_fin_location" string="Fin" widget="date"/>
+                <field name="date_fin_location" string="Reste" widget="remaining_days"/>
+                <field name="state" column_invisible="1"/>
+                <field name="type_commande" column_invisible="1"/>
+                <button name="action_prolonger_contrat" type="object" string="Prolonger" icon="event_upcoming"
+                        class="btn-primary"/>
+            </list>
+        </field>
+    </record>
+    <record id="action_pilotage_prolongation" model="ir.actions.act_window">
+        <field name="name">Prolongation de contrat</field>
+        <field name="res_model">sale.order</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('type_commande', '=', 'location'), ('state', '=', 'sale')]</field>
+        <field name="context">{'group_by': ['partner_id']}</field>
+        <field name="search_view_id" ref="view_pilotage_location_search"/>
+        <field name="view_ids" eval="[(5, 0, 0), (0, 0, {'view_mode': 'list', 'view_id': ref('view_pilotage_prolongation_list')})]"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aucun contrat de location confirmé</p>
+        </field>
+    </record>
+
     <!-- ================================================================ TICKETS DE REPRISE / D'ENTRETIEN -->
     <record id="action_pilotage_tickets_reprise" model="ir.actions.act_window">
         <field name="name">Tickets de reprise</field>

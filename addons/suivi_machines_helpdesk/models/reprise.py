@@ -252,6 +252,24 @@ class SaleOrder(models.Model):
             crees |= ticket
         return crees
 
+    def _prolonger(self, nouvelle_fin):
+        """Contrat prolonge : le ticket de reprise cree par Odoo pour l'ancienne fin n'a plus lieu d'etre
+        (ferme avec une note) ; le prochain sera cree X jours avant la nouvelle fin."""
+        ancienne_fin = super()._prolonger(nouvelle_fin)
+        Ticket = self.env["helpdesk.ticket"]
+        perimes = Ticket.search([("commande_reprise_id", "=", self.id), ("origine_auto", "=", "reprise"),
+                                 ("date_fin_reprise", "!=", False), ("date_fin_reprise", "<", nouvelle_fin)])
+        annule = Ticket._etape_contenant("annul")
+        for ticket in perimes.filtered(lambda t: not t._est_ferme()):
+            ticket.message_post(body=self.env._(
+                "Contrat %(contrat)s prolongé jusqu'au %(fin)s : reprise annulée. Si un ramassage était "
+                "déjà planifié, annulez-le.", contrat=self.name, fin=self._date_courte(nouvelle_fin)))
+            if annule:
+                ticket.stage_id = annule
+            elif "active" in ticket._fields:
+                ticket.active = False
+        return ancienne_fin
+
     def action_creer_tickets_reprise(self):
         """Bouton du contrat : cree le ticket de reprise maintenant (sans attendre le delai),
         sinon explique pourquoi ce n'est pas possible."""

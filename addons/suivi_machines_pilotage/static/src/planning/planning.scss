@@ -69,4 +69,8 @@
     .o_pp_legende { display: flex; gap: 6px; align-items: center; margin-top: 10px; font-size: 12px; color: #6b7280;
         .o_pp_carte { cursor: default; } }
     &.o_pp_charge .o_pp_grille { opacity: .6; }
+    .o_pp_bord { position: fixed; top: 45%; z-index: 20; background: #71639e; color: #fff; font-weight: 700;
+        padding: 14px 10px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0, 0, 0, .2); pointer-events: none; }
+    .o_pp_bord_suivante { right: 8px; }
+    .o_pp_bord_precedente { left: 8px; }
 }

@@ -4,6 +4,9 @@
 
     <div t-name="suivi_machines_pilotage.PlanningSemaine" t-translation="off" t-attf-class="o_action o_pilotage_planning {{ this.state.chargement ? 'o_pp_charge' : '' }}">
         <t t-set="d" t-value="this.state.donnees"/>
+        <div t-if="this.state.bord" t-attf-class="o_pp_bord o_pp_bord_{{ this.state.bord }}">
+            <t t-if="this.state.bord === 'suivante'">Suivant ›</t><t t-else="">‹ Précédent</t>
+        </div>
         <div class="o_content o_pp_defile">
         <div class="o_pp_wrap" t-if="d">
             <t t-set="k" t-value="d.indicateurs"/>

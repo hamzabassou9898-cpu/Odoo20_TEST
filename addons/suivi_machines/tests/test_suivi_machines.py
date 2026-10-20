@@ -1030,6 +1030,43 @@ class TestContratEnLigne(HttpCase):
 
 
 
+    def test_prolonger_contrat(self):
+        """Prolonger un contrat confirme : par duree (1 an, 6 mois, 3 mois) ou jusqu'a une date choisie ;
+        meme heure de fin, note dans le fil ; jamais plus tot, jamais un devis."""
+        client = self.env["res.partner"].create({"name": "Client prolongation"})
+        produit = self.env["product.product"].create({"name": "Machine prolongation"})
+        so = self.env["sale.order"].create({
+            "partner_id": client.id, "type_commande": "location", "date_debut_location": PERIODE_TEST[0],
+            "date_fin_location": PERIODE_TEST[1], "order_line": [(0, 0, {"product_id": produit.id})]})
+        with self.assertRaises(UserError):
+            so.action_prolonger_contrat()          # devis : pas encore un contrat
+        so.action_confirm()
+        fin = so.date_fin_location
+        action = so.action_prolonger_contrat()
+        self.assertEqual((action["res_model"], action["target"]), ("suivi.machines.prolonger.contrat", "new"))
+        Wizard = self.env["suivi.machines.prolonger.contrat"].with_context(action["context"], tz="America/Toronto")
+        wiz = Wizard.create({})
+        self.assertEqual((wiz.mode, wiz.duree), ("duree", "12"), "1 an proposé")
+        def locale(moment):
+            return fields.Datetime.context_timestamp(wiz, moment).replace(tzinfo=None)
+        wiz.action_prolonger()
+        self.assertEqual(locale(so.date_fin_location), locale(fin) + relativedelta(years=1),
+                         "même heure (locale), un an plus tard")
+        self.assertIn("prolongé", so.message_ids[:1].body)
+        for duree, mois in (("6", 6), ("3", 3)):
+            avant = so.date_fin_location
+            Wizard.create({"duree": duree}).action_prolonger()
+            self.assertEqual(locale(so.date_fin_location), locale(avant) + relativedelta(months=mois))
+        avant = so.date_fin_location
+        cible = locale(avant).date() + relativedelta(days=45)
+        Wizard.create({"mode": "date", "nouvelle_date": cible}).action_prolonger()
+        self.assertEqual(locale(so.date_fin_location).date(), cible)
+        with self.assertRaises(ValidationError):
+            Wizard.create({"mode": "date", "nouvelle_date": locale(avant).date() - relativedelta(days=1)}).action_prolonger()
+        arch = self.env["sale.order"].get_views([(False, "form")])["views"]["form"]["arch"]
+        self.assertIn("action_prolonger_contrat", arch)
+
+
 @tagged("post_install", "-at_install")
 class TestRechercheContacts(TransactionCase):
     """Recherche Contacts : chercher et regrouper par ville, province, code client, etiquette."""

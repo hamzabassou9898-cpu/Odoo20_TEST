@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Contrat de location confirme : bouton « Prolonger le contrat » -->
+    <record id="view_order_form_prolonger" model="ir.ui.view">
+        <field name="name">sale.order.form.prolonger.contrat</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_prolonger_contrat" type="object" string="Prolonger le contrat"
+                        invisible="state != 'sale' or type_commande != 'location'"
+                        groups="sales_team.group_sale_salesman"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_prolonger_contrat_form" model="ir.ui.view">
+        <field name="name">suivi.machines.prolonger.contrat.form</field>
+        <field name="model">suivi.machines.prolonger.contrat</field>
+        <field name="arch" type="xml">
+            <form string="Prolonger le contrat">
+                <group>
+                    <group>
+                        <field name="order_id"/>
+                        <field name="partner_id"/>
+                        <field name="fin_actuelle" widget="date"/>
+                    </group>
+                    <group>
+                        <field name="mode" widget="radio"/>
+                        <field name="duree" widget="radio" options="{'horizontal': true}"
+                               invisible="mode != 'duree'" required="mode == 'duree'"/>
+                        <field name="nouvelle_date" readonly="mode == 'duree'" force_save="1" class="fw-bold"/>
+                    </group>
+                </group>
+                <footer>
+                    <button name="action_prolonger" type="object" string="Prolonger" class="btn-primary"/>
+                    <button special="cancel" string="Annuler"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>
