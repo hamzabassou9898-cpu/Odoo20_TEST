@@ -1028,3 +1028,25 @@ class TestContratEnLigne(HttpCase):
             if "owner_id" in document._fields:
                 self.assertFalse(document.owner_id.share, "propriétaire interne : visible par le bureau")
 
+
+
+@tagged("post_install", "-at_install")
+class TestRechercheContacts(TransactionCase):
+    """Recherche Contacts : chercher et regrouper par ville, province, code client, etiquette."""
+
+    def test_filtres_et_regroupements(self):
+        arch = self.env["res.partner"].get_views([(False, "search")])["views"]["search"]["arch"]
+        for nom in ("monroy_entreprises", "monroy_personnes", "monroy_avec_code", "monroy_sans_code",
+                    "monroy_par_ville", "monroy_par_province", "monroy_par_etiquette"):
+            self.assertIn('name="%s"' % nom, arch)
+        for champ in ('name="ref"', 'name="city"'):
+            self.assertIn(champ, arch)
+        self.assertIn("filter_vat_set", arch, "filtres natifs gardés")
+
+    def test_regrouper_par_ville(self):
+        Partner = self.env["res.partner"]
+        Partner.create([{"name": "Ville test A", "city": "Villetest-sur-Mer", "ref": "VTA1", "is_company": True},
+                        {"name": "Ville test B", "city": "Villetest-sur-Mer"}])
+        groupes = Partner._read_group([("city", "=", "Villetest-sur-Mer")], ["city"], ["__count"])
+        self.assertEqual(groupes, [("Villetest-sur-Mer", 2)])
+        self.assertEqual(Partner.search_count([("city", "=", "Villetest-sur-Mer"), ("ref", "!=", False)]), 1)

@@ -31,4 +31,31 @@
             </xpath>
         </field>
     </record>
+    <!-- Recherche Contacts : chercher et regrouper par ville, province, code client, etiquette -->
+    <record id="view_res_partner_filter_monroy" model="ir.ui.view">
+        <field name="name">res.partner.select.monroy</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_res_partner_filter"/>
+        <field name="arch" type="xml">
+            <field name="email" position="before">
+                <field name="ref" string="Code client"/>
+                <field name="city" string="Ville"/>
+            </field>
+            <filter name="filter_vat_set" position="before">
+                <filter string="Entreprises" name="monroy_entreprises" domain="[('is_company', '=', True)]"/>
+                <filter string="Personnes" name="monroy_personnes" domain="[('is_company', '=', False)]"/>
+                <separator/>
+                <filter string="Avec code client" name="monroy_avec_code" domain="[('ref', '!=', False)]"/>
+                <filter string="Sans code client" name="monroy_sans_code"
+                        domain="[('ref', '=', False), ('parent_id', '=', False)]"/>
+                <separator/>
+            </filter>
+            <filter name="salesperson" position="before">
+                <filter string="Ville" name="monroy_par_ville" context="{'group_by': 'city'}"/>
+                <filter string="Province" name="monroy_par_province" context="{'group_by': 'state_id'}"/>
+                <filter string="Étiquette" name="monroy_par_etiquette" context="{'group_by': 'category_id'}"/>
+            </filter>
+        </field>
+    </record>
+
 </odoo>
