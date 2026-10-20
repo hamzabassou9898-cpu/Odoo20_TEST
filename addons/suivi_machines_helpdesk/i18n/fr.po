@@ -78,12 +78,6 @@ msgstr "%s machine(s) suivie(s)."
 #. module: suivi_machines_helpdesk
 #. odoo-python
 #: code:addons/suivi_machines_helpdesk/models/type_ticket.py:0
-msgid "%s n'a aucun contrat de location confirmé."
-msgstr "%s n'a aucun contrat de location confirmé."
-
-#. module: suivi_machines_helpdesk
-#. odoo-python
-#: code:addons/suivi_machines_helpdesk/models/type_ticket.py:0
 msgid ""
 "%s n'a aucune machine en inventaire : impossible de créer un ticket « "
 "Machine à remplacer ». Choisissez un autre type ou vérifiez le"
@@ -161,16 +155,6 @@ msgstr "Adresse commerciale"
 #: model:ir.model.fields,help:suivi_machines_helpdesk.field_stock_picking__route
 msgid "Adresse de livraison du client, pour planifier la tournée."
 msgstr "Adresse de livraison du client, pour planifier la tournée."
-
-#. module: suivi_machines_helpdesk
-#: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.helpdesk_ticket_view_form_machine
-msgid "Ajuster le contrat"
-msgstr "Ajuster le contrat"
-
-#. module: suivi_machines_helpdesk
-#: model:ir.model.fields.selection,name:suivi_machines_helpdesk.selection__helpdesk_ticket__type_demande__ajustement
-msgid "Ajuster un contrat"
-msgstr "Ajuster un contrat"
 
 #. module: suivi_machines_helpdesk
 #: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.view_valider_entretien_form
@@ -431,12 +415,6 @@ msgstr "Contrat de location actuel"
 #: code:addons/suivi_machines_helpdesk/models/res_partner.py:0
 msgid "Contrat du client"
 msgstr "Contrat du client"
-
-#. module: suivi_machines_helpdesk
-#. odoo-python
-#: code:addons/suivi_machines_helpdesk/models/type_ticket.py:0
-msgid "Contrats de location"
-msgstr "Contrats de location"
 
 #. module: suivi_machines_helpdesk
 #: model:ir.model.fields.selection,name:suivi_machines_helpdesk.selection__helpdesk_ticket__type_reparation__coule

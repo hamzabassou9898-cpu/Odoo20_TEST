@@ -78,8 +78,9 @@ class TestGuides(TransactionCase):
         """Un chapitre par type de ticket ; portail technicien et planning ont leur guide."""
         self.env["knowledge.article"]._monroy_installer_guides()
         appels = self.env.ref(MODULE + ".guide_appels_service")
-        for type_ticket in ("Réparation", "Entretien", "Ramassage", "Machine à remplacer", "Ajuster un contrat"):
+        for type_ticket in ("Réparation", "Entretien", "Ramassage", "Machine à remplacer"):
             self.assertIn(type_ticket, appels.body)
+        self.assertNotIn("Ajuster un contrat", appels.body, "type retiré")
         self.assertIn("Ma journée", self.env.ref(MODULE + ".guide_portail_technicien").body)
         self.assertIn("Glisser", self.env.ref(MODULE + ".guide_planning").body)
         self.assertEqual([g[0] for g in GUIDES][-3:],

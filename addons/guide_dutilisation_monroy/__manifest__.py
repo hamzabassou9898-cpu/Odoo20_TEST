@@ -3,7 +3,7 @@
     "name": "Guide d'utilisation Monroy",
     "summary": "Guides de l'utilisation de Monroy dans l'application Connaissances (renommée « Guide de "
                "l'utilisation »), avec des exemples pris dans la base",
-    "version": "20.0.1.2.0",
+    "version": "20.0.1.3.0",
     "category": "Productivity/Knowledge",
     "author": "Volcan",
     "website": "https://volcan.ca/",

@@ -51,9 +51,6 @@
                 <button name="action_facturer_frais" type="object" string="Facturer les frais" class="btn-secondary"
                         invisible="not id or not partner_id or type_demande not in ('reparation', 'entretien', 'remplacement', 'ramassage') or (type_demande != 'ramassage' and statut_entretien != 'fait')"
                         groups="sales_team.group_sale_salesman"/>
-                <!-- Ajuster un contrat : ouvre le contrat de location du client -->
-                <button name="action_ajuster_contrat" type="object" string="Ajuster le contrat" class="btn-primary"
-                        invisible="type_demande != 'ajustement' or not partner_id"/>
 
             </xpath>
 
@@ -285,8 +282,7 @@
                            decoration-danger="type_demande == 'reparation'"
                            decoration-info="type_demande == 'entretien'"
                            decoration-warning="type_demande == 'remplacement'"
-                           decoration-primary="type_demande == 'ramassage'"
-                           decoration-muted="type_demande == 'ajustement'"/>
+                           decoration-primary="type_demande == 'ramassage'"/>
                 </div>
             </xpath>
             <!-- Dans la carte (templates), pas dans les declarations de champs en tete -->

@@ -374,27 +374,6 @@ class TestTicketMachine(TransactionCase):
         for champ in ("sante_niveau", "sante_nb_machines", "sante_impayes", "sante_chiffre"):
             self.assertIn(champ, arch)
 
-    def test_ajuster_un_contrat(self):
-        so = self.env["sale.order"].create({"partner_id": self.commerce.id, "type_commande": "location", "date_debut_location": PERIODE_TEST[0], "date_fin_location": PERIODE_TEST[1],
-                                            "order_line": [(0, 0, {"product_id": self.produit.id})]})
-        ticket = self.env["helpdesk.ticket"].create({"name": "Ajouter 2 machines", "partner_id": self.commerce.id,
-                                                     "type_demande": "ajustement"})
-        with self.assertRaises(UserError):
-            ticket.action_ajuster_contrat()          # devis pas encore confirme : pas un contrat
-        so.action_confirm()
-        action = ticket.action_ajuster_contrat()
-        self.assertEqual((action["res_model"], action["res_id"], action["view_mode"]), ("sale.order", so.id, "form"))
-        so2 = self.env["sale.order"].create({"partner_id": self.commerce.id, "type_commande": "location", "date_debut_location": PERIODE_TEST[0], "date_fin_location": PERIODE_TEST[1],
-                                             "order_line": [(0, 0, {"product_id": self.produit.id})]})
-        so2.action_confirm()
-        action = ticket.action_ajuster_contrat()
-        self.assertEqual(self.env["sale.order"].search(action["domain"]), so | so2, "plusieurs : la liste")
-        self.assertFalse(ticket.statut_entretien, "rien à planifier")
-        from lxml import etree
-        arch = etree.fromstring(self.env["helpdesk.ticket"].get_views([(False, "form")])["views"]["form"]["arch"])
-        bouton = arch.xpath("//header/button[@name='action_ajuster_contrat']")
-        self.assertEqual(bouton[0].get("invisible"), "type_demande != 'ajustement' or not partner_id")
-
     def test_creation_rapide_avec_type(self):
         kanban = self.env["helpdesk.ticket"].get_views([(False, "kanban")])["views"]["kanban"]["arch"]
         self.assertIn('quick_create_view="suivi_machines_helpdesk.helpdesk_ticket_view_form_creation_rapide"', kanban)
@@ -876,12 +855,12 @@ class TestTicketMachine(TransactionCase):
         ticket.type_demande = "reparation"
         self.assertFalse(ticket.est_entretien)
         self.assertEqual(ticket.statut_entretien, "a_planifier", "une réparation se planifie aussi")
-        ticket.type_demande = "ajustement"
-        self.assertFalse(ticket.statut_entretien, "ajuster un contrat : rien à planifier")
+        ticket.type_demande = False
+        self.assertFalse(ticket.statut_entretien, "sans type : rien à planifier")
         types = dict(self.env["helpdesk.ticket"]._fields["type_demande"].selection)
-        for valeur in ("reparation", "ramassage", "entretien", "remplacement", "ajustement"):
-            self.assertIn(valeur, types)
-        self.assertNotIn("commande", types, "« Passer une commande » retiré")
+        self.assertEqual(set(types), {"reparation", "ramassage", "entretien", "remplacement"},
+                         "« Passer une commande » et « Ajuster un contrat » retirés")
+        self.assertNotIn("action_ajuster_contrat", dir(self.env["helpdesk.ticket"]))
 
     def test_type_de_reparation(self):
         """Ticket de reparation : choix a cocher (Coule, Ne gele pas...) obligatoire dans le formulaire,
@@ -899,7 +878,7 @@ class TestTicketMachine(TransactionCase):
         self.assertEqual(ticket.type_reparation, "bruit")
         # Autre type : le choix disparait du formulaire et n'est plus obligatoire
         f = Form(ticket)
-        f.type_demande = "ajustement"
+        f.type_demande = "ramassage"
         self.assertFalse(f.type_reparation)
         f.save()
         self.assertFalse(ticket.type_reparation)
@@ -964,7 +943,7 @@ class TestTicketMachine(TransactionCase):
             "type_reparation": "coule", "lot_id": self.lots[0].id, "date_planifiee": fields.Datetime.now()})
         interv = ticket.intervention_ticket_ids
         self.assertEqual((len(interv), interv.state), (1, "planifie"), "créée dès la création du ticket")
-        ticket.type_demande = "ajustement"
+        ticket.type_demande = "ramassage"
         self.assertEqual(interv.state, "annule")
         ticket.type_demande = "remplacement"
         self.assertEqual(len(ticket.intervention_ticket_ids.filtered(lambda i: i.state == "planifie")), 1)
@@ -1018,8 +997,7 @@ class TestTicketMachine(TransactionCase):
         from lxml import etree
         self.assertEqual(self.commerce.machine_client_ids, self.lots[:2], "les machines du commerce seulement")
         self.assertEqual(self.commerce.sante_nb_machines, 2)
-        ticket = self.env["helpdesk.ticket"].create({"name": "Appel fiche", "partner_id": self.commerce.id,
-                                                     "type_demande": "ajustement"})
+        ticket = self.env["helpdesk.ticket"].create({"name": "Appel fiche", "partner_id": self.commerce.id})
         (self.commerce | self.autre_client).invalidate_recordset(["appel_client_ids"])  # calcul a l'affichage
         self.assertIn(ticket, self.commerce.appel_client_ids)
         self.assertNotIn(ticket, self.autre_client.appel_client_ids)
@@ -1129,7 +1107,7 @@ class TestTicketMachine(TransactionCase):
                          "stage_id": resolu.id})
         fini.user_id = tech
         self.assertEqual(fini.stage_id, resolu)
-        commande = T.create({"name": "Contrat", "partner_id": self.commerce.id, "type_demande": "ajustement",
+        commande = T.create({"name": "Sans type", "partner_id": self.commerce.id, "type_demande": False,
                              "stage_id": nouveau.id, "user_id": tech.id})
         self.assertEqual(commande.stage_id, nouveau, "pas d'étape propre : on ne touche pas")
 

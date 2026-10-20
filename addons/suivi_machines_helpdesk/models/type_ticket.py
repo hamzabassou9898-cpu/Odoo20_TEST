@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Type de ticket (obligatoire a la creation) et statut des entretiens (a planifier / planifie / fait)."""
 from odoo import api, fields, models
-from odoo.exceptions import UserError, ValidationError
+from odoo.exceptions import ValidationError
 
 from .etapes import est_ferme
 
@@ -10,7 +10,6 @@ TYPES_DEMANDE = [
     ("ramassage", "Ramassage"),
     ("entretien", "Entretien"),
     ("remplacement", "Machine à remplacer"),
-    ("ajustement", "Ajuster un contrat"),
 ]
 # Type de reparation : choix a cocher quand le ticket est une reparation
 TYPES_REPARATION = [
@@ -185,33 +184,3 @@ class HelpdeskTicket(models.Model):
                 if valeurs:
                     super(HelpdeskTicket, ticket).write(valeurs)
         return res
-
-    # ------------------------------------------------------------ type « Ajuster un contrat »
-    def _contrats_location(self):
-        self.ensure_one()
-        client = (self.commerce_id or self.partner_id).commercial_partner_id
-        if not client:
-            return self.env["sale.order"]
-        return self.env["sale.order"].search(
-            [("type_commande", "=", "location"), ("state", "=", "sale"), "|",
-             ("partner_id", "child_of", client.id), ("partner_shipping_id", "child_of", client.id)],
-            order="date_order desc, id desc")
-
-    def action_ajuster_contrat(self):
-        """Ouvre le contrat de location du client (page de l'application Location) pour l'ajuster."""
-        self.ensure_one()
-        contrats = self._contrats_location()
-        if not contrats:
-            raise UserError(self.env._("%s n'a aucun contrat de location confirmé.",
-                                       (self.commerce_id or self.partner_id).display_name))
-        # Page de l'application Location si elle est installee, sinon la page de commande
-        vue_location = self.env.ref("sale_renting.rental_order_primary_form_view", raise_if_not_found=False)
-        contexte = {"in_rental_app": True} if vue_location else {}
-        if len(contrats) == 1:
-            return {"type": "ir.actions.act_window", "name": contrats.name, "res_model": "sale.order",
-                    "res_id": contrats.id, "view_mode": "form", "target": "current", "context": contexte,
-                    "views": [(vue_location.id if vue_location else False, "form")]}
-        return {"type": "ir.actions.act_window", "name": self.env._("Contrats de location"),
-                "res_model": "sale.order", "view_mode": "list,form", "target": "current",
-                "domain": [("id", "in", contrats.ids)], "context": contexte,
-                "views": [(False, "list"), (vue_location.id if vue_location else False, "form")]}
