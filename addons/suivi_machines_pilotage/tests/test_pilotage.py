@@ -447,6 +447,70 @@ class TestPilotage(TransactionCase):
         self.assertEqual((carte["jour"], carte["etat"]), (aujourdhui, "en_retard"))
         self.assertTrue(retard)
 
+    def test_planning_indicateurs_filtres_periodes(self):
+        """Planning : cartes du haut, graphiques, filtres technicien / type, vues Jour / Semaine / Mois.
+        Semaine lointaine et techniciens crees ici : le test ne depend pas des donnees deja presentes."""
+        import pytz
+        from datetime import datetime, time, timedelta
+        Ticket, Tache = self.env["helpdesk.ticket"], self.env["portail.tache"]
+        fuseau = pytz.timezone("America/Toronto")
+        lundi = datetime.now(fuseau).date() + timedelta(days=400)
+        lundi -= timedelta(days=lundi.weekday())
+
+        def quand(jours, heure=14):
+            return fuseau.localize(datetime.combine(lundi + timedelta(days=jours), time(heure))).astimezone(
+                pytz.UTC).replace(tzinfo=None)
+        tech_a = self.env["res.users"].create({"name": "Tech Planning A", "login": "tech_planning_a"})
+        tech_b = self.env["res.users"].create({"name": "Tech Planning B", "login": "tech_planning_b"})
+        Ticket.create([
+            {"name": "Plan A1", "partner_id": self.client.id, "type_demande": "reparation", "user_id": tech_a.id,
+             "date_planifiee": quand(0)},
+            {"name": "Plan A2", "partner_id": self.client.id, "type_demande": "ramassage", "user_id": tech_a.id,
+             "date_planifiee": quand(2)},
+            {"name": "Plan B1", "partner_id": self.client.id, "type_demande": "reparation", "user_id": tech_b.id,
+             "date_planifiee": quand(2)},
+        ])
+        # Un technicien : sa ligne seulement, ses taches, sa charge (2 taches / 5 jours x 5 par jour)
+        d = Tache.donnees_planning(lundi.isoformat(), "semaine", tech_a.id)
+        self.assertEqual([l["id"] for l in d["lignes"]], [tech_a.id])
+        self.assertEqual(sorted(c["titre"] for c in d["cartes"]), ["Plan A1", "Plan A2"])
+        self.assertEqual(d["lignes"][0]["charge"], 8)
+        k = d["indicateurs"]
+        self.assertEqual((k["total"], k["ramassages"], k["entretiens_reparations"], k["reparations"]), (2, 1, 1, 1))
+        self.assertEqual((k["completion"], k["objectif"], k["tendance"]), (0, 90, False))
+        g = d["graphiques"]
+        self.assertEqual(g["charge"]["etiquettes"], ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"])
+        self.assertEqual(g["charge"]["series"][0]["valeurs"], [1, 0, 1, 0, 0, 0, 0])
+        self.assertEqual(sum(r["valeur"] for r in g["repartition"]), 2)
+        self.assertEqual((len(g["tendance"]["etiquettes"]), g["tendance"]["planifiees"][-1]), (12, 2))
+        self.assertEqual(d["reference"], lundi.isoformat(), "semaine lointaine : on garde son lundi")
+        # Filtre par type : les reparations des deux techniciens
+        d = Tache.donnees_planning(lundi.isoformat(), "semaine", False, "reparation")
+        mes_cartes = [c["titre"] for c in d["cartes"] if c["technicien_id"] in (tech_a.id, tech_b.id)]
+        self.assertEqual(sorted(mes_cartes), ["Plan A1", "Plan B1"])
+        self.assertTrue(all(c["type"] == "reparation" for c in d["cartes"]))
+        self.assertIn({"id": tech_b.id, "nom": tech_b.name}, d["filtres"]["techniciens"])
+        # Vue Jour : une colonne ; vue Mois : du 1er au dernier jour du mois, regroupe par semaine
+        d = Tache.donnees_planning((lundi + timedelta(days=2)).isoformat(), "jour", tech_a.id)
+        self.assertEqual(([j["iso"] for j in d["jours"]], [c["titre"] for c in d["cartes"]]),
+                         ([(lundi + timedelta(days=2)).isoformat()], ["Plan A2"]))
+        d = Tache.donnees_planning(lundi.isoformat(), "mois", tech_a.id)
+        self.assertEqual(d["jours"][0]["iso"][-2:], "01")
+        self.assertIn(len(d["jours"]), (28, 29, 30, 31))
+        self.assertTrue(all(e.startswith("S") for e in d["graphiques"]["charge"]["etiquettes"]))
+        # Capacite reglable : 1 tache par jour -> 2 taches sur 5 jours = 40 %
+        self.env["ir.config_parameter"].sudo().set_int("suivi_machines_pilotage.planning_taches_par_jour", 1)
+        d = Tache.donnees_planning(lundi.isoformat(), "semaine", tech_a.id)
+        self.assertEqual(d["lignes"][0]["charge"], 40)
+        # Sans technicien seulement
+        Ticket.create({"name": "Plan libre", "partner_id": self.client.id, "type_demande": "reparation",
+                       "date_planifiee": quand(1)})
+        d = Tache.donnees_planning(lundi.isoformat(), "semaine", -1)
+        self.assertEqual([l["id"] for l in d["lignes"]], [0])
+        self.assertTrue(all(not c["technicien_id"] for c in d["cartes"]))
+        self.assertIn("Plan libre", [c["titre"] for c in d["cartes"]])
+        self.assertEqual(Tache.donnees_planning(lundi.isoformat(), "inconnue")["periode"], "semaine")
+
     def test_entretien_planifie_via_intervention(self):
         """Jose planifie l'entretien depuis Interventions : le ticket ouvert de la machine devient « Planifié »."""
         Ticket = self.env["helpdesk.ticket"]

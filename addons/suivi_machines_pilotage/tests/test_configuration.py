@@ -60,6 +60,6 @@ class TestVueContacts(TransactionCase):
     def test_hierarchie_menu_regrouper(self):
         """Vue Hierarchie : le menu Regrouper par / Favoris est charge dans l'interface."""
         fichiers = [f[0] if isinstance(f, (list, tuple)) else f for f in
-                    self.env["ir.asset"]._get_asset_paths("web.assets_backend", {})]
+                    self.env["ir.asset"]._get_asset_paths("web.assets_backend_lazy", {})]
         self.assertTrue(any(f.endswith("suivi_machines_pilotage/static/src/hierarchie/hierarchie_regrouper.js")
                             for f in fichiers))

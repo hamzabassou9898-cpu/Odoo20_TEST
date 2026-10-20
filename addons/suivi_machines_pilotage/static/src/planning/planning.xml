@@ -1,41 +1,128 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
+    <div t-name="suivi_machines_pilotage.GraphiquePlanning" class="o_pp_graph"><canvas t-ref="this.chart.ref"/></div>
+
     <div t-name="suivi_machines_pilotage.PlanningSemaine" t-translation="off" t-attf-class="o_action o_pilotage_planning {{ this.state.chargement ? 'o_pp_charge' : '' }}">
         <t t-set="d" t-value="this.state.donnees"/>
         <div class="o_content o_pp_defile">
         <div class="o_pp_wrap" t-if="d">
+            <t t-set="k" t-value="d.indicateurs"/>
+            <t t-set="g" t-value="d.graphiques"/>
             <div class="o_pp_head">
                 <div>
                     <h1>Planning</h1>
                     <p t-if="d.peut_deplacer">Glissez une tâche sur un technicien ou un autre jour : le ticket, le transfert ou l'intervention est mis à jour.</p>
                 </div>
                 <div class="o_pp_nav">
-                    <button class="o_pp_btn" t-on-click="() => this.charger(d.precedente)" title="Semaine précédente">‹</button>
-                    <button class="o_pp_btn" t-on-click="() => this.charger()">Cette semaine</button>
-                    <button class="o_pp_btn" t-on-click="() => this.charger(d.suivante)" title="Semaine suivante">›</button>
+                    <button class="o_pp_btn" t-on-click="() => this.charger(d.precedente)" title="Précédent">‹</button>
+                    <button class="o_pp_btn" t-on-click="() => this.charger()"
+                            t-out="d.periode === 'jour' ? 'Aujourd’hui' : d.periode === 'mois' ? 'Ce mois' : 'Cette semaine'"/>
+                    <button class="o_pp_btn" t-on-click="() => this.charger(d.suivante)" title="Suivant">›</button>
                     <span class="o_pp_titre" t-out="d.titre"/>
                 </div>
             </div>
-            <div class="o_pp_grille">
+            <div class="o_pp_outils">
+                <select class="o_pp_btn o_pp_select" t-on-change="(ev) => this.filtrer('technicien_id', ev)">
+                    <option value="0" t-att-selected="!d.filtres.technicien_id">👤 Tous les techniciens</option>
+                    <option t-foreach="d.filtres.techniciens" t-as="tech" t-key="tech.id" t-att-value="tech.id"
+                            t-att-selected="d.filtres.technicien_id === tech.id" t-out="tech.nom"/>
+                    <option value="-1" t-att-selected="d.filtres.technicien_id === -1">Sans technicien</option>
+                </select>
+                <select class="o_pp_btn o_pp_select" t-on-change="(ev) => this.filtrer('type_tache', ev)">
+                    <option value="" t-att-selected="!d.filtres.type_tache">🏷️ Tous les types</option>
+                    <option t-foreach="d.filtres.types" t-as="ty" t-key="ty.code" t-att-value="ty.code"
+                            t-att-selected="d.filtres.type_tache === ty.code" t-out="ty.nom"/>
+                </select>
+                <span class="o_pp_groupe">
+                    <button t-attf-class="o_pp_btn {{ d.periode === 'jour' ? 'o_pp_actif' : '' }}" t-on-click="() => this.changerPeriode('jour')">Jour</button>
+                    <button t-attf-class="o_pp_btn {{ d.periode === 'semaine' ? 'o_pp_actif' : '' }}" t-on-click="() => this.changerPeriode('semaine')">Semaine</button>
+                    <button t-attf-class="o_pp_btn {{ d.periode === 'mois' ? 'o_pp_actif' : '' }}" t-on-click="() => this.changerPeriode('mois')">Mois</button>
+                </span>
+            </div>
+
+            <div class="o_pp_kpis">
+                <div class="o_pp_kpi o_pp_k_rose">
+                    <span class="o_pp_k_ic">📅</span><div class="o_pp_k_v" t-out="k.total"/>
+                    <div class="o_pp_k_t">Tâches sur la période</div>
+                    <div class="o_pp_k_s"><span>vs période préc.</span>
+                        <b t-if="k.tendance !== false" t-attf-class="{{ k.tendance >= 0 ? 'text-success' : 'text-danger' }}" t-out="(k.tendance > 0 ? '+' : '') + k.tendance + ' %'"/></div>
+                </div>
+                <div class="o_pp_kpi o_pp_k_orange">
+                    <span class="o_pp_k_ic">⏰</span><div class="o_pp_k_v" t-out="k.en_retard"/>
+                    <div class="o_pp_k_t">En retard</div><div class="o_pp_k_s"><span>à replanifier</span></div>
+                </div>
+                <div class="o_pp_kpi o_pp_k_vert">
+                    <span class="o_pp_k_ic">👤</span><div class="o_pp_k_v" t-out="k.sans_technicien"/>
+                    <div class="o_pp_k_t">Sans technicien</div><div class="o_pp_k_s"><span>à assigner</span></div>
+                </div>
+                <div class="o_pp_kpi o_pp_k_bleu">
+                    <span class="o_pp_k_ic">✅</span><div class="o_pp_k_v" t-out="k.completion + ' %'"/>
+                    <div class="o_pp_k_t">Tâches complétées</div>
+                    <div class="o_pp_k_s"><span t-out="'vs objectif ' + k.objectif + ' %'"/>
+                        <span class="o_pp_k_prog"><span t-attf-style="width: {{ Math.min(k.completion, 100) }}%"/></span>
+                        <b t-attf-class="{{ k.completion >= k.objectif ? 'text-success' : 'text-danger' }}" t-out="k.completion + ' %'"/></div>
+                </div>
+                <div class="o_pp_kpi o_pp_k_menthe">
+                    <span class="o_pp_k_ic">🚚</span><div class="o_pp_k_v" t-out="k.livraisons + ' / ' + k.ramassages"/>
+                    <div class="o_pp_k_t">Livraisons / ramassages</div><div class="o_pp_k_s"><span>sur la période</span></div>
+                </div>
+                <div class="o_pp_kpi o_pp_k_violet">
+                    <span class="o_pp_k_ic">🛠️</span><div class="o_pp_k_v" t-out="k.entretiens_reparations"/>
+                    <div class="o_pp_k_t">Entretiens &amp; réparations</div>
+                    <div class="o_pp_k_s"><span t-out="'dont ' + k.reparations + ' réparation' + (k.reparations > 1 ? 's' : '')"/></div>
+                </div>
+            </div>
+
+            <div class="o_pp_graphs">
+                <div class="o_pp_cadre"><h3>Charge par technicien</h3>
+                    <GraphiquePlanning t-if="g.charge.series.length" type="'charge'" donnees="g.charge"/>
+                    <div t-else="" class="o_pp_vide">Aucune tâche assignée sur la période.</div>
+                </div>
+                <div class="o_pp_cadre"><h3>Répartition par type</h3>
+                    <div class="o_pp_donut" t-if="g.repartition.length">
+                        <div class="o_pp_donut_g"><GraphiquePlanning type="'repartition'" donnees="g.repartition"/>
+                            <div class="o_pp_donut_c"><b t-out="k.total"/><small>tâches</small></div></div>
+                        <div class="o_pp_donut_l">
+                            <div t-foreach="g.repartition" t-as="r" t-key="r.nom"><i t-attf-style="background: {{ r.couleur }}"/><span t-out="r.nom"/><b t-out="r.valeur"/></div>
+                        </div>
+                    </div>
+                    <div t-else="" class="o_pp_vide">Aucune tâche sur la période.</div>
+                </div>
+                <div class="o_pp_cadre"><h3>Tâches faites — 12 dernières semaines</h3>
+                    <GraphiquePlanning type="'tendance'" donnees="g.tendance"/>
+                </div>
+            </div>
+
+            <div t-attf-class="o_pp_grille {{ d.jours.length > 7 ? 'o_pp_mois' : '' }}" t-att-style="this.largeurGrille()">
                 <div class="o_pp_tete o_pp_tech">Technicien</div>
-                <div t-foreach="d.jours" t-as="jour" t-key="jour.iso" t-attf-class="o_pp_tete {{ jour.aujourdhui ? 'o_pp_auj' : '' }}" t-out="jour.titre"/>
+                <div t-foreach="d.jours" t-as="jour" t-key="jour.iso" t-attf-class="o_pp_tete {{ jour.aujourdhui ? 'o_pp_auj' : '' }}" t-out="d.jours.length > 7 ? jour.titre.split(' ')[1] : jour.titre"/>
                 <t t-foreach="d.lignes" t-as="ligne" t-key="ligne.id">
                     <div t-attf-class="o_pp_tech {{ ligne.id ? '' : 'o_pp_sans' }}">
-                        <span class="o_pp_avatar" t-out="ligne.initiales"/><span t-out="ligne.nom"/>
+                        <span class="o_pp_avatar" t-attf-style="background: {{ ligne.couleur }}" t-out="ligne.initiales"/>
+                        <div class="o_pp_tech_info">
+                            <div class="o_pp_tech_nom" t-out="ligne.nom"/>
+                            <t t-if="ligne.id">
+                                <div class="o_pp_charge_barre"><span t-attf-style="width: {{ Math.min(ligne.charge, 100) }}%; background: {{ ligne.couleur }}"/></div>
+                                <small t-attf-class="{{ ligne.charge > 100 ? 'text-danger fw-bold' : '' }}" t-out="ligne.charge + ' % de charge'"/>
+                            </t>
+                            <small t-elif="ligne.nombre" class="text-danger fw-bold" t-out="ligne.nombre + ' à assigner'"/>
+                        </div>
                     </div>
                     <div t-foreach="d.jours" t-as="jour" t-key="jour.iso"
-                         t-attf-class="o_pp_case {{ jour.aujourdhui ? 'o_pp_auj' : '' }} {{ this.state.survol === ligne.id + '-' + jour.iso ? 'o_pp_survol' : '' }}"
+                         t-attf-class="o_pp_case {{ jour.aujourdhui ? 'o_pp_auj' : '' }} {{ jour.weekend ? 'o_pp_we' : '' }} {{ this.state.survol === ligne.id + '-' + jour.iso ? 'o_pp_survol' : '' }}"
                          t-on-dragover="(ev) => this.survoler(ev, ligne, jour)"
                          t-on-drop="(ev) => this.deposer(ev, ligne, jour)">
                         <div t-foreach="this.cartes(ligne, jour)" t-as="c" t-key="c.id"
                              t-attf-class="o_pp_carte o_pp_{{ c.couleur }} {{ c.etat === 'fait' ? 'o_pp_fait' : '' }} {{ c.etat === 'en_retard' ? 'o_pp_retard' : '' }}"
                              t-att-draggable="d.peut_deplacer and c.deplacable ? 'true' : 'false'"
                              t-on-dragstart="(ev) => this.debutGlisser(ev, c)" t-on-dragend="() => this.finGlisser()"
-                             t-on-click="() => this.ouvrir(c)" t-att-title="c.libelle_type + ' · ' + c.titre">
-                            <div class="o_pp_l1"><span t-out="c.heure"/> · <span t-out="c.libelle_type"/>
-                                <span t-if="c.etat === 'fait'" class="ms-1">✓</span>
-                                <span t-if="c.etat === 'en_retard'" class="ms-1">En retard</span></div>
-                            <div class="o_pp_l2" t-out="c.client or c.titre"/>
+                             t-on-click="() => this.ouvrir(c)" t-att-title="c.heure + ' · ' + c.libelle_type + ' · ' + (c.client or c.titre)">
+                            <t t-if="d.jours.length &lt;= 7">
+                                <div class="o_pp_l1"><span t-out="c.heure"/> · <span t-out="c.libelle_type"/>
+                                    <span t-if="c.etat === 'fait'" class="ms-1">✓</span>
+                                    <span t-if="c.etat === 'en_retard'" class="ms-1">En retard</span></div>
+                                <div class="o_pp_l2" t-out="c.client or c.titre"/>
+                            </t>
                         </div>
                     </div>
                 </t>
@@ -45,6 +132,7 @@
                 <span class="o_pp_carte o_pp_warning">Ramassage</span>
                 <span class="o_pp_carte o_pp_info">Entretien</span>
                 <span class="o_pp_carte o_pp_danger">Réparation</span>
+                <span class="o_pp_carte o_pp_primary">Installation</span>
                 <span class="ms-2">Cliquez sur une tâche pour l'ouvrir.</span>
             </div>
         </div>
