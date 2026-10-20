@@ -470,11 +470,12 @@ class TestPilotage(TransactionCase):
             {"name": "Plan B1", "partner_id": self.client.id, "type_demande": "reparation", "user_id": tech_b.id,
              "date_planifiee": quand(2)},
         ])
-        # Un technicien : sa ligne seulement, ses taches, sa charge (2 taches / 5 jours x 5 par jour)
+        # Un technicien : sa ligne seulement, ses taches et leur nombre
         d = Tache.donnees_planning(lundi.isoformat(), "semaine", tech_a.id)
         self.assertEqual([l["id"] for l in d["lignes"]], [tech_a.id])
         self.assertEqual(sorted(c["titre"] for c in d["cartes"]), ["Plan A1", "Plan A2"])
-        self.assertEqual(d["lignes"][0]["charge"], 8)
+        self.assertEqual((d["lignes"][0]["nombre"], d["lignes"][0]["en_retard"]), (2, 0))
+        self.assertNotIn("charge", d["lignes"][0], "pas de pourcentage de charge")
         k = d["indicateurs"]
         self.assertEqual((k["total"], k["ramassages"], k["entretiens_reparations"], k["reparations"]), (2, 1, 1, 1))
         self.assertEqual((k["completion"], k["objectif"], k["tendance"]), (0, 90, False))
@@ -498,10 +499,6 @@ class TestPilotage(TransactionCase):
         self.assertEqual(d["jours"][0]["iso"][-2:], "01")
         self.assertIn(len(d["jours"]), (28, 29, 30, 31))
         self.assertTrue(all(e.startswith("S") for e in d["graphiques"]["charge"]["etiquettes"]))
-        # Capacite reglable : 1 tache par jour -> 2 taches sur 5 jours = 40 %
-        self.env["ir.config_parameter"].sudo().set_int("suivi_machines_pilotage.planning_taches_par_jour", 1)
-        d = Tache.donnees_planning(lundi.isoformat(), "semaine", tech_a.id)
-        self.assertEqual(d["lignes"][0]["charge"], 40)
         # Sans technicien seulement
         Ticket.create({"name": "Plan libre", "partner_id": self.client.id, "type_demande": "reparation",
                        "date_planifiee": quand(1)})

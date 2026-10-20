@@ -97,17 +97,17 @@ class PortailTache(models.Model):
                 "technicien_id": tache.technicien_id.id or 0,
                 "etat": tache.etat_suivi, "deplacable": bool(tache.a_faire),
             })
-        capacite = self._capacite_planning(jours)
         lignes = []
         for i, tech in enumerate(techniciens):
-            nombre = len(taches.filtered(lambda t: t.technicien_id == tech))
+            siennes = taches.filtered(lambda t: t.technicien_id == tech)
             lignes.append({"id": tech.id, "nom": tech.name,
                            "initiales": "".join(m[:1] for m in (tech.name or "?").split()[:2]).upper(),
-                           "couleur": COULEURS_TECH[i % len(COULEURS_TECH)], "nombre": nombre,
-                           "charge": round(100 * nombre / capacite) if capacite else 0})
+                           "couleur": COULEURS_TECH[i % len(COULEURS_TECH)], "nombre": len(siennes),
+                           "en_retard": len(siennes.filtered(lambda t: t.etat_suivi == "en_retard"))})
         if not technicien_id or technicien_id < 0:
+            sans = taches.filtered(lambda t: not t.technicien_id)
             lignes.append({"id": 0, "nom": self.env._("Sans technicien"), "initiales": "?", "couleur": "#94a3b8",
-                           "nombre": len(taches.filtered(lambda t: not t.technicien_id)), "charge": False})
+                           "nombre": len(sans), "en_retard": len(sans.filtered(lambda t: t.etat_suivi == "en_retard"))})
         if periode == "jour":
             titre = self.env._("%(jour)s %(date)s", jour=noms_jours[debut.weekday()], date=debut.strftime("%d/%m/%Y"))
         elif periode == "mois":
@@ -138,12 +138,6 @@ class PortailTache(models.Model):
     @api.model
     def _parametre_planning(self, cle, defaut):
         return self.env["ir.config_parameter"].sudo().get_int("suivi_machines_pilotage.planning_" + cle, defaut) or defaut
-
-    @api.model
-    def _capacite_planning(self, jours):
-        """Taches qu'un technicien peut faire sur la periode : jours de semaine x taches par jour (reglable)."""
-        ouvrables = len([j for j in jours if not j["weekend"]]) or len(jours)
-        return ouvrables * self._parametre_planning("taches_par_jour", 5)
 
     @api.model
     def _indicateurs_planning(self, taches, avant, debut):

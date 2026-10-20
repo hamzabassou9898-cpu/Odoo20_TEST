@@ -101,11 +101,9 @@
                         <span class="o_pp_avatar" t-attf-style="background: {{ ligne.couleur }}" t-out="ligne.initiales"/>
                         <div class="o_pp_tech_info">
                             <div class="o_pp_tech_nom" t-out="ligne.nom"/>
-                            <t t-if="ligne.id">
-                                <div class="o_pp_charge_barre"><span t-attf-style="width: {{ Math.min(ligne.charge, 100) }}%; background: {{ ligne.couleur }}"/></div>
-                                <small t-attf-class="{{ ligne.charge > 100 ? 'text-danger fw-bold' : '' }}" t-out="ligne.charge + ' % de charge'"/>
-                            </t>
+                            <small t-if="ligne.id" t-out="ligne.nombre + (ligne.nombre > 1 ? ' tâches' : ' tâche')"/>
                             <small t-elif="ligne.nombre" class="text-danger fw-bold" t-out="ligne.nombre + ' à assigner'"/>
+                            <small t-if="ligne.id and ligne.en_retard" class="text-danger fw-bold" t-out="' · ' + ligne.en_retard + ' en retard'"/>
                         </div>
                     </div>
                     <div t-foreach="d.jours" t-as="jour" t-key="jour.iso"

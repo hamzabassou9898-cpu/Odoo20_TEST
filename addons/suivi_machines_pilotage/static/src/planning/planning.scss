@@ -44,8 +44,6 @@
     .o_pp_sans { color: #9ca3af; font-style: italic; }
     .o_pp_tech_info { min-width: 0; small { font-size: 11px; color: #6b7280; font-weight: 400; } }
     .o_pp_tech_nom { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .o_pp_charge_barre { height: 5px; width: 110px; background: #eef0f4; border-radius: 4px; margin: 4px 0 2px; overflow: hidden;
-        span { display: block; height: 100%; border-radius: 4px; } }
     .o_pp_we { background: #fafafa; }
     .o_pp_mois { .o_pp_case { flex-direction: row; flex-wrap: wrap; align-content: flex-start; min-height: 48px; }
         .o_pp_carte { width: 12px; height: 12px; padding: 0; border-left-width: 0; border-radius: 50%; }
