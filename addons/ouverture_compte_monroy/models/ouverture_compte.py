@@ -218,21 +218,50 @@ class OuvertureCompte(models.Model):
             return False
 
     # ------------------------------------------------------------ au bureau
+    def _verifier_envoi(self):
+        self.ensure_one()
+        if not self.courriel:
+            raise UserError(self.env._("Indiquez le courriel du client avant d'envoyer le formulaire."))
+        if self.state not in ("brouillon", "envoye"):
+            raise UserError(self.env._("Ce formulaire est déjà signé."))
+
     def action_envoyer(self):
-        """Courriel au client avec le lien « Remplir et signer » (adresse saisie par Jose)."""
-        for ouverture in self:
-            if not ouverture.courriel:
-                raise UserError(self.env._("Indiquez le courriel du client avant d'envoyer le formulaire."))
-            if ouverture.state not in ("brouillon", "envoye"):
-                raise UserError(self.env._("Ce formulaire est déjà signé."))
-            ouverture._portal_ensure_token()
-            modele = self.env.ref("ouverture_compte_monroy.mail_template_ouverture")
-            # Adresse donnee directement au courriel : le futur client ne devient pas un contact avant
-            # l'approbation (Odoo creerait sinon un contact a partir de l'adresse du modele)
-            modele.send_mail(ouverture.id, force_send=False,
-                             email_values={"email_to": ouverture.courriel, "recipient_ids": []})
-            ouverture.state = "envoye"
-            ouverture.message_post(body=self.env._("Formulaire envoyé à %s.", ouverture.courriel))
+        """Fenetre du courriel (destinataire, objet, texte, pieces jointes) preparee avec le modele, a relire
+        et modifier avant l'envoi, comme dans le CRM."""
+        self.ensure_one()
+        self._verifier_envoi()
+        self._portal_ensure_token()
+        return {"type": "ir.actions.act_window", "name": self.env._("Envoyer le formulaire au client"),
+                "res_model": "ouverture.compte.envoyer", "view_mode": "form", "target": "new",
+                "context": {"default_ouverture_id": self.id}}
+
+    def _contenu_courriel(self):
+        """Objet et texte du modele « Ouverture de compte », rendus pour cette demande."""
+        self.ensure_one()
+        modele = self.env.ref("ouverture_compte_monroy.mail_template_ouverture")
+        return (modele._render_field("subject", self.ids)[self.id],
+                modele._render_field("body_html", self.ids, compute_lang=True)[self.id])
+
+    def _envoyer(self, courriel=None, sujet=None, corps=None, pieces=None):
+        """Courriel au client avec le lien « Remplir et signer ». L'adresse est donnee directement au
+        courriel : le futur client ne devient pas un contact avant l'approbation (Odoo creerait sinon un
+        contact a partir de l'adresse du modele)."""
+        self.ensure_one()
+        if courriel:
+            self.courriel = courriel.strip()
+        self._verifier_envoi()
+        self._portal_ensure_token()
+        valeurs = {"email_to": self.courriel, "recipient_ids": []}
+        if sujet:
+            valeurs["subject"] = sujet
+        if corps:
+            valeurs["body_html"] = corps
+        if pieces:
+            valeurs["attachment_ids"] = [(4, piece.id) for piece in pieces]
+        modele = self.env.ref("ouverture_compte_monroy.mail_template_ouverture")
+        modele.send_mail(self.id, force_send=False, email_values=valeurs)
+        self.state = "envoye"
+        self.message_post(body=self.env._("Formulaire envoyé à %s.", self.courriel))
         return True
 
     def action_apercu(self):

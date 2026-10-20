@@ -170,4 +170,10 @@
     </record>
     <menuitem id="menu_ouverture_compte" name="Ouvertures de compte" parent="contacts.menu_contacts"
               action="action_ouverture_compte" sequence="3" groups="sales_team.group_sale_salesman"/>
+    <!-- Pilotage > Contacts devient un menu : la liste des contacts et les ouvertures de compte -->
+    <menuitem id="menu_pilotage_contacts_liste" name="Contacts" parent="suivi_machines_pilotage.menu_pilotage_contacts"
+              action="contacts.action_contacts" sequence="1"/>
+    <menuitem id="menu_pilotage_ouverture_compte" name="Ouvertures de compte"
+              parent="suivi_machines_pilotage.menu_pilotage_contacts" action="action_ouverture_compte" sequence="2"
+              groups="sales_team.group_sale_salesman"/>
 </odoo>

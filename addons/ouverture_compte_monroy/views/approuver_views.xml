@@ -18,4 +18,26 @@
             </form>
         </field>
     </record>
+    <!-- Courriel au client, relu et modifiable avant l'envoi (comme dans le CRM) -->
+    <record id="ouverture_compte_envoyer_view_form" model="ir.ui.view">
+        <field name="name">ouverture.compte.envoyer.form</field>
+        <field name="model">ouverture.compte.envoyer</field>
+        <field name="arch" type="xml">
+            <form string="Envoyer le formulaire au client">
+                <group>
+                    <field name="courriel" widget="email"/>
+                    <field name="sujet"/>
+                    <field name="ouverture_id" invisible="1"/>
+                </group>
+                <field name="corps" class="oe-bordered-editor" options="{'style-inline': true}"/>
+                <group>
+                    <field name="piece_ids" widget="many2many_binary"/>
+                </group>
+                <footer>
+                    <button name="action_envoyer" type="object" string="Envoyer" class="btn-primary"/>
+                    <button special="cancel" string="Annuler"/>
+                </footer>
+            </form>
+        </field>
+    </record>
 </odoo>

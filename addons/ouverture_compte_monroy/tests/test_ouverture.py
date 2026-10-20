@@ -21,7 +21,7 @@ class TestOuvertureCompte(TransactionCase):
     def _ouverture_envoyee(self, **valeurs):
         ouverture = self.Ouverture.create(dict({"entreprise_nom": "Glaces Test inc.", "courriel": "glaces@exemple.test",
                                                 "contact_nom": "Lise Test"}, **valeurs))
-        ouverture.action_envoyer()
+        ouverture._envoyer()
         return ouverture
 
     def _remplir(self, ouverture, **extra):
@@ -46,6 +46,25 @@ class TestOuvertureCompte(TransactionCase):
         sans_courriel = self.Ouverture.create({"entreprise_nom": "Sans courriel"})
         with self.assertRaises(UserError):
             sans_courriel.action_envoyer()
+
+    def test_fenetre_courriel_modifiable(self):
+        """Envoyer ouvre le courriel pret a relire ; Jose change l'adresse, l'objet, le texte, ajoute une piece."""
+        ouverture = self.Ouverture.create({"entreprise_nom": "Courriel Test", "courriel": "avant@exemple.test"})
+        action = ouverture.action_envoyer()
+        self.assertEqual((action["res_model"], action["target"]), ("ouverture.compte.envoyer", "new"))
+        fenetre = self.env["ouverture.compte.envoyer"].with_context(action["context"]).create({})
+        self.assertEqual(fenetre.courriel, "avant@exemple.test")
+        self.assertIn(ouverture.name, fenetre.sujet)
+        self.assertIn(ouverture.get_portal_url(), fenetre.corps, "lien Remplir et signer dans le texte")
+        piece = self.env["ir.attachment"].create({"name": "tarifs.pdf", "raw": b"%PDF-1.4"})
+        fenetre.write({"courriel": " apres@exemple.test ", "sujet": "Votre compte Monroy",
+                       "corps": fenetre.corps + "<p>Texte ajouté par Jose</p>", "piece_ids": [(6, 0, piece.ids)]})
+        fenetre.action_envoyer()
+        courriel = self.env["mail.mail"].search([("model", "=", "ouverture.compte"), ("res_id", "=", ouverture.id)])
+        self.assertEqual((courriel.email_to, courriel.subject), ("apres@exemple.test", "Votre compte Monroy"))
+        self.assertIn("Texte ajouté par Jose", courriel.body_html)
+        self.assertEqual(courriel.attachment_ids.mapped("name"), ["tarifs.pdf"])
+        self.assertEqual((ouverture.courriel, ouverture.state), ("apres@exemple.test", "envoye"))
 
     def test_client_remplit_seulement_ses_cases(self):
         ouverture = self._ouverture_envoyee()
@@ -120,12 +139,22 @@ class TestOuvertureCompte(TransactionCase):
         self.assertEqual((ouverture.partner_id, ouverture.courriel, ouverture.ville),
                          (existant, "connu@exemple.test", "Lévis"))
         self.assertEqual(existant.action_ouverture_compte()["res_id"], ouverture.id, "même demande en cours")
-        ouverture.action_envoyer()
+        ouverture._envoyer()
         self._remplir(ouverture, ville="Québec")
         ouverture._signer("Lise Test", SIGNATURE)
         client = ouverture._approuver("MONT555")
         self.assertEqual(client, existant, "pas de doublon")
         self.assertEqual((client.ref, client.city), ("MONT555", "Lévis"), "ce qui était rempli est gardé")
+
+    def test_menus_contacts_et_pilotage(self):
+        """Ouvertures de compte : dans Contacts et dans Pilotage > Contacts (avec la liste des contacts)."""
+        action = self.env.ref("ouverture_compte_monroy.action_ouverture_compte")
+        for xmlid in ("menu_ouverture_compte", "menu_pilotage_ouverture_compte"):
+            self.assertEqual(self.env.ref("ouverture_compte_monroy." + xmlid).action, action)
+        pilotage = self.env.ref("suivi_machines_pilotage.menu_pilotage_contacts")
+        self.assertEqual(pilotage.child_id.mapped("name"), ["Contacts", "Ouvertures de compte"])
+        self.assertEqual(self.env.ref("ouverture_compte_monroy.menu_pilotage_contacts_liste").action,
+                         self.env.ref("contacts.action_contacts"))
 
     def test_refus_et_renseignements_proteges(self):
         ouverture = self._ouverture_envoyee()
@@ -144,7 +173,7 @@ class TestOuverturePortail(HttpCase):
     def test_page_cases_et_signature(self):
         ouverture = self.env["ouverture.compte"].create({"entreprise_nom": "Page Test inc.",
                                                          "courriel": "page@exemple.test"})
-        ouverture.action_envoyer()
+        ouverture._envoyer()
         url = "/ouverture/%s" % ouverture.id
         reponse = self.url_open(url + "?access_token=%s" % ouverture.access_token)
         self.assertNotIn("Internal Server Error", reponse.text)
@@ -169,7 +198,7 @@ class TestOuverturePortail(HttpCase):
         client = self.env["res.partner"].create({"name": "Fiche suivie", "email": "suivie@exemple.test"})
         ouverture = self.env["ouverture.compte"].browse(client.action_ouverture_compte()["res_id"])
         self.assertEqual(client.ouverture_compte_etat, "brouillon")
-        ouverture.action_envoyer()
+        ouverture._envoyer()
         self.assertEqual(client.ouverture_compte_etat, "envoye")
         ouverture._completer_par_client({"rue": "1 rue", "ville": "Québec", "code_postal": "G1A 1A1",
                                          "telephone": "418", "nom_majuscules": "X", "entreprise_nom": "Fiche suivie"})
