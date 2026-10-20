@@ -637,6 +637,61 @@ class TestSuiviMachines(TransactionCase):
         self.assertIn("type_contrat_id", arch)
         self.assertIn("forfait_montant", arch)
 
+    def test_prolonger_ajuste_le_forfait(self):
+        """Prolongation : forfait / machine ajuste (pourcentage ou nouveau prix), propose au prochain
+        renouvellement ; rien n'est facture tout de suite ; 0 % : inchange."""
+        convention = self.env.ref("suivi_machines.type_contrat_convention")
+        so = self.env["sale.order"].create({
+            "partner_id": self.client.id, "type_contrat_id": convention.id, "type_commande": "location",
+            "date_debut_location": PERIODE_TEST[0], "date_fin_location": PERIODE_TEST[1],
+            "order_line": [(0, 0, {"product_id": self.produit.id, "product_uom_qty": 2})]})
+        so.action_confirm()
+        ligne = so.order_line.filtered("est_forfait")
+        action = so.action_prolonger_contrat()
+        Wizard = self.env[action["res_model"]].with_context(action["context"])
+        # 0 % : le forfait ne bouge pas
+        wiz = Wizard.create({})
+        self.assertTrue(wiz.avec_forfait)
+        self.assertEqual((wiz.forfait_actuel, wiz.nouveau_forfait, wiz.nombre_machines), (359.99, 359.99, 2))
+        wiz.action_prolonger()
+        self.assertEqual((so.forfait_montant, so.forfait_prix_ajuste), (359.99, 0))
+        # +3 % : 370,79 $, note dans le fil, ligne du contrat (deja signee) inchangee
+        f = Form(Wizard)
+        f.hausse = 3
+        self.assertEqual(f.nouveau_forfait, 370.79)
+        self.assertIn("2 × ", f.calcul_forfait)
+        self.assertIn("au prochain forfait annuel", f.application_forfait)
+        f.save().action_prolonger()
+        self.assertEqual((so.forfait_montant, so.forfait_prix_ajuste), (370.79, 370.79))
+        self.assertIn("ajusté", so.message_ids[:1].body)
+        self.assertEqual((len(so.order_line.filtered("est_forfait")), ligne.price_unit), (1, 359.99),
+                         "rien de facturé tout de suite")
+        # Nouveau prix tape directement (part du prix deja ajuste)
+        f = Form(Wizard)
+        self.assertEqual(f.forfait_actuel, 370.79)
+        f.ajustement = "prix"
+        f.nouveau_forfait = 380
+        f.save().action_prolonger()
+        self.assertEqual(so.forfait_prix_ajuste, 380)
+        with self.assertRaises(ValidationError):
+            so._ajuster_forfait(380, -1)
+        # Anniversaire : le prix ajuste est propose, puis le renouvellement le remet a zero
+        self.assertIn("380.00", so._note_forfait_a_renouveler())
+        action = so.action_renouveler_forfait()
+        assistant = Form(self.env[action["res_model"]].with_context(action["context"]))
+        self.assertEqual((assistant.prix_precedent, assistant.prix), (359.99, 380))
+        assistant.save().action_renouveler()
+        self.assertEqual(so.order_line.filtered("est_forfait").sorted("id")[-1].price_unit, 380)
+        self.assertFalse(so.forfait_prix_ajuste)
+        # Location sans forfait : pas de partie « Ajustement des frais »
+        location = self.env["sale.order"].create({
+            "partner_id": self.client.id, "type_contrat_id": self.env.ref("suivi_machines.type_contrat_location").id,
+            "date_debut_location": PERIODE_TEST[0], "date_fin_location": PERIODE_TEST[1],
+            "order_line": [(0, 0, {"product_id": self.produit.id, "product_uom_qty": 1})]})
+        location.action_confirm()
+        action = location.action_prolonger_contrat()
+        self.assertFalse(self.env[action["res_model"]].with_context(action["context"]).create({}).avec_forfait)
+
     def test_forfait_annuel_selon_le_contrat(self):
         """Convention : le forfait est une ligne DU CONTRAT (signee avec lui), prix modifiable ; chaque
         annee, la ligne de l'annee suivante est ajoutee au meme contrat (tache planifiee)."""
@@ -665,9 +720,15 @@ class TestSuiviMachines(TransactionCase):
         # Pas encore l'anniversaire : rien
         self.env["sale.order"]._cron_forfaits_annuels()
         self.assertEqual(len(so.order_line.filtered("est_forfait")), 1)
-        # Un an plus tard : rappel au bureau, rien d'ajoute tout seul (le prix est a ajuster)
-        so.forfait_prochaine_date = aujourdhui
+        # Un mois avant l'anniversaire : rappel au bureau, rien d'ajoute tout seul (le prix est a ajuster)
+        so.forfait_prochaine_date = aujourdhui + relativedelta(days=31)
         self.env["sale.order"]._cron_forfaits_annuels()
+        self.assertFalse(so.forfait_a_renouveler, "plus d'un mois avant : pas encore")
+        so.forfait_prochaine_date = aujourdhui + relativedelta(days=30)
+        self.env["sale.order"]._cron_forfaits_annuels()
+        self.assertEqual(so._activites_forfait().date_deadline, aujourdhui + relativedelta(days=30),
+                         "due le jour de l'anniversaire")
+        so.forfait_prochaine_date = aujourdhui
         self.assertTrue(so.forfait_a_renouveler)
         self.assertEqual(len(so.order_line.filtered("est_forfait")), 1, "pas de ligne automatique")
         self.assertEqual(len(so._activites_forfait()), 1)

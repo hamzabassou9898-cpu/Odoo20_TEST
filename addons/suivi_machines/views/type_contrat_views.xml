@@ -47,6 +47,7 @@
                 <field name="forfait_montant" invisible="not type_contrat_id"
                        readonly="state not in ('draft', 'sent')"/>
                 <field name="forfait_prochaine_date" invisible="not forfait_montant or state != 'sale'"/>
+                <field name="forfait_prix_ajuste" invisible="not forfait_prix_ajuste"/>
                 <field name="contrat_modele" invisible="1"/>
                 <!-- Contrat original : saison et prix de detail des que c'est une location (avant meme le
                      choix du type de contrat) -->

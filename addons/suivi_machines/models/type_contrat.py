@@ -20,6 +20,9 @@ from odoo.tools.image import image_data_uri
 _logger = logging.getLogger(__name__)
 
 
+# Rappel de renouvellement du forfait annuel : un mois avant l'anniversaire (demande de la cliente)
+JOURS_RAPPEL_FORFAIT = 30
+
 class SuiviTypeContrat(models.Model):
     _name = "suivi.type.contrat"
     _description = "Type de contrat"
@@ -483,6 +486,7 @@ class SaleOrder(models.Model):
             raise UserError(self.env._("Le prix du forfait ne peut pas être négatif."))
         self.with_context(synchro_forfait=True).write({
             "forfait_prochaine_date": debut + relativedelta(months=12), "forfait_a_renouveler": False,
+            "forfait_prix_ajuste": 0.0,
             "order_line": [(0, 0, {"product_id": produit.id, "est_forfait": True, "product_uom_qty": nombre,
                                    "price_unit": prix, "name": self._libelle_forfait(debut, machines)})]})
         self.message_post(body=Markup("<p>%s</p>") % self.env._(
@@ -499,20 +503,29 @@ class SaleOrder(models.Model):
                 "res_model": "suivi.forfait.renouvellement", "view_mode": "form", "views": [(False, "form")],
                 "target": "new", "context": {"default_order_id": self.id}}
 
+    def _note_forfait_a_renouveler(self):
+        self.ensure_one()
+        note = self.env._("Anniversaire du contrat : ajustez le prix puis cliquez sur « Renouveler le "
+                          "forfait » (prix de l'an dernier : %.2f $).", self._forfait_prix_precedent())
+        if self.forfait_prix_ajuste:
+            note += " " + self.env._("Nouveau prix choisi à la prolongation : %.2f $.", self.forfait_prix_ajuste)
+        return note
+
     @api.model
     def _cron_forfaits_annuels(self):
-        """Chaque jour : anniversaire arrive -> rappel au bureau (le prix est ajuste avant de renouveler)."""
+        """Chaque jour : un mois avant l'anniversaire -> rappel au bureau (le prix est ajuste avant de
+        renouveler ; l'activite est due le jour de l'anniversaire)."""
+        limite = fields.Date.context_today(self) + relativedelta(days=JOURS_RAPPEL_FORFAIT)
         contrats = self.search([("state", "=", "sale"), ("forfait_montant", ">", 0),
                                 ("forfait_a_renouveler", "=", False),
-                                ("forfait_prochaine_date", "<=", fields.Date.context_today(self))])
+                                ("forfait_prochaine_date", "<=", limite)])
         for contrat in contrats:
             contrat.forfait_a_renouveler = True
             contrat.activity_schedule(
                 "mail.mail_activity_data_todo", date_deadline=contrat.forfait_prochaine_date,
                 user_id=(contrat.user_id or self.env.ref("base.user_admin")).id,
                 summary=self.env._("Forfait annuel à renouveler"),
-                note=self.env._("Anniversaire du contrat : ajustez le prix puis cliquez sur « Renouveler le "
-                                "forfait » (prix de l'an dernier : %.2f $).", contrat._forfait_prix_precedent()))
+                note=contrat._note_forfait_a_renouveler())
         return contrats
 
 
@@ -533,7 +546,9 @@ class RenouvellementForfait(models.TransientModel):
         order = self.env["sale.order"].browse(res.get("order_id") or self.env.context.get("default_order_id"))
         if order:
             prix = order._forfait_prix_precedent()
-            res.update(prix_precedent=prix, prix=prix, nombre=order._machines_forfait()[0])
+            # Prix ajuste a la prolongation : propose a la place de celui de l'an dernier
+            res.update(prix_precedent=prix, prix=order.forfait_prix_ajuste or prix,
+                       nombre=order._machines_forfait()[0])
         return res
 
     def action_renouveler(self):

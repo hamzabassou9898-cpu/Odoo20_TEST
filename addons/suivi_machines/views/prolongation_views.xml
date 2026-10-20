@@ -32,6 +32,26 @@
                         <field name="nouvelle_date" readonly="mode == 'duree'" force_save="1" class="fw-bold"/>
                     </group>
                 </group>
+                <!-- Ajustement des frais : forfait annuel / machine, applique au prochain forfait -->
+                <group invisible="not avec_forfait">
+                    <separator string="Ajustement des frais" colspan="2"/>
+                    <group>
+                        <field name="avec_forfait" invisible="1"/>
+                        <field name="forfait_actuel" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                        <field name="ajustement" widget="radio" options="{'horizontal': true}"/>
+                        <field name="hausse" invisible="ajustement != 'pourcentage'"/>
+                    </group>
+                    <group>
+                        <field name="currency_id" invisible="1"/>
+                        <field name="nouveau_forfait" widget="monetary" options="{'currency_field': 'currency_id'}"
+                               readonly="ajustement == 'pourcentage'" force_save="1" class="fw-bold"/>
+                        <field name="calcul_forfait"/>
+                        <field name="application_forfait"/>
+                    </group>
+                    <div colspan="2" class="text-muted small">
+                        Laisser 0 % : le forfait ne change pas. Le changement est noté dans le fil du contrat.
+                    </div>
+                </group>
                 <footer>
                     <button name="action_prolonger" type="object" string="Prolonger" class="btn-primary"/>
                     <button special="cancel" string="Annuler"/>
