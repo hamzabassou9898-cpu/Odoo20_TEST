@@ -10,7 +10,6 @@ TYPES_DEMANDE = [
     ("ramassage", "Ramassage"),
     ("entretien", "Entretien"),
     ("remplacement", "Machine à remplacer"),
-    ("commande", "Passer une commande"),
     ("ajustement", "Ajuster un contrat"),
 ]
 # Type de reparation : choix a cocher quand le ticket est une reparation
@@ -103,7 +102,7 @@ class HelpdeskTicket(models.Model):
             if ticket.type_demande == "remplacement" and ticket.partner_id and not ticket.nb_machines_client:
                 raise ValidationError(self.env._(
                     "%s n'a aucune machine en inventaire : impossible de créer un ticket « Machine à remplacer ». "
-                    "Choisissez un autre type (ex. Passer une commande) ou vérifiez le client.",
+                    "Choisissez un autre type ou vérifiez le client.",
                     ticket.commerce_id.display_name or ticket.partner_id.display_name))
 
     # ------------------------------------------------------------ type « Ramassage » choisi a la main

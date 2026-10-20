@@ -801,7 +801,9 @@ class TestTicketMachine(TransactionCase):
     def test_bon_de_vente_et_livraison(self):
         t = self.env["helpdesk.ticket"].create({"name": "Pièce", "code_client": "TST100"})
         piece = self.env["product.product"].create({"name": "Pièce test", "is_storable": True})
-        f = Form(self.env["sale.order"].with_context(**t.action_creer_vente()["context"]))
+        f = Form(self.env["sale.order"].with_context(default_partner_id=self.commerce.id,
+                                                       default_ticket_assistance_id=t.id, default_origin=t.name,
+                                                       default_type_commande="vente"))
         self.assertEqual(f.partner_id, self.commerce)
         self.assertEqual(f.type_commande, "vente")
         with f.order_line.new() as ligne:
@@ -842,9 +844,8 @@ class TestTicketMachine(TransactionCase):
         boutons = [b.get("name") for b in arch.iter("button") if b.getparent().tag == "header"]
         self.assertNotIn("action_nouvelle_intervention", boutons, "intervention planifiée toute seule")
         self.assertIn("action_marquer_fait", boutons)
-        vente = arch.xpath("//header/button[@name='action_creer_vente']")
-        self.assertEqual([b.get("invisible") for b in vente], ["type_demande != 'commande' or not partner_id"],
-                         "Bon de vente : seulement pour « Passer une commande »")
+        self.assertFalse(arch.xpath("//header/button[@name='action_creer_vente']"),
+                         "Bon de vente retiré avec le type « Passer une commande »")
         self.assertNotIn("action_creer_livraison", boutons, "bouton Livraison retiré")
         self.env["stock.lot"].get_views([(False, "form")])
 
@@ -875,10 +876,12 @@ class TestTicketMachine(TransactionCase):
         ticket.type_demande = "reparation"
         self.assertFalse(ticket.est_entretien)
         self.assertEqual(ticket.statut_entretien, "a_planifier", "une réparation se planifie aussi")
-        ticket.type_demande = "commande"
-        self.assertFalse(ticket.statut_entretien, "passer une commande : rien à planifier")
-        for valeur in ("reparation", "ramassage", "entretien", "remplacement", "commande"):
-            self.assertIn(valeur, dict(self.env["helpdesk.ticket"]._fields["type_demande"].selection))
+        ticket.type_demande = "ajustement"
+        self.assertFalse(ticket.statut_entretien, "ajuster un contrat : rien à planifier")
+        types = dict(self.env["helpdesk.ticket"]._fields["type_demande"].selection)
+        for valeur in ("reparation", "ramassage", "entretien", "remplacement", "ajustement"):
+            self.assertIn(valeur, types)
+        self.assertNotIn("commande", types, "« Passer une commande » retiré")
 
     def test_type_de_reparation(self):
         """Ticket de reparation : choix a cocher (Coule, Ne gele pas...) obligatoire dans le formulaire,
@@ -896,7 +899,7 @@ class TestTicketMachine(TransactionCase):
         self.assertEqual(ticket.type_reparation, "bruit")
         # Autre type : le choix disparait du formulaire et n'est plus obligatoire
         f = Form(ticket)
-        f.type_demande = "commande"
+        f.type_demande = "ajustement"
         self.assertFalse(f.type_reparation)
         f.save()
         self.assertFalse(ticket.type_reparation)
@@ -961,7 +964,7 @@ class TestTicketMachine(TransactionCase):
             "type_reparation": "coule", "lot_id": self.lots[0].id, "date_planifiee": fields.Datetime.now()})
         interv = ticket.intervention_ticket_ids
         self.assertEqual((len(interv), interv.state), (1, "planifie"), "créée dès la création du ticket")
-        ticket.type_demande = "commande"
+        ticket.type_demande = "ajustement"
         self.assertEqual(interv.state, "annule")
         ticket.type_demande = "remplacement"
         self.assertEqual(len(ticket.intervention_ticket_ids.filtered(lambda i: i.state == "planifie")), 1)
@@ -1016,7 +1019,7 @@ class TestTicketMachine(TransactionCase):
         self.assertEqual(self.commerce.machine_client_ids, self.lots[:2], "les machines du commerce seulement")
         self.assertEqual(self.commerce.sante_nb_machines, 2)
         ticket = self.env["helpdesk.ticket"].create({"name": "Appel fiche", "partner_id": self.commerce.id,
-                                                     "type_demande": "commande"})
+                                                     "type_demande": "ajustement"})
         (self.commerce | self.autre_client).invalidate_recordset(["appel_client_ids"])  # calcul a l'affichage
         self.assertIn(ticket, self.commerce.appel_client_ids)
         self.assertNotIn(ticket, self.autre_client.appel_client_ids)
@@ -1126,7 +1129,7 @@ class TestTicketMachine(TransactionCase):
                          "stage_id": resolu.id})
         fini.user_id = tech
         self.assertEqual(fini.stage_id, resolu)
-        commande = T.create({"name": "Commande", "partner_id": self.commerce.id, "type_demande": "commande",
+        commande = T.create({"name": "Contrat", "partner_id": self.commerce.id, "type_demande": "ajustement",
                              "stage_id": nouveau.id, "user_id": tech.id})
         self.assertEqual(commande.stage_id, nouveau, "pas d'étape propre : on ne touche pas")
 

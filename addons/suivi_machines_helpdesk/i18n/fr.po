@@ -86,12 +86,12 @@ msgstr "%s n'a aucun contrat de location confirmé."
 #: code:addons/suivi_machines_helpdesk/models/type_ticket.py:0
 msgid ""
 "%s n'a aucune machine en inventaire : impossible de créer un ticket « "
-"Machine à remplacer ». Choisissez un autre type (ex. Passer une commande) ou"
-" vérifiez le client."
+"Machine à remplacer ». Choisissez un autre type ou vérifiez le"
+" client."
 msgstr ""
 "%s n'a aucune machine en inventaire : impossible de créer un ticket « "
-"Machine à remplacer ». Choisissez un autre type (ex. Passer une commande) ou"
-" vérifiez le client."
+"Machine à remplacer ». Choisissez un autre type ou vérifiez le"
+" client."
 
 #. module: suivi_machines_helpdesk
 #. odoo-python
@@ -1014,11 +1014,6 @@ msgstr ""
 #: model_terms:ir.ui.view,arch_db:suivi_machines_helpdesk.view_partner_form_contrat_location
 msgid "N° de bon / contrat de location"
 msgstr "N° de bon / contrat de location"
-
-#. module: suivi_machines_helpdesk
-#: model:ir.model.fields.selection,name:suivi_machines_helpdesk.selection__helpdesk_ticket__type_demande__commande
-msgid "Passer une commande"
-msgstr "Passer une commande"
 
 #. module: suivi_machines_helpdesk
 #: model:ir.model.fields,field_description:suivi_machines_helpdesk.field_helpdesk_ticket__statut_entretien

@@ -214,17 +214,6 @@ class HelpdeskTicket(models.Model):
         return self._action_liste("machine.intervention", self.env._("Interventions - %s", self.name),
                                   self.intervention_ticket_ids, self._contexte_intervention())
 
-    def action_creer_vente(self):
-        """Bon de vente (pieces, accessoires, machine) pour le client du ticket."""
-        self.ensure_one()
-        return {"type": "ir.actions.act_window", "name": self.env._("Bon de vente"),
-                "res_model": "sale.order", "view_mode": "form", "views": [(False, "form")],
-                "target": "current",
-                "context": {"default_partner_id": self.commerce_id.id or self.partner_id.id,
-                            "default_ticket_assistance_id": self.id,
-                            "default_origin": self.name,
-                            "default_type_commande": "vente"}}
-
     def action_facturer_frais(self):
         """Bon de vente des frais (main-d'oeuvre, livraison, deplacement, pieces) fait DEPUIS LE TICKET :
         reprend les frais saisis dans ses interventions, sinon les frais prevus par le contrat du client.

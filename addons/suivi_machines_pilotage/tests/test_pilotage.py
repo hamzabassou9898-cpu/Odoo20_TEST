@@ -246,7 +246,7 @@ class TestPilotage(TransactionCase):
                                   "user_id": tech.id})
         remplacer = Ticket.create({"name": "À remplacer", "code_client": "PIL1", "type_demande": "remplacement",
                                    "user_id": tech.id})
-        commande = Ticket.create({"name": "Sirop", "code_client": "PIL1", "type_demande": "commande",
+        commande = Ticket.create({"name": "Contrat", "code_client": "PIL1", "type_demande": "ajustement",
                                   "user_id": tech.id})
         tous = sans_tech | assignee | remplacer | commande
         domaines = self.env["pilotage.indicateur"]._domaines()
