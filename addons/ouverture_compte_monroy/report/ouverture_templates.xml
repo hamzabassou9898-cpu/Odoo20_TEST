@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Une case du formulaire : a remplir (bleue) sur la page du client, sinon la valeur ecrite -->
+    <template id="case">
+        <span t-attf-style="flex: {{ largeur or 1 }}; min-width: 0;">
+            <input t-if="editable" form="ouverture_client_form" t-att-name="champ" t-att-value="doc[champ] or ''"
+                   type="text" maxlength="150" class="o_ouverture_saisie"
+                   style="width: 100%; background: #f3f7ff; border: 0; border-bottom: 1px solid #2f6fd1; padding: 2px 6px; color: #1e3a8a;"/>
+            <span t-else="" style="display: block; border-bottom: 1px solid #555; min-height: 1.3em; padding: 0 4px;" t-out="doc[champ] or ''"/>
+        </span>
+    </template>
+    <!-- Une case a cocher (choix unique) -->
+    <template id="choix">
+        <label style="display: inline-flex; gap: 5px; align-items: center; margin: 0 14px 0 0; font-weight: normal;">
+            <input t-if="editable" form="ouverture_client_form" type="radio" t-att-name="champ" t-att-value="valeur"
+                   t-att-checked="doc[champ] == valeur" class="o_ouverture_saisie"/>
+            <span t-else="" style="display: inline-block; width: 12px; height: 12px; border: 1px solid #333; text-align: center; line-height: 10px; font-size: 10px;"
+                  t-out="'X' if doc[champ] == valeur else ''"/>
+            <span t-out="libelle"/>
+        </label>
+    </template>
+
+    <!-- Le formulaire Monroy « Ouverture compte client » (page du client et PDF) -->
+    <template id="formulaire">
+        <t t-set="societe" t-value="doc.company_id"/>
+        <div class="o_ouverture_formulaire" style="font-size: 13px; color: #222;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+                <div style="font-size: 11px; line-height: 1.35;">
+                    <img t-if="societe.logo" t-att-src="image_data_uri(societe.logo)" style="max-height: 70px; max-width: 200px;" alt="Logo"/>
+                    <div t-else="" style="font-family: Georgia, serif; font-size: 24px; font-style: italic;" t-out="societe.name"/>
+                    <div style="letter-spacing: 2px; font-size: 9px;">SPÉCIALISTE EN BARBOTINE</div>
+                    <div t-out="societe.street"/>
+                    <div><t t-out="societe.city"/> <t t-out="societe.zip"/></div>
+                    <div t-if="societe.phone">Tél. : <t t-out="societe.phone"/></div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-size: 22px; font-weight: 800; font-style: italic;">OUVERTURE COMPTE CLIENT</div>
+                    <div style="color: #666;" t-out="doc.name"/>
+                </div>
+            </div>
+            <t t-set="titre" t-value="'font-size: 12px; font-weight: 700; text-transform: uppercase; margin: 14px 0 4px; border-bottom: 2px solid #111;'"/>
+            <t t-set="cadre" t-value="'border: 1px solid #333; padding: 8px 10px;'"/>
+            <t t-set="ligne" t-value="'display: flex; gap: 10px; align-items: flex-end; margin: 5px 0;'"/>
+
+            <div t-att-style="titre">Identification du client</div>
+            <div t-att-style="cadre">
+                <div t-att-style="ligne"><b>NOM DE L'ENTREPRISE :</b>
+                    <t t-call="ouverture_compte_monroy.case" champ="'entreprise_nom'" largeur="3"/>
+                    <span style="font-size: 11px;">(ci-après désigné «le détaillant»)</span>
+                    <t t-call="ouverture_compte_monroy.choix" champ="'forme'" valeur="'ltee'" libelle="'Ltée'"/>
+                    <t t-call="ouverture_compte_monroy.choix" champ="'forme'" valeur="'inc'" libelle="'Inc.'"/>
+                    <t t-call="ouverture_compte_monroy.choix" champ="'forme'" valeur="'enr'" libelle="'Enr'"/>
+                </div>
+                <div t-att-style="ligne">AUTRE(S) NOM(S) UTILISÉ(S) :<t t-call="ouverture_compte_monroy.case" champ="'autres_noms'"/></div>
+                <div t-att-style="ligne">Adresse :<t t-call="ouverture_compte_monroy.case" champ="'rue'"/></div>
+                <div t-att-style="ligne">Ville :<t t-call="ouverture_compte_monroy.case" champ="'ville'"/>
+                    Code postal :<t t-call="ouverture_compte_monroy.case" champ="'code_postal'" largeur="0.6"/>
+                    Courriel :<t t-call="ouverture_compte_monroy.case" champ="'courriel'"/></div>
+                <div t-att-style="ligne">Contact :<t t-call="ouverture_compte_monroy.case" champ="'contact_nom'"/>
+                    Téléphone :<t t-call="ouverture_compte_monroy.case" champ="'telephone'"/>
+                    Télécopieur :<t t-call="ouverture_compte_monroy.case" champ="'telecopieur'"/></div>
+                <div t-att-style="ligne">Permis taxe provinciale :<t t-call="ouverture_compte_monroy.case" champ="'taxe_provinciale'"/>
+                    Fédérale :<t t-call="ouverture_compte_monroy.case" champ="'taxe_federale'"/></div>
+            </div>
+
+            <div t-att-style="cadre + 'margin-top: 12px;'">
+                <div t-att-style="ligne"><b>ADRESSE DE LIVRAISON (si différente) :</b><t t-call="ouverture_compte_monroy.case" champ="'livraison_rue'"/></div>
+                <div t-att-style="ligne">Ville :<t t-call="ouverture_compte_monroy.case" champ="'livraison_ville'"/></div>
+                <div t-att-style="ligne">Code postal :<t t-call="ouverture_compte_monroy.case" champ="'livraison_code_postal'"/>
+                    Téléphone :<t t-call="ouverture_compte_monroy.case" champ="'livraison_telephone'"/>
+                    Télécopieur :<t t-call="ouverture_compte_monroy.case" champ="'livraison_telecopieur'"/></div>
+                <div t-att-style="ligne"><b>Si locataire de l'immeuble : Nom du locateur :</b><t t-call="ouverture_compte_monroy.case" champ="'locateur_nom'"/>
+                    <b>Téléphone :</b><t t-call="ouverture_compte_monroy.case" champ="'locateur_telephone'"/></div>
+            </div>
+
+            <div t-att-style="titre">Renseignements personnels des actionnaires, associés ou propriétaire du détaillant</div>
+            <div t-att-style="cadre + 'display: flex; gap: 24px;'">
+                <div t-foreach="['actionnaire1', 'actionnaire2']" t-as="a" style="flex: 1;">
+                    <div t-att-style="ligne">Nom :<t t-call="ouverture_compte_monroy.case" champ="a + '_nom'"/></div>
+                    <div t-att-style="ligne">Adresse :<t t-call="ouverture_compte_monroy.case" champ="a + '_adresse'"/></div>
+                    <div t-att-style="ligne">Ville :<t t-call="ouverture_compte_monroy.case" champ="a + '_ville'"/></div>
+                    <div t-att-style="ligne">Code Postal :<t t-call="ouverture_compte_monroy.case" champ="a + '_code_postal'"/></div>
+                    <div t-att-style="ligne">Téléphone :<t t-call="ouverture_compte_monroy.case" champ="a + '_telephone'"/></div>
+                    <div t-att-style="ligne">% actions :<t t-call="ouverture_compte_monroy.case" champ="a + '_actions'"/></div>
+                    <div t-att-style="ligne">Date naissance :<t t-call="ouverture_compte_monroy.case" champ="a + '_naissance'"/></div>
+                </div>
+            </div>
+
+            <div t-att-style="titre">Références bancaires</div>
+            <div t-att-style="cadre">
+                <div t-att-style="ligne"><b>INSTITUTION FINANCIÈRE COMMERCIALE DU DÉTAILLANT :</b><t t-call="ouverture_compte_monroy.case" champ="'banque_nom'"/></div>
+                <div t-att-style="ligne">Adresse de la succursale :<t t-call="ouverture_compte_monroy.case" champ="'banque_adresse'"/></div>
+                <div t-att-style="ligne">Numéro de compte :<t t-call="ouverture_compte_monroy.case" champ="'banque_compte'"/>
+                    Téléphone :<t t-call="ouverture_compte_monroy.case" champ="'banque_telephone'"/></div>
+            </div>
+
+            <div t-att-style="titre">Modes d'approvisionnement</div>
+            <div t-att-style="cadre">
+                <div t-att-style="ligne"><t t-call="ouverture_compte_monroy.choix" champ="'approvisionnement'" valeur="'bureau'" libelle="'Venir chercher au bureau de Monroy (sans minimum de commande)'"/></div>
+                <div t-att-style="ligne"><t t-call="ouverture_compte_monroy.choix" champ="'approvisionnement'" valeur="'livraison'" libelle="'Livraison par Monroy avec achats minimums de 300$ par commande'"/></div>
+            </div>
+
+            <div t-att-style="titre">Département du crédit</div>
+            <div t-att-style="cadre">
+                <div t-att-style="ligne"><b>MODE DE PAIEMENT UTILISÉ :</b>
+                    <t t-call="ouverture_compte_monroy.choix" champ="'paiement'" valeur="'cheque'" libelle="'chèque'"/>
+                    <t t-call="ouverture_compte_monroy.choix" champ="'paiement'" valeur="'ppa'" libelle="'PPA'"/>
+                    <t t-call="ouverture_compte_monroy.choix" champ="'paiement'" valeur="'comptant'" libelle="'comptant'"/>
+                    <b style="margin-left: auto;">TERME :</b><t t-call="ouverture_compte_monroy.case" champ="'terme'" largeur="0.3"/> jours
+                </div>
+            </div>
+
+            <div style="page-break-before: always;"/>
+            <t t-call="ouverture_compte_monroy.conditions"/>
+        </div>
+    </template>
+
+    <!-- Conditions du formulaire papier, texte original -->
+    <template id="conditions">
+        <t t-set="ligne" t-value="'display: flex; gap: 10px; align-items: flex-end; margin: 6px 0;'"/>
+        <div style="font-size: 11.5px; line-height: 1.45; text-align: justify; margin-top: 14px;">
+            <p><b>LE DÉTAILLANT CONVIENT ET ACCEPTE LES CONDITIONS, TERMES ET MODALITÉS CI-BAS PRÉVUS POUR L'ACHAT DE MARCHANDISES AUPRÈS DE MONROY INC. POUR SON COMMERCE CI-AVANT IDENTIFIÉ;</b></p>
+            <p><b>1 - PRIX</b> – Les prix de vente des marchandises par MONROY INC. au détaillant seront ceux en vigueur au moment de la livraison desdites marchandises au commerce du détaillant. Lesdits prix pourront être modifiés en tout temps par MONROY INC. sans avis ni délai.</p>
+            <p><b>2 - CONDITIONS DE CRÉDIT</b> – Les termes, conditions et modalités de paiement des marchandises pourront être modifiés en tout temps par MONROY INC. sur un simple avis écrit de cette dernière au détaillant. Les nouveaux termes, conditions ou modalités entreront en vigueur à compter de la date de l'avis.</p>
+            <p><b>3 - ARRÉRAGES</b> – Le paiement de toute marchandise vendue par MONROY INC. au détaillant est dû et exigible selon les termes, conditions et modalités fixés. Advenant tout défaut de paiement, le détaillant devra payer à MONROY INC. un intérêt de <b>DEUX POUR CENT (2%) par mois</b> soit 24% par année sur tout solde dû. Les intérêts seront payables quinze (15) jours après l'exigibilité de tout solde dû. Tout arrérage d'intérêt portera intérêt au même taux et sera payable selon les mêmes modalités prévues ci-haut pour tout arrérage.</p>
+            <p><b>4 - CHÈQUE SANS PROVISION</b> – Tout chèque sans provision devra être immédiatement payé en totalité plus un frais d'administration de 25$. Le tout devra être acquitté au bureau de MONROY INC. en argent comptant.</p>
+            <p><b>5 - EXIGIBILITÉ</b> – Toute somme due à MONROY INC. par le détaillant suite à la vente de marchandise, de prêt d'argent ou autres deviendra exigible à demande de la part de MONROY INC. advenant le cas où le détaillant fait faillite, devient insolvable, est incapable de payer ses dettes selon toute loi créée au bénéfice des créanciers, vend, cède, transfère ou sous-loue son commerce ci avant identifié, n'a pas payé ou maintenu en vigueur tout permis, certificat ou autre document exigés par quelque autorité compétente que ce soit pour l'exploitation de son entreprise opérée à l'adresse susmentionnée.</p>
+            <p><b>6 - CHANGEMENTS MAJEURS</b> – Le détaillant s'engage et s'oblige à aviser immédiatement MONROY INC. de tout changement majeur pouvant survenir quant à ses actionnaires, propriétaires, ses associés, sa forme et son statut juridique et autres.</p>
+            <p><b>7 - RESPONSABILITÉ</b> - MONROY INC. ne pourra sous aucune considération être tenue responsable, directement ou indirectement, de toute perte de profit, de volume d'affaires, d'achalandage ou autre subie par le détaillant occasionnée par le retard, la modification de quelque livraison de marchandises commandées par le détaillant à MONROY INC. pour son commerce ci avant identifié.</p>
+            <p><b>8 - VENTE À TEMPÉRAMENT</b> – MONROY INC. conserve son droit de propriété sur les marchandises vendues au commerce du détaillant jusqu'au parfait paiement desdites marchandises.</p>
+            <p><b>9 - ÉLECTION DE DOMICILE</b> MONROY INC. et le détaillant conviennent mutuellement d'élire domicile dans le district judiciaire de Québec soit au 5645, rue Rideau, ville de Québec, province de Québec et qu'à cet effet ils conviennent que tout litige portant sur l'interprétation et l'application des présentes devra être entendu à l'intérieur du district judiciaire de Québec.</p>
+            <p><b>10 - INTERPRÉTATION</b> – Les présentes conventions seront interprétées et régies selon les lois de la province de Québec.</p>
+            <p><b>11 - INFORMATION</b> – Le détaillant autorise MONROY INC. ou une firme mandatée en son nom, à communiquer, à vérifier et à procéder auprès de tiers à toute enquête pertinente relativement à son crédit et sa solvabilité. Cette vérification peut-être faite par téléphone ou par écrit, auprès de personnes que nous avons soumises à MONROY INC. et/ou à titre de références ou auprès de toutes autres, notamment mais non limitativement, des institutions financières, de ses créanciers, employeurs, des agences de renseignements de crédit, agences de perception qui sont, par le fait même, autorisés par la présente à fournir les renseignements demandés par MONROY INC. ou une firme mandatée en son nom. Le soussigné, signataire du détaillant, autorise également, à titre personnel, MONROY INC., ou une firme mandatée en son nom, à communiquer, à vérifier et à procéder auprès de tiers à toute enquête pertinente relativement à son crédit et sa solvabilité personnelle. Cette vérification peut être faite par téléphone ou par écrit, auprès de personnes soumises à MONROY INC. à titre de références ou auprès de toutes autres, notamment mais non limitativement, des institutions financières, de ses créanciers, employeurs, des agences de renseignements de crédit, des agences de perception qui sont, par le fait même, autorisés par la présente à fournir les renseignements demandés par MONROY INC. ou une firme mandatée en son nom.</p>
+        </div>
+        <t t-set="date_signature" t-value="doc._date_texte(doc.signe_le)"/>
+        <div t-att-style="ligne">Nous avons lu les conditions ci-haut énumérées et les acceptons sans réserve <b>ET NOUS AVONS SIGNÉ à</b>
+            <t t-call="ouverture_compte_monroy.case" champ="'signe_a'"/>
+            , ce <b t-out="date_signature or '____'"/>.</div>
+        <div style="display: flex; gap: 40px; margin-top: 14px;">
+            <div style="flex: 1;">
+                <div style="min-height: 70px; border-bottom: 1px solid #333; display: flex; align-items: flex-end;">
+                    <span t-if="doc.approuve_par_id" style="font-size: 12px;">Approuvé par <b t-out="doc.approuve_par_id.name"/>
+                        le <t t-out="doc._date_texte(doc.approuve_le)"/></span></div>
+                <div style="font-size: 11px; font-weight: 700;">Signature du représentant de Monroy inc.</div>
+            </div>
+            <div style="flex: 1;">
+                <div style="min-height: 70px; border-bottom: 1px solid #333;">
+                    <img t-if="doc.signature" t-att-src="image_data_uri(doc.signature)" style="max-height: 70px;" alt="Signature"/></div>
+                <div style="font-size: 11px; font-weight: 700;">Signature du client ou de son représentant autorisé tant personnellement qu'à titre de représentant du client.</div>
+                <div t-att-style="ligne"><t t-call="ouverture_compte_monroy.case" champ="'nom_majuscules'"/></div>
+                <div style="font-size: 11px; font-weight: 700;">Nom en lettres majuscules</div>
+                <div style="border-bottom: 1px solid #555; min-height: 1.3em; margin-top: 6px;" t-out="doc.entreprise_nom or ''"/>
+                <div style="font-size: 11px; font-weight: 700;">Nom de l'entreprise</div>
+            </div>
+        </div>
+        <div style="margin-top: 22px; font-size: 11.5px; line-height: 1.6;">
+            <div t-att-style="ligne">Je (nous), soussigné(s)
+                <t t-call="ouverture_compte_monroy.case" champ="'caution_noms'"/></div>
+            (ci-après désigné(s) «la (les) Caution(s)» intervient(-venons) personnellement aux présentes afin de me (nous) porter caution conjointe et solidaire de <b t-out="doc.entreprise_nom or '__________'"/> en faveur de MONROY INC. pour toutes dettes et obligations passées, présentes et futures de <b t-out="doc.entreprise_nom or '__________'"/> envers MONROY INC., quelqu'en soit la nature résultant des relations commerciales entre <b t-out="doc.entreprise_nom or '__________'"/> et MONROY INC.
+            Par les présentes, la (les) Caution(s) renonce(çons) expressément aux bénéfices de division et de discussion.
+        </div>
+        <div style="margin-top: 8px;"><b>EN FOI DE QUOI, nous avons signé à</b> <t t-out="doc.signe_a or '__________'"/>, ce <b t-out="date_signature or '____'"/>.</div>
+        <div style="display: flex; gap: 40px; margin-top: 14px;">
+            <div style="flex: 1;"><div style="min-height: 70px; border-bottom: 1px solid #333;"/><div style="font-size: 11px; font-weight: 700; text-align: center;">Témoin</div></div>
+            <div style="flex: 1;">
+                <div style="min-height: 70px; border-bottom: 1px solid #333;">
+                    <img t-if="doc.signature and doc.caution_noms" t-att-src="image_data_uri(doc.signature)" style="max-height: 70px;" alt="Signature"/></div>
+                <div style="font-size: 11px; font-weight: 700;">Signature du client ou de son représentant autorisé tant personnellement qu'à titre de représentant du client.</div>
+                <div style="border-bottom: 1px solid #555; min-height: 1.3em; margin-top: 6px;" t-out="doc.caution_noms and doc.nom_majuscules or ''"/>
+                <div style="font-size: 11px; font-weight: 700;">Nom en lettres majuscules</div>
+            </div>
+        </div>
+    </template>
+
+    <!-- PDF -->
+    <record id="action_report_ouverture" model="ir.actions.report">
+        <field name="name">Ouverture de compte</field>
+        <field name="model">ouverture.compte</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ouverture_compte_monroy.report_ouverture</field>
+        <field name="print_report_name">object._nom_pdf()</field>
+        <field name="binding_model_id" ref="model_ouverture_compte"/>
+        <field name="binding_type">report</field>
+    </record>
+    <template id="report_ouverture">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="web.basic_layout">
+                    <div class="page">
+                        <t t-set="editable" t-value="False"/>
+                        <t t-call="ouverture_compte_monroy.formulaire"/>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

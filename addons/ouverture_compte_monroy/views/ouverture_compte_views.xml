@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="ouverture_compte_view_form" model="ir.ui.view">
+        <field name="name">ouverture.compte.form</field>
+        <field name="model">ouverture.compte</field>
+        <field name="arch" type="xml">
+            <form string="Ouverture de compte">
+                <header>
+                    <button name="action_envoyer" type="object" string="Envoyer au client" class="btn-primary"
+                            invisible="state != 'brouillon'"/>
+                    <button name="action_envoyer" type="object" string="Renvoyer" invisible="state != 'envoye'"/>
+                    <button name="action_approuver" type="object" string="Approuver" class="btn-primary"
+                            invisible="state != 'signe'"/>
+                    <button name="action_refuser" type="object" string="Refuser" invisible="state not in ('envoye', 'signe')"
+                            confirm="Refuser cette demande d'ouverture de compte ?"/>
+                    <button name="action_brouillon" type="object" string="Remettre en brouillon" invisible="state != 'refuse'"/>
+                    <button name="action_apercu" type="object" string="Page du client" invisible="state == 'brouillon'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="brouillon,envoye,signe,approuve"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_ouvrir_client" type="object" class="oe_stat_button" icon="person"
+                                invisible="not partner_id">
+                            <div class="o_stat_info"><span class="o_stat_value"><field name="partner_id" readonly="1"/></span>
+                                <span class="o_stat_text">Client</span></div>
+                        </button>
+                    </div>
+                    <div class="alert alert-info" role="status" invisible="state != 'brouillon'">
+                        Indiquez au moins le <strong>nom du client</strong> et son <strong>courriel</strong>, puis
+                        <strong>Envoyer au client</strong> : il remplit le reste en ligne et signe.
+                    </div>
+                    <div class="alert alert-warning" role="status" invisible="state != 'signe'">
+                        Le client a <strong>signé</strong> : vérifiez la demande, puis <strong>Approuver</strong> avec son code client.
+                    </div>
+                    <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+                    <group>
+                        <group string="Identification du client">
+                            <field name="entreprise_nom" placeholder="Nom de l'entreprise" required="state == 'brouillon'"/>
+                            <field name="forme" widget="radio" options="{'horizontal': true}"/>
+                            <field name="autres_noms" placeholder="Nom du commerce"/>
+                            <field name="contact_nom"/>
+                            <field name="courriel" widget="email" required="state == 'brouillon'"/>
+                            <field name="telephone" widget="phone"/>
+                            <field name="telecopieur"/>
+                            <field name="rue"/>
+                            <field name="ville"/>
+                            <field name="code_postal"/>
+                            <field name="taxe_provinciale"/>
+                            <field name="taxe_federale"/>
+                        </group>
+                        <group string="Suivi">
+                            <field name="user_id"/>
+                            <field name="partner_id" invisible="not partner_id"/>
+                            <field name="signe_par" invisible="not signe_par"/>
+                            <field name="signe_le" invisible="not signe_le"/>
+                            <field name="approuve_par_id" invisible="not approuve_par_id"/>
+                            <field name="approuve_le" invisible="not approuve_le"/>
+                            <field name="pdf_signe_id" invisible="not pdf_signe_id"/>
+                            <field name="motif_refus" invisible="state != 'refuse'"/>
+                            <field name="company_id" invisible="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Livraison et crédit" name="livraison_credit">
+                            <group>
+                                <group string="Adresse de livraison (si différente)">
+                                    <field name="livraison_rue"/>
+                                    <field name="livraison_ville"/>
+                                    <field name="livraison_code_postal"/>
+                                    <field name="livraison_telephone"/>
+                                    <field name="livraison_telecopieur"/>
+                                    <field name="locateur_nom"/>
+                                    <field name="locateur_telephone"/>
+                                </group>
+                                <group string="Approvisionnement et crédit">
+                                    <field name="approvisionnement" widget="radio"/>
+                                    <field name="paiement" widget="radio" options="{'horizontal': true}"/>
+                                    <field name="terme"/>
+                                    <field name="caution_noms"/>
+                                    <field name="signe_a"/>
+                                    <field name="nom_majuscules"/>
+                                </group>
+                            </group>
+                        </page>
+                        <!-- Renseignements personnels et bancaires : responsables seulement -->
+                        <page string="Actionnaires et banque" name="confidentiel" groups="sales_team.group_sale_manager">
+                            <group>
+                                <group string="Actionnaire, associé ou propriétaire 1">
+                                    <field name="actionnaire1_nom" string="Nom"/>
+                                    <field name="actionnaire1_adresse" string="Adresse"/>
+                                    <field name="actionnaire1_ville" string="Ville"/>
+                                    <field name="actionnaire1_code_postal" string="Code postal"/>
+                                    <field name="actionnaire1_telephone" string="Téléphone"/>
+                                    <field name="actionnaire1_actions" string="% actions"/>
+                                    <field name="actionnaire1_naissance" string="Date de naissance"/>
+                                </group>
+                                <group string="Actionnaire, associé ou propriétaire 2">
+                                    <field name="actionnaire2_nom" string="Nom"/>
+                                    <field name="actionnaire2_adresse" string="Adresse"/>
+                                    <field name="actionnaire2_ville" string="Ville"/>
+                                    <field name="actionnaire2_code_postal" string="Code postal"/>
+                                    <field name="actionnaire2_telephone" string="Téléphone"/>
+                                    <field name="actionnaire2_actions" string="% actions"/>
+                                    <field name="actionnaire2_naissance" string="Date de naissance"/>
+                                </group>
+                                <group string="Références bancaires">
+                                    <field name="banque_nom"/>
+                                    <field name="banque_adresse"/>
+                                    <field name="banque_compte"/>
+                                    <field name="banque_telephone"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Signature" name="signature" invisible="not signature">
+                            <field name="signature" widget="image" readonly="1"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="ouverture_compte_view_list" model="ir.ui.view">
+        <field name="name">ouverture.compte.list</field>
+        <field name="model">ouverture.compte</field>
+        <field name="arch" type="xml">
+            <list string="Ouvertures de compte">
+                <field name="name"/>
+                <field name="entreprise_nom"/>
+                <field name="autres_noms" optional="show"/>
+                <field name="courriel" optional="show"/>
+                <field name="ville" optional="show"/>
+                <field name="signe_le" optional="show"/>
+                <field name="partner_id" optional="show"/>
+                <field name="user_id" widget="many2one_avatar_user" optional="show"/>
+                <field name="state" widget="badge" decoration-info="state == 'envoye'" decoration-warning="state == 'signe'"
+                       decoration-success="state == 'approuve'" decoration-danger="state == 'refuse'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="ouverture_compte_view_search" model="ir.ui.view">
+        <field name="name">ouverture.compte.search</field>
+        <field name="model">ouverture.compte</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="entreprise_nom"/>
+                <field name="autres_noms"/>
+                <field name="courriel"/>
+                <field name="name"/>
+                <filter string="À évaluer" name="a_evaluer" domain="[('state', '=', 'signe')]"/>
+                <filter string="En attente du client" name="envoyes" domain="[('state', '=', 'envoye')]"/>
+                <filter string="Approuvées" name="approuvees" domain="[('state', '=', 'approuve')]"/>
+                <separator/>
+                <filter string="État" name="par_etat" context="{'group_by': 'state'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_ouverture_compte" model="ir.actions.act_window">
+        <field name="name">Ouvertures de compte</field>
+        <field name="res_model">ouverture.compte</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Nouvelle ouverture de compte</p>
+            <p>Indiquez le nom et le courriel du futur client, envoyez-lui le formulaire : il le remplit et le signe en ligne,
+                puis vous l'approuvez avec son code client.</p>
+        </field>
+    </record>
+    <menuitem id="menu_ouverture_compte" name="Ouvertures de compte" parent="contacts.menu_contacts"
+              action="action_ouverture_compte" sequence="3" groups="sales_team.group_sale_salesman"/>
+</odoo>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Fiche contact : bouton « Ouverture de compte » (demande en cours ou nouvelle, preparee avec la fiche) -->
+    <record id="view_partner_form_ouverture_compte" model="ir.ui.view">
+        <field name="name">res.partner.form.ouverture.compte</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <div name="button_box" position="inside">
+                <button name="action_ouverture_compte" type="object" class="oe_stat_button" icon="contract_edit"
+                        groups="sales_team.group_sale_salesman">
+                    <div class="o_stat_info">
+                        <span class="o_stat_value"><field name="ouverture_compte_etat" readonly="1"/></span>
+                        <span class="o_stat_text">Ouverture de compte</span>
+                    </div>
+                </button>
+            </div>
+        </field>
+    </record>
+</odoo>

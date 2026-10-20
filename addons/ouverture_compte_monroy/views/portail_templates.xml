@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Page du client : il remplit les cases bleues puis signe (meme principe que le contrat de location) -->
+    <template id="ouverture_page" name="Ouverture de compte (page du client)">
+        <t t-call="portal.frontend_layout">
+            <t t-set="no_breadcrumbs" t-value="True"/>
+            <div class="container py-4 o_ouverture_page">
+                <div class="row">
+                    <div class="col-lg-3 mb-3">
+                        <div class="card p-3 mb-3">
+                            <div class="text-muted small">Ouverture de compte</div>
+                            <h4 class="fw-bold" t-out="doc.name"/>
+                            <a t-if="editable" href="#signature" class="btn btn-primary w-100">Accepter et signer</a>
+                            <div t-if="editable" class="small text-muted mt-2">Vos réponses s'enregistrent pendant que vous écrivez.</div>
+                            <div t-elif="doc.signature" class="alert alert-success mb-0 mt-2 py-2">
+                                Signé par <b t-out="doc.signe_par"/>. Merci ! Monroy va évaluer votre demande.</div>
+                        </div>
+                        <div class="card p-3 small">
+                            <b t-out="doc.company_id.name"/>
+                            <div t-out="doc.company_id.street"/>
+                            <div><t t-out="doc.company_id.city"/> <t t-out="doc.company_id.zip"/></div>
+                            <div t-if="doc.company_id.phone">Tél. : <t t-out="doc.company_id.phone"/></div>
+                        </div>
+                    </div>
+                    <div class="col-lg-9">
+                        <div class="card p-4">
+                            <div t-if="editable" class="alert alert-info">
+                                Complétez les cases bleues, lisez les conditions, puis cliquez sur <b>Accepter et signer</b> en bas de la page.
+                            </div>
+                            <form id="ouverture_client_form" t-attf-action="/ouverture/#{doc.id}/champ" method="post">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <input type="hidden" name="access_token" t-att-value="access_token"/>
+                            </form>
+                            <t t-call="ouverture_compte_monroy.formulaire"/>
+                            <div t-if="editable" id="signature" class="mt-4">
+                                <div t-if="manquants" class="alert alert-warning small">
+                                    À remplir avant de signer : <t t-out="', '.join(manquants)"/>.
+                                    <span class="d-block">Après avoir rempli les cases, rechargez la page pour mettre cette liste à jour.</span>
+                                </div>
+                                <t t-call="portal.signature_form"
+                                   call_url="'/ouverture/%s/signer?access_token=%s' % (doc.id, access_token)"
+                                   default_name="doc.nom_majuscules or doc.contact_nom or ''"
+                                   send_label="'Accepter et signer'"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+</odoo>

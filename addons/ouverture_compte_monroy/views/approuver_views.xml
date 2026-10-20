@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="ouverture_compte_approuver_view_form" model="ir.ui.view">
+        <field name="name">ouverture.compte.approuver.form</field>
+        <field name="model">ouverture.compte.approuver</field>
+        <field name="arch" type="xml">
+            <form string="Approuver l'ouverture de compte">
+                <p>La demande de <strong><field name="entreprise_nom" readonly="1" class="d-inline"/></strong> est approuvée :
+                    le client est créé dans Contacts avec ce code, et le formulaire signé est rangé dans son dossier.</p>
+                <group>
+                    <field name="code_client" placeholder="ex. MON134" class="fw-bold"/>
+                    <field name="ouverture_id" invisible="1"/>
+                </group>
+                <footer>
+                    <button name="action_approuver" type="object" string="Approuver et créer le client" class="btn-primary"/>
+                    <button special="cancel" string="Annuler"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>
