@@ -162,7 +162,7 @@ class PilotageIndicateur(models.Model):
         return domaine
 
     @api.model
-    def _donnees_stock(self):
+    def _donnees_stock(self, rupture=None):
         Lot = self.env["stock.lot"]
         libelles = dict(Lot._fields["machine_statut"]._description_selection(self.env))
         couleurs = {"entrepot": "g", "chez_client": "violet", "vendue": "b", "livree": "b",
@@ -201,7 +201,7 @@ class PilotageIndicateur(models.Model):
         return {"statuts": statuts, "max_statut": max([x["nombre"] for x in statuts] or [1]),
                 "disponibles": disponibles, "max_dispo": max([x["nombre"] for x in disponibles] or [1]),
                 "categories": categories, "max_categorie": max([x["nombre"] for x in categories] or [1]) or 1,
-                "rupture": len(self._produits_en_rupture()),
+                "rupture": len(self._produits_en_rupture()) if rupture is None else rupture,
                 "mouvements": mouvements}
 
     @api.model
@@ -303,7 +303,8 @@ class PilotageIndicateur(models.Model):
         Tache = self.env["portail.tache"]
         domaine_periode = ["|", "&", ("date", ">=", debut), ("date", "<", fin), ("etat_suivi", "=", "en_retard")]
         taches = Tache.search([("technicien_id", "!=", False)] + domaine_periode, order="date, id")
-        taches = taches.filtered(lambda t: t.technicien_id in self._techniciens_du_tableau(taches))
+        visibles = self._techniciens_du_tableau(taches)
+        taches = taches.filtered(lambda t: t.technicien_id in visibles)
         techniciens = []
         for i, tech in enumerate(taches.technicien_id.sorted(lambda u: (u.name or "").lower())):
             siennes = taches.filtered(lambda t: t.technicien_id == tech)
@@ -357,5 +358,5 @@ class PilotageIndicateur(models.Model):
                             "pourcentage": round(100 * faits / total) if total else 0},
             "problemes": problemes, "max_probleme": max([p["nombre"] for p in problemes] or [1]),
             "semaines": semaines, "max_semaine": max([s["nombre"] for s in semaines] or [1]) or 1,
-            "tournees": tournees, "stock": self._donnees_stock(),
+            "tournees": tournees, "stock": self._donnees_stock(rupture),
         }

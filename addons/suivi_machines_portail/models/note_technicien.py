@@ -25,7 +25,8 @@ class SuiviNoteTechnicien(models.Model):
                                       index="btree_not_null")
     # Suivi : une activite « a faire » pour le responsable, la note passe a « Lue » quand elle est faite
     lu = fields.Boolean("Lue", default=False, index=True, copy=False)
-    activity_id = fields.Many2one("mail.activity", "Activité", ondelete="set null", readonly=True, copy=False)
+    activity_id = fields.Many2one("mail.activity", "Activité", ondelete="set null", readonly=True, copy=False,
+                                  index="btree_not_null")
     responsable_id = fields.Many2one("res.users", "Responsable", readonly=True)
     document = fields.Char("Document", compute="_compute_document")
     statut_lecture = fields.Selection([("a_lire", "À lire"), ("lue", "Lue")], "Statut", compute="_compute_statut_lecture")

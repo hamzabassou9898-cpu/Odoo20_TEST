@@ -354,7 +354,7 @@ class StockMove(models.Model):
     _inherit = "stock.move"
 
     machine_lot_id = fields.Many2one(
-        "stock.lot", "N° de série", copy=False,
+        "stock.lot", "N° de série", copy=False, index="btree_not_null",
         domain="[('product_id', '=', product_id), ('location_id.usage', '=', 'internal')]",
         help="Machine précise à livrer (choisie sur le bon de vente ou au moment de la livraison) : "
              "elle est réservée à la place de celle choisie automatiquement.")

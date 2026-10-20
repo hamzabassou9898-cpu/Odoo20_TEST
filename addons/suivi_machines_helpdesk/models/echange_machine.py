@@ -20,8 +20,10 @@ class HelpdeskTicket(models.Model):
         "stock.lot", "Machine de remplacement", tracking=True, copy=False,
         domain="[('est_machine', '=', True), ('machine_statut', '=', 'entrepot'), ('product_id', '=', machine_modele_id)]",
         help="Machine en entrepôt du même modèle, livrée à la place de celle du ticket.")
-    echange_retour_id = fields.Many2one("stock.picking", "Ramassage (échange)", copy=False, readonly=True)
-    echange_livraison_id = fields.Many2one("stock.picking", "Livraison (échange)", copy=False, readonly=True)
+    echange_retour_id = fields.Many2one("stock.picking", "Ramassage (échange)", copy=False, readonly=True,
+                                        index="btree_not_null")
+    echange_livraison_id = fields.Many2one("stock.picking", "Livraison (échange)", copy=False, readonly=True,
+                                           index="btree_not_null")
 
     def _echange_verifier(self):
         self.ensure_one()

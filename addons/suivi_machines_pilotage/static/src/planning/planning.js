@@ -124,8 +124,21 @@ export class PlanningSemaine extends Component {
         return `grid-template-columns: 190px repeat(${n}, ${colonne});`;
     }
 
+    /** Cartes d'une case (technicien x jour) : index construit une fois par chargement, pas a chaque survol. */
     cartes(ligne, jour) {
-        return this.state.donnees.cartes.filter((c) => c.technicien_id === ligne.id && c.jour === jour.iso);
+        const donnees = this.state.donnees;
+        if (this.indexDonnees !== donnees) {
+            this.indexDonnees = donnees;
+            this.indexCartes = new Map();
+            for (const carte of donnees.cartes) {
+                const cle = `${carte.technicien_id}-${carte.jour}`;
+                if (!this.indexCartes.has(cle)) {
+                    this.indexCartes.set(cle, []);
+                }
+                this.indexCartes.get(cle).push(carte);
+            }
+        }
+        return this.indexCartes.get(`${ligne.id}-${jour.iso}`) || [];
     }
 
     debutGlisser(ev, carte) {

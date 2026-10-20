@@ -25,11 +25,11 @@ class MachineIntervention(models.Model):
     product_id = fields.Many2one(related="lot_id.product_id", store=True, string="Produit")
     machine_ref = fields.Char(related="lot_id.ref", string="# machine")
     type = fields.Selection(TYPES, "Type", required=True, default="entretien", tracking=True)
-    date = fields.Datetime("Date", required=True, default=fields.Datetime.now, tracking=True)
+    date = fields.Datetime("Date", required=True, default=fields.Datetime.now, tracking=True, index=True)
     state = fields.Selection(
         [("planifie", "Planifiée"), ("fait", "Faite"), ("annule", "Annulée")],
         "Statut", default="planifie", required=True, tracking=True)
-    partner_id = fields.Many2one("res.partner", "Client", tracking=True)
+    partner_id = fields.Many2one("res.partner", "Client", tracking=True, index="btree_not_null")
     route = fields.Char("Route", compute="_compute_route", store=True,
                         help="Adresse du commerce du client, pour planifier la tournée.")
     user_id = fields.Many2one("res.users", "Technicien", default=lambda self: self.env.user,

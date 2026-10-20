@@ -66,15 +66,22 @@ class HelpdeskTicket(models.Model):
         Ticket = self.with_context(mail_create_nolog=True)
 
         # 1) Tickets deja ouverts : etiquettes a jour (ou retirees si l'entretien a ete fait)
+        # (une ecriture par groupe, seulement pour les tickets dont les etiquettes changent)
         ouverts = Ticket.search([("est_entretien", "=", True)])
+        a_nettoyer, en_retard_ids, cette_semaine = Ticket, Ticket, Ticket
         for ticket in ouverts:
-            lot = ticket.lot_id
-            if lot.date_prochain_entretien != ticket.date_entretien_prevu:
-                ticket.tag_ids = [(3, retard.id), (3, semaine.id)]   # entretien fait
-            elif ticket.date_entretien_prevu and ticket.date_entretien_prevu < aujourdhui:
-                ticket.tag_ids = [(3, semaine.id), (4, retard.id)]
-            elif ticket.date_entretien_prevu and ticket.date_entretien_prevu <= fin_semaine:
-                ticket.tag_ids = [(4, semaine.id)]
+            prevu, tags = ticket.date_entretien_prevu, ticket.tag_ids
+            if ticket.lot_id.date_prochain_entretien != prevu:
+                if (retard | semaine) & tags:
+                    a_nettoyer |= ticket   # entretien fait
+            elif prevu and prevu < aujourdhui:
+                if retard not in tags or semaine in tags:
+                    en_retard_ids |= ticket
+            elif prevu and prevu <= fin_semaine and semaine not in tags:
+                cette_semaine |= ticket
+        a_nettoyer.write({"tag_ids": [(3, retard.id), (3, semaine.id)]})
+        en_retard_ids.write({"tag_ids": [(3, semaine.id), (4, retard.id)]})
+        cette_semaine.write({"tag_ids": [(4, semaine.id)]})
 
         # Machine revenue en entrepot : son ticket automatique pas encore planifie n'a plus lieu d'etre
         sans_client = ouverts.filtered(
@@ -91,15 +98,18 @@ class HelpdeskTicket(models.Model):
         # Contrat Ete : le rappel part le 1er novembre lui-meme (pas un mois avant)
         lots = lots.filtered(lambda l: l.machine_contrat_id.saison != "ete"
                              or l.date_prochain_entretien <= aujourdhui)
+        # Tickets existants de ces machines, lus en une fois (archives compris pour l'echeance deja traitee)
+        existants = Ticket.with_context(active_test=False).search(
+            [("est_entretien", "=", True), ("lot_id", "in", lots.ids)])
+        deja = {(t.lot_id.id, t.date_entretien_prevu) for t in existants}
+        archivable = "active" in Ticket._fields
+        avec_ouvert = {t.lot_id.id for t in existants if (not archivable or t.active) and not t._est_ferme()}
         crees = Ticket
         for lot in lots:
-            if Ticket.with_context(active_test=False).search_count(
-                    [("est_entretien", "=", True), ("lot_id", "=", lot.id),
-                     ("date_entretien_prevu", "=", lot.date_prochain_entretien)]):
+            if (lot.id, lot.date_prochain_entretien) in deja:
                 continue
             # Un ticket d'entretien est deja ouvert pour cette machine : pas un deuxieme
-            if Ticket.search([("est_entretien", "=", True), ("lot_id", "=", lot.id)]).filtered(
-                    lambda t: not t._est_ferme()):
+            if lot.id in avec_ouvert:
                 continue
             client = lot.machine_client_id
             en_retard = lot.date_prochain_entretien < aujourdhui
@@ -133,6 +143,8 @@ class HelpdeskTicket(models.Model):
                                     serie=lot.name, ou=self._ou_est_machine(lot)),
                     user_id=reglages["responsable"].id)
             crees |= ticket
+            deja.add((lot.id, lot.date_prochain_entretien))
+            avec_ouvert.add(lot.id)
         return crees
 
     @api.model

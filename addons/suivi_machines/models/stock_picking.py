@@ -171,7 +171,7 @@ class StockMove(models.Model):
         """Retour d'une machine (de chez le client vers l'entrepot) : intervention « Ramassage »
         faite, avec le livreur, et les frais de reprise si leur prix est renseigne."""
         frais = self.env.ref("suivi_machines.produit_frais_livraison", raise_if_not_found=False)
-        Interv = self.env["machine.intervention"]
+        vals_list = []
         for ml in self._lignes_retour():
             picking = ml.picking_id or ml.move_id.picking_id
             vals = {
@@ -186,7 +186,9 @@ class StockMove(models.Model):
                 vals["frais_ids"] = [(0, 0, {"product_id": frais.id, "name": frais.display_name,
                                              "prix_unitaire": frais.lst_price})]
             vals.update(self._vals_intervention_retour(ml, picking))
-            Interv.sudo().create(vals)
+            vals_list.append(vals)
+        if vals_list:
+            self.env["machine.intervention"].sudo().create(vals_list)   # une seule creation pour tout le retour
 
     def _lignes_retour(self):
         """Lignes faites qui ramenent une machine de chez le client vers l'entrepot."""

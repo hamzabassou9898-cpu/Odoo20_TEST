@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Planning de la semaine : une ligne par technicien, une colonne par jour, glisser-deposer."""
+from collections import Counter, defaultdict
 from datetime import date, datetime, time, timedelta
 
 import pytz
@@ -82,7 +83,8 @@ class PortailTache(models.Model):
         taches = tout.filtered(lambda t: (not technicien_id or t.technicien_id.id == max(technicien_id, 0))
                                and (not type_tache or t.type_tache == type_tache))
         types = dict(self._fields["type_tache"]._description_selection(self.env))
-        techniciens = self._techniciens_planning(tout).sorted(lambda u: (u.name or "").lower())
+        tous_techniciens = self._techniciens_planning(tout).sorted(lambda u: (u.name or "").lower())
+        techniciens = tous_techniciens
         if technicien_id:
             techniciens = techniciens.filtered(lambda u: u.id == technicien_id)
         noms_jours = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"]
@@ -102,15 +104,16 @@ class PortailTache(models.Model):
                 "technicien_id": tache.technicien_id.id or 0,
                 "etat": tache.etat_suivi, "deplacable": bool(tache.a_faire),
             })
+        par_technicien = self._par_technicien(taches)
         lignes = []
         for i, tech in enumerate(techniciens):
-            siennes = taches.filtered(lambda t: t.technicien_id == tech)
+            siennes = par_technicien.get(tech.id, self)
             lignes.append({"id": tech.id, "nom": tech.name,
                            "initiales": "".join(m[:1] for m in (tech.name or "?").split()[:2]).upper(),
                            "couleur": COULEURS_TECH[i % len(COULEURS_TECH)], "nombre": len(siennes),
                            "en_retard": len(siennes.filtered(lambda t: t.etat_suivi == "en_retard"))})
         if not technicien_id or technicien_id < 0:
-            sans = taches.filtered(lambda t: not t.technicien_id)
+            sans = par_technicien.get(False, self)
             lignes.append({"id": 0, "nom": self.env._("Sans technicien"), "initiales": "?", "couleur": "#94a3b8",
                            "nombre": len(sans), "en_retard": len(sans.filtered(lambda t: t.etat_suivi == "en_retard"))})
         if periode == "jour":
@@ -126,12 +129,20 @@ class PortailTache(models.Model):
                 "precedente": precedente.isoformat(), "suivante": suivante.isoformat(), "titre": titre,
                 "jours": jours, "lignes": lignes, "cartes": cartes,
                 "filtres": {"technicien_id": technicien_id or 0, "type_tache": type_tache or "",
-                            "techniciens": [{"id": t.id, "nom": t.name} for t in
-                                            self._techniciens_planning(tout).sorted(lambda u: (u.name or "").lower())],
+                            "techniciens": [{"id": t.id, "nom": t.name} for t in tous_techniciens],
                             "types": [{"code": c, "nom": n} for c, n in types.items()]},
                 "indicateurs": self._indicateurs_planning(taches, avant, debut),
-                "graphiques": self._graphiques_planning(taches, jours, lignes, debut, periode, technicien_id, type_tache),
+                "graphiques": self._graphiques_planning(taches, jours, lignes, debut, periode, technicien_id, type_tache,
+                                                        par_technicien),
                 "peut_deplacer": self.env.user.has_group("suivi_machines_pilotage.group_pilotage")}
+
+    @api.model
+    def _par_technicien(self, taches):
+        """Taches regroupees par technicien (id, False sans technicien), dans leur ordre : un seul passage."""
+        groupes = defaultdict(list)
+        for tache in taches:
+            groupes[tache.technicien_id.id].append(tache.id)
+        return {cle: self.browse(ids) for cle, ids in groupes.items()}
 
     @api.model
     def _jour(self, jour_iso):
@@ -148,26 +159,32 @@ class PortailTache(models.Model):
     def _indicateurs_planning(self, taches, avant, debut):
         """Cartes du haut. Tendance et % complete : seulement les taches prevues dans la periode (les retards
         reportes d'avant sont comptes a part)."""
-        def nb(condition, lot=taches):
-            return len(lot.filtered(condition))
         borne = self._vers_utc(debut, time.min)
-        prevues = taches.filtered(lambda t: t.date >= borne)
-        reparations = nb(lambda t: t.type_tache == "reparation")
+        # Un seul passage sur les taches, puis des comptes en Python
+        lignes = [{"type_tache": t.type_tache, "etat_suivi": t.etat_suivi, "a_faire": t.a_faire,
+                   "technicien_id": t.technicien_id.id, "date": t.date} for t in taches]
+        prevues = [l for l in lignes if l["date"] >= borne]
+
+        def nb(condition, lot=lignes):
+            return sum(1 for l in lot if condition(l))
+        reparations = nb(lambda t: t["type_tache"] == "reparation")
         return {
-            "total": len(taches), "tendance": round(100 * (len(prevues) - avant) / avant) if avant else False,
-            "en_retard": nb(lambda t: t.etat_suivi == "en_retard"),
-            "sans_technicien": nb(lambda t: t.a_faire and not t.technicien_id),
-            "completion": round(100 * nb(lambda t: t.etat_suivi == "fait", prevues) / len(prevues)) if prevues else 0,
+            "total": len(lignes), "tendance": round(100 * (len(prevues) - avant) / avant) if avant else False,
+            "en_retard": nb(lambda t: t["etat_suivi"] == "en_retard"),
+            "sans_technicien": nb(lambda t: t["a_faire"] and not t["technicien_id"]),
+            "completion": round(100 * nb(lambda t: t["etat_suivi"] == "fait", prevues) / len(prevues)) if prevues else 0,
             "objectif": self._parametre_planning("objectif_completion", 90),
-            "livraisons": nb(lambda t: t.type_tache == "livraison"),
-            "ramassages": nb(lambda t: t.type_tache == "ramassage"),
-            "entretiens_reparations": nb(lambda t: t.type_tache == "entretien") + reparations,
+            "livraisons": nb(lambda t: t["type_tache"] == "livraison"),
+            "ramassages": nb(lambda t: t["type_tache"] == "ramassage"),
+            "entretiens_reparations": nb(lambda t: t["type_tache"] == "entretien") + reparations,
             "reparations": reparations,
         }
 
     @api.model
-    def _graphiques_planning(self, taches, jours, lignes, debut, periode, technicien_id, type_tache):
+    def _graphiques_planning(self, taches, jours, lignes, debut, periode, technicien_id, type_tache,
+                             par_technicien=None):
         fuseau = pytz.timezone(FUSEAU)
+        par_technicien = self._par_technicien(taches) if par_technicien is None else par_technicien
 
         def jour_local(tache):
             return pytz.UTC.localize(tache.date).astimezone(fuseau).date()
@@ -182,14 +199,15 @@ class PortailTache(models.Model):
                          j["titre"].split()[0]) for j in jours]
         series = []
         for ligne in [l for l in lignes if l["id"]][:len(COULEURS_TECH)]:
-            siennes = taches.filtered(lambda t: t.technicien_id.id == ligne["id"])
+            siennes = par_technicien.get(ligne["id"], self)
             dates = [max(jour_local(t), debut) for t in siennes]
             series.append({"nom": ligne["nom"], "couleur": ligne["couleur"],
                            "valeurs": [len([d for d in dates if a <= d < b]) for a, b, _l in colonnes]})
         # Repartition par type
         types = dict(self._fields["type_tache"]._description_selection(self.env))
-        repartition = [{"nom": types[code], "couleur": COULEURS_HEX.get(code, "#6b7280"), "valeur": nombre}
-                       for code in types if (nombre := len(taches.filtered(lambda t: t.type_tache == code)))]
+        par_type = Counter(taches.mapped("type_tache"))
+        repartition = [{"nom": types[code], "couleur": COULEURS_HEX.get(code, "#6b7280"), "valeur": par_type[code]}
+                       for code in types if par_type[code]]
         # Planifiees / faites sur les 12 dernieres semaines (jusqu'a la semaine affichee)
         derniere = debut - timedelta(days=debut.weekday())
         premiere = derniere - timedelta(weeks=11)

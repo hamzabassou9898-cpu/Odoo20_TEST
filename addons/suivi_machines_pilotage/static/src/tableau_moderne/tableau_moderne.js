@@ -3,6 +3,8 @@ import { useService } from "@web/core/utils/hooks";
 import { standardActionServiceProps } from "@web/webclient/actions/action_plugin";
 import { Component, onMounted, onWillStart, onWillUnmount, proxy, useProps } from "@odoo/owl";
 
+const DELAI_RAFRAICHIR = 120000;
+
 /** Pilotage : vue d'ensemble moderne (la vue « Toutes les cartes » reste disponible). */
 export class TableauModerne extends Component {
     static template = "suivi_machines_pilotage.TableauModerne";
@@ -13,11 +15,27 @@ export class TableauModerne extends Component {
         this.actionService = useService("action");
         this.state = proxy({ donnees: null, periode: "jour", chargement: true, majA: "" });
         onWillStart(() => this.charger("jour"));
-        // Rafraichissement automatique toutes les 2 minutes
+        // Rafraichissement automatique toutes les 2 minutes, seulement quand l'onglet est visible
+        // (et tout de suite en revenant sur l'onglet si le dernier date de plus de 2 minutes)
+        this.surVisibilite = () => {
+            if (!document.hidden && Date.now() - (this.dernierChargement || 0) >= DELAI_RAFRAICHIR) {
+                this.rafraichir();
+            }
+        };
         onMounted(() => {
-            this.minuteur = setInterval(() => this.charger(this.state.periode, true), 120000);
+            this.minuteur = setInterval(() => this.rafraichir(), DELAI_RAFRAICHIR);
+            document.addEventListener("visibilitychange", this.surVisibilite);
         });
-        onWillUnmount(() => clearInterval(this.minuteur));
+        onWillUnmount(() => {
+            clearInterval(this.minuteur);
+            document.removeEventListener("visibilitychange", this.surVisibilite);
+        });
+    }
+
+    rafraichir() {
+        if (!document.hidden && !this.enCours) {
+            return this.charger(this.state.periode, true);
+        }
     }
 
     async charger(periode, silencieux = false) {
@@ -25,12 +43,15 @@ export class TableauModerne extends Component {
             this.state.chargement = true;
         }
         this.state.periode = periode;
+        this.enCours = true;
+        this.dernierChargement = Date.now();
         try {
             const donnees = await this.orm.call("pilotage.indicateur", "donnees_tableau_moderne", [periode]);
             this.state.donnees = this.completer(donnees);
             const maintenant = new Date();
             this.state.majA = maintenant.toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" });
         } finally {
+            this.enCours = false;
             this.state.chargement = false;
         }
     }

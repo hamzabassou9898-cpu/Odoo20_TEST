@@ -62,6 +62,13 @@ class StockLot(models.Model):
                  "intervention_ids.date", "intervention_ids.partner_id")
     def _compute_machine(self):
         MoveLine = self.env["stock.move.line"]
+        # Derniers mouvements faits de toutes les machines, lus en une fois (par machine et par destination)
+        ids = [i for i in self._origin.ids if i]
+        dernier_par_lot, dernier_par_dest = {}, {}
+        for ml in MoveLine.search([("lot_id", "in", ids), ("state", "=", "done")], order="date desc, id desc") \
+                if ids else MoveLine:
+            dernier_par_lot.setdefault(ml.lot_id.id, ml)
+            dernier_par_dest.setdefault((ml.lot_id.id, ml.location_dest_id.id), ml)
         for lot in self:
             faites = lot.intervention_ids.filtered(lambda i: i.state == "fait").sorted("date")
             installs = faites.filtered(lambda i: i.type == "installation")
@@ -83,9 +90,7 @@ class StockLot(models.Model):
             societe = lot.company_id or self.env.company
             loc_location = societe.rental_loc_id if "rental_loc_id" in societe._fields else False
             if lot.location_id.usage == "customer" or (loc_location and lot.location_id == loc_location):
-                ml = MoveLine.search([("lot_id", "=", lot._origin.id), ("state", "=", "done"),
-                                      ("location_dest_id", "=", lot.location_id.id)],
-                                     order="date desc", limit=1)
+                ml = dernier_par_dest.get((lot._origin.id, lot.location_id.id), MoveLine)
                 client = ml.picking_id.partner_id or ml.move_id.partner_id
                 installation = ml.date.date() if ml else False
                 commande = ml.move_id.sale_line_id.order_id
@@ -96,8 +101,7 @@ class StockLot(models.Model):
                 # Installation saisie en intervention : prise en compte seulement si elle est
                 # plus recente que le dernier mouvement d'inventaire (ex. retour en entrepot)
                 derniere = faites.filtered(lambda i: i.type in ("installation", "ramassage"))[-1:]
-                dernier_mvt = MoveLine.search([("lot_id", "=", lot._origin.id), ("state", "=", "done")],
-                                              order="date desc", limit=1) if derniere and lot._origin.id else MoveLine
+                dernier_mvt = dernier_par_lot.get(lot._origin.id, MoveLine) if derniere else MoveLine
                 if derniere.type == "installation" and (not dernier_mvt or derniere.date > dernier_mvt.date):
                     client = derniere.partner_id
                     installation = derniere.date.date()
