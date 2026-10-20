@@ -102,6 +102,16 @@ class TestPortailTechnicien(HttpCase):
         self.authenticate("tech_portail_b", "tech_portail_b_mdp_123")
         page = self.url_open("/my/journee")
         self.assertNotIn("Ticket d'un autre technicien", page.text)
+        accueil = self.url_open("/my")
+        self.assertFalse(accueil.url.endswith("/my/journee"), "un autre utilisateur portail garde Mon compte")
+
+    def test_technicien_seulement_sa_journee(self):
+        """Le technicien n'a que « Ma journée » : Mon compte l'y amène, une seule carte."""
+        self.authenticate("tech_portail_a", "tech_portail_a_mdp_123")
+        for url in ("/my", "/my/home"):
+            self.assertTrue(self.url_open(url).url.endswith("/my/journee"), url)
+        cartes = self.env["portal.entry"].search([]).with_user(self.tech_a)._filter_visible_portal_cards()
+        self.assertEqual(cartes, self.env.ref("suivi_machines_portail.portal_entry_ma_journee"))
 
 
     # ------------------------------------------------------------ note + pieces jointes depuis le portail

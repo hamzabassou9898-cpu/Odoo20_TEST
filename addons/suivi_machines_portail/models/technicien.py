@@ -73,7 +73,7 @@ class PortalEntry(models.Model):
         visibles = super()._filter_visible_portal_cards()
         carte = self.env.ref("suivi_machines_portail.portal_entry_ma_journee", raise_if_not_found=False)
         if carte and carte in self and self.env.user.est_technicien:
-            visibles |= carte
+            return carte   # le technicien ne voit que sa journee
         return visibles
 
 

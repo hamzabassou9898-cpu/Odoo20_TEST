@@ -49,6 +49,13 @@ class PortailTechnicien(CustomerPortal):
         domaine = [("technicien_id", "=", request.env.user.id), *journee]
         return request.env["portail.tache"].with_context(tz=self._fuseau().zone).sudo().search(domaine, order="date, id")
 
+    @http.route()
+    def home(self, **kw):
+        # Le technicien n'a que sa journee : « Mon compte » l'y amene directement
+        if _est_technicien():
+            return request.redirect("/my/journee")
+        return super().home(**kw)
+
     @http.route(["/my/journee"], type="http", auth="user", website=True)
     def ma_journee(self, jour=None, **kw):
         if not _est_technicien():
