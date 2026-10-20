@@ -39,7 +39,13 @@ class StockLot(models.Model):
         "Premier entretien prévu", copy=False, tracking=True,
         help="Choisi à la livraison chez le client. Une fois cet entretien fait, le suivant est calculé "
              "avec la fréquence (dernier entretien + fréquence).")
-    date_prochain_entretien = fields.Date("Prochain entretien", compute="_compute_machine", store=True)
+    machine_contrat_id = fields.Many2one("sale.order", "Contrat de location", compute="_compute_machine",
+                                         store=True, index="btree_not_null",
+                                         help="Contrat de la derniere livraison de la machine chez le client.")
+    date_prochain_entretien = fields.Date(
+        "Prochain entretien", compute="_compute_prochain_entretien", store=True,
+        help="Date choisie a la livraison, sinon selon la saison du contrat (Annee, Ecole : renouvellement ; "
+             "Ete : 1er novembre ; Hiver : aucun), sinon dernier entretien + frequence.")
     nb_interventions = fields.Integer("Nb interventions", compute="_compute_machine", store=True)
     nb_bris = fields.Integer("Bris", compute="_compute_machine", store=True)
     date_mise_service = fields.Date("Mise en service",
@@ -69,6 +75,7 @@ class StockLot(models.Model):
             # bon de livraison valide vers le client). Sans livraison dans Odoo,
             # on se rabat sur la derniere installation / ramassage saisi en intervention.
             client = self.env["res.partner"]
+            contrat = self.env["sale.order"]
             installation = False
             sortie = "livree"   # chez un client sans commande liee
             # Location Enterprise : la machine remise au client est dans l'emplacement
@@ -84,6 +91,7 @@ class StockLot(models.Model):
                 commande = ml.move_id.sale_line_id.order_id
                 if commande:
                     sortie = "chez_client" if commande.type_commande == "location" else "vendue"
+                    contrat = commande if commande.type_commande == "location" else contrat
             else:
                 # Installation saisie en intervention : prise en compte seulement si elle est
                 # plus recente que le dernier mouvement d'inventaire (ex. retour en entrepot)
@@ -95,15 +103,8 @@ class StockLot(models.Model):
                     installation = derniere.date.date()
                     sortie = "chez_client"   # installee par intervention = location
             lot.machine_client_id = client
+            lot.machine_contrat_id = contrat
             lot.date_installation = installation or (installs[-1:].date.date() if installs else False)
-            depart = lot.date_dernier_entretien or lot.date_installation
-            lot.date_prochain_entretien = (
-                depart + relativedelta(months=lot.intervalle_entretien or 12) if depart else False)
-            # Date choisie a la livraison : valable tant qu'aucun entretien n'a ete fait depuis l'installation
-            dernier = lot.date_dernier_entretien
-            if lot.prochain_entretien_fixe and (
-                    not dernier or (lot.date_installation and dernier < lot.date_installation)):
-                lot.date_prochain_entretien = lot.prochain_entretien_fixe
 
             if lot.machine_etat != "actif":
                 lot.machine_statut = lot.machine_etat
@@ -113,6 +114,25 @@ class StockLot(models.Model):
                 lot.machine_statut = "entrepot"
             else:
                 lot.machine_statut = "sans_emplacement"
+
+    @api.depends("date_dernier_entretien", "date_installation", "intervalle_entretien", "prochain_entretien_fixe",
+                 "machine_contrat_id.saison", "machine_contrat_id.date_fin_location")
+    def _compute_prochain_entretien(self):
+        for lot in self:
+            dernier = lot.date_dernier_entretien
+            # Date choisie a la livraison : valable tant qu'aucun entretien n'a ete fait depuis l'installation
+            if lot.prochain_entretien_fixe and (
+                    not dernier or (lot.date_installation and dernier < lot.date_installation)):
+                lot.date_prochain_entretien = lot.prochain_entretien_fixe
+                continue
+            depart = dernier or lot.date_installation
+            saison = lot.machine_contrat_id._date_entretien_saison(depart or fields.Date.context_today(lot)) \
+                if lot.machine_contrat_id else None
+            if saison is not None:
+                lot.date_prochain_entretien = saison
+            else:
+                lot.date_prochain_entretien = (
+                    depart + relativedelta(months=lot.intervalle_entretien or 12) if depart else False)
 
     @api.depends("date_mise_service", "intervention_ids.date", "intervention_ids.type")
     def _compute_age(self):

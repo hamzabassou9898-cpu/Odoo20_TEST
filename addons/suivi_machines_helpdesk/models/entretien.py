@@ -88,6 +88,9 @@ class HelpdeskTicket(models.Model):
                                              ("machine_client_id", "!=", False),
                                              ("date_prochain_entretien", "!=", False),
                                              ("date_prochain_entretien", "<=", limite)])
+        # Contrat Ete : le rappel part le 1er novembre lui-meme (pas un mois avant)
+        lots = lots.filtered(lambda l: l.machine_contrat_id.saison != "ete"
+                             or l.date_prochain_entretien <= aujourdhui)
         crees = Ticket
         for lot in lots:
             if Ticket.with_context(active_test=False).search_count(
@@ -129,6 +132,48 @@ class HelpdeskTicket(models.Model):
                     note=self.env._("Planifier l'entretien de la machine %(serie)s (%(ou)s).",
                                     serie=lot.name, ou=self._ou_est_machine(lot)),
                     user_id=reglages["responsable"].id)
+            crees |= ticket
+        return crees
+
+    @api.model
+    def _creer_entretiens_au_retour(self, lignes):
+        """Machine revenue de chez le client : son entretien se fait au retour (ticket a l'entrepot), sauf
+        si un ticket d'entretien est deja ouvert pour elle."""
+        aujourdhui = fields.Date.context_today(self)
+        reglages = self.env["sale.order"]._reglages_reprise()
+        etape = self._etape_contenant("entretien")
+        Ticket = self.with_context(mail_create_nolog=True)
+        crees = Ticket
+        for ml in lignes:
+            lot = ml.lot_id
+            ouverts = Ticket.search([("est_entretien", "=", True), ("lot_id", "=", lot.id)]).filtered(
+                lambda t: not t._est_ferme())
+            # Entretien a echeance pas encore planifie chez le client : il se fera au retour
+            a_planifier = ouverts.filtered(lambda t: t.origine_auto == "entretien"
+                                           and t.statut_entretien == "a_planifier")
+            if a_planifier:
+                a_planifier.write({"origine_auto": "retour", "date_entretien_prevu": aujourdhui})
+                for ticket in a_planifier:
+                    ticket.message_post(body=self.env._("Machine revenue à l'entrepôt : entretien au retour."))
+            if ouverts:
+                continue
+            client = (ml.picking_id or ml.move_id.picking_id).partner_id or ml.move_id.partner_id
+            vals = {
+                "name": self.env._("Entretien au retour - %s", lot.ref or lot.name),
+                "partner_id": client.id,
+                "code_client": Ticket._code_du_client(client) if client else False,
+                "lot_id": lot.id,
+                "est_entretien": True,
+                "origine_auto": "retour",
+                "date_entretien_prevu": aujourdhui,
+                "description": self.env._("<p>Machine %(serie)s revenue à l'entrepôt (%(bon)s) : entretien au "
+                                          "retour.</p>", serie=lot.name, bon=ml.reference or ""),
+            }
+            if reglages["equipe"]:
+                vals["team_id"] = reglages["equipe"]
+            ticket = Ticket.create(vals)
+            if etape and ticket.stage_id != etape:
+                ticket.stage_id = etape
             crees |= ticket
         return crees
 
@@ -256,3 +301,13 @@ class ValiderEntretien(models.TransientModel):
         if resolu:
             ticket.stage_id = resolu
         return {"type": "ir.actions.act_window_close"}
+
+
+class StockMove(models.Model):
+    _inherit = "stock.move"
+
+    def _creer_interventions_retour(self):
+        super()._creer_interventions_retour()
+        lignes = self._lignes_retour()
+        if lignes:
+            self.env["helpdesk.ticket"].sudo()._creer_entretiens_au_retour(lignes)

@@ -150,7 +150,7 @@ class PilotageIndicateur(models.Model):
              "|", ("categ_id", "=", False), ("categ_id.suivi_machine", "=", False)])
         en_stock = self.env["stock.quant"]._read_group(
             self._emplacements_stock() + [("product_id", "in", produits.ids)], ["product_id"], ["quantity:sum"])
-        return produits - self.env["product.product"].union(*[p for p, qte in en_stock if qte > 0])
+        return produits - self.env["product.product"].union(p for p, qte in en_stock if qte > 0)
 
     @api.model
     def _emplacements_stock(self):

@@ -33,7 +33,7 @@
                     readonly="1"/> : valider ce transfert valide aussi l'autre (une seule opération).
                 </div>
                 <div class="alert alert-danger mb-0 py-2" role="alert"
-                     invisible="not livre_machines or state in ('done', 'cancel') or (prochain_entretien and frequence_entretien)">
+                     invisible="not livre_machines or state in ('done', 'cancel') or sans_entretien_saison or (prochain_entretien and frequence_entretien)">
                     Indiquez le <strong>Prochain entretien</strong> et la <strong>Fréquence des entretiens</strong> des
                     machines livrées : Odoo les garde sur la fiche de chaque machine et prévient le bureau un mois avant.
                 </div>
@@ -63,8 +63,10 @@
             <field name="origin" position="before">
                 <field name="livreur_id" widget="many2one_avatar_user"
                        readonly="state in ('done', 'cancel')"/>
+                <field name="sans_entretien_saison" invisible="1"/>
                 <field name="prochain_entretien" invisible="not livre_machines"
-                       readonly="state in ('done', 'cancel')"/>
+                       readonly="state in ('done', 'cancel')"
+                       placeholder="Contrat Hiver : pas d'entretien chez le client"/>
                 <field name="frequence_entretien" invisible="not livre_machines"
                        readonly="state in ('done', 'cancel')"/>
             </field>

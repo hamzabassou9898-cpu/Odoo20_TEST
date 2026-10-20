@@ -24,7 +24,8 @@ TYPES_REPARATION = [
 TYPES_A_PLANIFIER = ("entretien", "reparation", "remplacement")
 STATUTS_ENTRETIEN = [("a_planifier", "À planifier"), ("planifie", "Planifié"), ("fait", "Fait")]
 # Tickets crees par les actions planifiees d'Odoo (bandeau en haut du ticket)
-ORIGINES_AUTO = [("entretien", "Entretien à échéance"), ("reprise", "Fin de location")]
+ORIGINES_AUTO = [("entretien", "Entretien à échéance"), ("reprise", "Fin de location"),
+                 ("retour", "Retour de la machine")]
 
 
 class HelpdeskTicket(models.Model):

@@ -63,6 +63,9 @@
                         : l'entretien de cette machine arrive à échéance<span invisible="not date_entretien_prevu">
                         (prévu le <field name="date_entretien_prevu" readonly="1" class="d-inline-block w-auto"/>)</span>.
                     </span>
+                    <span invisible="origine_auto != 'retour'">
+                        : la machine est revenue à l'entrepôt, son entretien se fait au retour.
+                    </span>
                     <span invisible="origine_auto != 'reprise'">
                         : la location <field name="commande_reprise_id" readonly="1" class="d-inline"/>
                         se termine, les machines sont à reprendre.

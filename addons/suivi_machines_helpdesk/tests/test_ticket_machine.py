@@ -581,24 +581,63 @@ class TestTicketMachine(TransactionCase):
         self.assertEqual(so.action_creer_tickets_reprise()["domain"], [("commande_reprise_id", "=", so.id)],
                          "2e clic : ouvre le ticket existant")
 
-    def _location_livree(self, nom):
+    def _location_livree(self, nom, saison=False):
         stock = self.env.ref("stock.stock_location_stock")
         lot = self.env["stock.lot"].create({"name": nom, "product_id": self.produit.id})
         self.env["stock.quant"]._update_available_quantity(self.produit, stock, 1, lot_id=lot)
         so = self.env["sale.order"].create({
             "partner_id": self.commerce.id, "type_commande": "location", "date_debut_location": PERIODE_TEST[0],
-            "date_fin_location": fields.Datetime.now() + relativedelta(days=1),
+            "date_fin_location": fields.Datetime.now() + relativedelta(days=1), "saison": saison,
             "order_line": [(0, 0, {"product_id": self.produit.id, "product_uom_qty": 1, "machine_lot_id": lot.id})]})
         so.action_confirm()
         pk = so.picking_ids
         pk.action_assign()
         pk.move_ids.picked = True
         pk.livreur_id = pk.livreur_id or self.env.user  # technicien obligatoire pour valider
-        pk.prochain_entretien = pk.prochain_entretien or fields.Date.today() + relativedelta(months=12)  # entretien obligatoire a la livraison
-        pk.frequence_entretien = pk.frequence_entretien or "12"
+        if not pk.sans_entretien_saison:
+            pk.prochain_entretien = pk.prochain_entretien or fields.Date.today() + relativedelta(months=12)  # entretien obligatoire a la livraison
+            pk.frequence_entretien = pk.frequence_entretien or "12"
         pk.with_context(skip_sms=True).button_validate()
         ticket = self.env["helpdesk.ticket"].browse(so.action_creer_tickets_reprise()["res_id"])
         return lot, so, ticket
+
+    def _ramasser(self, ticket):
+        retour = self.env["stock.picking"].browse(ticket.action_ramassage()["res_id"])
+        retour.move_ids.picked = True
+        retour.livreur_id = self.env.user
+        retour.with_context(skip_sms=True).button_validate()
+        self.assertEqual(retour.state, "done")
+        return retour
+
+    def test_entretien_ete_le_1er_novembre_puis_au_retour(self):
+        """Contrat Ete : le rappel part le 1er novembre lui-meme ; machine revenue : entretien au retour."""
+        T = self.env["helpdesk.ticket"]
+        lot, so, reprise = self._location_livree("ETE-1", saison="ete")
+        novembre = lot.date_prochain_entretien
+        self.assertEqual((novembre.month, novembre.day), (11, 1), "Été : entretien le 1er novembre")
+        tickets = lambda: T.search([("est_entretien", "=", True), ("lot_id", "=", lot.id)])
+        with freeze_time(novembre - relativedelta(days=10)):
+            T._cron_tickets_entretien()
+        self.assertFalse(tickets(), "pas de rappel un mois avant pour l'Été")
+        with freeze_time(novembre):
+            T._cron_tickets_entretien()
+        ticket = tickets()
+        self.assertEqual((ticket.origine_auto, ticket.statut_entretien), ("entretien", "a_planifier"))
+        # Reporte au printemps : la machine revient, l'entretien se fait au retour (meme ticket)
+        self._ramasser(reprise)
+        self.assertEqual(tickets(), ticket, "pas de doublon")
+        self.assertEqual((ticket.origine_auto, ticket.date_entretien_prevu),
+                         ("retour", fields.Date.context_today(T)))
+
+    def test_entretien_au_retour_de_la_machine(self):
+        """Toute machine revenue de chez le client : ticket « Entretien au retour »."""
+        T = self.env["helpdesk.ticket"]
+        lot, so, reprise = self._location_livree("RET-1", saison="hiver")
+        self.assertFalse(lot.date_prochain_entretien, "Hiver : aucun rappel automatique")
+        self._ramasser(reprise)
+        ticket = T.search([("est_entretien", "=", True), ("lot_id", "=", lot.id)])
+        self.assertEqual(ticket.name, "Entretien au retour - %s" % (lot.ref or lot.name))
+        self.assertEqual((ticket.origine_auto, ticket.partner_id), ("retour", self.commerce))
 
     def test_ramassage_depuis_ticket(self):
         lot, so, ticket = self._location_livree("RAM-1")

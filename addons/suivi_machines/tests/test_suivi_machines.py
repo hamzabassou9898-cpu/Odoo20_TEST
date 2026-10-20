@@ -46,6 +46,66 @@ class TestSuiviMachines(TransactionCase):
         self.assertTrue(res is True or isinstance(res, dict) and picking.state == "done", res)
         self.assertEqual(picking.state, "done")
 
+    def _contrat_saison(self, saison, lot):
+        so = self.env["sale.order"].create({
+            "partner_id": self.client.id, "type_commande": "location", "saison": saison,
+            "date_debut_location": PERIODE_TEST[0], "date_fin_location": PERIODE_TEST[1],
+            "order_line": [(0, 0, {"product_id": self.produit.id, "product_uom_qty": 1, "machine_lot_id": lot.id})]})
+        so.action_confirm()
+        return so
+
+    def test_regle_entretien_par_saison(self):
+        """Annee, Ecole : au renouvellement du contrat (sa fin), puis tous les 12 mois ; Ete : 1er novembre ;
+        Hiver : aucun ; sans saison : la frequence de la machine."""
+        from datetime import date, datetime
+        SO = self.env["sale.order"]
+        fin = datetime(2027, 3, 15, 12, 0)
+        mai = date(2026, 5, 10)
+        self.assertEqual(SO.new({"saison": "ete"})._date_entretien_saison(mai), date(2026, 11, 1))
+        self.assertEqual(SO.new({"saison": "ete"})._date_entretien_saison(date(2026, 11, 1)), date(2027, 11, 1))
+        self.assertIs(SO.new({"saison": "hiver"})._date_entretien_saison(mai), False)
+        for saison in ("annee", "ecole"):
+            contrat = SO.new({"saison": saison, "date_fin_location": fin})
+            self.assertEqual(contrat._date_entretien_saison(mai), date(2027, 3, 15), saison)
+            self.assertEqual(contrat._date_entretien_saison(date(2027, 3, 20)), date(2028, 3, 15),
+                             "entretien fait au renouvellement : le suivant 12 mois plus tard")
+        self.assertEqual(SO.new({"saison": "annee"})._date_entretien_saison(mai), date(2027, 5, 10))
+        self.assertIsNone(SO.new({"saison": False})._date_entretien_saison(mai))
+
+    def test_livraison_propose_l_entretien_de_la_saison(self):
+        """Livraison : la date est proposee selon la saison, Jose peut la changer ; Hiver : pas obligatoire."""
+        ete = self._contrat_saison("ete", self.lot_a)
+        livraison = ete.picking_ids
+        attendu = ete._date_entretien_saison(fields.Date.context_today(livraison))
+        self.assertEqual((livraison.prochain_entretien, livraison.frequence_entretien), (attendu, "12"))
+        choisi = fields.Date.today() + relativedelta(months=3)
+        livraison.prochain_entretien = choisi                       # Jose deplace la date
+        self._valider(livraison, self.lot_a)
+        self.assertEqual(self.lot_a.machine_contrat_id, ete)
+        self.assertEqual(self.lot_a.date_prochain_entretien, choisi, "la date choisie a la livraison compte")
+        # Entretien fait : le suivant suit la saison (1er novembre)
+        self.env["machine.intervention"].create({"lot_id": self.lot_a.id, "type": "entretien", "state": "fait",
+                                                 "partner_id": self.client.id,
+                                                 "date": fields.Datetime.now() + relativedelta(months=4)})
+        fait = self.lot_a.date_dernier_entretien
+        self.assertEqual(self.lot_a.date_prochain_entretien, ete._date_entretien_saison(fait))
+        self.assertEqual((self.lot_a.date_prochain_entretien.month, self.lot_a.date_prochain_entretien.day), (11, 1))
+        # Hiver : aucune date demandee ni calculee
+        hiver = self._contrat_saison("hiver", self.lot_b)
+        livraison = hiver.picking_ids
+        self.assertTrue(livraison.sans_entretien_saison)
+        self.assertFalse(livraison.prochain_entretien)
+        livraison.action_assign()
+        livraison.move_ids.move_line_ids.unlink()
+        livraison.move_ids.write({"move_line_ids": [(0, 0, {
+            "product_id": self.produit.id, "lot_id": self.lot_b.id, "quantity": 1,
+            "location_id": livraison.location_id.id, "location_dest_id": livraison.location_dest_id.id})]})
+        livraison.move_ids.picked = True
+        livraison.livreur_id = self.env.user
+        livraison.button_validate()
+        self.assertEqual(livraison.state, "done", "validée sans date d'entretien")
+        self.assertFalse(self.lot_b.date_prochain_entretien, "Hiver : pas d'entretien chez le client")
+
     def _livrer_sans_commande(self, lot):
         picking = self.env["stock.picking"].create({
             "picking_type_id": self.env.ref("stock.picking_type_out").id, "partner_id": self.client.id,

@@ -16,12 +16,38 @@ class StockPicking(models.Model):
     # Livraison de machines chez le client : premier entretien et frequence (gardes sur la machine)
     livre_machines = fields.Boolean("Livre des machines", compute="_compute_livre_machines")
     prochain_entretien = fields.Date(
-        "Prochain entretien", copy=False,
-        help="Date du premier entretien des machines livrées. Odoo la garde sur la fiche de chaque machine "
-             "et prévient le bureau un mois avant.")
+        "Prochain entretien", copy=False, compute="_compute_entretien_propose", store=True, readonly=False,
+        help="Date du premier entretien des machines livrées, proposée selon la saison du contrat (Année, "
+             "École : renouvellement ; Été : 1er novembre) et modifiable. Odoo la garde sur la fiche de chaque "
+             "machine et prévient le bureau un mois avant.")
     frequence_entretien = fields.Selection(
-        FREQUENCES_ENTRETIEN, "Fréquence des entretiens", copy=False,
+        FREQUENCES_ENTRETIEN, "Fréquence des entretiens", copy=False, compute="_compute_entretien_propose",
+        store=True, readonly=False,
         help="Ensuite, Odoo calcule chaque entretien : dernier entretien + fréquence.")
+    sans_entretien_saison = fields.Boolean(
+        "Sans entretien (saison Hiver)", compute="_compute_sans_entretien_saison",
+        help="Contrat Hiver : la machine revient à la fin de la période, pas d'entretien chez le client.")
+
+    def _contrat_location(self):
+        self.ensure_one()
+        return self.sale_id if self.sale_id.type_commande == "location" else self.sale_id.browse()
+
+    @api.depends("sale_id.saison", "sale_id.type_commande")
+    def _compute_sans_entretien_saison(self):
+        for picking in self:
+            picking.sans_entretien_saison = picking._contrat_location().saison == "hiver"
+
+    @api.depends("sale_id.saison", "sale_id.date_fin_location", "state")
+    def _compute_entretien_propose(self):
+        """Proposition selon la saison du contrat ; ce que Jose a choisi n'est jamais remplace."""
+        for picking in self:
+            contrat = picking._contrat_location()
+            prochain, frequence = picking.prochain_entretien, picking.frequence_entretien
+            if picking.state not in ("done", "cancel") and contrat.saison:
+                if not prochain and contrat.saison != "hiver":
+                    prochain = contrat._date_entretien_saison(fields.Date.context_today(picking))
+                frequence = frequence or "12"
+            picking.prochain_entretien, picking.frequence_entretien = prochain, frequence
 
     # Echange de machine : le ramassage de l'ancienne et la livraison de la nouvelle, valides ensemble
     echange_picking_id = fields.Many2one(
@@ -97,6 +123,7 @@ class StockPicking(models.Model):
                 "Choisissez le technicien assigné avant de valider : %s.",
                 ", ".join(sans_technicien.mapped("name"))))
         sans_entretien = self.filtered(lambda p: p.livre_machines and p.state not in ("done", "cancel")
+                                       and not p.sans_entretien_saison
                                        and not (p.prochain_entretien and p.frequence_entretien))
         if sans_entretien:
             raise UserError(self.env._(
@@ -125,9 +152,10 @@ class StockPicking(models.Model):
 
     def _enregistrer_entretien_machines(self):
         """Machines livrees chez le client : premier entretien et frequence sur leur fiche."""
-        for picking in self.filtered(lambda p: p.state == "done" and p.prochain_entretien and p.frequence_entretien):
+        for picking in self.filtered(lambda p: p.state == "done" and p.frequence_entretien
+                                     and (p.prochain_entretien or p.sans_entretien_saison)):
             lots = picking.move_ids.filtered(lambda m: m.est_machine and m._vers_client()).move_line_ids.lot_id
-            lots.write({"prochain_entretien_fixe": picking.prochain_entretien,
+            lots.write({"prochain_entretien_fixe": picking.prochain_entretien or False,
                         "intervalle_entretien": int(picking.frequence_entretien)})
 
 
@@ -144,14 +172,7 @@ class StockMove(models.Model):
         faite, avec le livreur, et les frais de reprise si leur prix est renseigne."""
         frais = self.env.ref("suivi_machines.produit_frais_livraison", raise_if_not_found=False)
         Interv = self.env["machine.intervention"]
-        for ml in self.move_line_ids.filtered(lambda l: l.state == "done" and l.lot_id.est_machine):
-            societe = ml.company_id or self.env.company
-            loc_location = societe.rental_loc_id if "rental_loc_id" in societe._fields else False
-            depuis_client = (ml.location_id.usage == "customer"
-                             or (loc_location and ml.location_id == loc_location))
-            vers_entrepot = ml.location_dest_id.usage == "internal" and ml.location_dest_id != loc_location
-            if not (depuis_client and vers_entrepot):
-                continue
+        for ml in self._lignes_retour():
             picking = ml.picking_id or ml.move_id.picking_id
             vals = {
                 "lot_id": ml.lot_id.id,
@@ -166,6 +187,17 @@ class StockMove(models.Model):
                                              "prix_unitaire": frais.lst_price})]
             vals.update(self._vals_intervention_retour(ml, picking))
             Interv.sudo().create(vals)
+
+    def _lignes_retour(self):
+        """Lignes faites qui ramenent une machine de chez le client vers l'entrepot."""
+        def retour(ml):
+            societe = ml.company_id or self.env.company
+            loc_location = societe.rental_loc_id if "rental_loc_id" in societe._fields else False
+            depuis_client = (ml.location_id.usage == "customer"
+                             or (loc_location and ml.location_id == loc_location))
+            vers_entrepot = ml.location_dest_id.usage == "internal" and ml.location_dest_id != loc_location
+            return depuis_client and vers_entrepot
+        return self.move_line_ids.filtered(lambda l: l.state == "done" and l.lot_id.est_machine and retour(l))
 
     def _vals_intervention_retour(self, ml, picking):
         """Point d'extension : valeurs supplementaires de l'intervention de retour."""

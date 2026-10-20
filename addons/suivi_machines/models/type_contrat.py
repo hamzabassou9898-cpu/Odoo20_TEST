@@ -7,6 +7,7 @@ Ventes > Configuration > Types de contrat, sans programmation.
 """
 import logging
 import re
+from datetime import date
 
 from babel import dates as babel_dates
 from dateutil.relativedelta import relativedelta
@@ -103,6 +104,28 @@ class SaleOrder(models.Model):
     forfait_a_renouveler = fields.Boolean(
         "Forfait à renouveler", copy=False, readonly=True,
         help="L'anniversaire est arrivé : renouveler le forfait avec le bouton « Renouveler le forfait ».")
+
+    def _date_entretien_saison(self, depuis):
+        """Prochain entretien d'une machine de ce contrat, apres la date « depuis » (dernier entretien ou
+        installation), selon la saison :
+        - Annee, Ecole : a la date de renouvellement du contrat (sa fin), puis tous les 12 mois ;
+        - Ete : le 1er novembre (machine fermee l'hiver ; date deplacable jusqu'au printemps) ;
+        - Hiver : aucun entretien periodique (la machine revient a la fin de la periode).
+        None : pas de saison, la frequence de la machine s'applique."""
+        self.ensure_one()
+        if self.saison == "hiver":
+            return False
+        if self.saison == "ete":
+            novembre = date(depuis.year, 11, 1)
+            return novembre if novembre > depuis else date(depuis.year + 1, 11, 1)
+        if self.saison in ("annee", "ecole"):
+            if not self.date_fin_location:
+                return depuis + relativedelta(months=12)
+            prochain = fields.Datetime.context_timestamp(self, self.date_fin_location).date()
+            while prochain <= depuis:
+                prochain += relativedelta(months=12)
+            return prochain
+        return None
 
     @api.depends("type_contrat_id")
     def _compute_forfait_montant(self):
