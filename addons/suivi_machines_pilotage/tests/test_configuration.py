@@ -56,3 +56,10 @@ class TestVueContacts(TransactionCase):
         action.invalidate_recordset()
         self.assertEqual(action.views[0][1], "hierarchy")
         self.assertEqual(self.env.ref("suivi_machines_pilotage.action_contacts_vue_hierarchie"), a_la_main)
+
+    def test_hierarchie_menu_regrouper(self):
+        """Vue Hierarchie : le menu Regrouper par / Favoris est charge dans l'interface."""
+        fichiers = [f[0] if isinstance(f, (list, tuple)) else f for f in
+                    self.env["ir.asset"]._get_asset_paths("web.assets_backend", {})]
+        self.assertTrue(any(f.endswith("suivi_machines_pilotage/static/src/hierarchie/hierarchie_regrouper.js")
+                            for f in fichiers))
