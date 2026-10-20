@@ -20,6 +20,9 @@ RACINE = ("guide_racine", "Guide de l'utilisation", "📘")
 GUIDES = [
     ("guide_contacts", "contacts", "Contacts", "👥"),
     ("guide_contrat_location", "contrat_location", "Contrat de location", "📝"),
+    ("guide_appels_service", "appels_service", "Appels de service", "📞"),
+    ("guide_portail_technicien", "portail_technicien", "Portail technicien", "📱"),
+    ("guide_planning", "planning", "Planning", "🗓️"),
 ]
 # Exemples de la base de demonstration (si la base n'a pas de banniere avec des commerces)
 EXEMPLES_DEMO = {"banniere": "Dépanneurs Bonjour", "nb": "4", "commerces": "ses commerces",

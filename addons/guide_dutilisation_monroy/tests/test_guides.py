@@ -73,3 +73,14 @@ class TestGuides(TransactionCase):
         commande.write({"state": "sale"})
         valeurs = self.env["knowledge.article"]._monroy_exemples()
         self.assertEqual((valeurs["contrat"], valeurs["contrat_client"]), (commande.name, "Client contrat guides"))
+
+    def test_guides_tickets_portail_planning(self):
+        """Un chapitre par type de ticket ; portail technicien et planning ont leur guide."""
+        self.env["knowledge.article"]._monroy_installer_guides()
+        appels = self.env.ref(MODULE + ".guide_appels_service")
+        for type_ticket in ("Réparation", "Entretien", "Ramassage", "Machine à remplacer", "Ajuster un contrat"):
+            self.assertIn(type_ticket, appels.body)
+        self.assertIn("Ma journée", self.env.ref(MODULE + ".guide_portail_technicien").body)
+        self.assertIn("Glisser", self.env.ref(MODULE + ".guide_planning").body)
+        self.assertEqual([g[0] for g in GUIDES][-3:],
+                         ["guide_appels_service", "guide_portail_technicien", "guide_planning"])
