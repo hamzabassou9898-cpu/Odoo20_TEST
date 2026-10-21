@@ -12,7 +12,6 @@ PARAM_EQUIPE = "suivi_machines_helpdesk.equipe_reprise_id"
 PARAM_ETAPE = "suivi_machines_helpdesk.etape_reprise"
 PARAM_RESPONSABLE = "suivi_machines_helpdesk.responsable_reprise_id"
 ETAPE_DEFAUT = "Reprise de machine"
-NOM_ETAPE_LIVRAISON = "Livraison & installation / Reprise"
 
 
 def _param_int(icp, cle, defaut):
@@ -55,16 +54,6 @@ class HelpdeskTicket(models.Model):
             etape = self._etape_reprise(nom, equipe=ticket.team_id if "team_id" in ticket._fields else None)
             if etape and ticket.stage_id != etape:
                 ticket.stage_id = etape
-
-    @api.model
-    def _renommer_etape_installation(self):
-        """« Installation de machine / Reprise... » -> « Livraison & installation / Reprise », dans toutes les
-        langues installees (le mot « reprise » reste : l'etape est toujours reconnue)."""
-        self.env.cr.execute("SELECT id FROM helpdesk_stage WHERE name::text ILIKE %s", ["%installation de machine%"])
-        etapes = self.env["helpdesk.stage"].browse([r[0] for r in self.env.cr.fetchall()])
-        for code, _nom in self.env["res.lang"].get_installed():
-            etapes.with_context(lang=code).write({"name": NOM_ETAPE_LIVRAISON})
-        return etapes
 
     def _est_ferme(self):
         return est_ferme(self.stage_id.name)
