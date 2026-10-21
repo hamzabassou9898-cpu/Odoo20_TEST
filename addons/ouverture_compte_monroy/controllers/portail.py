@@ -35,6 +35,22 @@ class OuverturePortail(CustomerPortal):
             return request.make_response("", status=409)
         return request.make_response("", status=204)
 
+    @http.route(["/ouverture/<int:ouverture_id>/pdf"], type="http", auth="public", website=True)
+    def ouverture_pdf(self, ouverture_id, access_token=None, **kw):
+        """La demande signee, a telecharger par le client (PDF deja prepare, sinon fait a la demande)."""
+        try:
+            ouverture = self._ouverture(ouverture_id, access_token)
+        except (AccessError, MissingError):
+            return request.redirect("/my")
+        if not ouverture.signature:
+            return request.redirect(ouverture.get_portal_url())
+        piece = ouverture.sudo()._pdf_pour_client()
+        if not piece:
+            return request.redirect(ouverture.get_portal_url())
+        stream = request.env["ir.binary"]._get_stream_from(piece)
+        stream.download_name = ouverture.sudo()._nom_pdf() + ".pdf"
+        return stream.get_response(as_attachment=True)
+
     @http.route(["/ouverture/<int:ouverture_id>/signer"], type="jsonrpc", auth="public", website=True)
     def ouverture_signer(self, ouverture_id, access_token=None, name=None, signature=None):
         access_token = access_token or request.httprequest.args.get("access_token")

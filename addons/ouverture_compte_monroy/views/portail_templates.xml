@@ -12,8 +12,14 @@
                             <h4 class="fw-bold" t-out="doc.name"/>
                             <a t-if="editable" href="#signature" class="btn btn-primary w-100">Accepter et signer</a>
                             <div t-if="editable" id="ouverture_etat_enregistrement" class="small text-muted mt-2">Vos réponses s'enregistrent pendant que vous écrivez.</div>
-                            <div t-elif="doc.signature" class="alert alert-success mb-0 mt-2 py-2">
-                                Signé par <b t-out="doc.signe_par"/>. Merci ! Monroy va évaluer votre demande.</div>
+                            <t t-elif="doc.signature">
+                                <span t-if="doc.state == 'approuve'" class="badge text-bg-success">Compte ouvert</span>
+                                <span t-elif="doc.state == 'refuse'" class="badge text-bg-secondary">Demande non retenue</span>
+                                <span t-else="" class="badge text-bg-warning">En attente d'approbation</span>
+                                <a t-attf-href="/ouverture/#{doc.id}/pdf?access_token=#{access_token}"
+                                   class="btn btn-outline-primary w-100 mt-3">
+                                    <i class="oi me-1" data-icon="download"/>Télécharger ma demande signée (PDF)</a>
+                            </t>
                         </div>
                         <div class="card p-3 small">
                             <b t-out="doc.company_id.name"/>
@@ -26,6 +32,41 @@
                         <div class="card p-4">
                             <div t-if="editable" class="alert alert-info">
                                 Complétez les cases bleues, lisez les conditions, puis cliquez sur <b>Accepter et signer</b> en bas de la page.
+                            </div>
+                            <!-- Signee : confirmation claire pour le client (la demande signee reste affichee dessous) -->
+                            <div t-elif="doc.signature" id="ouverture_confirmation" class="border rounded-3 p-4 mb-4"
+                                 t-attf-style="background: #{'#eefaf2' if doc.state != 'refuse' else '#f6f6f6'};">
+                                <t t-if="doc.state == 'approuve'">
+                                    <h4 class="fw-bold text-success mb-2"><i class="oi me-2" data-icon="check"/>Votre compte client est ouvert</h4>
+                                    <p class="mb-3">Bienvenue chez <t t-out="doc.company_id.name"/> ! Votre demande d'ouverture de compte a été
+                                        approuvée. Nous vous remercions de votre confiance.</p>
+                                </t>
+                                <t t-elif="doc.state == 'refuse'">
+                                    <h4 class="fw-bold mb-2">Votre demande n'a pas été retenue</h4>
+                                    <p class="mb-3">Pour toute question, communiquez avec nous<t t-if="doc.company_id.phone"> au
+                                        <b t-out="doc.company_id.phone"/></t>.</p>
+                                </t>
+                                <t t-else="">
+                                    <h4 class="fw-bold text-success mb-2"><i class="oi me-2" data-icon="check"/>Merci, votre demande est bien signée</h4>
+                                    <p class="mb-3">Votre demande d'ouverture de compte a été signée le
+                                        <b t-out="doc._date_texte(doc.signe_le)"/> par <b t-out="doc.signe_par"/>.
+                                        Elle est maintenant <b>en attente d'approbation par <t t-out="doc.company_id.name"/></b> :
+                                        notre équipe l'étudie et vous confirmera l'ouverture de votre compte par courriel.</p>
+                                </t>
+                                <!-- Etapes de la demande -->
+                                <div class="d-flex flex-wrap gap-2 mb-3 small">
+                                    <span class="badge rounded-pill text-bg-success"><i class="oi me-1" data-icon="check"/>Formulaire rempli</span>
+                                    <span class="badge rounded-pill text-bg-success"><i class="oi me-1" data-icon="check"/>Signée</span>
+                                    <span t-if="doc.state == 'approuve'" class="badge rounded-pill text-bg-success"><i class="oi me-1" data-icon="check"/>Approuvée par Monroy</span>
+                                    <span t-elif="doc.state == 'refuse'" class="badge rounded-pill text-bg-secondary">Non retenue</span>
+                                    <span t-else="" class="badge rounded-pill text-bg-warning">Approbation par Monroy en cours</span>
+                                </div>
+                                <a t-attf-href="/ouverture/#{doc.id}/pdf?access_token=#{access_token}" class="btn btn-primary">
+                                    <i class="oi me-1" data-icon="download"/>Télécharger ma demande signée (PDF)</a>
+                                <div class="small text-muted mt-3">Votre demande signée est reproduite ci-dessous.</div>
+                            </div>
+                            <div t-elif="doc.state == 'brouillon'" class="alert alert-warning">
+                                Ce formulaire n'est pas encore prêt : <t t-out="doc.company_id.name"/> vous enverra le lien par courriel.
                             </div>
                             <form id="ouverture_client_form" t-attf-action="/ouverture/#{doc.id}/champ" method="post">
                                 <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>

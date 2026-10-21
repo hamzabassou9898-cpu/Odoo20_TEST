@@ -29,7 +29,8 @@ function enregistrerChamp(formulaire, champ) {
         .then(() => fetch(formulaire.action, { method: "POST", body: donnees, credentials: "same-origin" }))
         .then((reponse) => {
             if (reponse.status === 409) {
-                window.location.reload();   // deja signe ailleurs : la page montre ou en est le formulaire
+                // Deja signe (autre onglet) : on le dit, sans recharger la page pendant que le client ecrit
+                afficherEtat("Ce formulaire est déjà signé : rechargez la page pour voir la demande signée.", "text-warning");
             } else if (!reponse.ok) {
                 throw new Error(String(reponse.status));
             } else {

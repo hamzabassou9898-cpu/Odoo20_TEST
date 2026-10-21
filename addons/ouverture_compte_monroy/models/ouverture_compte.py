@@ -226,6 +226,14 @@ class OuvertureCompte(models.Model):
                     ouverture.pdf_signe_id = message.attachment_ids[:1]
             ouverture.pdf_a_preparer = False
 
+    def _pdf_pour_client(self):
+        """PDF signe pour le client (piece jointe) : celui deja prepare en arriere-plan, sinon fait maintenant
+        (une seule fois)."""
+        self.ensure_one()
+        if self.pdf_a_preparer or not self.pdf_signe_id:
+            self._preparer_pdf_signe()
+        return self.pdf_signe_id
+
     @api.model
     def _cron_pdf_signes(self):
         self.sudo().search([("pdf_a_preparer", "=", True)], limit=50)._preparer_pdf_signe()

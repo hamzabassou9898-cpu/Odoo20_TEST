@@ -231,6 +231,20 @@ class TestOuverturePortail(HttpCase):
         reponse = self.url_open("/ouverture/%s?access_token=%s" % (ouverture.id, ouverture.access_token))
         self.assertEqual(reponse.status_code, 200)
         self.assertIn(ouverture._date_texte(ouverture.signe_le), reponse.text)
+        # Confirmation claire pour le client : signee, en attente d'approbation, PDF a telecharger
+        self.assertIn('id="ouverture_confirmation"', reponse.text)
+        self.assertIn("en attente d'approbation", reponse.text)
+        self.assertNotIn('name="ville"', reponse.text, "plus de cases à remplir")
+        lien = "/ouverture/%s/pdf?access_token=%s" % (ouverture.id, ouverture.access_token)
+        self.assertIn(lien.replace("&", "&amp;") if "&" in lien else lien, reponse.text)
+        pdf = self.url_open(lien)
+        if ouverture._rendre_pdf():   # moteur PDF present (Odoo.sh) : le fichier est envoye
+            self.assertEqual(pdf.headers.get("Content-Type"), "application/pdf")
+            self.assertIn("attachment", pdf.headers.get("Content-Disposition", ""))
+            self.assertTrue(pdf.content, "le fichier est envoyé (en test, Odoo rend le rapport en HTML)")
+            self.assertFalse(ouverture.pdf_a_preparer, "prepare une seule fois")
+        refuse = self.url_open("/ouverture/%s/pdf?access_token=faux" % ouverture.id)
+        self.assertNotIn("attachment", refuse.headers.get("Content-Disposition", ""), "jamais sans le bon lien")
         client.ouverture_compte_etat  # lu avant l'approbation, comme sur la fiche ouverte
         ouverture._approuver("MONT321")
         self.assertEqual(client.ouverture_compte_etat, "approuve")
