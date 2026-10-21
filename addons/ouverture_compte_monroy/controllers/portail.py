@@ -3,6 +3,7 @@
 from odoo import http
 from odoo.exceptions import AccessError, MissingError, UserError
 from odoo.http import request
+from odoo.http.stream import content_disposition
 
 from odoo.addons.portal.controllers.portal import CustomerPortal
 
@@ -57,10 +58,18 @@ class OuverturePortail(CustomerPortal):
         if not ouverture.signature:
             return request.redirect(ouverture.get_portal_url())
         piece = ouverture.sudo()._pdf_pour_client()
+        nom = ouverture.sudo()._nom_pdf() + ".pdf"
         if not piece:
-            return request.redirect(ouverture.get_portal_url())
+            # Tache de fond en train de le preparer : on le donne quand meme, fait a la volee
+            pdf = ouverture.sudo()._rendre_pdf()
+            if not pdf:
+                return request.redirect(ouverture.get_portal_url())
+            return request.make_response(pdf, headers=[
+                ("Content-Type", "application/pdf"),
+                ("Content-Disposition", content_disposition(nom)),
+            ])
         stream = request.env["ir.binary"]._get_stream_from(piece)
-        stream.download_name = ouverture.sudo()._nom_pdf() + ".pdf"
+        stream.download_name = nom
         return stream.get_response(as_attachment=True)
 
     @http.route(["/ouverture/<int:ouverture_id>/signer"], type="jsonrpc", auth="public", website=True)

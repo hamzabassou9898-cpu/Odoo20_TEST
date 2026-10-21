@@ -10,6 +10,7 @@ import binascii
 from markupsafe import Markup
 
 from odoo import api, fields, models
+from odoo.tools import SQL
 from odoo.exceptions import UserError, ValidationError
 
 ETATS = [("brouillon", "Brouillon"), ("envoye", "Envoyé au client"), ("signe", "Signé, à évaluer"),
@@ -219,9 +220,19 @@ class OuvertureCompte(models.Model):
                                 ouverture.entreprise_nom or ouverture.name))
         return True
 
+    def _verrouiller(self):
+        """Demandes que personne d'autre n'est en train de traiter (la tache de fond et le client qui telecharge
+        le PDF au meme moment se gênaient : « could not serialize access due to concurrent update »)."""
+        if not self:
+            return self
+        self.env.cr.execute(SQL("SELECT id FROM ouverture_compte WHERE id IN %s FOR UPDATE SKIP LOCKED",
+                                tuple(self.ids)))
+        return self.browse(ligne[0] for ligne in self.env.cr.fetchall())
+
     def _preparer_pdf_signe(self):
-        """PDF signe joint au fil de la demande (une fois) ; sans moteur PDF, la demande reste consultable."""
-        for ouverture in self.sudo():
+        """PDF signe joint au fil de la demande (une fois) ; sans moteur PDF, la demande reste consultable.
+        Une demande deja prise par un autre traitement est laissee a celui-ci."""
+        for ouverture in self.sudo()._verrouiller():
             pdf = ouverture._rendre_pdf()
             if pdf:
                 message = ouverture.message_post(
@@ -252,7 +263,7 @@ class OuvertureCompte(models.Model):
         self.ensure_one()
         if self.pdf_a_preparer or not self.pdf_signe_id:
             self._preparer_pdf_signe()
-        return self.pdf_signe_id
+        return self.pdf_signe_id   # vide si la tache de fond le prepare a cet instant
 
     @api.model
     def _cron_pdf_signes(self):

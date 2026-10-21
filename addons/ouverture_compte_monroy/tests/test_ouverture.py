@@ -281,6 +281,9 @@ class TestOuverturePortail(HttpCase):
             self.assertIn("attachment", pdf.headers.get("Content-Disposition", ""))
             self.assertTrue(pdf.content, "le fichier est envoyé (en test, Odoo rend le rapport en HTML)")
             self.assertFalse(ouverture.pdf_a_preparer, "prepare une seule fois")
+        # Verrou contre la tache de fond : une demande libre est bien prise, une liste vide ne fait rien
+        self.assertEqual(ouverture.sudo()._verrouiller(), ouverture.sudo())
+        self.assertFalse(ouverture.browse()._verrouiller())
         refuse = self.url_open("/ouverture/%s/pdf?access_token=faux" % ouverture.id)
         self.assertNotIn("attachment", refuse.headers.get("Content-Disposition", ""), "jamais sans le bon lien")
         client.ouverture_compte_etat  # lu avant l'approbation, comme sur la fiche ouverte
