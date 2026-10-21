@@ -25,7 +25,7 @@
     <t t-inherit="web.KanbanRenderer" t-inherit-mode="extension">
         <xpath expr="//t[@t-foreach='group.list.records']" position="before">
             <t t-set="livraisonsGroupe" t-value="this.livraisonsDuGroupe(group)"/>
-            <LivraisonsAFaire t-if="livraisonsGroupe" donnees="livraisonsGroupe"/>
+            <t t-if="livraisonsGroupe" t-component="this.composantLivraisons" donnees="livraisonsGroupe"/>
         </xpath>
     </t>
 </templates>

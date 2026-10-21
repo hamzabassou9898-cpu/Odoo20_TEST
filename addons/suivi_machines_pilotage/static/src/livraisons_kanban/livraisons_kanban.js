@@ -25,8 +25,6 @@ export class LivraisonsAFaire extends Component {
     }
 }
 
-KanbanRenderer.components = { ...KanbanRenderer.components, LivraisonsAFaire };
-
 patch(KanbanRenderer.prototype, {
     setup() {
         super.setup(...arguments);
@@ -49,6 +47,12 @@ patch(KanbanRenderer.prototype, {
         onWillUpdateProps(() => {
             charger();
         });
+    },
+
+    /** Composant passe par le prototype (et non par « components ») : les kanbans qui heritent de celui-ci
+     * (ex. l'Assistance Enterprise) ont copie leur liste de composants avant ce complement. */
+    get composantLivraisons() {
+        return LivraisonsAFaire;
     },
 
     /** Donnees a montrer dans cette colonne (seulement groupe par etape, sur l'etape des livraisons). */
