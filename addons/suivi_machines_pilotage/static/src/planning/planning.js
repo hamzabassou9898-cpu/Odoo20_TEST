@@ -13,7 +13,7 @@ const AXE = { color: "#94a3b8", font: { size: 11 } };
 /** Un graphique Chart.js (natif Odoo) : redessine seulement quand ses donnees changent. */
 export class GraphiquePlanning extends Component {
     static template = "suivi_machines_pilotage.GraphiquePlanning";
-    props = useProps({ type: t.string(), donnees: t.object() });
+    props = useProps({ type: t.string(), donnees: t.or([t.object(), t.array()]) });
 
     setup() {
         this.chart = useChart(() => this.config());
