@@ -18,9 +18,12 @@ class OuverturePortail(CustomerPortal):
             ouverture = self._ouverture(ouverture_id, access_token)
         except (AccessError, MissingError):
             return request.redirect("/my")
-        return request.render("ouverture_compte_monroy.ouverture_page", {
-            "doc": ouverture, "editable": ouverture._modifiable_par_client(),
+        reponse = request.render("ouverture_compte_monroy.ouverture_page", {
+            "doc": ouverture, "modifiable_client": ouverture._modifiable_par_client(),
             "access_token": access_token or "", "manquants": ouverture._manquants()})
+        # Jamais une ancienne version en cache : apres la signature, le navigateur recharge la vraie page
+        reponse.headers["Cache-Control"] = "no-store, must-revalidate"
+        return reponse
 
     @http.route(["/ouverture/<int:ouverture_id>/champ"], type="http", auth="public", methods=["POST"],
                 website=True)

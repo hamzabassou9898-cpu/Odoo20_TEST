@@ -4,14 +4,16 @@
     <template id="ouverture_page" name="Ouverture de compte (page du client)">
         <t t-call="portal.frontend_layout">
             <t t-set="no_breadcrumbs" t-value="True"/>
+            <!-- Garde-fou : une demande signee ne s'affiche jamais en mode « a remplir » -->
+            <t t-set="modifiable_client" t-value="modifiable_client and not doc.signature and doc.state == 'envoye'"/>
             <div class="container py-4 o_ouverture_page">
                 <div class="row">
                     <div class="col-lg-3 mb-3">
                         <div class="card p-3 mb-3">
                             <div class="text-muted small">Ouverture de compte</div>
                             <h4 class="fw-bold" t-out="doc.name"/>
-                            <a t-if="editable" href="#signature" class="btn btn-primary w-100">Accepter et signer</a>
-                            <div t-if="editable" id="ouverture_etat_enregistrement" class="small text-muted mt-2">Vos réponses s'enregistrent pendant que vous écrivez.</div>
+                            <a t-if="modifiable_client" href="#signature" class="btn btn-primary w-100">Accepter et signer</a>
+                            <div t-if="modifiable_client" id="ouverture_etat_enregistrement" class="small text-muted mt-2">Vos réponses s'enregistrent pendant que vous écrivez.</div>
                             <t t-elif="doc.signature">
                                 <span t-if="doc.state == 'approuve'" class="badge text-bg-success">Compte ouvert</span>
                                 <span t-elif="doc.state == 'refuse'" class="badge text-bg-secondary">Demande non retenue</span>
@@ -30,7 +32,7 @@
                     </div>
                     <div class="col-lg-9">
                         <div class="card p-4">
-                            <div t-if="editable" class="alert alert-info">
+                            <div t-if="modifiable_client" class="alert alert-info">
                                 Complétez les cases bleues, lisez les conditions, puis cliquez sur <b>Accepter et signer</b> en bas de la page.
                             </div>
                             <!-- Signee : confirmation claire pour le client (la demande signee reste affichee dessous) -->
@@ -73,7 +75,7 @@
                                 <input type="hidden" name="access_token" t-att-value="access_token"/>
                             </form>
                             <t t-call="ouverture_compte_monroy.formulaire"/>
-                            <div t-if="editable" id="signature" class="mt-4">
+                            <div t-if="modifiable_client" id="signature" class="mt-4">
                                 <!-- Mis a jour pendant que le client ecrit (pas besoin de recharger la page) -->
                                 <div id="ouverture_manquants" t-attf-class="alert alert-warning small #{'' if manquants else 'd-none'}">
                                     <span class="o_ouverture_intro_manquants">À remplir avant de signer : </span><span class="o_ouverture_liste_manquants fw-bold" t-out="', '.join(manquants)"/>.

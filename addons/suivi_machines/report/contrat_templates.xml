@@ -7,7 +7,7 @@
     -->
     <!-- Blanc rempli par le client : case de saisie DANS le contrat sur sa page, valeur en gras ailleurs -->
     <template id="contrat_champ">
-        <input t-if="editable" form="contrat_client_form" t-att-name="champ" t-att-value="doc[champ] or ''"
+        <input t-if="modifiable_client" form="contrat_client_form" t-att-name="champ" t-att-value="doc[champ] or ''"
                t-att-size="taille or 22" t-att-maxlength="150" class="o_contrat_saisie"
                style="border: none; border-bottom: 1px solid #2f6fd1; background: #f3f7ff; padding: 0 4px; font-weight: bold;"/>
         <t t-else="" t-out="b(doc[champ])"/>
@@ -129,7 +129,7 @@
                 </tr>
             </table>
             <p style="text-align: center; margin-top: 16px;"><strong>CAUTION</strong><br/>(applicable dans le cas d’une compagnie uniquement)</p>
-            <p t-if="editable" class="text-center o_contrat_compagnie">
+            <p t-if="modifiable_client" class="text-center o_contrat_compagnie">
                 Signez-vous au nom d’une compagnie ?
                 <label class="ms-2"><input type="radio" form="contrat_client_form" name="contrat_compagnie" value="oui"
                        class="o_contrat_saisie" t-att-checked="doc.contrat_compagnie == 'oui'"/> Oui</label>
@@ -255,7 +255,7 @@
                 </tr>
             </table>
             <p style="text-align: center; margin-top: 16px;"><strong>CAUTION</strong><br/>(applicable dans le cas d’une compagnie uniquement)</p>
-            <p t-if="editable" class="text-center o_contrat_compagnie">
+            <p t-if="modifiable_client" class="text-center o_contrat_compagnie">
                 Signez-vous au nom d’une compagnie ?
                 <label class="ms-2"><input type="radio" form="contrat_client_form" name="contrat_compagnie" value="oui"
                        class="o_contrat_saisie" t-att-checked="doc.contrat_compagnie == 'oui'"/> Oui</label>
@@ -364,7 +364,7 @@
                 </tr>
             </table>
             <p style="text-align: center; margin-top: 16px;"><strong>CAUTION</strong><br/>(applicable dans le cas d’une compagnie uniquement)</p>
-            <p t-if="editable" class="text-center o_contrat_compagnie">
+            <p t-if="modifiable_client" class="text-center o_contrat_compagnie">
                 Signez-vous au nom d’une compagnie ?
                 <label class="ms-2"><input type="radio" form="contrat_client_form" name="contrat_compagnie" value="oui"
                        class="o_contrat_saisie" t-att-checked="doc.contrat_compagnie == 'oui'"/> Oui</label>
@@ -459,7 +459,7 @@
                 </tr>
             </table>
             <p style="text-align: center; margin-top: 16px;"><strong>CAUTION</strong><br/>(applicable dans le cas d’une compagnie uniquement)</p>
-            <p t-if="editable" class="text-center o_contrat_compagnie">
+            <p t-if="modifiable_client" class="text-center o_contrat_compagnie">
                 Signez-vous au nom d’une compagnie ?
                 <label class="ms-2"><input type="radio" form="contrat_client_form" name="contrat_compagnie" value="oui"
                        class="o_contrat_saisie" t-att-checked="doc.contrat_compagnie == 'oui'"/> Oui</label>
@@ -495,13 +495,13 @@
         <xpath expr="//section[@id='customer_info']" position="before">
             <section t-if="sale_order.type_contrat_id" id="contrat_monroy" class="p-3 p-lg-4 mt-4 rounded-3 border">
                 <t t-set="doc" t-value="sale_order"/>
-                <t t-set="editable" t-value="sale_order._contrat_modifiable_par_client()"/>
-                <div t-if="editable" class="alert alert-info">
+                <t t-set="modifiable_client" t-value="sale_order._contrat_modifiable_par_client()"/>
+                <div t-if="modifiable_client" class="alert alert-info">
                     Remplissez les cases bleues du contrat (initiales, compagnie et caution, propriétaire de
                     l’immeuble) : elles s’enregistrent toutes seules. Ensuite, signez avec <strong>« Accepter et signer »</strong>.
                 </div>
                 <t t-call="suivi_machines.contrat_monroy"/>
-                <form t-if="editable" id="contrat_client_form" t-attf-action="/my/orders/#{sale_order.id}/contrat"
+                <form t-if="modifiable_client" id="contrat_client_form" t-attf-action="/my/orders/#{sale_order.id}/contrat"
                       method="post" class="mt-3">
                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                     <input type="hidden" name="access_token" t-att-value="sale_order.access_token"/>

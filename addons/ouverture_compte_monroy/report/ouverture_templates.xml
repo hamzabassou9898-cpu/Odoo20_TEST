@@ -3,7 +3,7 @@
     <!-- Une case du formulaire : a remplir (bleue) sur la page du client, sinon la valeur ecrite -->
     <template id="case">
         <span t-attf-style="flex: {{ largeur or 1 }}; min-width: 0;">
-            <input t-if="editable" form="ouverture_client_form" t-att-name="champ" t-att-value="doc[champ] or ''"
+            <input t-if="modifiable_client" form="ouverture_client_form" t-att-name="champ" t-att-value="doc[champ] or ''"
                    type="text" maxlength="150" class="o_ouverture_saisie"
                    t-att-data-obligatoire="champ in doc._champs_obligatoires() and doc._fields[champ].string"
                    style="width: 100%; background: #f3f7ff; border: 0; border-bottom: 1px solid #2f6fd1; padding: 2px 6px; color: #1e3a8a;"/>
@@ -13,7 +13,7 @@
     <!-- Une case a cocher (choix unique) -->
     <template id="choix">
         <label style="display: inline-flex; gap: 5px; align-items: center; margin: 0 14px 0 0; font-weight: normal;">
-            <input t-if="editable" form="ouverture_client_form" type="radio" t-att-name="champ" t-att-value="valeur"
+            <input t-if="modifiable_client" form="ouverture_client_form" type="radio" t-att-name="champ" t-att-value="valeur"
                    t-att-checked="doc[champ] == valeur" class="o_ouverture_saisie"
                    t-att-data-obligatoire="champ in doc._champs_obligatoires() and doc._fields[champ].string"/>
             <span t-else="" style="display: inline-block; width: 12px; height: 12px; border: 1px solid #333; text-align: center; line-height: 10px; font-size: 10px;"
@@ -189,7 +189,7 @@
             <t t-foreach="docs" t-as="doc">
                 <t t-call="web.basic_layout">
                     <div class="page">
-                        <t t-set="editable" t-value="False"/>
+                        <t t-set="modifiable_client" t-value="False"/>
                         <t t-call="ouverture_compte_monroy.formulaire"/>
                     </div>
                 </t>

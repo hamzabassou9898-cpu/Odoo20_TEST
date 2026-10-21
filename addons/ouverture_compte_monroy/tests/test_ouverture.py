@@ -267,6 +267,12 @@ class TestOuverturePortail(HttpCase):
                          {"modifiable": False})
         self.assertIn("en attente d'approbation", reponse.text)
         self.assertNotIn('name="ville"', reponse.text, "plus de cases à remplir")
+        self.assertIn("no-store", reponse.headers.get("Cache-Control", ""), "jamais une ancienne version en cache")
+        # Garde-fou : meme si la demande revenait a « Envoye », une demande signee n'est plus a remplir
+        ouverture.sudo().state = "envoye"
+        self.assertNotIn('name="ville"', self.url_open("/ouverture/%s?access_token=%s" % (
+            ouverture.id, ouverture.access_token)).text)
+        ouverture.sudo().state = "signe"
         lien = "/ouverture/%s/pdf?access_token=%s" % (ouverture.id, ouverture.access_token)
         self.assertIn(lien.replace("&", "&amp;") if "&" in lien else lien, reponse.text)
         pdf = self.url_open(lien)
