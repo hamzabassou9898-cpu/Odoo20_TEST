@@ -857,3 +857,66 @@ class TestTableauStock(TransactionCase):
         mouvement = d["mouvements"][0]
         self.assertEqual((mouvement["serie"], mouvement["entree"]), ("STK-0", False))
         self.assertEqual(Ind.action_par_code(mouvement["code"])["res_id"], pk.id)
+
+
+@tagged("post_install", "-at_install")
+class TestLivraisonsAppelsDeService(TransactionCase):
+    """Appels de service : bons de livraison (machines et accessoires) en haut de la colonne
+    « Livraison & installation / Reprise » ; ce ne sont pas des tickets ; valides, ils disparaissent."""
+
+    def test_bons_dans_la_colonne_livraison(self):
+        env = self.env(context=dict(self.env.context, tracking_disable=True, skip_sms=True))
+        T = env["helpdesk.ticket"]
+        # Etape de la base renommee par la mise a jour (toujours reconnue par le mot « reprise »)
+        ancienne = env["helpdesk.stage"].create({"name": "Installation de machine / Reprise de machine"})
+        self.assertIn(ancienne, T._renommer_etape_installation())
+        self.assertEqual(ancienne.name, "Livraison & installation / Reprise")
+        client = env["res.partner"].create({"name": "Client livraisons appels"})
+        categ = env["product.category"].create({"name": "Mach appels", "suivi_machine": True})
+        machine = env["product.product"].create({"name": "Granita appels", "categ_id": categ.id,
+                                                 "is_storable": True, "tracking": "serial"})
+        accessoire = env["product.product"].create({"name": "Pompe appels", "is_storable": True})
+        service = env["product.product"].create({"name": "Frais appels", "type": "service"})
+        stock = env.ref("stock.stock_location_stock")
+        lot = env["stock.lot"].create({"name": "APP-1", "product_id": machine.id})
+        env["stock.quant"]._update_available_quantity(machine, stock, 1, lot_id=lot)
+        env["stock.quant"]._update_available_quantity(accessoire, stock, 5)
+        location = env["sale.order"].create({
+            "partner_id": client.id, "type_commande": "location", "date_debut_location": PERIODE_TEST[0],
+            "date_fin_location": PERIODE_TEST[1],
+            "order_line": [(0, 0, {"product_id": machine.id, "product_uom_qty": 1, "machine_lot_id": lot.id})]})
+        location.action_confirm()
+        vente = env["sale.order"].create({"partner_id": client.id, "order_line": [
+            (0, 0, {"product_id": accessoire.id, "product_uom_qty": 2}),
+            (0, 0, {"product_id": service.id, "product_uom_qty": 1})]})
+        vente.action_confirm()
+        bon_machine, bon_accessoire = location.picking_ids, vente.picking_ids
+        # Le plus ancien (en retard) : en tete de colonne, meme sur une base avec d'autres bons
+        bon_machine.scheduled_date = fields.Datetime.to_datetime("2001-01-02 15:00:00")
+        bon_machine.livreur_id = env.user
+        donnees = env["stock.picking"].livraisons_kanban_assistance()
+        self.assertIn(ancienne.id, donnees["etape_ids"])
+        self.assertLessEqual(len(donnees["bons"]), 6, "6 bons au plus dans la colonne")
+        self.assertEqual(donnees["total"], env["stock.picking"].search_count(donnees["action"]["domain"]))
+        tous = env["stock.picking"].search(donnees["action"]["domain"])
+        self.assertIn(bon_machine, tous, "livraison de machine")
+        self.assertIn(bon_accessoire, tous, "livraison d'accessoires")
+        carte = next(b for b in donnees["bons"] if b["id"] == bon_machine.id)
+        self.assertTrue(carte["en_retard"])
+        self.assertEqual((carte["client"], carte["contrat"]), (client.display_name, location.name))
+        self.assertEqual(carte["technicien"], env.user.name)
+        self.assertIn("APP-1", carte["contenu"])
+        # Jose valide le bon : il n'est plus dans la colonne
+        bon_accessoire.move_ids.quantity = 2
+        bon_accessoire.move_ids.picked = True
+        bon_accessoire.livreur_id = env.user
+        bon_accessoire.button_validate()
+        self.assertEqual(bon_accessoire.state, "done")
+        self.assertNotIn(bon_accessoire, env["stock.picking"].search(donnees["action"]["domain"]))
+        # Pas un ticket : aucun ticket cree pour ces livraisons
+        self.assertFalse(T.search([("partner_id", "=", client.id)]))
+        # Sans droit sur l'inventaire : rien (la colonne reste comme avant)
+        sans_stock = env["res.users"].create({"name": "Sans stock", "login": "sans_stock_appels",
+                                              "group_ids": [(6, 0, [env.ref("base.group_user").id])]})
+        if not env["stock.picking"].with_user(sans_stock).has_access("read"):
+            self.assertEqual(env["stock.picking"].with_user(sans_stock).livraisons_kanban_assistance()["bons"], [])
