@@ -73,3 +73,27 @@
         font-size: 0.75rem;
     }
 }
+
+// Resolu : bons valides (vert) ; Annule : bons annules (gris)
+.o_suivi_livraisons.o_suivi_livraisons_livres {
+    border-color: $success;
+    background-color: rgba($success, 0.05);
+
+    .o_suivi_livraisons_titre, .o_suivi_livraisons_note {
+        color: darken($success, 15%);
+    }
+}
+
+.o_suivi_livraisons.o_suivi_livraisons_annules {
+    border-color: $gray-500;
+    background-color: rgba($gray-500, 0.06);
+
+    .o_suivi_livraisons_titre, .o_suivi_livraisons_note {
+        color: $gray-700;
+    }
+
+    .o_suivi_livraison {
+        border-left-color: $gray-500;
+        opacity: 0.85;
+    }
+}

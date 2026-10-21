@@ -861,8 +861,8 @@ class TestTableauStock(TransactionCase):
 
 @tagged("post_install", "-at_install")
 class TestLivraisonsAppelsDeService(TransactionCase):
-    """Appels de service : bons de livraison (machines et accessoires) en haut de la colonne
-    « Livraison & installation / Reprise » ; ce ne sont pas des tickets ; valides, ils disparaissent."""
+    """Appels de service : bons de livraison (machines et accessoires) en haut des colonnes : a faire dans
+    « Livraison & installation / Reprise », valides dans Resolu, annules dans Annule ; pas des tickets."""
 
     def test_bons_dans_la_colonne_livraison(self):
         env = self.env(context=dict(self.env.context, tracking_disable=True, skip_sms=True))
@@ -894,29 +894,48 @@ class TestLivraisonsAppelsDeService(TransactionCase):
         # Le plus ancien (en retard) : en tete de colonne, meme sur une base avec d'autres bons
         bon_machine.scheduled_date = fields.Datetime.to_datetime("2001-01-02 15:00:00")
         bon_machine.livreur_id = env.user
-        donnees = env["stock.picking"].livraisons_kanban_assistance()
-        self.assertIn(ancienne.id, donnees["etape_ids"])
-        self.assertLessEqual(len(donnees["bons"]), 6, "6 bons au plus dans la colonne")
-        self.assertEqual(donnees["total"], env["stock.picking"].search_count(donnees["action"]["domain"]))
-        tous = env["stock.picking"].search(donnees["action"]["domain"])
+        Picking = env["stock.picking"]
+        resolu = T._etape_contenant("résolu") or env["helpdesk.stage"].create({"name": "Résolu"})
+        annule = T._etape_contenant("annul") or env["helpdesk.stage"].create({"name": "Annulé"})
+
+        def zone(genre):
+            return next((z for z in Picking.livraisons_kanban_assistance()["zones"] if z["genre"] == genre), None)
+
+        a_faire = zone("a_faire")
+        self.assertIn(ancienne.id, a_faire["etape_ids"])
+        self.assertNotIn(resolu.id, a_faire["etape_ids"])
+        self.assertLessEqual(len(a_faire["bons"]), 6, "6 bons au plus dans la colonne")
+        self.assertEqual(a_faire["total"], Picking.search_count(a_faire["action"]["domain"]))
+        tous = Picking.search(a_faire["action"]["domain"])
         self.assertIn(bon_machine, tous, "livraison de machine")
         self.assertIn(bon_accessoire, tous, "livraison d'accessoires")
-        carte = next(b for b in donnees["bons"] if b["id"] == bon_machine.id)
+        carte = next(b for b in a_faire["bons"] if b["id"] == bon_machine.id)
         self.assertTrue(carte["en_retard"])
         self.assertEqual((carte["client"], carte["contrat"]), (client.display_name, location.name))
         self.assertEqual(carte["technicien"], env.user.name)
         self.assertIn("APP-1", carte["contenu"])
-        # Jose valide le bon : il n'est plus dans la colonne
+        # Jose valide le bon : il passe dans Resolu (en tete : le plus recent)
         bon_accessoire.move_ids.quantity = 2
         bon_accessoire.move_ids.picked = True
         bon_accessoire.livreur_id = env.user
         bon_accessoire.button_validate()
         self.assertEqual(bon_accessoire.state, "done")
-        self.assertNotIn(bon_accessoire, env["stock.picking"].search(donnees["action"]["domain"]))
+        self.assertNotIn(bon_accessoire, Picking.search(zone("a_faire")["action"]["domain"]))
+        livres = zone("livres")
+        self.assertIn(resolu.id, livres["etape_ids"])
+        self.assertEqual(livres["bons"][0]["id"], bon_accessoire.id)
+        self.assertFalse(livres["bons"][0]["en_retard"])
+        # Bon annule : dans Annule
+        bon_machine.action_cancel()
+        self.assertEqual(bon_machine.state, "cancel")
+        annules = zone("annules")
+        self.assertIn(annule.id, annules["etape_ids"])
+        self.assertIn(bon_machine.id, [b["id"] for b in annules["bons"]])
+        self.assertNotIn(bon_machine, Picking.search(zone("a_faire")["action"]["domain"]))
         # Pas un ticket : aucun ticket cree pour ces livraisons
         self.assertFalse(T.search([("partner_id", "=", client.id)]))
         # Sans droit sur l'inventaire : rien (la colonne reste comme avant)
         sans_stock = env["res.users"].create({"name": "Sans stock", "login": "sans_stock_appels",
                                               "group_ids": [(6, 0, [env.ref("base.group_user").id])]})
         if not env["stock.picking"].with_user(sans_stock).has_access("read"):
-            self.assertEqual(env["stock.picking"].with_user(sans_stock).livraisons_kanban_assistance()["bons"], [])
+            self.assertEqual(env["stock.picking"].with_user(sans_stock).livraisons_kanban_assistance()["zones"], [])

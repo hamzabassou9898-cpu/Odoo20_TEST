@@ -1,24 +1,34 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
     <t t-name="suivi_machines_pilotage.LivraisonsAFaire">
-        <div class="o_suivi_livraisons" t-on-click.stop="">
+        <t t-set="zone" t-value="this.props.donnees"/>
+        <div class="o_suivi_livraisons" t-attf-class="o_suivi_livraisons_{{ zone.genre }}" t-on-click.stop="">
             <div class="o_suivi_livraisons_titre">
-                <span><i class="fa fa-truck me-1"/>Bons de livraison à faire · <t t-out="this.props.donnees.total"/></span>
+                <span><i class="fa fa-truck me-1"/><t t-out="zone.titre"/> · <t t-out="zone.total"/></span>
                 <a href="#" t-on-click.prevent="() => this.toutVoir()">Tout voir ›</a>
             </div>
-            <t t-foreach="this.props.donnees.bons" t-as="bon" t-key="bon.id">
+            <t t-foreach="zone.bons" t-as="bon" t-key="bon.id">
                 <div class="o_suivi_livraison" t-att-class="{ 'o_suivi_livraison_retard': bon.en_retard }"
                      t-att-title="bon.contenu" t-on-click="() => this.ouvrir(bon)">
                     <span t-if="bon.technicien" class="o_suivi_livraison_tech" t-att-title="bon.technicien"
                           t-out="bon.initiales"/>
-                    <span t-else="" class="o_suivi_livraison_sans">sans technicien</span>
+                    <span t-elif="zone.genre === 'a_faire'" class="o_suivi_livraison_sans">sans technicien</span>
                     <b t-out="bon.nom"/> · Livraison
                     <div class="o_suivi_livraison_detail">
-                        <t t-out="bon.client"/><t t-if="bon.contrat"> · <t t-out="bon.contrat"/></t><t t-if="bon.quand"> · <t t-out="bon.quand"/></t>
+                        <t t-out="bon.client"/><t t-if="bon.contrat"> · <t t-out="bon.contrat"/></t>
+                        <t t-if="bon.quand"> ·
+                            <t t-if="zone.genre === 'livres'">validé </t>
+                            <t t-elif="zone.genre === 'annules'">annulé </t>
+                            <t t-out="bon.quand"/>
+                        </t>
                     </div>
                 </div>
             </t>
-            <div class="o_suivi_livraisons_note">Bons de livraison (pas des tickets) : un clic ouvre le bon. Validé, il disparaît.</div>
+            <div class="o_suivi_livraisons_note">
+                <t t-if="zone.genre === 'a_faire'">Bons de livraison (pas des tickets) : un clic ouvre le bon. Validé, il passe dans Résolu.</t>
+                <t t-elif="zone.genre === 'livres'">Validés ces 30 derniers jours (les plus récents).</t>
+                <t t-else="">Annulés ces 30 derniers jours (les plus récents).</t>
+            </div>
         </div>
     </t>
 
