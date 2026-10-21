@@ -27,7 +27,9 @@ class TestOuvertureCompte(TransactionCase):
     def _remplir(self, ouverture, **extra):
         valeurs = {"rue": "1 rue Test", "ville": "Québec", "code_postal": "G1A 1A1", "telephone": "418 555-0000",
                    "nom_majuscules": "LISE TEST", "forme": "inc", "paiement": "ppa", "terme": "30",
-                   "approvisionnement": "livraison", "banque_compte": "12345", "actionnaire1_naissance": "1980-01-01"}
+                   "approvisionnement": "livraison", "banque_compte": "12345", "actionnaire1_naissance": "1980-01-01",
+                   "banque_nom": "Caisse Test", "banque_adresse": "2 rue Banque", "signe_a": "Québec",
+                   "caution_noms": "Lise Test"}
         valeurs.update(extra)
         return ouverture._completer_par_client(valeurs)
 
@@ -77,13 +79,23 @@ class TestOuvertureCompte(TransactionCase):
         self.assertEqual(ouverture.forme, "inc", "choix inconnu ignoré, le précédent reste")
         self.assertEqual(ouverture.sudo().banque_compte, "12345")
 
-    def test_aucune_case_obligatoire_pour_le_moment(self):
-        """Monroy : aucune case obligatoire pour le moment ; le client peut signer tout de suite."""
+    def test_cases_obligatoires_choisies_par_monroy(self):
+        """Les cases marquees par Monroy sont obligatoires ; les autres sections restent facultatives."""
         ouverture = self._ouverture_envoyee(contact_nom=False)
+        manquants = ouverture._manquants()
+        for libelle in ("Adresse", "Ville", "Contact", "Mode de paiement", "Institution financière", "Signé à",
+                        "Nom en lettres majuscules", "Caution(s)", "Terme (jours)", "Forme"):
+            self.assertIn(libelle, manquants)
+        for libelle in ("Télécopieur", "Autre(s) nom(s) utilisé(s)"):
+            self.assertNotIn(libelle, manquants, "facultatif")
+        with self.assertRaises(UserError):
+            ouverture._signer("Lise Test", SIGNATURE)
+        self._remplir(ouverture, contact_nom="Lise Test")
         self.assertEqual(ouverture._manquants(), [])
-        ouverture.entreprise_nom = False
-        ouverture._signer("Lise Test", SIGNATURE)
-        self.assertEqual(ouverture.state, "signe")
+        ouverture.entreprise_nom = False   # Jose le retire apres coup : l'approbation reste possible
+        ouverture.contact_nom = False
+        ouverture.sudo().signature = SIGNATURE
+        ouverture.state = "signe"
         # Approuvee sans nom d'entreprise : la fiche porte le code client (Jose la renomme au besoin)
         assistant = self.env["ouverture.compte.approuver"].create({"ouverture_id": ouverture.id,
                                                                    "code_client": "VIDE001"})
@@ -113,6 +125,18 @@ class TestOuvertureCompte(TransactionCase):
         self.assertTrue(ouverture.pdf_a_preparer)
         self.Ouverture._cron_pdf_signes()
         self.assertFalse(ouverture.pdf_a_preparer)
+        # Le client recoit la confirmation (avec la demande signee), une seule fois
+        self.assertTrue(ouverture.confirmation_envoyee)
+        courriel = self.env["mail.mail"].search([("model", "=", "ouverture.compte"), ("res_id", "=", ouverture.id),
+                                                 ("subject", "ilike", "bien reçu")])
+        self.assertEqual(len(courriel), 1)
+        self.assertEqual(courriel.email_to, ouverture.courriel)
+        self.assertIn("en attente d'approbation", courriel.body_html)
+        self.assertEqual(courriel.attachment_ids, ouverture.pdf_signe_id)
+        ouverture._envoyer_confirmation_signature()
+        self.assertEqual(len(self.env["mail.mail"].search([("model", "=", "ouverture.compte"),
+                                                          ("res_id", "=", ouverture.id),
+                                                          ("subject", "ilike", "bien reçu")])), 1, "une seule fois")
         with self.assertRaises(UserError):
             ouverture._completer_par_client({"ville": "Autre"})
 
@@ -225,7 +249,10 @@ class TestOuverturePortail(HttpCase):
         ouverture._envoyer()
         self.assertEqual(client.ouverture_compte_etat, "envoye")
         ouverture._completer_par_client({"rue": "1 rue", "ville": "Québec", "code_postal": "G1A 1A1",
-                                         "telephone": "418", "nom_majuscules": "X", "entreprise_nom": "Fiche suivie"})
+                                         "telephone": "418", "nom_majuscules": "X", "entreprise_nom": "Fiche suivie",
+                                         "forme": "inc", "contact_nom": "X", "banque_nom": "B", "banque_adresse": "B",
+                                         "banque_compte": "1", "approvisionnement": "bureau", "paiement": "cheque",
+                                         "terme": "30", "signe_a": "Québec", "caution_noms": "X"})
         ouverture._signer("X", "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==")
         self.assertEqual(client.ouverture_compte_etat, "signe")
         reponse = self.url_open("/ouverture/%s?access_token=%s" % (ouverture.id, ouverture.access_token))

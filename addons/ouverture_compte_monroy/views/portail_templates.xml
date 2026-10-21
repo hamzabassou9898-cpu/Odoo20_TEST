@@ -75,12 +75,13 @@
                             <t t-call="ouverture_compte_monroy.formulaire"/>
                             <div t-if="editable" id="signature" class="mt-4">
                                 <!-- Mis a jour pendant que le client ecrit (pas besoin de recharger la page) -->
-                                <div id="ouverture_manquants" t-attf-class="alert alert-danger small #{'' if manquants else 'd-none'}">
-                                    À remplir avant de signer (en rouge) : <span class="o_ouverture_liste_manquants" t-out="', '.join(manquants)"/>.
+                                <div id="ouverture_manquants" t-attf-class="alert alert-warning small #{'' if manquants else 'd-none'}">
+                                    <span class="o_ouverture_intro_manquants">À remplir avant de signer : </span><span class="o_ouverture_liste_manquants fw-bold" t-out="', '.join(manquants)"/>.
                                 </div>
                                 <t t-call="portal.signature_form"
                                    call_url="'/ouverture/%s/signer?access_token=%s' % (doc.id, access_token)"
                                    default_name="doc.nom_majuscules or doc.contact_nom or ''"
+                                   mode="'draw'"
                                    send_label="'Accepter et signer'"/>
                             </div>
                         </div>

@@ -14,7 +14,8 @@
     <template id="choix">
         <label style="display: inline-flex; gap: 5px; align-items: center; margin: 0 14px 0 0; font-weight: normal;">
             <input t-if="editable" form="ouverture_client_form" type="radio" t-att-name="champ" t-att-value="valeur"
-                   t-att-checked="doc[champ] == valeur" class="o_ouverture_saisie"/>
+                   t-att-checked="doc[champ] == valeur" class="o_ouverture_saisie"
+                   t-att-data-obligatoire="champ in doc._champs_obligatoires() and doc._fields[champ].string"/>
             <span t-else="" style="display: inline-block; width: 12px; height: 12px; border: 1px solid #333; text-align: center; line-height: 10px; font-size: 10px;"
                   t-out="'X' if doc[champ] == valeur else ''"/>
             <span t-out="libelle"/>

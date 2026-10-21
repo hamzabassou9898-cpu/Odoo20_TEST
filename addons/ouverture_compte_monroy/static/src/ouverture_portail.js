@@ -29,8 +29,8 @@ function enregistrerChamp(formulaire, champ) {
         .then(() => fetch(formulaire.action, { method: "POST", body: donnees, credentials: "same-origin" }))
         .then((reponse) => {
             if (reponse.status === 409) {
-                // Deja signe (autre onglet) : on le dit, sans recharger la page pendant que le client ecrit
-                afficherEtat("Ce formulaire est déjà signé : rechargez la page pour voir la demande signée.", "text-warning");
+                // Deja signe (ex. dans un autre onglet) : on le dit clairement, sans recharger la page tout seul
+                afficherDejaSigne();
             } else if (!reponse.ok) {
                 throw new Error(String(reponse.status));
             } else {
@@ -43,14 +43,64 @@ function enregistrerChamp(formulaire, champ) {
     return fileEnvois;
 }
 
-/** Cases obligatoires vides : en rouge, et la liste au-dessus de la signature. */
+/** Page restee ouverte alors que le formulaire est deja signe : bandeau bien visible en haut. */
+function afficherDejaSigne() {
+    afficherEtat("Ce formulaire est déjà signé.", "text-warning");
+    if (document.getElementById("ouverture_deja_signe")) {
+        return;
+    }
+    const bandeau = document.createElement("div");
+    bandeau.id = "ouverture_deja_signe";
+    bandeau.className = "alert alert-warning d-flex flex-wrap align-items-center justify-content-between gap-2";
+    bandeau.style.cssText = "position: sticky; top: 0; z-index: 10;";
+    const texte = document.createElement("span");
+    texte.textContent = "Ce formulaire a déjà été signé (peut-être dans un autre onglet). Vos dernières modifications n'ont pas été enregistrées.";
+    const bouton = document.createElement("a");
+    bouton.className = "btn btn-primary btn-sm";
+    bouton.href = window.location.pathname + window.location.search;
+    bouton.textContent = "Voir la demande signée";
+    bandeau.append(texte, bouton);
+    const carte = document.querySelector(".o_ouverture_page .col-lg-9 .card") || document.body;
+    carte.prepend(bandeau);
+    bandeau.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+/** Cases obligatoires vides : en rouge, et la liste au-dessus de la signature. Choix (Forme, Paiement...) :
+ * le groupe est rempli des qu'une case est cochee. */
+let tentativeSignature = false;   // apres un clic sur « Accepter et signer » : toutes les cases vides en rouge
+
+function enRouge(champ) {
+    return tentativeSignature || champ.dataset.touche === "1";
+}
+
 function verifierObligatoires() {
     const vides = [];
+    const groupesVus = new Set();
     for (const champ of document.querySelectorAll(".o_ouverture_saisie[data-obligatoire]")) {
+        if (champ.type === "radio") {
+            if (groupesVus.has(champ.name)) {
+                continue;
+            }
+            groupesVus.add(champ.name);
+            const groupe = document.querySelectorAll(`.o_ouverture_saisie[type="radio"][name="${champ.name}"]`);
+            const vide = ![...groupe].some((c) => c.checked);
+            for (const c of groupe) {
+                const etiquette = c.closest("label");
+                if (etiquette) {
+                    etiquette.style.color = vide && tentativeSignature ? "#dc3545" : "";
+                }
+            }
+            if (vide) {
+                vides.push(champ);
+            }
+            continue;
+        }
         const vide = !champ.value.trim();
-        champ.classList.toggle("o_ouverture_manquant", vide);
-        champ.style.background = vide ? "#fdecec" : "#f3f7ff";
-        champ.style.borderBottomColor = vide ? "#dc3545" : "#2f6fd1";
+        const rouge = vide && enRouge(champ);
+        champ.classList.toggle("o_ouverture_manquant", rouge);
+        champ.style.background = rouge ? "#fdecec" : "#f3f7ff";
+        champ.style.borderBottomColor = rouge ? "#dc3545" : "#2f6fd1";
+        champ.title = rouge ? "Case obligatoire : à remplir avant de signer" : "";
         if (vide) {
             vides.push(champ);
         }
@@ -74,11 +124,22 @@ document.addEventListener("change", (ev) => {
     }
 });
 
-document.addEventListener("input", (ev) => {
-    if (ev.target.closest(".o_ouverture_saisie[data-obligatoire]")) {
+// Case obligatoire quittee vide : en rouge tout de suite
+document.addEventListener("focusout", (ev) => {
+    const champ = ev.target.closest(".o_ouverture_saisie[data-obligatoire]");
+    if (champ && champ.type !== "radio") {
+        champ.dataset.touche = "1";
         verifierObligatoires();
     }
 });
+
+for (const evenement of ["input", "change"]) {
+    document.addEventListener(evenement, (ev) => {
+        if (ev.target.closest(".o_ouverture_saisie[data-obligatoire]")) {
+            verifierObligatoires();
+        }
+    });
+}
 
 // Avant la signature : cases obligatoires remplies (sinon on montre la premiere) et derniere reponse enregistree
 document.addEventListener("click", async (ev) => {
@@ -86,12 +147,20 @@ document.addEventListener("click", async (ev) => {
     if (!bouton || bouton.dataset.ouvertureVerifie) {
         return;
     }
+    tentativeSignature = true;
     const vides = verifierObligatoires();
     ev.preventDefault();
     ev.stopImmediatePropagation();
     if (vides.length) {
+        // On montre au client ce qu'il a oublie : la liste, puis la premiere case
+        const bloc = document.getElementById("ouverture_manquants");
+        if (bloc) {
+            bloc.classList.replace("alert-warning", "alert-danger");
+            bloc.querySelector(".o_ouverture_intro_manquants").textContent =
+                vides.length === 1 ? "Il manque une case obligatoire (en rouge) : " : `Il manque ${vides.length} cases obligatoires (en rouge) : `;
+        }
         vides[0].scrollIntoView({ behavior: "smooth", block: "center" });
-        vides[0].focus();
+        vides[0].focus({ preventScroll: true });
         return;
     }
     await fileEnvois;

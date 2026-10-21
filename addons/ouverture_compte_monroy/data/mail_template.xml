@@ -21,4 +21,29 @@
 </div>
         </field>
     </record>
+
+    <!-- Au client, juste apres sa signature : accuse de reception + demande signee (PDF) en piece jointe -->
+    <record id="mail_template_ouverture_signee" model="mail.template">
+        <field name="name">Ouverture de compte : demande signée reçue (au client)</field>
+        <field name="model_id" ref="model_ouverture_compte"/>
+        <field name="subject">{{ object.company_id.name }} : nous avons bien reçu votre demande d'ouverture de compte ({{ object.name }})</field>
+        <field name="email_from">{{ (object.user_id.email_formatted or object.company_id.email_formatted or user.email_formatted) }}</field>
+        <field name="auto_delete" eval="False"/>
+        <field name="body_html" type="html">
+<div style="margin: 0; padding: 0; font-size: 14px;">
+    <p>Bonjour<t t-if="object.contact_nom"> <t t-out="object.contact_nom"/></t>,</p>
+    <p>Merci ! Nous avons bien reçu votre demande d'ouverture de compte client <b t-out="object.name"/>,
+        signée le <t t-out="object._date_texte(object.signe_le)"/> par <t t-out="object.signe_par"/>.</p>
+    <p>Elle est maintenant <b>en attente d'approbation</b> par <t t-out="object.company_id.name"/> : notre équipe l'étudie
+        et vous confirmera l'ouverture de votre compte par courriel.</p>
+    <p>Vous trouverez votre demande signée en pièce jointe. Vous pouvez aussi la consulter en tout temps :</p>
+    <p style="margin: 24px 0;">
+        <a t-att-href="object.get_base_url() + object.get_portal_url()"
+           style="background-color: #71639e; padding: 10px 18px; color: #ffffff; text-decoration: none; border-radius: 5px; font-weight: bold;">
+            Voir ma demande signée</a>
+    </p>
+    <p>Merci de votre confiance,<br/><t t-out="object.user_id.name or object.company_id.name"/></p>
+</div>
+        </field>
+    </record>
 </odoo>

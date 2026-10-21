@@ -35,9 +35,11 @@ CHAMPS_TEXTE = (
 )
 CHAMPS_CHOIX = {"forme": FORMES, "approvisionnement": APPROVISIONNEMENTS, "paiement": PAIEMENTS}
 # A remplir avant de signer
-# Cases a remplir avant de signer : aucune pour le moment (demande de Monroy). Pour en exiger, ajouter leur nom
-# ici (ex. "rue", "ville") : la page les montre en rouge et empeche de signer tant qu'elles sont vides.
-OBLIGATOIRES = ()
+# Cases a remplir avant de signer (choisies par Monroy) : la page les montre en rouge et empeche de signer
+# tant qu'elles sont vides ; les autres sections restent facultatives.
+OBLIGATOIRES = ("entreprise_nom", "forme", "rue", "ville", "code_postal", "courriel", "contact_nom", "telephone",
+                "banque_nom", "banque_adresse", "banque_compte", "approvisionnement", "paiement", "terme",
+                "signe_a", "nom_majuscules", "caution_noms")
 LONGUEUR_MAX = 150
 
 
@@ -111,6 +113,9 @@ class OuvertureCompte(models.Model):
     approuve_le = fields.Datetime("Approuvé le", readonly=True, copy=False)
     motif_refus = fields.Text("Motif du refus", copy=False)
     pdf_signe_id = fields.Many2one("ir.attachment", "PDF signé", readonly=True, copy=False)
+    confirmation_envoyee = fields.Boolean(
+        "Confirmation envoyée au client", readonly=True, copy=False,
+        help="Courriel « demande signée reçue » envoyé au client avec sa demande signée (PDF).")
     pdf_a_preparer = fields.Boolean("PDF signé à préparer", readonly=True, copy=False, index=True,
                                     help="Signé : le PDF est prêt quelques instants après (préparé en arrière-plan).")
 
@@ -225,6 +230,21 @@ class OuvertureCompte(models.Model):
                 if not ouverture.pdf_signe_id:
                     ouverture.pdf_signe_id = message.attachment_ids[:1]
             ouverture.pdf_a_preparer = False
+            ouverture._envoyer_confirmation_signature()
+
+    def _envoyer_confirmation_signature(self):
+        """Au client, une seule fois : demande signee recue, en attente d'approbation, PDF joint. L'adresse est
+        donnee directement (le futur client ne devient pas un contact avant l'approbation)."""
+        for ouverture in self.sudo().filtered(lambda o: o.signature and o.courriel and not o.confirmation_envoyee):
+            valeurs = {"email_to": ouverture.courriel, "recipient_ids": []}
+            if ouverture.pdf_signe_id:
+                valeurs["attachment_ids"] = [(4, ouverture.pdf_signe_id.id)]
+            modele = self.env.ref("ouverture_compte_monroy.mail_template_ouverture_signee", raise_if_not_found=False)
+            if modele:
+                modele.send_mail(ouverture.id, force_send=False, email_values=valeurs)
+                ouverture.confirmation_envoyee = True
+                ouverture.message_post(body=self.env._("Confirmation de signature envoyée à %s (avec la demande signée).",
+                                                       ouverture.courriel))
 
     def _pdf_pour_client(self):
         """PDF signe pour le client (piece jointe) : celui deja prepare en arriere-plan, sinon fait maintenant
