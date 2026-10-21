@@ -3,7 +3,7 @@
     "name": "Ouverture de compte client Monroy",
     "summary": "Formulaire « Ouverture compte client » envoyé au client, rempli et signé en ligne, "
                "évalué puis approuvé par le bureau : le client est créé avec son code client",
-    "version": "20.0.1.1.0",
+    "version": "20.0.1.3.0",
     "category": "Sales/Sales",
     "author": "Volcan",
     "website": "https://volcan.ca/",
@@ -13,6 +13,7 @@
         "security/ir.access.csv",
         "data/ir_sequence.xml",
         "data/mail_template.xml",
+        "data/ir_cron.xml",
         "report/ouverture_templates.xml",
         "views/ouverture_compte_views.xml",
         "views/approuver_views.xml",

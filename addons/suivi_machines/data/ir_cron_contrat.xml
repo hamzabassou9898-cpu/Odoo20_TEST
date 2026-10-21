@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Contrat signe en ligne : PDF signe range dans le dossier du client en arriere-plan, juste apres la
+         signature (le client n'attend pas) ; lancee a chaque signature, et une fois par heure au cas ou -->
+    <record id="cron_archiver_contrats_signes" model="ir.cron">
+        <field name="name">Contrats : ranger les contrats signés dans le dossier du client</field>
+        <field name="model_id" ref="sale.model_sale_order"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_archiver_contrats_signes()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">hours</field>
+    </record>
+</odoo>

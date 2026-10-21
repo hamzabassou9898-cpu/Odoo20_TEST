@@ -40,9 +40,13 @@ class OuverturePortail(CustomerPortal):
         access_token = access_token or request.httprequest.args.get("access_token")
         try:
             ouverture = self._ouverture(ouverture_id, access_token)
-            ouverture._signer(name, signature)
         except (AccessError, MissingError):
             return {"error": request.env._("Formulaire introuvable.")}
+        if not ouverture._modifiable_par_client():
+            # Deja signe (autre onglet, double clic) ou retire : la page se recharge et montre ou il en est
+            return {"force_refresh": True, "redirect_url": ouverture.get_portal_url()}
+        try:
+            ouverture._signer(name, signature)
         except UserError as erreur:
             return {"error": str(erreur)}
         return {"force_refresh": True, "redirect_url": ouverture.get_portal_url()}

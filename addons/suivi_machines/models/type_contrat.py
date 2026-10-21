@@ -104,6 +104,9 @@ class SaleOrder(models.Model):
         "Prochain forfait annuel", copy=False, tracking=True,
         help="Anniversaire de la signature : ce jour-là, Odoo rappelle au bureau de renouveler le forfait "
              "(prix à ajuster).")
+    contrat_a_archiver = fields.Boolean(
+        "Contrat signé à ranger", copy=False, readonly=True, index=True,
+        help="Signé en ligne : le PDF est rangé dans le dossier du client quelques instants après.")
     forfait_a_renouveler = fields.Boolean(
         "Forfait à renouveler", copy=False, readonly=True,
         help="L'anniversaire est arrivé : renouveler le forfait avec le bouton « Renouveler le forfait ».")
@@ -230,6 +233,21 @@ class SaleOrder(models.Model):
             self.write(ecriture)
 
     # ------------------------------------------------------------ PDF dans le dossier (Documents) du client
+    def _archiver_plus_tard(self):
+        """Contrat signe a ranger : fait en arriere-plan, quelques instants apres."""
+        contrats = self.filtered(lambda o: o.type_contrat_id and o.signature)
+        if contrats:
+            contrats.sudo().contrat_a_archiver = True
+            cron = self.env.ref("suivi_machines.cron_archiver_contrats_signes", raise_if_not_found=False)
+            if cron:
+                cron.sudo()._trigger()
+
+    @api.model
+    def _cron_archiver_contrats_signes(self):
+        for contrat in self.sudo().search([("contrat_a_archiver", "=", True)], limit=50):
+            contrat._archiver_contrat_signe()
+            contrat.contrat_a_archiver = False
+
     def _archiver_contrat_signe(self):
         """Contrat signe en ligne : message dans la fiche du client + PDF signe dans ses Documents."""
         for order in self.filtered(lambda o: o.type_contrat_id and o.signature):
@@ -406,8 +424,11 @@ class SaleOrder(models.Model):
         res = super().action_confirm()
         # Profil du client : une vente confirmee (signee ou non) ; un contrat seulement une fois signe
         # (rien a l'envoi du devis)
+        # Signe sur la page du client : range en arriere-plan avec le message (voir _archiver_plus_tard)
+        differe = self.env.context.get("contrat_archivage_differe")
         self.filtered(lambda o: o.state == "sale" and (
-            o.signature or (o.type_commande == "vente" and not o.type_contrat_id)))._archiver_pdf_client()
+            (o.signature and not (differe and o.type_contrat_id))
+            or (o.type_commande == "vente" and not o.type_contrat_id)))._archiver_pdf_client()
         # Clause 8.2 : forfait paye a la signature (ligne du contrat), puis tous les 12 mois
         aujourdhui = fields.Date.context_today(self)
         for contrat in self.filtered(lambda o: o.state == "sale" and o.forfait_montant > 0
@@ -427,6 +448,10 @@ class SaleOrder(models.Model):
         if machines:
             libelle += "\n" + self.env._("Machines : %s", ", ".join(machines.mapped(lambda l: l.ref or l.name)))
         return libelle
+
+    def _get_copiable_order_lines(self):
+        # Dupliquer un contrat : la ligne du forfait est recreee (dates du jour), pas copiee en double
+        return super()._get_copiable_order_lines().filtered(lambda l: not l.est_forfait)
 
     def _synchroniser_forfait(self, prix=False):
         """Soumission : la ligne du forfait de la 1re annee suit le contrat (une par machine commandee).

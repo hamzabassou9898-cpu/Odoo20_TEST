@@ -377,11 +377,17 @@ class TestPortailTechnicien(HttpCase):
         page = self.url_open(url).text
         self.assertIn('alt="Signature du technicien"', page)
         self.assertNotIn("/signer_technicien", page)
-        self.assertIn("error", self.make_jsonrpc_request(url + "/signer_technicien",
-                                                         {"name": "Tech", "signature": self.SIGNATURE}),
-                      "une seule fois")
-        # Deuxieme signature : refusee (deja terminee) ; page : bon affiche
-        self.assertIn("error", self.make_jsonrpc_request(url + "/signer", {"name": "X", "signature": self.SIGNATURE}))
+        signe_le = bon.technicien_signe_le
+        # Une seule fois : un 2e envoi (double clic) recharge la page, sans erreur ni bouton bloque
+        encore = self.make_jsonrpc_request(url + "/signer_technicien", {"name": "Tech", "signature": self.SIGNATURE})
+        self.assertEqual((encore.get("force_refresh"), encore.get("error")), (True, None))
+        self.assertEqual(bon.technicien_signe_le, signe_le, "signature inchangée")
+        # Deuxieme signature du client : la tache est deja terminee -> la page se recharge, aucun 2e bon
+        Bon = self.env["suivi.bon.intervention"]
+        avant = Bon.search_count([])
+        encore = self.make_jsonrpc_request(url + "/signer", {"name": "X", "signature": self.SIGNATURE})
+        self.assertEqual((encore.get("force_refresh"), encore.get("error")), (True, None))
+        self.assertEqual(Bon.search_count([]), avant, "pas de deuxième bon")
         self.assertIn(bon.name, self.url_open(url).text)
         # « Voir le bon (PDF) » : le fichier est bien envoye (pas de page blanche)
         self.assertTrue(bon.pdf_id, "PDF joint au ticket")

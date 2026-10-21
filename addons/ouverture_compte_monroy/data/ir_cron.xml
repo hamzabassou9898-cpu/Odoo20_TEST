@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- PDF signe de l'ouverture de compte : prepare en arriere-plan juste apres la signature (le client n'attend
+         pas le PDF) ; lancee a chaque signature, et une fois par heure au cas ou -->
+    <record id="cron_pdf_ouverture_signee" model="ir.cron">
+        <field name="name">Ouverture de compte : PDF signé</field>
+        <field name="model_id" ref="model_ouverture_compte"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_pdf_signes()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">hours</field>
+    </record>
+</odoo>

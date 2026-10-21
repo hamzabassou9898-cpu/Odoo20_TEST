@@ -5,6 +5,7 @@
         <span t-attf-style="flex: {{ largeur or 1 }}; min-width: 0;">
             <input t-if="editable" form="ouverture_client_form" t-att-name="champ" t-att-value="doc[champ] or ''"
                    type="text" maxlength="150" class="o_ouverture_saisie"
+                   t-att-data-obligatoire="champ in doc._champs_obligatoires() and doc._fields[champ].string"
                    style="width: 100%; background: #f3f7ff; border: 0; border-bottom: 1px solid #2f6fd1; padding: 2px 6px; color: #1e3a8a;"/>
             <span t-else="" style="display: block; border-bottom: 1px solid #555; min-height: 1.3em; padding: 0 4px;" t-out="doc[champ] or ''"/>
         </span>

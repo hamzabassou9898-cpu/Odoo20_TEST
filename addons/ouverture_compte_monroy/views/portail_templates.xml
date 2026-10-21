@@ -11,7 +11,7 @@
                             <div class="text-muted small">Ouverture de compte</div>
                             <h4 class="fw-bold" t-out="doc.name"/>
                             <a t-if="editable" href="#signature" class="btn btn-primary w-100">Accepter et signer</a>
-                            <div t-if="editable" class="small text-muted mt-2">Vos réponses s'enregistrent pendant que vous écrivez.</div>
+                            <div t-if="editable" id="ouverture_etat_enregistrement" class="small text-muted mt-2">Vos réponses s'enregistrent pendant que vous écrivez.</div>
                             <div t-elif="doc.signature" class="alert alert-success mb-0 mt-2 py-2">
                                 Signé par <b t-out="doc.signe_par"/>. Merci ! Monroy va évaluer votre demande.</div>
                         </div>
@@ -33,9 +33,9 @@
                             </form>
                             <t t-call="ouverture_compte_monroy.formulaire"/>
                             <div t-if="editable" id="signature" class="mt-4">
-                                <div t-if="manquants" class="alert alert-warning small">
-                                    À remplir avant de signer : <t t-out="', '.join(manquants)"/>.
-                                    <span class="d-block">Après avoir rempli les cases, rechargez la page pour mettre cette liste à jour.</span>
+                                <!-- Mis a jour pendant que le client ecrit (pas besoin de recharger la page) -->
+                                <div id="ouverture_manquants" t-attf-class="alert alert-danger small #{'' if manquants else 'd-none'}">
+                                    À remplir avant de signer (en rouge) : <span class="o_ouverture_liste_manquants" t-out="', '.join(manquants)"/>.
                                 </div>
                                 <t t-call="portal.signature_form"
                                    call_url="'/ouverture/%s/signer?access_token=%s' % (doc.id, access_token)"

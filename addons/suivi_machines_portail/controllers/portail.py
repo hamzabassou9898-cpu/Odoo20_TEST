@@ -178,7 +178,9 @@ class PortailTechnicien(CustomerPortal):
         if not tache:
             return {"error": request.env._("Tâche introuvable.")}
         if not tache.a_faire:
-            return {"error": request.env._("Cette tâche est déjà terminée.")}
+            # Deja signee (double clic, Entree, autre onglet) : la page se recharge et montre le bon (le bouton
+            # de signature d'Odoo reste bloque apres une erreur)
+            return {"force_refresh": True, "redirect_url": "/my/journee/tache/%s#bon_intervention" % tache_id}
         if not signature:
             return {"error": request.env._("La signature est vide.")}
         try:
@@ -196,6 +198,8 @@ class PortailTechnicien(CustomerPortal):
             return {"error": request.env._("Le client doit d'abord signer le bon.")}
         if bon.technicien_id != request.env.user:
             return {"error": request.env._("Seul le technicien du bon peut le signer.")}
+        if bon.signature_technicien:
+            return {"force_refresh": True, "redirect_url": "/my/journee/tache/%s#bon_intervention" % tache_id}
         try:
             bon._signer_technicien(signature)
         except (UserError, ValueError, binascii.Error) as erreur:

@@ -77,11 +77,31 @@ class TestOuvertureCompte(TransactionCase):
         self.assertEqual(ouverture.forme, "inc", "choix inconnu ignoré, le précédent reste")
         self.assertEqual(ouverture.sudo().banque_compte, "12345")
 
+    def test_aucune_case_obligatoire_pour_le_moment(self):
+        """Monroy : aucune case obligatoire pour le moment ; le client peut signer tout de suite."""
+        ouverture = self._ouverture_envoyee(contact_nom=False)
+        self.assertEqual(ouverture._manquants(), [])
+        ouverture.entreprise_nom = False
+        ouverture._signer("Lise Test", SIGNATURE)
+        self.assertEqual(ouverture.state, "signe")
+        # Approuvee sans nom d'entreprise : la fiche porte le code client (Jose la renomme au besoin)
+        assistant = self.env["ouverture.compte.approuver"].create({"ouverture_id": ouverture.id,
+                                                                   "code_client": "VIDE001"})
+        assistant.action_approuver()
+        self.assertEqual((ouverture.state, ouverture.partner_id.name, ouverture.partner_id.ref),
+                         ("approuve", "VIDE001", "VIDE001"))
+
     def test_signature_complete_obligatoire(self):
+        """Si des cases deviennent obligatoires : signer attend qu'elles soient remplies."""
+        from unittest.mock import patch
         ouverture = self._ouverture_envoyee()
-        with self.assertRaises(UserError):
-            ouverture._signer("Lise Test", SIGNATURE)
-        self._remplir(ouverture)
+        Ouverture = type(self.env["ouverture.compte"])
+        with patch.object(Ouverture, "_champs_obligatoires", lambda self: ("rue", "ville")):
+            self.assertEqual(ouverture._manquants(), ["Adresse", "Ville"])
+            with self.assertRaises(UserError):
+                ouverture._signer("Lise Test", SIGNATURE)
+            self._remplir(ouverture)
+            self.assertEqual(ouverture._manquants(), [])
         with self.assertRaises(UserError):
             ouverture._signer("Lise Test", False)
         ouverture.user_id = self.env.user
@@ -89,6 +109,10 @@ class TestOuvertureCompte(TransactionCase):
         self.assertEqual((ouverture.state, ouverture.signe_par), ("signe", "Lise Test"))
         self.assertTrue(ouverture.signe_le)
         self.assertTrue(ouverture.activity_ids, "Jose doit évaluer la demande")
+        # PDF prepare en arriere-plan (le client n'attend pas)
+        self.assertTrue(ouverture.pdf_a_preparer)
+        self.Ouverture._cron_pdf_signes()
+        self.assertFalse(ouverture.pdf_a_preparer)
         with self.assertRaises(UserError):
             ouverture._completer_par_client({"ville": "Autre"})
 

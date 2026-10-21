@@ -35,7 +35,9 @@ CHAMPS_TEXTE = (
 )
 CHAMPS_CHOIX = {"forme": FORMES, "approvisionnement": APPROVISIONNEMENTS, "paiement": PAIEMENTS}
 # A remplir avant de signer
-OBLIGATOIRES = ("entreprise_nom", "rue", "ville", "code_postal", "courriel", "telephone", "nom_majuscules")
+# Cases a remplir avant de signer : aucune pour le moment (demande de Monroy). Pour en exiger, ajouter leur nom
+# ici (ex. "rue", "ville") : la page les montre en rouge et empeche de signer tant qu'elles sont vides.
+OBLIGATOIRES = ()
 LONGUEUR_MAX = 150
 
 
@@ -109,6 +111,8 @@ class OuvertureCompte(models.Model):
     approuve_le = fields.Datetime("Approuvé le", readonly=True, copy=False)
     motif_refus = fields.Text("Motif du refus", copy=False)
     pdf_signe_id = fields.Many2one("ir.attachment", "PDF signé", readonly=True, copy=False)
+    pdf_a_preparer = fields.Boolean("PDF signé à préparer", readonly=True, copy=False, index=True,
+                                    help="Signé : le PDF est prêt quelques instants après (préparé en arrière-plan).")
 
     # ------------------------------------------------------------ creation, portail
     @api.model_create_multi
@@ -169,10 +173,13 @@ class OuvertureCompte(models.Model):
             self.sudo().write(a_ecrire)
         return a_ecrire
 
+    def _champs_obligatoires(self):
+        return OBLIGATOIRES
+
     def _manquants(self):
         self.ensure_one()
-        libelles = {champ: self._fields[champ].string for champ in OBLIGATOIRES}
-        return [libelles[champ] for champ in OBLIGATOIRES if not self.sudo()[champ]]
+        obligatoires = self._champs_obligatoires()
+        return [self._fields[champ].string for champ in obligatoires if not self.sudo()[champ]]
 
     def _signer(self, nom, signature):
         """Signature du client : formulaire complet obligatoire ; PDF signe, Jose prevenu."""
@@ -192,14 +199,13 @@ class OuvertureCompte(models.Model):
             raise UserError(self.env._("Signature illisible.")) from erreur
         ouverture = self.sudo()
         ouverture.write({"signature": signature, "signe_par": (nom or "").strip()[:LONGUEUR_MAX],
-                         "signe_le": fields.Datetime.now(), "state": "signe"})
-        self.env.cr.flush()
-        pdf = ouverture._rendre_pdf()
-        message = ouverture.message_post(
-            body=Markup(self.env._("Formulaire rempli et <b>signé en ligne</b> par %s.")) % ouverture.signe_par,
-            attachments=[(ouverture._nom_pdf() + ".pdf", pdf)] if pdf else [])
-        if pdf:
-            ouverture.pdf_signe_id = message.attachment_ids[:1]
+                         "signe_le": fields.Datetime.now(), "state": "signe", "pdf_a_preparer": True})
+        ouverture.message_post(
+            body=Markup(self.env._("Formulaire rempli et <b>signé en ligne</b> par %s.")) % ouverture.signe_par)
+        # Le PDF (quelques secondes) se prepare en arriere-plan : le client voit tout de suite « Signé »
+        cron = self.env.ref("ouverture_compte_monroy.cron_pdf_ouverture_signee", raise_if_not_found=False)
+        if cron:
+            cron.sudo()._trigger()
         if ouverture.user_id:
             ouverture.activity_schedule(
                 "mail.mail_activity_data_todo", user_id=ouverture.user_id.id,
@@ -207,6 +213,22 @@ class OuvertureCompte(models.Model):
                 note=self.env._("%s a signé : vérifiez la demande puis approuvez-la avec un code client.",
                                 ouverture.entreprise_nom or ouverture.name))
         return True
+
+    def _preparer_pdf_signe(self):
+        """PDF signe joint au fil de la demande (une fois) ; sans moteur PDF, la demande reste consultable."""
+        for ouverture in self.sudo():
+            pdf = ouverture._rendre_pdf()
+            if pdf:
+                message = ouverture.message_post(
+                    body=self.env._("PDF du formulaire signé."),
+                    attachments=[(ouverture._nom_pdf() + ".pdf", pdf)])
+                if not ouverture.pdf_signe_id:
+                    ouverture.pdf_signe_id = message.attachment_ids[:1]
+            ouverture.pdf_a_preparer = False
+
+    @api.model
+    def _cron_pdf_signes(self):
+        self.sudo().search([("pdf_a_preparer", "=", True)], limit=50)._preparer_pdf_signe()
 
     def _rendre_pdf(self):
         """PDF du formulaire (False sans moteur PDF : la demande reste consultable dans Odoo)."""
@@ -308,7 +330,9 @@ class OuvertureCompte(models.Model):
             raise ValidationError(self.env._("Le code client %s est déjà utilisé.", code_client))
         ouverture = self.sudo()
         legal = " ".join(filter(None, [ouverture.entreprise_nom, dict(FORMES).get(ouverture.forme)]))
-        valeurs = {"name": ouverture.autres_noms or ouverture.entreprise_nom,
+        # Aucune case obligatoire : sans nom d'entreprise, le contact ou le code client nomme la fiche
+        nom = ouverture.autres_noms or ouverture.entreprise_nom or ouverture.contact_nom or code_client
+        valeurs = {"name": nom,
                    "ref": code_client, "street": ouverture.rue, "city": ouverture.ville,
                    "zip": ouverture.code_postal, "email": ouverture.courriel, "phone": ouverture.telephone,
                    "x_nom_legal": legal}
@@ -321,12 +345,12 @@ class OuvertureCompte(models.Model):
                             "email": ouverture.courriel, "phone": ouverture.telephone})
         if ouverture.livraison_rue and not client.child_ids.filtered(
                 lambda c: c.type == "delivery" and c.street == ouverture.livraison_rue):
-            Partner.create({"name": ouverture.autres_noms or ouverture.entreprise_nom, "parent_id": client.id,
+            Partner.create({"name": nom, "parent_id": client.id,
                             "type": "delivery", "street": ouverture.livraison_rue,
                             "city": ouverture.livraison_ville, "zip": ouverture.livraison_code_postal,
                             "phone": ouverture.livraison_telephone})
         ouverture.write({"partner_id": client.id, "state": "approuve", "approuve_par_id": self.env.user.id,
-                         "approuve_le": fields.Datetime.now()})
+                         "approuve_le": fields.Datetime.now(), "pdf_a_preparer": False})
         ouverture._ranger_dans_le_dossier(client)
         ouverture.activity_ids.action_feedback(feedback=self.env._("Demande approuvée : code client %s.",
                                                                    code_client))

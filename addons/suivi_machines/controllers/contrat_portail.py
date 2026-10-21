@@ -25,12 +25,18 @@ class ContratPortail(CustomerPortal):
 
     @http.route()
     def portal_quote_accept(self, order_id, access_token=None, name=None, signature=None):
-        """Contrat signe en ligne : le PDF signe est range dans le dossier du client."""
+        """Contrat signe en ligne : le PDF signe est range dans le dossier du client, en arriere-plan (le client
+        n'attend pas). Deja signe (double clic, Entree, autre onglet) : la page se recharge au lieu d'une
+        erreur (le bouton de signature d'Odoo reste bloque apres une erreur)."""
+        access_token = access_token or request.httprequest.args.get("access_token")
+        try:
+            order_sudo = self._contrat_du_client(order_id, access_token)
+        except (AccessError, MissingError):
+            order_sudo = None
+        if order_sudo and order_sudo.signature and not order_sudo._has_to_be_signed():
+            return {"force_refresh": True, "redirect_url": order_sudo.get_portal_url()}
+        request.update_context(contrat_archivage_differe=True)
         resultat = super().portal_quote_accept(order_id, access_token=access_token, name=name, signature=signature)
-        if isinstance(resultat, dict) and not resultat.get("error"):
-            try:
-                order_sudo = self._contrat_du_client(order_id, access_token or request.httprequest.args.get("access_token"))
-            except (AccessError, MissingError):
-                return resultat
-            order_sudo._archiver_contrat_signe()
+        if order_sudo and isinstance(resultat, dict) and not resultat.get("error"):
+            order_sudo._archiver_plus_tard()
         return resultat

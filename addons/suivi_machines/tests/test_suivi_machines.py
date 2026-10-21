@@ -637,6 +637,18 @@ class TestSuiviMachines(TransactionCase):
         self.assertIn("type_contrat_id", arch)
         self.assertIn("forfait_montant", arch)
 
+    def test_dupliquer_un_contrat_sans_doubler_le_forfait(self):
+        convention = self.env.ref("suivi_machines.type_contrat_convention")
+        so = self.env["sale.order"].create({
+            "partner_id": self.client.id, "type_contrat_id": convention.id,
+            "date_debut_location": PERIODE_TEST[0], "date_fin_location": PERIODE_TEST[1],
+            "order_line": [(0, 0, {"product_id": self.produit.id, "product_uom_qty": 2})]})
+        copie = so.copy()
+        forfaits = copie.order_line.filtered("est_forfait")
+        self.assertEqual(len(forfaits), 1, "une seule ligne de forfait")
+        self.assertEqual((forfaits.product_uom_qty, forfaits.price_unit), (2, 359.99))
+        self.assertEqual(len(copie.order_line), len(so.order_line), "mêmes lignes que le contrat d'origine")
+
     def test_prolonger_ajuste_le_forfait(self):
         """Prolongation : forfait / machine ajuste (pourcentage ou nouveau prix), propose au prochain
         renouvellement ; rien n'est facture tout de suite ; 0 % : inchange."""
@@ -1135,6 +1147,14 @@ class TestContratEnLigne(HttpCase):
         self.assertFalse(resultat.get("error"), resultat)
         so.invalidate_recordset()
         self.assertEqual(so.state, "sale", "contrat signé = confirmé")
+        # Deuxieme envoi (double clic, Entree) : la page se recharge, pas d'erreur ni de bouton bloque
+        encore = self.make_jsonrpc_request("/my/orders/%s/accept?access_token=%s" % (so.id, jeton),
+                                           {"name": "Richard Filion", "signature": signature})
+        self.assertEqual((encore.get("force_refresh"), encore.get("error")), (True, None))
+        # Le PDF est range en arriere-plan, juste apres
+        self.assertTrue(so.contrat_a_archiver)
+        self.env["sale.order"]._cron_archiver_contrats_signes()
+        self.assertFalse(so.contrat_a_archiver)
         pieces = self.env["ir.attachment"].search([("res_model", "=", "res.partner"), ("res_id", "=", client.id)])
         self.assertTrue(pieces.filtered(lambda a: so.name in a.name and a.name.endswith("signé.pdf")),
                         "le contrat signé est dans la fiche du client")
