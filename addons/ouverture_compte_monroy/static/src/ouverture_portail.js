@@ -6,6 +6,22 @@
  * signature attend qu'elles soient remplies (le bouton de signature d'Odoo reste bloque apres une erreur). */
 let fileEnvois = Promise.resolve();
 
+/* A l'ouverture, le bloc de signature d'Odoo met le curseur dans « Nom complet » : le navigateur descendait
+ * tout en bas. Tant que le client n'a rien touche, ce saut est annule : la page s'ouvre en haut. */
+let clientAgi = false;
+for (const evenement of ["pointerdown", "keydown", "touchstart", "wheel"]) {
+    window.addEventListener(evenement, () => { clientAgi = true; }, { capture: true, once: true });
+}
+document.addEventListener("focusin", (ev) => {
+    if (!clientAgi && ev.target.closest("#signature") && !window.location.hash) {
+        ev.target.blur();
+        window.scrollTo(0, 0);
+    }
+}, true);
+if ("scrollRestoration" in history) {
+    history.scrollRestoration = "manual";   // recharger la page : on repart du haut, pas d'en bas
+}
+
 function afficherEtat(texte, classe) {
     const etat = document.getElementById("ouverture_etat_enregistrement");
     if (etat) {
@@ -175,9 +191,6 @@ document.addEventListener("DOMContentLoaded", () => {
     // revenir en bas de la page (la ou le client vient de signer)
     const confirmation = document.getElementById("ouverture_confirmation");
     if (confirmation) {
-        if ("scrollRestoration" in history) {
-            history.scrollRestoration = "manual";
-        }
         window.scrollTo(0, 0);
         confirmation.scrollIntoView({ block: "start" });
     }
