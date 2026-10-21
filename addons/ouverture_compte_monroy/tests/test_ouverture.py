@@ -260,6 +260,11 @@ class TestOuverturePortail(HttpCase):
         self.assertIn(ouverture._date_texte(ouverture.signe_le), reponse.text)
         # Confirmation claire pour le client : signee, en attente d'approbation, PDF a telecharger
         self.assertIn('id="ouverture_confirmation"', reponse.text)
+        # Un onglet reste ouvert demande l'etat : plus a remplir -> il se met a jour
+        etat = self.make_jsonrpc_request("/ouverture/%s/etat" % ouverture.id, {"access_token": ouverture.access_token})
+        self.assertEqual(etat, {"modifiable": False})
+        self.assertEqual(self.make_jsonrpc_request("/ouverture/%s/etat" % ouverture.id, {"access_token": "faux"}),
+                         {"modifiable": False})
         self.assertIn("en attente d'approbation", reponse.text)
         self.assertNotIn('name="ville"', reponse.text, "plus de cases à remplir")
         lien = "/ouverture/%s/pdf?access_token=%s" % (ouverture.id, ouverture.access_token)

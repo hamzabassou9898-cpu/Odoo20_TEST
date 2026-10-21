@@ -35,6 +35,15 @@ class OuverturePortail(CustomerPortal):
             return request.make_response("", status=409)
         return request.make_response("", status=204)
 
+    @http.route(["/ouverture/<int:ouverture_id>/etat"], type="jsonrpc", auth="public", website=True)
+    def ouverture_etat(self, ouverture_id, access_token=None, **kw):
+        """Onglet reste ouvert : le formulaire est-il encore a remplir ? (sinon la page se met a jour)."""
+        try:
+            ouverture = self._ouverture(ouverture_id, access_token)
+        except (AccessError, MissingError):
+            return {"modifiable": False}
+        return {"modifiable": ouverture._modifiable_par_client()}
+
     @http.route(["/ouverture/<int:ouverture_id>/pdf"], type="http", auth="public", website=True)
     def ouverture_pdf(self, ouverture_id, access_token=None, **kw):
         """La demande signee, a telecharger par le client (PDF deja prepare, sinon fait a la demande)."""

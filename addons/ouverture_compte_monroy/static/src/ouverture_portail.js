@@ -169,4 +169,41 @@ document.addEventListener("click", async (ev) => {
     delete bouton.dataset.ouvertureVerifie;
 }, true);
 
-document.addEventListener("DOMContentLoaded", verifierObligatoires);
+document.addEventListener("DOMContentLoaded", () => {
+    verifierObligatoires();
+    // Demande signee : on montre le message de confirmation en haut, meme si le navigateur voulait
+    // revenir en bas de la page (la ou le client vient de signer)
+    const confirmation = document.getElementById("ouverture_confirmation");
+    if (confirmation) {
+        if ("scrollRestoration" in history) {
+            history.scrollRestoration = "manual";
+        }
+        window.scrollTo(0, 0);
+        confirmation.scrollIntoView({ block: "start" });
+    }
+});
+
+/* Onglet du formulaire reste ouvert pendant que la demande est signee ailleurs (autre onglet, lien du
+ * courriel, « Page du client ») : en revenant sur l'onglet, il le voit et montre la demande signee. */
+async function verifierSiSigneAilleurs() {
+    const formulaire = document.getElementById("ouverture_client_form");
+    if (document.hidden || !formulaire || !document.querySelector(".o_ouverture_saisie")) {
+        return;   // page deja signee (rien a remplir) ou onglet cache
+    }
+    const jeton = formulaire.querySelector('input[name="access_token"]');
+    const url = formulaire.action.replace(/\/champ$/, "/etat");
+    try {
+        const reponse = await fetch(url, {
+            method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ jsonrpc: "2.0", method: "call", params: { access_token: jeton ? jeton.value : "" } }),
+        });
+        const donnees = await reponse.json();
+        if (donnees.result && donnees.result.modifiable === false) {
+            window.location.reload();
+        }
+    } catch {
+        // pas de connexion : on reessaiera au prochain retour sur l'onglet
+    }
+}
+document.addEventListener("visibilitychange", verifierSiSigneAilleurs);
+window.addEventListener("focus", verifierSiSigneAilleurs);
