@@ -8,3 +8,4 @@ from . import product_template
 from . import rappel
 from . import planning
 from . import configuration
+from . import crm_fiche_vente

@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Opportunite : onglet « Fiche de vente » (sections du formulaire de vente interne du site) -->
+    <record id="crm_lead_view_form_fiche_vente" model="ir.ui.view">
+        <field name="name">crm.lead.form.fiche.vente</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.crm_lead_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook/page[@name='internal_notes']" position="before">
+                <page string="Fiche de vente" name="fiche_vente" invisible="type == 'lead'">
+                    <field name="est_proprietaire" invisible="1"/>
+                    <field name="est_location_envisagee" invisible="1"/>
+                    <group>
+                        <group string="Représentant">
+                            <field name="user_id" string="Nom du représentant" widget="many2one_avatar_user"
+                                   domain="[('share', '=', False)]"/>
+                            <field name="medium_id" string="Reçue par" readonly="1" invisible="not via_formulaire_web"/>
+                            <field name="via_formulaire_web" invisible="1"/>
+                        </group>
+                    </group>
+                    <group string="1. Informations générales">
+                        <group>
+                            <field name="type_clientele"/>
+                            <field name="type_commerce" invisible="type_clientele != 'commercant'"/>
+                            <field name="deja_client"/>
+                            <field name="partner_id" string="Client" invisible="not deja_client"/>
+                            <field name="partner_name" string="Nom du commerce / entreprise" invisible="deja_client"
+                                   placeholder="EN MAJUSCULES ET SANS ACCENT"/>
+                            <field name="region_desservie"/>
+                        </group>
+                        <group invisible="deja_client">
+                            <label for="street" string="Adresse"/>
+                            <div class="o_address_format">
+                                <field name="street" placeholder="Adresse" class="o_address_street"/>
+                                <field name="city" placeholder="Ville" class="o_address_city"/>
+                                <field name="state_id" placeholder="Province" class="o_address_state"
+                                       options="{'no_open': True, 'no_create': True}"/>
+                                <field name="zip" placeholder="Code postal" class="o_address_zip"/>
+                                <field name="country_id" placeholder="Pays" class="o_address_country"
+                                       options="{'no_open': True, 'no_create': True}"/>
+                            </div>
+                            <field name="phone" string="Téléphone du commerce" widget="phone"/>
+                        </group>
+                    </group>
+                    <group string="2. Contact du projet">
+                        <group>
+                            <field name="contact_name" string="Nom du contact"/>
+                            <field name="function" string="Titre / fonction du contact"/>
+                        </group>
+                        <group>
+                            <field name="telephone_contact" widget="phone"/>
+                            <field name="email_from" string="Courriel du contact" widget="email"/>
+                        </group>
+                    </group>
+                    <group string="3. Besoin &amp; qualification">
+                        <group>
+                            <field name="equipement_souhaite"/>
+                            <field name="potentiel_emplacement"/>
+                        </group>
+                        <group>
+                            <field name="machine_concurrente"/>
+                            <field name="fournisseur_concurrent" invisible="not machine_concurrente"/>
+                        </group>
+                    </group>
+                    <group string="4. Type de contrat envisagé">
+                        <group>
+                            <field name="type_contrat_envisage_id" string="Type de contrat"
+                                   options="{'no_create': True, 'no_open': True}"/>
+                        </group>
+                        <group invisible="not est_location_envisagee">
+                            <field name="duree_location"/>
+                            <field name="debut_location_souhaite"/>
+                        </group>
+                    </group>
+                    <div class="alert alert-info" role="alert" invisible="not est_proprietaire">
+                        Contrat <b>propriétaire</b> : la réservation de machine est exclue. On procède tout de même
+                        à l'ouverture du compte, au choix des accessoires et au bon de commande.
+                    </div>
+                    <div class="text-muted mt-2">5. Commentaires : onglet <b>Notes</b>.</div>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Pipeline : le representant en etiquette sur chaque carte -->
+    <record id="crm_lead_kanban_representant" model="ir.ui.view">
+        <field name="name">crm.lead.kanban.representant</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.crm_case_kanban_view_leads"/>
+        <field name="arch" type="xml">
+            <xpath expr="//t[@t-name='card']//field[@name='tag_ids']" position="before">
+                <div t-if="record.user_id.raw_value" class="mb-1">
+                    <span class="badge rounded-pill border text-bg-light fw-normal">👤 <t t-out="record.user_id.value"/></span>
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>

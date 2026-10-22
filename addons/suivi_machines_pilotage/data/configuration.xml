@@ -2,4 +2,5 @@
 <odoo>
     <!-- Etapes du CRM de Monroy (1re et 2e proposition, Livre / Termine) : creees seulement si elles manquent -->
     <function model="crm.lead" name="_configuration_monroy"/>
+    <function model="crm.lead" name="_configuration_formulaire_vente"/>
 </odoo>
