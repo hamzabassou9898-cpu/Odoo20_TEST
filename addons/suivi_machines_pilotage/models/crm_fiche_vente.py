@@ -47,8 +47,7 @@ class CrmLead(models.Model):
     fournisseur_concurrent = fields.Char("Fournisseur / marque concurrente")
     # 4. Type de contrat envisage : les vrais types de contrat (ceux de « Nouvelle location »)
     type_contrat_envisage_id = fields.Many2one("suivi.type.contrat", "Type de contrat envisagé", tracking=True)
-    est_proprietaire = fields.Boolean(compute="_compute_est_proprietaire")
-    est_location_envisagee = fields.Boolean(compute="_compute_est_proprietaire")
+    est_location_envisagee = fields.Boolean(compute="_compute_est_location_envisagee")
     duree_location = fields.Selection(DUREES, "Durée de location")
     debut_location_souhaite = fields.Date("Début de location souhaité")
     # Case cachee du formulaire du site : l'opportunite recoit toujours le support « Formulaire web »
@@ -70,11 +69,11 @@ class CrmLead(models.Model):
             or Support.create({"name": SUPPORT_FORMULAIRE})
 
     @api.depends("type_contrat_envisage_id")
-    def _compute_est_proprietaire(self):
+    def _compute_est_location_envisagee(self):
+        """Duree et debut de location : seulement pour un contrat de location (pas « Proprietaire »)."""
         proprietaire = self.env.ref("suivi_machines.type_contrat_proprietaire", raise_if_not_found=False)
         for lead in self:
             type_contrat = lead.type_contrat_envisage_id
-            lead.est_proprietaire = bool(type_contrat) and type_contrat == proprietaire
             lead.est_location_envisagee = bool(type_contrat) and type_contrat.type_commande == "location" \
                 and type_contrat != proprietaire
 

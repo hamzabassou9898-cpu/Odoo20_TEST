@@ -8,7 +8,6 @@
         <field name="arch" type="xml">
             <xpath expr="//notebook/page[@name='internal_notes']" position="before">
                 <page string="Fiche de vente" name="fiche_vente" invisible="type == 'lead'">
-                    <field name="est_proprietaire" invisible="1"/>
                     <field name="est_location_envisagee" invisible="1"/>
                     <group>
                         <group string="Représentant">
@@ -71,10 +70,6 @@
                             <field name="debut_location_souhaite"/>
                         </group>
                     </group>
-                    <div class="alert alert-info" role="alert" invisible="not est_proprietaire">
-                        Contrat <b>propriétaire</b> : la réservation de machine est exclue. On procède tout de même
-                        à l'ouverture du compte, au choix des accessoires et au bon de commande.
-                    </div>
                     <div class="text-muted mt-2">5. Commentaires : onglet <b>Notes</b>.</div>
                 </page>
             </xpath>
@@ -89,6 +84,14 @@
         <field name="arch" type="xml">
             <xpath expr="//templates" position="before">
                 <field name="nom_representant"/>
+                <field name="medium_id"/>
+            </xpath>
+            <!-- A la place de l'equipe (« Sales ») : d'ou vient l'opportunite (ex. « Formulaire web ») -->
+            <xpath expr="//t[@t-name='card']//field[@name='team_id']/.." position="replace">
+                <span t-if="record.medium_id.raw_value" t-att-title="'Source : ' + record.medium_id.value"
+                      class="d-flex align-items-center text-truncate">
+                    <span class="badge rounded-pill text-bg-300 fw-bold" t-out="record.medium_id.value"/>
+                </span>
             </xpath>
             <xpath expr="//t[@t-name='card']//field[@name='tag_ids']" position="before">
                 <div t-if="record.nom_representant.raw_value" class="mb-1">

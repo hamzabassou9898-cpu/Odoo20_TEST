@@ -25,9 +25,7 @@ class TestFicheVente(TransactionCase):
         lead = self.env["crm.lead"].create({"name": "Contrat"})
         lead.type_contrat_envisage_id = self.env.ref("suivi_machines.type_contrat_location")
         self.assertTrue(lead.est_location_envisagee)
-        self.assertFalse(lead.est_proprietaire)
         lead.type_contrat_envisage_id = self.env.ref("suivi_machines.type_contrat_proprietaire")
-        self.assertTrue(lead.est_proprietaire, "note : pas de réservation de machine")
         self.assertFalse(lead.est_location_envisagee, "durée et début de location cachés")
 
     def test_cases_permises_au_formulaire_du_site(self):
@@ -48,4 +46,7 @@ class TestFicheVente(TransactionCase):
                         "4. Type de contrat envisagé"):
             self.assertTrue(page.xpath(".//group[@string=$s]", s=section), section)
         kanban = self.env["crm.lead"].get_views([(self.env.ref("crm.crm_case_kanban_view_leads").id, "kanban")])
-        self.assertIn("record.nom_representant.value", kanban["views"]["kanban"]["arch"], "représentant en étiquette")
+        arch = kanban["views"]["kanban"]["arch"]
+        self.assertIn("record.nom_representant.value", arch, "représentant en étiquette")
+        self.assertIn("record.medium_id.value", arch, "la source à la place de l'équipe")
+        self.assertNotIn('name="team_id" class="badge', arch)
