@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Opportunite : bouton a l'etape « Ouverture de compte », etat de la demande, rappel tant qu'elle n'est pas envoyee -->
+    <record id="crm_lead_view_form_ouverture" model="ir.ui.view">
+        <field name="name">crm.lead.form.ouverture.compte</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.crm_lead_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <field name="est_etape_ouverture" invisible="1"/>
+                <field name="ouverture_compte_etat" invisible="1"/>
+                <button name="action_ouverture_compte" type="object" class="btn-primary"
+                        string="Envoyer l'ouverture de compte"
+                        invisible="not est_etape_ouverture or ouverture_compte_etat in ('envoye', 'signe', 'approuve')"/>
+            </xpath>
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_voir_ouverture_compte" type="object" class="oe_stat_button" icon="person"
+                        invisible="not ouverture_compte_etat">
+                    <div class="o_stat_info">
+                        <span class="o_stat_value"><field name="ouverture_compte_etat" readonly="1"/></span>
+                        <span class="o_stat_text">Ouverture de compte</span>
+                    </div>
+                </button>
+            </xpath>
+            <xpath expr="//div[@name='button_box']" position="after">
+                <div class="alert alert-warning d-flex justify-content-between align-items-center flex-wrap gap-2" role="alert"
+                     invisible="not est_etape_ouverture or ouverture_compte_etat in ('envoye', 'signe', 'approuve')">
+                    <span>👤 Cette opportunité est à l'étape <b>Ouverture de compte</b> : envoyez le formulaire au client.
+                        Il est préparé avec les informations déjà connues.</span>
+                    <button name="action_ouverture_compte" type="object" class="btn btn-primary btn-sm"
+                            string="Envoyer l'ouverture de compte"/>
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Pipeline : etat de l'ouverture de compte sur chaque carte -->
+    <record id="crm_lead_kanban_ouverture" model="ir.ui.view">
+        <field name="name">crm.lead.kanban.ouverture.compte</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.crm_case_kanban_view_leads"/>
+        <field name="arch" type="xml">
+            <xpath expr="//t[@t-name='card']//field[@name='tag_ids']" position="after">
+                <div t-if="record.ouverture_compte_etat.raw_value" class="mt-1">
+                    <span t-if="record.ouverture_compte_etat.raw_value == 'brouillon'" class="badge rounded-pill text-bg-light border">👤 Ouverture : à envoyer</span>
+                    <span t-elif="record.ouverture_compte_etat.raw_value == 'envoye'" class="badge rounded-pill text-bg-info">👤 Envoyée — attend le client</span>
+                    <span t-elif="record.ouverture_compte_etat.raw_value == 'signe'" class="badge rounded-pill text-bg-warning">👤 Signée — à approuver</span>
+                    <span t-elif="record.ouverture_compte_etat.raw_value == 'approuve'" class="badge rounded-pill text-bg-success">👤 Approuvée<t t-if="record.ouverture_compte_code.raw_value"> · <t t-out="record.ouverture_compte_code.raw_value"/></t></span>
+                    <span t-elif="record.ouverture_compte_etat.raw_value == 'refuse'" class="badge rounded-pill text-bg-danger">👤 Refusée</span>
+                </div>
+            </xpath>
+            <xpath expr="//templates" position="before">
+                <field name="ouverture_compte_etat"/>
+                <field name="ouverture_compte_code"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Ouverture de compte : lien vers l'opportunite -->
+    <record id="ouverture_compte_form_lead" model="ir.ui.view">
+        <field name="name">ouverture.compte.form.lead</field>
+        <field name="model">ouverture.compte</field>
+        <field name="inherit_id" ref="ouverture_compte_monroy.ouverture_compte_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <field name="lead_id" invisible="1"/>
+                <button name="action_voir_opportunite" type="object" class="oe_stat_button" icon="star"
+                        invisible="not lead_id" string="Opportunité"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

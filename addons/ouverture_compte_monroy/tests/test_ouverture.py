@@ -299,3 +299,87 @@ class TestOuverturePortail(HttpCase):
         client.ouverture_compte_etat  # lu avant l'approbation, comme sur la fiche ouverte
         ouverture._approuver("MONT321")
         self.assertEqual(client.ouverture_compte_etat, "approuve")
+
+
+@tagged("post_install", "-at_install")
+class TestOuvertureCrm(TransactionCase):
+    """CRM : a l'etape « 👤 Ouverture de compte », la demande se prepare depuis l'opportunite et s'y suit."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.env = cls.env(context=dict(cls.env.context, tracking_disable=True))
+        Etape = cls.env["crm.stage"]
+        cls.nouvelle = Etape.create({"name": "🚀 Nouvelle opportunité test", "sequence": 9001})
+        cls.etape = Etape.create({"name": "👤 Ouverture de compte", "sequence": 9002})
+        cls.qualification = Etape.create({"name": "🏆 Qualification test", "sequence": 9003})
+        cls.lead = cls.env["crm.lead"].create({
+            "name": "Opportunité de Amélie", "type": "opportunity", "stage_id": cls.etape.id,
+            "partner_name": "Accommodation Clairbourg", "contact_name": "Amélie Roy",
+            "email_from": "amelie@clairbourg.test", "phone": "418 555-0101",
+            "street": "1423 avenue Lac-St-Charles", "city": "Lac-Saint-Charles", "zip": "G0A 2H0"})
+
+    def test_demande_preparee_avec_les_infos_de_l_opportunite(self):
+        self.assertTrue(self.lead.est_etape_ouverture)
+        self.lead.stage_id = self.nouvelle
+        self.assertFalse(self.lead.est_etape_ouverture)
+        self.lead.stage_id = self.etape
+        action = self.lead.action_ouverture_compte()
+        self.assertEqual(action["res_model"], "ouverture.compte.envoyer", "courriel connu : fenêtre d'envoi")
+        ouverture = self.lead.ouverture_compte_id
+        self.assertEqual((ouverture.entreprise_nom, ouverture.contact_nom, ouverture.courriel, ouverture.telephone,
+                          ouverture.rue, ouverture.ville, ouverture.code_postal, ouverture.lead_id),
+                         ("Accommodation Clairbourg", "Amélie Roy", "amelie@clairbourg.test", "418 555-0101",
+                          "1423 avenue Lac-St-Charles", "Lac-Saint-Charles", "G0A 2H0", self.lead))
+        self.assertEqual(self.lead.ouverture_compte_etat, "brouillon")
+        # Deuxieme clic : la meme demande, pas une nouvelle
+        self.lead.action_ouverture_compte()
+        self.assertEqual(len(self.lead.ouverture_compte_ids), 1)
+
+    def test_fiche_client_existante_passe_avant(self):
+        client = self.env["res.partner"].create({"name": "Clairbourg (fiche)", "is_company": True,
+                                                 "email": "fiche@clairbourg.test", "street": "2 rue Fiche"})
+        self.lead.partner_id = client
+        self.lead.contact_name = "Amélie Roy"   # Odoo y met le nom de la fiche : le vendeur le corrige
+        ouverture = self.env["ouverture.compte"].create(self.lead._valeurs_ouverture())
+        self.assertEqual(ouverture.partner_id, client)
+        self.assertEqual(ouverture.rue, "2 rue Fiche", "la fiche client d'abord")
+        self.assertEqual(ouverture.contact_nom, "Amélie Roy", "complété par l'opportunité")
+
+    def test_suivi_dans_l_opportunite_et_etape_suivante(self):
+        self.lead.action_ouverture_compte()
+        ouverture = self.lead.ouverture_compte_id
+        ouverture._envoyer()
+        self.assertEqual(self.lead.ouverture_compte_etat, "envoye")
+        TestOuvertureCompte._remplir(self, ouverture, entreprise_nom="Accommodation Clairbourg", contact_nom="Amélie Roy",
+                                     courriel="amelie@clairbourg.test")
+        ouverture._signer("Amélie Roy", SIGNATURE)
+        self.assertEqual(self.lead.ouverture_compte_etat, "signe")
+        client = ouverture._approuver("CLAI01")
+        self.assertEqual(self.lead.ouverture_compte_etat, "approuve")
+        self.assertEqual(self.lead.ouverture_compte_code, "CLAI01")
+        self.assertEqual(self.lead.partner_id, client, "l'opportunité est reliée au nouveau client")
+        self.assertEqual(self.lead.stage_id, self.qualification, "passe toute seule à l'étape suivante")
+        fil = " ".join(self.lead.message_ids.mapped("body"))
+        for texte in ("envoyée à amelie@clairbourg.test", "signée en ligne par Amélie Roy", "code client <b>CLAI01</b>"):
+            self.assertIn(texte, fil)
+        # Deja approuvee : le bouton montre la demande, n'en cree pas d'autre
+        self.assertEqual(self.lead.action_ouverture_compte()["res_id"], ouverture.id)
+
+    def test_refus_note_et_nouvelle_demande_possible(self):
+        self.lead.action_ouverture_compte()
+        ouverture = self.lead.ouverture_compte_id
+        ouverture._envoyer()
+        ouverture.action_refuser()
+        self.assertIn("refusée", self.lead.message_ids[0].body)
+        self.assertEqual(self.lead.stage_id, self.etape, "refus : l'opportunité ne bouge pas")
+        self.lead.action_ouverture_compte()
+        self.assertEqual(len(self.lead.ouverture_compte_ids), 2, "après un refus, une nouvelle demande")
+
+    def test_vues_crm(self):
+        from lxml import etree
+        form = etree.fromstring(self.env["crm.lead"].get_views([(False, "form")])["views"]["form"]["arch"])
+        self.assertTrue(form.xpath("//button[@name='action_ouverture_compte']"))
+        self.assertTrue(form.xpath("//button[@name='action_voir_ouverture_compte']"))
+        kanban = self.env["crm.lead"].get_views([(self.env.ref("crm.crm_case_kanban_view_leads").id, "kanban")])
+        self.assertIn("Signée — à approuver", kanban["views"]["kanban"]["arch"])
