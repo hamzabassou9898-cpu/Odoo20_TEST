@@ -21,7 +21,7 @@ DUREES = [("ete", "Saisonnier (été)"), ("6_mois", "6 mois"), ("1_an", "1 an"),
           ("3_ans", "3 ans"), ("autre", "Autre (préciser en commentaires)")]
 
 # Cases que le formulaire du site peut remplir (en plus de celles du CRM deja permises)
-CHAMPS_FORMULAIRE = ["user_id", "type_clientele", "type_commerce", "deja_client", "partner_id", "region_desservie",
+CHAMPS_FORMULAIRE = ["nom_representant", "type_clientele", "type_commerce", "deja_client", "partner_id", "region_desservie",
                      "street", "city", "state_id", "zip", "country_id", "function", "telephone_contact",
                      "equipement_souhaite", "potentiel_emplacement", "machine_concurrente", "fournisseur_concurrent",
                      "type_contrat_envisage_id", "duree_location", "debut_location_souhaite", "via_formulaire_web"]
@@ -31,6 +31,8 @@ SUPPORT_FORMULAIRE = "Formulaire web"
 class CrmLead(models.Model):
     _inherit = "crm.lead"
 
+    # Ecrit librement dans le formulaire (pas forcement un utilisateur Odoo)
+    nom_representant = fields.Char("Nom du représentant", tracking=True)
     # 1. Informations generales
     type_clientele = fields.Selection(TYPES_CLIENTELE, "Type de clientèle", tracking=True)
     type_commerce = fields.Selection(TYPES_COMMERCE, "Type de commerce")

@@ -12,8 +12,7 @@
                     <field name="est_location_envisagee" invisible="1"/>
                     <group>
                         <group string="Représentant">
-                            <field name="user_id" string="Nom du représentant" widget="many2one_avatar_user"
-                                   domain="[('share', '=', False)]"/>
+                            <field name="nom_representant"/>
                             <field name="medium_id" string="Reçue par" readonly="1" invisible="not via_formulaire_web"/>
                             <field name="via_formulaire_web" invisible="1"/>
                         </group>
@@ -88,9 +87,12 @@
         <field name="model">crm.lead</field>
         <field name="inherit_id" ref="crm.crm_case_kanban_view_leads"/>
         <field name="arch" type="xml">
+            <xpath expr="//templates" position="before">
+                <field name="nom_representant"/>
+            </xpath>
             <xpath expr="//t[@t-name='card']//field[@name='tag_ids']" position="before">
-                <div t-if="record.user_id.raw_value" class="mb-1">
-                    <span class="badge rounded-pill border text-bg-light fw-normal">👤 <t t-out="record.user_id.value"/></span>
+                <div t-if="record.nom_representant.raw_value" class="mb-1">
+                    <span class="badge rounded-pill border text-bg-light fw-normal">👤 <t t-out="record.nom_representant.value"/></span>
                 </div>
             </xpath>
         </field>
