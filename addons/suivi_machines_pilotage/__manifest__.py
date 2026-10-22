@@ -25,6 +25,7 @@
             "suivi_machines_pilotage/static/src/tableau_moderne/*",
             "suivi_machines_pilotage/static/src/planning/*",
             "suivi_machines_pilotage/static/src/activites/*",
+            "suivi_machines_pilotage/static/src/toutes_cartes/*",
         ],
         # La vue Hierarchie d'Odoo est chargee a la demande : le complement suit le meme paquet
         "web.assets_backend_lazy": [

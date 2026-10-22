@@ -5,7 +5,7 @@
         <field name="name">pilotage.indicateur.kanban</field>
         <field name="model">pilotage.indicateur</field>
         <field name="arch" type="xml">
-            <kanban create="false" edit="false" delete="false" default_group_by="section"
+            <kanban js_class="pilotage_toutes_cartes" create="false" edit="false" delete="false" default_group_by="section"
                     group_create="false" group_delete="false" group_edit="false"
                     records_draggable="false" quick_create="false"
                     action="action_ouvrir" type="object">
