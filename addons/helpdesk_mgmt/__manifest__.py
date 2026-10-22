@@ -4,7 +4,7 @@
     "name": "Helpdesk Management",
     "summary": """
         Helpdesk""",
-    "version": "20.0.1.3.0",
+    "version": "20.0.1.3.1",
     "license": "AGPL-3",
     "category": "After-Sales",
     "author": "AdaptiveCity, "
