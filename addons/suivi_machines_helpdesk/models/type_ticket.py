@@ -3,7 +3,7 @@
 from odoo import api, fields, models
 from odoo.exceptions import ValidationError
 
-from .etapes import est_ferme
+from .etapes import est_ferme, nom_etape
 
 TYPES_DEMANDE = [
     ("reparation", "Réparation"),
@@ -88,7 +88,7 @@ class HelpdeskTicket(models.Model):
             if ticket.commande_reprise_id or not (ticket.est_entretien
                                                   or ticket.type_demande in TYPES_A_PLANIFIER):
                 ticket.statut_entretien = False
-            elif est_ferme(ticket.stage_id.name):
+            elif est_ferme(nom_etape(ticket.stage_id)):
                 ticket.statut_entretien = "fait"
             elif ticket.user_id or "planifie" in ticket.sudo().intervention_ticket_ids.mapped("state"):
                 ticket.statut_entretien = "planifie"

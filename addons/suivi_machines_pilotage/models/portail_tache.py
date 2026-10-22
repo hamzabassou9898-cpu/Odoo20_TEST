@@ -98,12 +98,12 @@ class PortailTache(models.Model):
                                            WHEN t.type_demande = 'ramassage' THEN 'ramassage'
                                            ELSE 'reparation' END,
                        COALESCE(t.date_planifiee, t.create_date), %(technicien_ticket)s,
-                       t.partner_id, t.name, '#' || t.id, COALESCE(s.name::text, '') !~* %(ferme)s,
+                       t.partner_id, t.name, '#' || t.id, %(nom_etape)s !~* %(ferme)s,
                        t.lot_id, %(societe_ticket)s, NULL, t.id, NULL
                   FROM helpdesk_ticket t
              LEFT JOIN helpdesk_stage s ON s.id = t.stage_id
                  WHERE t.commande_reprise_id IS NULL
-                   AND COALESCE(s.name::text, '') !~* %(annule)s
+                   AND %(nom_etape)s !~* %(annule)s
                 UNION ALL
                 SELECT i.id * 10 + 3, CASE WHEN i.type IN ('entretien', 'installation') THEN i.type
                                            WHEN i.type IN ('bris', 'reparation', 'remplacement') THEN 'reparation'
@@ -115,7 +115,16 @@ class PortailTache(models.Model):
                 ) u
             )""", table=SQL.identifier(self._table), ferme=ferme, annule=REGEX_ANNULE,
             societe_ticket=societe_ticket, fuseau=FUSEAU,
+            # Nom francais de l'etape (comme a l'ecran) : une traduction anglaise oubliee (« Solved ») ne
+            # doit pas faire passer un ticket ouvert pour « fait »
+            nom_etape=self._sql_nom_etape(),
             technicien_ticket=self._sql_technicien_ticket()))
+
+    def _sql_nom_etape(self):
+        """Nom francais de l'etape du ticket (comme a l'ecran), quelle que soit la langue de lecture."""
+        if self.env["helpdesk.stage"]._fields["name"].translate:
+            return SQL("COALESCE(s.name->>'fr_CA', s.name->>'fr_FR', s.name->>'en_US', '')")
+        return SQL("COALESCE(s.name::text, '')")
 
     def _source(self):
         self.ensure_one()

@@ -32,6 +32,22 @@ def est_ferme(nom):
     return any(m in nom for m in MOTS_FERME)
 
 
+# Monroy nomme ses etapes en francais : c'est ce nom qui compte. Une etape copiee d'une etape native garde
+# sa traduction anglaise (ex. « Solved ») : lue en anglais (tache planifiee), elle fermait le ticket a tort.
+LANGUES_ETAPES = ("fr_CA", "fr_FR")
+
+
+def nom_etape(etape):
+    """Nom de l'etape en francais si la langue est installee, sinon dans la langue courante."""
+    if not etape:
+        return ""
+    installees = {code for code, _nom in etape.env["res.lang"].get_installed()}
+    for code in LANGUES_ETAPES:
+        if code in installees:
+            return etape.with_context(lang=code).name or ""
+    return etape.name or ""
+
+
 def ou(termes):
     """Domaine « l'un ou l'autre » a partir d'une liste de termes."""
     return ["|"] * (len(termes) - 1) + list(termes)

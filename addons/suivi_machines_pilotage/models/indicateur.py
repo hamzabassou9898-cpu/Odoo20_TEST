@@ -318,6 +318,9 @@ class PilotageIndicateur(models.Model):
                     action[cle] = safe_eval(action[cle], valeurs)
                 except Exception:  # noqa: BLE001 - expression inconnue : l'equipe suffit
                     action[cle] = defaut
+        # L'adresse de la page reste celle du menu (« appels-de-service ») : recharger la page ne relit pas
+        # l'action de l'equipe, dont le contexte attend active_id
+        action.pop("path", None)
         return action
 
     @api.model
