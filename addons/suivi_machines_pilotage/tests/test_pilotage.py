@@ -637,11 +637,11 @@ class TestPilotage(TransactionCase):
         carte.invalidate_recordset()
         self.assertGreaterEqual(carte.valeur, 1, "aussi dans Toutes les cartes")
         self.assertIn(contrat, self.env["sale.order"].search(carte.action_ouvrir()["domain"]))
-        # Les deux vues dans le menu Tableau de bord
+        # Les deux vues dans le menu Tableau de bord : « Toutes les cartes » d'abord (ouverte par defaut)
         racine = self.env.ref("suivi_machines_pilotage.menu_pilotage_tableau_racine")
         self.assertEqual([m.action for m in racine.child_id.sorted("sequence")], [
-            self.env.ref("suivi_machines_pilotage.action_pilotage_vue_ensemble"),
-            self.env.ref("suivi_machines_pilotage.action_pilotage_tableau_bord")])
+            self.env.ref("suivi_machines_pilotage.action_pilotage_tableau_bord"),
+            self.env.ref("suivi_machines_pilotage.action_pilotage_vue_ensemble")])
 
     def test_chaque_chiffre_egal_a_sa_liste(self):
         """Vue d'ensemble : chaque chiffre (tuiles et « À traiter maintenant ») est égal au nombre de lignes

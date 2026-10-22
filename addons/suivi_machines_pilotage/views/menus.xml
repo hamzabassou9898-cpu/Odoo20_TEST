@@ -3,12 +3,12 @@
     <menuitem id="menu_pilotage_root" name="Pilotage" sequence="4"
               web_icon="suivi_machines_pilotage,static/description/icon.png"
               groups="suivi_machines_pilotage.group_pilotage"/>
-    <!-- Tableau de bord : vue d'ensemble moderne + toutes les cartes (les deux vues) -->
+    <!-- Tableau de bord : toutes les cartes (ouverte par defaut) + vue d'ensemble moderne -->
     <menuitem id="menu_pilotage_tableau_racine" name="Tableau de bord" parent="menu_pilotage_root" sequence="1"/>
-    <menuitem id="menu_pilotage_tableau_moderne" name="Vue d'ensemble" parent="menu_pilotage_tableau_racine"
-              action="action_pilotage_vue_ensemble" sequence="1"/>
     <menuitem id="menu_pilotage_tableau" name="Toutes les cartes" parent="menu_pilotage_tableau_racine"
-              action="action_pilotage_tableau_bord" sequence="2"/>
+              action="action_pilotage_tableau_bord" sequence="1"/>
+    <menuitem id="menu_pilotage_tableau_moderne" name="Vue d'ensemble" parent="menu_pilotage_tableau_racine"
+              action="action_pilotage_vue_ensemble" sequence="2"/>
 
     <!-- Contacts : s'ouvre sur la vue native « Hiérarchie » (chaque société avec ses contacts) -->
     <record id="contacts.action_contacts" model="ir.actions.act_window">
