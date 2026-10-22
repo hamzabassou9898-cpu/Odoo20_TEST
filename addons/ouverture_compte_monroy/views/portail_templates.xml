@@ -6,6 +6,7 @@
             <t t-set="no_breadcrumbs" t-value="True"/>
             <!-- Garde-fou : une demande signee ne s'affiche jamais en mode « a remplir » -->
             <t t-set="modifiable_client" t-value="modifiable_client and not doc.signature and doc.state == 'envoye'"/>
+            <style>.o_ouverture_saisie::placeholder { color: #8a9bb8; font-style: italic; opacity: 1; }</style>
             <div class="container py-4 o_ouverture_page">
                 <div class="row">
                     <div class="col-lg-3 mb-3">

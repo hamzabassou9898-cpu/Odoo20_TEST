@@ -240,6 +240,16 @@ class TestOuverturePortail(HttpCase):
         self.assertNotEqual(refus.status_code, 204)
         ouverture.invalidate_recordset()
         self.assertEqual(ouverture.ville, "Québec")
+        # Un exemple gris dans chaque case vide (page du client seulement, jamais dans le PDF)
+        self.assertIn('placeholder="Ex. : 123, rue Principale"', reponse.text)
+        self.assertIn('placeholder="Transit - institution - compte"', reponse.text)
+        self.assertIn('placeholder="AAAA-MM-JJ"', reponse.text, "actionnaires")
+        cases = re.findall(r'<input[^>]*class="o_ouverture_saisie"[^>]*>', reponse.text)
+        texte = [c for c in cases if 'type="text"' in c]
+        self.assertTrue(texte and all("placeholder=" in c for c in texte), "toutes les cases à écrire ont un exemple")
+        pdf = self.env["ir.actions.report"]._render_qweb_html("ouverture_compte_monroy.action_report_ouverture",
+                                                               ouverture.ids)[0].decode()
+        self.assertNotIn("Ex. : 123, rue Principale", pdf)
 
     def test_page_apres_signature_et_etat_sur_la_fiche(self):
         """Apres la signature : la page du client affiche le formulaire signe (date), la fiche suit l'etat."""

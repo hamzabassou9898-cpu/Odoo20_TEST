@@ -42,6 +42,27 @@ OBLIGATOIRES = ("entreprise_nom", "forme", "rue", "ville", "code_postal", "courr
                 "banque_nom", "banque_adresse", "banque_compte", "approvisionnement", "paiement", "terme",
                 "signe_a", "nom_majuscules", "caution_noms")
 LONGUEUR_MAX = 150
+# Exemple gris dans chaque case vide de la page du client (jamais enregistre, jamais dans le PDF)
+TELEPHONE = "Ex. : 418 555-1234"
+EXEMPLES = {
+    "entreprise_nom": "Ex. : Dépanneur du Quai inc.", "autres_noms": "Ex. : Dépanneur Chez Paul (facultatif)",
+    "rue": "Ex. : 123, rue Principale", "ville": "Ex. : Québec", "code_postal": "Ex. : G1A 1A1",
+    "courriel": "Ex. : info@entreprise.ca", "contact_nom": "Prénom et nom",
+    "telephone": TELEPHONE, "telecopieur": "Facultatif",
+    "taxe_provinciale": "Ex. : 1234567890 TQ0001", "taxe_federale": "Ex. : 123456789 RT0001",
+    "livraison_rue": "Seulement si différente de l'adresse", "livraison_ville": "Ex. : Lévis",
+    "livraison_code_postal": "Ex. : G6V 1A1", "livraison_telephone": TELEPHONE, "livraison_telecopieur": "Facultatif",
+    "locateur_nom": "Propriétaire de l'immeuble", "locateur_telephone": TELEPHONE,
+    "banque_nom": "Ex. : Caisse Desjardins de Québec", "banque_adresse": "Adresse de la succursale",
+    "banque_compte": "Transit - institution - compte", "banque_telephone": TELEPHONE,
+    "terme": "Ex. : 30", "signe_a": "Ville", "nom_majuscules": "EX. : JEAN TREMBLAY",
+    "caution_noms": "Prénom et nom de la ou des cautions",
+}
+# Actionnaires 1 et 2 : meme exemple pour les deux colonnes
+EXEMPLES_ACTIONNAIRE = {
+    "nom": "Prénom et nom", "adresse": "Ex. : 45, rue des Érables", "ville": "Ex. : Québec",
+    "code_postal": "Ex. : G1A 1A1", "telephone": TELEPHONE, "actions": "Ex. : 50 %", "naissance": "AAAA-MM-JJ",
+}
 
 
 class OuvertureCompte(models.Model):
@@ -181,6 +202,12 @@ class OuvertureCompte(models.Model):
 
     def _champs_obligatoires(self):
         return OBLIGATOIRES
+
+    def _exemple(self, champ):
+        """Exemple affiche dans la case vide (placeholder) de la page du client."""
+        if champ.startswith("actionnaire"):
+            return EXEMPLES_ACTIONNAIRE.get(champ.split("_", 1)[-1], "")
+        return EXEMPLES.get(champ, "")
 
     def _manquants(self):
         self.ensure_one()
