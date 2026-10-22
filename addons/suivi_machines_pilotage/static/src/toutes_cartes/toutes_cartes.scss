@@ -1,0 +1,6 @@
+// Meme style que le bouton « Toutes les cartes » de la Vue d'ensemble
+.o_pilotage_vue_ensemble {
+    background: #fff; border: 1px solid #e3e5ea; border-radius: 20px; padding: 6px 14px;
+    font-size: 13px; color: #714B67; font-weight: 600;
+    &:hover { background: #f6f2f5; border-color: #d8ccd5; }
+}

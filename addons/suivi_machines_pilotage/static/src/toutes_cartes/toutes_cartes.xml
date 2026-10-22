@@ -2,7 +2,7 @@
 <templates xml:space="preserve">
     <t t-name="suivi_machines_pilotage.ToutesCartes" t-inherit="web.KanbanView" t-inherit-mode="primary">
         <xpath expr="//t[@t-set-slot='control-panel-navigation-additional']" position="inside">
-            <button class="btn btn-secondary o_pilotage_vue_ensemble" t-on-click="() => this.ouvrirVueEnsemble()">
+            <button class="btn o_pilotage_vue_ensemble" t-on-click="() => this.ouvrirVueEnsemble()">
                 <i class="oi me-1" data-icon="grid_view"/>Vue d'ensemble
             </button>
         </xpath>
