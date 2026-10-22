@@ -30,7 +30,7 @@
                 type="action"
                 t-att-class="'btn btn-primary ' + (_btn_classes or '')"
             >
-                <i class="fa fa-plus" /> New</button>
+                <i class="oi" data-icon="add" /> New</button>
         </form>
     </template>
     <!-- Odoo 20 : carte "Tickets" de l'accueil du portail retiree (nouveau systeme de cartes) -->

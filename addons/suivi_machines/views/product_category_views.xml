@@ -20,7 +20,7 @@
             <div name="button_box" position="inside">
                 <field name="est_categorie_machine" invisible="1"/>
                 <button name="action_voir_machines" type="object" class="oe_stat_button"
-                        icon="precision_manufacturing" invisible="not est_categorie_machine">
+                        icon="factory" invisible="not est_categorie_machine">
                     <field name="machine_total" widget="statinfo" string="Machines"/>
                 </button>
             </div>

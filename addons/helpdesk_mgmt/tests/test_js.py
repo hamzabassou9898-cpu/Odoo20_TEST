@@ -13,5 +13,5 @@ class TestHelpdesMgmtJs(WebSuite):
         self._test_params = [("+", "@helpdesk_mgmt")]
         return super().get_hoot_filters()
 
-    def test_helpdesk_mgmt(self):
-        self.test_unit_desktop()
+    def test_helpdesk_mgmt(self, modules):
+        self.test_unit_desktop(["helpdesk_mgmt"])

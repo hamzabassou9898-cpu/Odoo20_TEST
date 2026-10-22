@@ -164,7 +164,7 @@ class HelpdeskTeam(models.Model):
                 "name": self.env._("Open Tickets without team"),
                 "value": no_team_tickets,
                 "sequence": 1,
-                "icon": "fa-exclamation-circle",
+                "icon": "error",
                 "show": no_team_tickets > 0,
                 "action": "helpdesk_mgmt.helpdesk_ticket_action_unassigned",
             },
@@ -174,7 +174,7 @@ class HelpdeskTeam(models.Model):
                     [("stage_id.closed", "=", False)]
                 ),
                 "sequence": 2,
-                "icon": "fa-life-ring",
+                "icon": "support",
                 "show": True,
                 "action": "helpdesk_mgmt.helpdesk_ticket_action_opened",
             },
