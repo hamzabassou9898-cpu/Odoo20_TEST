@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """Fiche du ticket : a gauche le type de ticket (en evidence) puis le client (code client, client, telephone,
 adresse, contrat) ; a droite l'assigne et la planification."""
+from lxml import etree
+
 from odoo import api, models
 
 CHAMPS_TYPE = ("type_demande", "type_reparation")
@@ -19,7 +21,8 @@ class HelpdeskTicket(models.Model):
     @api.model
     def _disposition_client_a_gauche(self, arch):
         """A gauche le type de ticket (en evidence, tout en haut) puis le client (code client, client, telephone,
-        adresse, contrat) ; a droite l'assigne, la date prevue, la planification, la priorite et les etiquettes. L'equipe d'assistance est
+        adresse, contrat) ; a droite l'assigne, la date prevue, la planification, la priorite, les etiquettes,
+        puis le parc machines du client. L'equipe d'assistance est
         cachee (une seule equipe, « Appel de service »). Ne fait rien si la vue n'a pas cette forme."""
         for equipe_champ in arch.xpath("//field[@name='team_id']"):
             equipe_champ.set("invisible", "1")
@@ -41,3 +44,16 @@ class HelpdeskTicket(models.Model):
             if noeud.tag == "field" and noeud.get("name") == "type_demande":
                 noeud.set("class", " ".join(filter(None, [noeud.get("class"), "fw-bold fs-5 text-primary"])))
         equipe.addprevious(client)     # le client a gauche, l'assigne et la planification a droite
+        # Choix du type de reparation sur deux lignes (pas une longue colonne de boutons)
+        for reparation in client.xpath("./field[@name='type_reparation']"):
+            reparation.set("options", "{'horizontal': true}")
+        # Parc machines du client : a droite, sous la planification (les deux colonnes s'equilibrent)
+        parc = arch.xpath("//group[@name='dossier_client_machine']/group[field[@name='lot_id']]")
+        if parc:
+            parc = parc[0]
+            parc.set("invisible", "not commerce_id")
+            # Colonne de droite : deux groupes l'un sous l'autre, chacun avec ses libelles
+            colonne = etree.Element("group", col="1", name="colonne_planification_machine")
+            equipe.addprevious(colonne)
+            colonne.append(equipe)
+            colonne.append(parc)
