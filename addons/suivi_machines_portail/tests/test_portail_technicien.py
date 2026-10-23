@@ -363,6 +363,8 @@ class TestPortailTechnicien(HttpCase):
                                                         ("subject", "=", "Bon %s signé" % bon.name)])
         self.assertFalse(notif(), "pas encore : le technicien doit signer")
         rep = self.make_jsonrpc_request(url + "/signer_technicien", {"name": "Tech", "signature": self.SIGNATURE})
+        # La page se recharge vraiment (adresse differente a chaque fois, pas seulement « #bon_intervention »)
+        self.assertRegex(rep.get("redirect_url", ""), r"\?signe=\w+#bon_intervention$")
         self.assertTrue(rep.get("force_refresh"), rep)
         self.env.invalidate_all()
         message = notif()

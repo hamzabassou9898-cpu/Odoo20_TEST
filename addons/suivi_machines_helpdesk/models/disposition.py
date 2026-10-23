@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-"""Fiche du ticket en deux colonnes equilibrees : a gauche le type de ticket (en evidence), le client et son
-parc machines ; a droite l'assigne, la planification et le contrat du client."""
+"""Fiche du ticket en deux colonnes equilibrees : a gauche le type de ticket (en evidence) et le client, a droite
+l'assigne et la planification ; dessous, alignes sur la meme ligne, le parc machines et le contrat du client."""
 from lxml import etree
 
 from odoo import api, models
@@ -48,23 +48,21 @@ class HelpdeskTicket(models.Model):
         # Choix du type de reparation sur deux lignes (pas une longue colonne de boutons)
         for reparation in client.xpath("./field[@name='type_reparation']"):
             reparation.set("options", "{'horizontal': true}")
-        # Deux colonnes equilibrees, chacune faite de groupes l'un sous l'autre (avec leurs libelles) :
-        # a gauche le client puis son parc machines ; a droite la planification puis le contrat du client
-        gauche = etree.Element("group", col="1", name="colonne_client_machine")
-        droite = etree.Element("group", col="1", name="colonne_planification_contrat")
-        client.addprevious(gauche)
-        equipe.addprevious(droite)
-        gauche.append(client)
-        droite.append(equipe)
+        # Deux rangees alignees : en haut le client a cote de la planification ; dessous, sur la meme ligne,
+        # le parc machines du client a cote du contrat du client
+        rangee = etree.Element("group", name="rangee_parc_contrat")
+        client.getparent().addnext(rangee)
         parc = arch.xpath("//group[@name='dossier_client_machine']/group[field[@name='lot_id']]")
         if parc:
             parc = parc[0]
             parc.set("invisible", "not commerce_id")
             parc.set("string", self.env._("Parc machines du client"))
-            gauche.append(parc)
+            rangee.append(parc)
+        else:
+            etree.SubElement(rangee, "group")      # garde le contrat dans la colonne de droite
         contrat = [n for n in client.xpath("./field") if n.get("name") in CHAMPS_CONTRAT]
         if contrat:
-            bloc = etree.SubElement(droite, "group", string=self.env._("Contrat du client"),
+            bloc = etree.SubElement(rangee, "group", string=self.env._("Contrat du client"),
                                     name="contrat_du_client", invisible="not contrat_client_id")
             for noeud in contrat:
                 bloc.append(noeud)

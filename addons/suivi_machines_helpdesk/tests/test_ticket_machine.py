@@ -1329,18 +1329,21 @@ class TestTicketMachine(TransactionCase):
         planification a droite ; equipe d'assistance cachee."""
         from lxml import etree
         arch = etree.fromstring(self.env["helpdesk.ticket"].get_views([(False, "form")])["views"]["form"]["arch"])
-        gauche = arch.xpath("//group[@name='colonne_client_machine']")[0]
-        droite = arch.xpath("//group[@name='colonne_planification_contrat']")[0]
-        self.assertIs(gauche.getnext(), droite, "deux colonnes l'une à côté de l'autre")
+        gauche = arch.xpath("//field[@name='code_client']/ancestor::group[1]")[0]
+        droite = arch.xpath("//field[@name='user_id']/ancestor::group[1]")[0]
+        self.assertIs(gauche.getnext(), droite, "client a gauche, planification a droite")
         noms = [n.get("name") for n in gauche.iter("field")]
         self.assertEqual(noms[0], "type_demande", "type de ticket tout en haut à gauche")
         self.assertLess(noms.index("type_demande"), noms.index("code_client"))
-        self.assertLess(noms.index("code_client"), noms.index("lot_id"), "parc machines sous le client")
         self.assertIn("fw-bold", gauche.xpath(".//field[@name='type_demande']")[0].get("class"))
         noms = [n.get("name") for n in droite.iter("field")]
         self.assertLess(noms.index("user_id"), noms.index("date_planifiee"))
-        self.assertLess(noms.index("date_planifiee"), noms.index("contrat_client_debut"), "contrat sous la planification")
-        self.assertIn("contrat_client_fin", noms)
+        # Parc machines et contrat du client cote a cote, sur la meme ligne, sous le client et la planification
+        rangee = arch.xpath("//group[@name='rangee_parc_contrat']")[0]
+        self.assertIs(gauche.getparent().getnext(), rangee)
+        parc, contrat = rangee.xpath("./group")
+        self.assertTrue(parc.xpath("./field[@name='lot_id']"), "parc machines à gauche")
+        self.assertEqual(contrat.get("name"), "contrat_du_client", "contrat du client à droite, aligné")
         self.assertTrue(arch.xpath("//field[@name='commerce_id']"), "condition d'affichage du parc gardée")
         for equipe in arch.xpath("//field[@name='team_id']"):
             self.assertEqual(equipe.get("invisible"), "1", "équipe d'assistance cachée")

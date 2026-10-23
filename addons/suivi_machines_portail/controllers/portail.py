@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Phase 2 : « Ma journée » des techniciens sur le portail web (/my/journee)."""
 import binascii
+import uuid
 from datetime import date, datetime, time, timedelta
 
 import pytz
@@ -174,6 +175,13 @@ class PortailTechnicien(CustomerPortal):
         return request.redirect(url + "?envoye=1")
 
 
+    def _recharger_sur_le_bon(self, tache_id):
+        """Apres une signature : la page de la tache se recharge et montre le bon. L'adresse change a chaque fois
+        (parametre « signe ») : vers la meme page avec seulement « #bon_intervention », le navigateur ne la
+        recharge pas et la page semble bloquee."""
+        return {"force_refresh": True,
+                "redirect_url": "/my/journee/tache/%s?signe=%s#bon_intervention" % (tache_id, uuid.uuid4().hex[:8])}
+
     @http.route(["/my/journee/tache/<int:tache_id>/signer"], type="jsonrpc", auth="user", website=True)
     def ma_tache_signer(self, tache_id, name=None, signature=None, **kw):
         """Signature du client (formulaire de signature du portail) : bon d'intervention + tache terminee."""
@@ -183,14 +191,14 @@ class PortailTechnicien(CustomerPortal):
         if not tache.a_faire:
             # Deja signee (double clic, Entree, autre onglet) : la page se recharge et montre le bon (le bouton
             # de signature d'Odoo reste bloque apres une erreur)
-            return {"force_refresh": True, "redirect_url": "/my/journee/tache/%s#bon_intervention" % tache_id}
+            return self._recharger_sur_le_bon(tache_id)
         if not signature:
             return {"error": request.env._("La signature est vide.")}
         try:
             request.env["suivi.bon.intervention"]._creer_depuis_tache(tache, name, signature)
         except (UserError, ValueError, binascii.Error) as erreur:
             return {"error": str(erreur)}
-        return {"force_refresh": True, "redirect_url": "/my/journee/tache/%s#bon_intervention" % tache_id}
+        return self._recharger_sur_le_bon(tache_id)
 
     @http.route(["/my/journee/tache/<int:tache_id>/signer_technicien"], type="jsonrpc", auth="user", website=True)
     def ma_tache_signer_technicien(self, tache_id, name=None, signature=None, **kw):
@@ -202,12 +210,12 @@ class PortailTechnicien(CustomerPortal):
         if bon.technicien_id != request.env.user:
             return {"error": request.env._("Seul le technicien du bon peut le signer.")}
         if bon.signature_technicien:
-            return {"force_refresh": True, "redirect_url": "/my/journee/tache/%s#bon_intervention" % tache_id}
+            return self._recharger_sur_le_bon(tache_id)
         try:
             bon._signer_technicien(signature)
         except (UserError, ValueError, binascii.Error) as erreur:
             return {"error": str(erreur)}
-        return {"force_refresh": True, "redirect_url": "/my/journee/tache/%s#bon_intervention" % tache_id}
+        return self._recharger_sur_le_bon(tache_id)
 
     @http.route(["/my/journee/tache/<int:tache_id>/bon"], type="http", auth="user", website=True)
     def ma_tache_bon(self, tache_id, **kw):
