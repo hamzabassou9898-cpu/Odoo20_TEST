@@ -885,10 +885,11 @@ class TestTicketMachine(TransactionCase):
         groupe = next(champ_tel.iterancestors("group"))
         noms = [f.get("name") for f in groupe.xpath("./field") if f.get("invisible") not in ("1", "True")]
         self.assertIn("adresse_commerce", noms, "adresse commerciale : sa propre ligne, dans le groupe du téléphone")
-        self.assertEqual(noms[noms.index("adresse_commerce"):noms.index("contrat_client_fin") + 1],
-                         ["adresse_commerce", "contrat_client_id", "contrat_client_modele_id", "contrat_client_type",
-                          "contrat_client_debut",
-                          "contrat_client_fin"], "puis le contrat du client, son type et ses dates")
+        contrat = arch.xpath("//group[@name='contrat_du_client']")[0]
+        self.assertEqual([f.get("name") for f in contrat.xpath("./field")],
+                         ["contrat_client_id", "contrat_client_modele_id", "contrat_client_type",
+                          "contrat_client_debut", "contrat_client_fin"],
+                         "contrat du client, son type et ses dates : bloc à droite")
         self.assertNotIn("commerce_id", visibles, "client affiché une seule fois (champ natif)")
         boutons = [b.get("name") for b in arch.iter("button") if b.getparent().tag == "header"]
         self.assertNotIn("action_nouvelle_intervention", boutons, "intervention planifiée toute seule")
@@ -1328,17 +1329,18 @@ class TestTicketMachine(TransactionCase):
         planification a droite ; equipe d'assistance cachee."""
         from lxml import etree
         arch = etree.fromstring(self.env["helpdesk.ticket"].get_views([(False, "form")])["views"]["form"]["arch"])
-        gauche = arch.xpath("//field[@name='code_client']/ancestor::group[1]")[0]
-        droite = arch.xpath("//field[@name='user_id']/ancestor::group[1]")[0]
-        self.assertIsNot(gauche, droite)
-        self.assertIs(gauche.getnext(), droite.getparent(), "client a gauche, planification a droite")
+        gauche = arch.xpath("//group[@name='colonne_client_machine']")[0]
+        droite = arch.xpath("//group[@name='colonne_planification_contrat']")[0]
+        self.assertIs(gauche.getnext(), droite, "deux colonnes l'une à côté de l'autre")
         noms = [n.get("name") for n in gauche.iter("field")]
         self.assertEqual(noms[0], "type_demande", "type de ticket tout en haut à gauche")
         self.assertLess(noms.index("type_demande"), noms.index("code_client"))
+        self.assertLess(noms.index("code_client"), noms.index("lot_id"), "parc machines sous le client")
         self.assertIn("fw-bold", gauche.xpath(".//field[@name='type_demande']")[0].get("class"))
-        noms = [n.get("name") for n in droite.getparent().iter("field")]
+        noms = [n.get("name") for n in droite.iter("field")]
         self.assertLess(noms.index("user_id"), noms.index("date_planifiee"))
-        self.assertLess(noms.index("date_planifiee"), noms.index("lot_id"), "parc machines à droite, sous la planification")
+        self.assertLess(noms.index("date_planifiee"), noms.index("contrat_client_debut"), "contrat sous la planification")
+        self.assertIn("contrat_client_fin", noms)
         self.assertTrue(arch.xpath("//field[@name='commerce_id']"), "condition d'affichage du parc gardée")
         for equipe in arch.xpath("//field[@name='team_id']"):
             self.assertEqual(equipe.get("invisible"), "1", "équipe d'assistance cachée")
