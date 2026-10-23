@@ -61,7 +61,12 @@
                         <div t-attf-class="card mb-3 shadow-sm #{'opacity-50' if tache.etat_suivi == 'fait' else ''}">
                             <div t-attf-class="card-body border-start border-5 rounded border-#{couleurs.get(tache.type_tache, 'secondary')}">
                                 <div class="d-flex justify-content-between align-items-start gap-2">
-                                    <div class="fs-5 fw-bold" t-out="tache.date_affichage"/>
+                                    <div class="fs-5 fw-bold d-flex align-items-center gap-2">
+                                        <span t-attf-class="badge rounded-pill #{'text-bg-dark' if tache.heure_fixe else 'text-bg-secondary'}"
+                                              t-att-title="'Heure fixe' if tache.heure_fixe else 'Ordre de la tournée'"
+                                              t-out="pastilles.get(tache.id)"/>
+                                        <span t-out="tache.date_affichage"/>
+                                    </div>
                                     <t t-call="suivi_machines_portail.portal_tache_badges"/>
                                 </div>
                                 <div class="fw-bold text-uppercase mt-1" t-out="tache.partner_id.display_name"/>

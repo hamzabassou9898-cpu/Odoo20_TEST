@@ -154,18 +154,21 @@ export class PlanningSemaine extends Component {
         }
     }
 
-    async deposer(ev, ligne, jour) {
+    /** Carte deposee dans une case, ou sur une autre carte : elle prend alors sa place dans la tournee. */
+    async deposer(ev, ligne, jour, avant = null) {
         ev.preventDefault();
         const carte = this.glissee;
         this.glissee = null;
         this.state.survol = "";
         this.arreterBord();
-        if (!carte || (carte.technicien_id === ligne.id && carte.jour === jour.iso)) {
+        const memeCase = carte && carte.technicien_id === ligne.id && carte.jour === jour.iso;
+        if (!carte || (memeCase && (!avant || avant.id === carte.id))) {
             return;
         }
         try {
-            await this.orm.call("portail.tache", "deplacer_planning", [carte.id, ligne.id, jour.iso]);
-            this.notification.add(`« ${carte.titre} » → ${ligne.nom}, ${jour.titre}`, { type: "success" });
+            await this.orm.call("portail.tache", "deplacer_planning", [carte.id, ligne.id, jour.iso, avant?.id || false]);
+            this.notification.add(memeCase ? `« ${carte.titre} » : nouvel ordre de la tournée`
+                : `« ${carte.titre} » → ${ligne.nom}, ${jour.titre}`, { type: "success" });
         } finally {
             // On reste sur la periode ou la tache vient d'etre posee
             await this.charger(jour.iso);
@@ -214,6 +217,12 @@ export class PlanningSemaine extends Component {
         this.minuterieBord = null;
         this.jetonBord = (this.jetonBord || 0) + 1;
         this.state.bord = "";
+    }
+
+    /** Fenetre « Journee » : ordre de la tournee et heures fixes d'un technicien pour un jour. */
+    async organiser(ligne, jour) {
+        const action = await this.orm.call("pilotage.journee", "action_ouvrir", [ligne.id, jour.iso]);
+        await this.actionService.doAction(action, { onClose: () => this.charger(jour.iso) });
     }
 
     async ouvrir(carte) {

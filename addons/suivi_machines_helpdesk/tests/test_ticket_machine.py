@@ -1324,14 +1324,21 @@ class TestTicketMachine(TransactionCase):
             self.assertTrue(badge[0].get(decoration), decoration)
 
     def test_disposition_client_a_gauche(self):
-        """Fiche du ticket : client (code client...) en haut a gauche, puis equipe et planification ;
-        type de ticket a droite."""
+        """Fiche du ticket : type de ticket en evidence tout en haut a gauche, puis le client ; l'assigne et la
+        planification a droite ; equipe d'assistance cachee."""
         from lxml import etree
         arch = etree.fromstring(self.env["helpdesk.ticket"].get_views([(False, "form")])["views"]["form"]["arch"])
         gauche = arch.xpath("//field[@name='code_client']/ancestor::group[1]")[0]
-        droite = arch.xpath("//field[@name='type_demande']/ancestor::group[1]")[0]
+        droite = arch.xpath("//field[@name='user_id']/ancestor::group[1]")[0]
         self.assertIsNot(gauche, droite)
-        self.assertTrue(gauche.xpath(".//field[@name='user_id']"), "assigne et planification sous le client")
-        self.assertIs(gauche.getnext(), droite, "client a gauche, type a droite")
+        self.assertIs(gauche.getnext(), droite, "client a gauche, planification a droite")
         noms = [n.get("name") for n in gauche.iter("field")]
-        self.assertLess(noms.index("code_client"), noms.index("user_id"))
+        self.assertEqual(noms[0], "type_demande", "type de ticket tout en haut à gauche")
+        self.assertLess(noms.index("type_demande"), noms.index("code_client"))
+        self.assertIn("fw-bold", gauche.xpath(".//field[@name='type_demande']")[0].get("class"))
+        noms = [n.get("name") for n in droite.iter("field")]
+        self.assertLess(noms.index("user_id"), noms.index("date_planifiee"))
+        for equipe in arch.xpath("//field[@name='team_id']"):
+            self.assertEqual(equipe.get("invisible"), "1", "équipe d'assistance cachée")
+        kanban = etree.fromstring(self.env["helpdesk.ticket"].get_views([(False, "kanban")])["views"]["kanban"]["arch"])
+        self.assertFalse(kanban.get("on_create"), "« Nouveau » ouvre la fiche complète du ticket")

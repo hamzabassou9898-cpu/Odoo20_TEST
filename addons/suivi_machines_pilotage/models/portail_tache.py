@@ -35,13 +35,14 @@ class PortailTache(models.Model):
 
     _depends = {
         "stock.picking": ["livreur_id", "scheduled_date", "partner_id", "state", "name", "origin",
-                          "type_tournee", "company_id"],
+                          "type_tournee", "company_id", "ordre_tournee", "heure_fixe"],
         "stock.move": ["picking_id", "product_id"],
         "helpdesk.ticket": ["user_id", "technicien_id", "date_planifiee", "partner_id", "stage_id", "name",
-                            "est_entretien", "commande_reprise_id", "lot_id", "type_demande"],
+                            "est_entretien", "commande_reprise_id", "lot_id", "type_demande", "ordre_tournee",
+                            "heure_fixe"],
         "helpdesk.stage": ["name"],
         "machine.intervention": ["user_id", "date", "partner_id", "state", "name", "type", "lot_id",
-                                 "ticket_id", "company_id"],
+                                 "ticket_id", "company_id", "ordre_tournee", "heure_fixe"],
     }
 
     type_tache = fields.Selection(TYPES_TACHE, "Type", readonly=True)
@@ -59,6 +60,8 @@ class PortailTache(models.Model):
     picking_id = fields.Many2one("stock.picking", "Transfert", readonly=True)
     ticket_id = fields.Many2one("helpdesk.ticket", "Ticket", readonly=True)
     intervention_id = fields.Many2one("machine.intervention", "Intervention", readonly=True)
+    ordre_tournee = fields.Integer("Ordre dans la tournée", readonly=True)
+    heure_fixe = fields.Boolean("Heure fixe", readonly=True)
 
     date_affichage = fields.Char("Quand", compute="_compute_affichage")
     route = fields.Char("Adresse", compute="_compute_affichage")
@@ -84,7 +87,8 @@ class PortailTache(models.Model):
                 SELECT p.id * 10 + 1 AS id, p.type_tournee AS type_tache, p.scheduled_date AS date,
                        p.livreur_id AS technicien_id, p.partner_id, p.name AS titre, p.origin AS reference,
                        p.state NOT IN ('done', 'cancel') AS a_faire, NULL::integer AS lot_id, p.company_id,
-                       p.id AS picking_id, NULL::integer AS ticket_id, NULL::integer AS intervention_id
+                       p.id AS picking_id, NULL::integer AS ticket_id, NULL::integer AS intervention_id,
+                       COALESCE(p.ordre_tournee, 0) AS ordre_tournee, COALESCE(p.heure_fixe, FALSE) AS heure_fixe
                   FROM stock_picking p
                  WHERE p.type_tournee IN ('livraison', 'ramassage') AND p.state != 'cancel'
                    AND (p.livreur_id IS NOT NULL OR EXISTS (
@@ -99,7 +103,8 @@ class PortailTache(models.Model):
                                            ELSE 'reparation' END,
                        COALESCE(t.date_planifiee, t.create_date), %(technicien_ticket)s,
                        t.partner_id, t.name, '#' || t.id, %(nom_etape)s !~* %(ferme)s,
-                       t.lot_id, %(societe_ticket)s, NULL, t.id, NULL
+                       t.lot_id, %(societe_ticket)s, NULL, t.id, NULL,
+                       COALESCE(t.ordre_tournee, 0), COALESCE(t.heure_fixe, FALSE)
                   FROM helpdesk_ticket t
              LEFT JOIN helpdesk_stage s ON s.id = t.stage_id
                  WHERE t.commande_reprise_id IS NULL
@@ -109,7 +114,7 @@ class PortailTache(models.Model):
                                            WHEN i.type IN ('bris', 'reparation', 'remplacement') THEN 'reparation'
                                            ELSE 'autre' END,
                        i.date, i.user_id, i.partner_id, i.name, NULL, i.state = 'planifie', i.lot_id, i.company_id,
-                       NULL, NULL, i.id
+                       NULL, NULL, i.id, COALESCE(i.ordre_tournee, 0), COALESCE(i.heure_fixe, FALSE)
                   FROM machine_intervention i
                  WHERE i.state IN ('planifie', 'fait') AND i.ticket_id IS NULL AND i.type != 'ramassage'
                 ) u
@@ -134,7 +139,9 @@ class PortailTache(models.Model):
         # Lecture des documents en sudo : un technicien voit ses taches meme sans droits sur les stocks
         for tache in self:
             src = tache.sudo()
-            date = format_datetime(self.env, src.date, dt_format="EEE d MMM '·' HH 'h' mm") if src.date else ""
+            # Heure montree seulement quand elle compte (heure fixe) ; sinon le technicien suit l'ordre
+            motif = "EEE d MMM '·' HH 'h' mm" if src.heure_fixe else "EEE d MMM"
+            date = format_datetime(self.env, src.date, dt_format=motif) if src.date else ""
             vals = {"date_affichage": date[:1].upper() + date[1:], "accessoires": False,
                     "tag_ids": [(6, 0, src.ticket_id.tag_ids.ids)]}
             lot = src.lot_id
@@ -157,7 +164,7 @@ class PortailTache(models.Model):
         """Glisser-deposer (technicien, date) : on modifie le document d'origine."""
         if not self.env.user.has_group("suivi_machines_pilotage.group_pilotage"):
             raise UserError(self.env._("Seul le pilotage peut réassigner ou déplacer une tâche."))
-        autres = set(vals) - {"technicien_id", "date"}
+        autres = set(vals) - {"technicien_id", "date", "ordre_tournee", "heure_fixe"}
         if autres:
             raise UserError(self.env._("Modifiez la tâche depuis son document (transfert, ticket ou intervention)."))
         for tache in self:
@@ -174,6 +181,7 @@ class PortailTache(models.Model):
             "ticket_id": {"technicien_id": "user_id", "date": "date_planifiee"},
             "intervention_id": {"technicien_id": "user_id", "date": "date"},
         }[SOURCES[self.id % 10]]
+        champs = dict(champs, ordre_tournee="ordre_tournee", heure_fixe="heure_fixe")
         return {champs[cle]: valeur for cle, valeur in vals.items() if cle != "date" or valeur}
 
     def _sql_technicien_ticket(self):

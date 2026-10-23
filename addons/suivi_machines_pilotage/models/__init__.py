@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from . import indicateur
+from . import ordre_tournee
 from . import stock_picking
 from . import portail_tache
 from . import helpdesk_ticket

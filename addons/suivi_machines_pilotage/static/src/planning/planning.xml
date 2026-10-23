@@ -117,14 +117,19 @@
                              t-attf-class="o_pp_carte o_pp_{{ c.couleur }} {{ c.etat === 'fait' ? 'o_pp_fait' : '' }} {{ c.etat === 'en_retard' ? 'o_pp_retard' : '' }}"
                              t-att-draggable="d.peut_deplacer and c.deplacable ? 'true' : 'false'"
                              t-on-dragstart="(ev) => this.debutGlisser(ev, c)" t-on-dragend="() => this.finGlisser()"
-                             t-on-click="() => this.ouvrir(c)" t-att-title="c.heure + ' · ' + c.libelle_type + ' · ' + (c.client or c.titre)">
+                             t-on-drop.stop="(ev) => this.deposer(ev, ligne, jour, c)"
+                             t-on-click="() => this.ouvrir(c)" t-att-title="(c.heure_fixe ? c.pastille : 'Tournée n° ' + c.pastille) + ' · ' + c.libelle_type + ' · ' + (c.client or c.titre)">
                             <t t-if="d.jours.length &lt;= 7">
-                                <div class="o_pp_l1"><span t-out="c.heure"/> · <span t-out="c.libelle_type"/>
+                                <div class="o_pp_l1"><span t-attf-class="o_pp_pastille {{ c.heure_fixe ? 'o_pp_pastille_fixe' : '' }}" t-out="c.pastille"/><span t-out="c.libelle_type"/>
                                     <span t-if="c.etat === 'fait'" class="ms-1">✓</span>
-                                    <span t-if="c.etat === 'en_retard'" class="ms-1">En retard</span></div>
+                                    <span t-if="c.etat === 'en_retard'" class="ms-1">En retard</span>
+                                    <span t-if="c.conflit" class="o_pp_conflit" title="Deux tâches à la même heure">Conflit</span></div>
                                 <div class="o_pp_l2" t-out="c.client or c.titre"/>
                             </t>
                         </div>
+                        <button t-if="d.peut_deplacer and d.jours.length &lt;= 7 and this.cartes(ligne, jour).length"
+                                class="o_pp_organiser" t-on-click="() => this.organiser(ligne, jour)"
+                                title="Choisir l'ordre de la tournée et les heures fixes">Ordre de la journée</button>
                     </div>
                 </t>
             </div>
@@ -134,7 +139,8 @@
                 <span class="o_pp_carte o_pp_info">Entretien</span>
                 <span class="o_pp_carte o_pp_danger">Réparation</span>
                 <span class="o_pp_carte o_pp_primary">Installation</span>
-                <span class="ms-2">Cliquez sur une tâche pour l'ouvrir.</span>
+                <span class="ms-2">Cliquez sur une tâche pour l'ouvrir. 1, 2, 3 : ordre de la tournée ; 14h00 : heure fixe.
+                    Glissez une tâche sur une autre pour changer l'ordre.</span>
             </div>
         </div>
         </div>

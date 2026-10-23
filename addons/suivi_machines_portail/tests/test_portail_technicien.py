@@ -535,7 +535,7 @@ class TestPortailTechnicien(HttpCase):
         noms = [ligne["nom"] for ligne in donnees["lignes"]]
         self.assertIn("Tech portail A", noms)
         self.assertIn("Tech portail B", noms)
-        self.assertEqual(noms[-1], "Sans technicien")
+        self.assertEqual(noms[0], "Sans technicien", "en haut, comme les postes ouverts du Planning")
 
     def test_planning_seulement_techniciens_portail(self):
         """Planning : ni ligne ni tâche pour un utilisateur interne (Administrator, API...)."""

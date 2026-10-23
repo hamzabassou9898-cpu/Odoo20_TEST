@@ -93,17 +93,19 @@ class PortailTache(models.Model):
             d = debut + timedelta(days=i)
             jours.append({"iso": d.isoformat(), "aujourdhui": d == aujourdhui, "libelle": fields.Date.to_string(d),
                           "titre": "%s %s" % (noms_jours[d.weekday()], d.day), "weekend": d.weekday() >= 5})
-        cartes = []
+        # Chaque case (technicien x jour) dans l'ordre de la tournee, avec ses pastilles (1, 2, 14h00...)
+        cases = defaultdict(lambda: self.browse())
         for tache in taches:
             locale = pytz.UTC.localize(tache.date).astimezone(fuseau)
-            cartes.append({
-                "id": tache.id, "type": tache.type_tache, "libelle_type": types.get(tache.type_tache, ""),
-                "couleur": COULEURS.get(tache.type_tache, "secondary"), "titre": tache.titre or "",
-                "client": tache.partner_id.display_name or "", "heure": locale.strftime("%H h %M"),
-                "jour": (aujourdhui if locale.date() < debut else locale.date()).isoformat(),
-                "technicien_id": tache.technicien_id.id or 0,
-                "etat": tache.etat_suivi, "deplacable": bool(tache.a_faire),
-            })
+            cases[(tache.technicien_id.id, aujourdhui if locale.date() < debut else locale.date())] |= tache
+        cartes = []
+        for (_tech, jour_case), case in cases.items():
+            case = case._trier_tournee()
+            pastilles = case._pastilles_tournee()
+            fixes = Counter(pastilles[t.id] for t in case if t.heure_fixe)
+            for tache in case:
+                cartes.append(self._carte_planning(tache, types, jour_case, pastilles[tache.id],
+                                                   tache.heure_fixe and fixes[pastilles[tache.id]] > 1))
         par_technicien = self._par_technicien(taches)
         lignes = []
         for i, tech in enumerate(techniciens):
@@ -114,7 +116,8 @@ class PortailTache(models.Model):
                            "en_retard": len(siennes.filtered(lambda t: t.etat_suivi == "en_retard"))})
         if not technicien_id or technicien_id < 0:
             sans = par_technicien.get(False, self)
-            lignes.append({"id": 0, "nom": self.env._("Sans technicien"), "initiales": "?", "couleur": "#94a3b8",
+            # En haut, comme les « postes ouverts » du Planning d'Odoo : a glisser sur un technicien
+            lignes.insert(0, {"id": 0, "nom": self.env._("Sans technicien"), "initiales": "?", "couleur": "#94a3b8",
                            "nombre": len(sans), "en_retard": len(sans.filtered(lambda t: t.etat_suivi == "en_retard"))})
         if periode == "jour":
             titre = self.env._("%(jour)s %(date)s", jour=noms_jours[debut.weekday()], date=debut.strftime("%d/%m/%Y"))
@@ -226,16 +229,72 @@ class PortailTache(models.Model):
                              "planifiees": planifiees, "faites": faites}}
 
     @api.model
-    def deplacer_planning(self, tache_id, technicien_id, jour_iso):
-        """Carte deposee dans une case : nouveau technicien et/ou nouveau jour (meme heure)."""
+    def _carte_planning(self, tache, types, jour, pastille, conflit):
+        locale = pytz.UTC.localize(tache.date).astimezone(pytz.timezone(FUSEAU))
+        return {
+            "id": tache.id, "type": tache.type_tache, "libelle_type": types.get(tache.type_tache, ""),
+            "couleur": COULEURS.get(tache.type_tache, "secondary"), "titre": tache.titre or "",
+            "client": tache.partner_id.display_name or "", "heure": locale.strftime("%H h %M"),
+            "jour": jour.isoformat(), "technicien_id": tache.technicien_id.id or 0,
+            "etat": tache.etat_suivi, "deplacable": bool(tache.a_faire),
+            "pastille": pastille, "heure_fixe": tache.heure_fixe, "conflit": conflit,
+        }
+
+    # ------------------------------------------------------------ ordre de la tournee
+    def _cle_tournee(self):
+        """Les taches placees par le superviseur (1, 2, 3...) d'abord, puis les autres par heure prevue."""
+        return (0 if self.ordre_tournee else 1, self.ordre_tournee, self.date or datetime.min, self.id)
+
+    def _trier_tournee(self):
+        return self.sorted(lambda tache: tache._cle_tournee())
+
+    def _pastilles_tournee(self):
+        """{id: pastille} de taches d'une meme journee deja triees : 1, 2, 3... ou l'heure fixe (14h00)."""
+        fuseau = pytz.timezone(FUSEAU)
+        pastilles, rang = {}, 0
+        for tache in self:
+            if tache.heure_fixe and tache.date:
+                locale = pytz.UTC.localize(tache.date).astimezone(fuseau)
+                pastilles[tache.id] = "%sh%02d" % (locale.hour, locale.minute)
+            else:
+                rang += 1
+                pastilles[tache.id] = str(rang)
+        return pastilles
+
+    @api.model
+    def _taches_journee(self, technicien_id, jour):
+        """Taches d'un technicien (0 : sans technicien) pour une journee, retards compris aujourd'hui."""
+        aujourdhui = datetime.now(pytz.timezone(FUSEAU)).date()
+        return self.search(self._domaine_planning(jour, jour + timedelta(days=1), technicien_id or -1,
+                                                  retards=jour == aujourdhui))
+
+    def _numeroter_tournee(self):
+        """Ces taches, dans cet ordre, deviennent 1, 2, 3... de la tournee."""
+        for rang, tache in enumerate(self, 1):
+            if tache.ordre_tournee != rang:
+                tache.write({"ordre_tournee": rang})
+
+    @api.model
+    def deplacer_planning(self, tache_id, technicien_id, jour_iso, avant_id=False):
+        """Carte deposee dans une case : nouveau technicien et/ou nouveau jour (meme heure). Deposee sur une
+        autre carte, elle prend sa place dans la tournee ; sinon elle passe a la fin de la journee."""
+        # Vue SQL : relue a jour (une tache faite entre-temps ne bouge plus)
+        self.env.flush_all()
+        self.invalidate_model()
         tache = self.browse(tache_id).exists()
         if not tache:
             raise UserError(self.env._("Cette tâche n'existe plus : actualisez le planning."))
         if not tache.a_faire:
             raise UserError(self.env._("Cette tâche est déjà faite."))
         fuseau = pytz.timezone(FUSEAU)
-        heure = pytz.UTC.localize(tache.date).astimezone(fuseau).time() if tache.date else time(9, 0)
-        valeurs = {"technicien_id": technicien_id or False,
-                   "date": self._vers_utc(date.fromisoformat(jour_iso), heure)}
-        tache.write(valeurs)
+        jour = date.fromisoformat(jour_iso)
+        locale = pytz.UTC.localize(tache.date).astimezone(fuseau) if tache.date else None
+        if tache.technicien_id.id != (technicien_id or False) or not locale or locale.date() != jour:
+            heure = locale.time() if locale else time(9, 0)
+            tache.write({"technicien_id": technicien_id or False, "date": self._vers_utc(jour, heure)})
+        tournee = list((self._taches_journee(technicien_id, jour) - tache)._trier_tournee())
+        avant = self.browse(avant_id) if avant_id else None
+        tournee.insert(tournee.index(avant) if avant in tournee else len(tournee), tache)
+        self.browse([t.id for t in tournee])._numeroter_tournee()
+        self.invalidate_model()
         return True

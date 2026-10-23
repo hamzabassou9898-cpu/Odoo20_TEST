@@ -47,7 +47,9 @@ class PortailTechnicien(CustomerPortal):
         if jour == datetime.now(fuseau).date():
             journee = ["|", *journee, ("etat_suivi", "=", "en_retard")]
         domaine = [("technicien_id", "=", request.env.user.id), *journee]
-        return request.env["portail.tache"].with_context(tz=self._fuseau().zone).sudo().search(domaine, order="date, id")
+        # Dans l'ordre de la tournee choisi par le superviseur au Planning (le technicien ne le change pas)
+        return request.env["portail.tache"].with_context(tz=self._fuseau().zone).sudo().search(
+            domaine, order="date, id")._trier_tournee()
 
     @http.route()
     def home(self, **kw):
@@ -68,6 +70,7 @@ class PortailTechnicien(CustomerPortal):
         values.update({
             "page_name": "ma_journee",
             "taches": taches,
+            "pastilles": taches._pastilles_tournee(),
             "jour": jour,
             "aujourdhui": aujourdhui,
             "titre_jour": format_date(request.env, jour, date_format="EEEE d MMMM").capitalize(),

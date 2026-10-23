@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Planning : la journee d'un technicien. Le superviseur choisit l'ordre de la tournee et les heures fixes. -->
+    <record id="view_pilotage_journee_form" model="ir.ui.view">
+        <field name="name">pilotage.journee.form</field>
+        <field name="model">pilotage.journee</field>
+        <field name="arch" type="xml">
+            <form string="Journée du technicien">
+                <div class="text-muted mb-2">
+                    Glissez les tâches pour choisir l'ordre de la tournée. Cochez « Heure fixe » quand le client
+                    attend à une heure précise. Le technicien voit cet ordre sur son portail, sans pouvoir le changer.
+                </div>
+                <field name="technicien_id" invisible="1"/>
+                <field name="jour" invisible="1"/>
+                <field name="ligne_ids" nolabel="1">
+                    <list editable="bottom" create="0" delete="0" decoration-muted="fait">
+                        <field name="sequence" widget="handle"/>
+                        <field name="tache_ref" column_invisible="1" force_save="1"/>
+                        <field name="fait" column_invisible="1" force_save="1"/>
+                        <field name="type_tache" readonly="1" force_save="1"/>
+                        <field name="client" readonly="1" force_save="1"/>
+                        <field name="titre" readonly="1" force_save="1" optional="hide"/>
+                        <field name="heure_fixe" readonly="fait"/>
+                        <field name="heure" widget="float_time" invisible="not heure_fixe" readonly="fait"/>
+                    </list>
+                </field>
+                <footer>
+                    <button name="action_enregistrer" type="object" string="Enregistrer" class="btn-primary"
+                            data-hotkey="q"/>
+                    <button special="cancel" string="Annuler" data-hotkey="x"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Ticket : heure fixe a cote de la date prevue (sinon le technicien suit l'ordre de sa tournee) -->
+    <record id="helpdesk_ticket_view_form_heure_fixe" model="ir.ui.view">
+        <field name="name">helpdesk.ticket.form.heure.fixe</field>
+        <field name="model">helpdesk.ticket</field>
+        <field name="inherit_id" ref="suivi_machines_helpdesk.helpdesk_ticket_view_form_machine"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='date_planifiee']" position="after">
+                <field name="heure_fixe" invisible="est_reprise or not date_planifiee"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -270,8 +270,11 @@
         <field name="model">helpdesk.ticket</field>
         <field name="inherit_id" ref="helpdesk.helpdesk_ticket_view_kanban"/>
         <field name="arch" type="xml">
+            <!-- « Nouveau » ouvre la fiche complete du ticket (pas la petite fenetre) ; le « + » d'une colonne
+                 garde la creation rapide -->
             <xpath expr="//kanban" position="attributes">
                 <attribute name="quick_create_view">suivi_machines_helpdesk.helpdesk_ticket_view_form_creation_rapide</attribute>
+                <attribute name="on_create"></attribute>
             </xpath>
             <!-- Champ declare en tete : toujours charge, quelle que soit la structure de la carte -->
             <xpath expr="//kanban" position="inside">

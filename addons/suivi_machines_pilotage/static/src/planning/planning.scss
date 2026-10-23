@@ -57,7 +57,14 @@
     .o_pp_survol { background: #ede4eb; outline: 2px dashed #714B67; outline-offset: -3px; }
     .o_pp_carte { border-radius: 7px; padding: 4px 7px; font-size: 12px; cursor: pointer; border-left: 4px solid; display: block; }
     .o_pp_carte[draggable="true"] { cursor: grab; }
-    .o_pp_l1 { font-weight: 700; } .o_pp_l2 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .o_pp_l1 { font-weight: 700; display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+    .o_pp_pastille { min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: rgba(0, 0, 0, .14);
+        display: inline-flex; align-items: center; justify-content: center; font-size: 11px; line-height: 1; }
+    .o_pp_pastille_fixe { background: #1f2937; color: #fff; }
+    .o_pp_conflit { background: #b45309; color: #fff; border-radius: 4px; padding: 0 5px; font-size: 11px; }
+    .o_pp_organiser { margin-top: auto; align-self: flex-start; border: 0; background: transparent; color: #017e84;
+        font-size: 11px; font-weight: 600; padding: 2px 0; opacity: 0; transition: opacity .1s; }
+    .o_pp_case:hover .o_pp_organiser, .o_pp_organiser:focus { opacity: 1; } .o_pp_l2 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .o_pp_success { background: #dcfce7; border-color: #16a34a; color: #14532d; }
     .o_pp_warning { background: #fef3c7; border-color: #d97706; color: #78350f; }
     .o_pp_info { background: #e0f2fe; border-color: #0284c7; color: #0c4a6e; }
