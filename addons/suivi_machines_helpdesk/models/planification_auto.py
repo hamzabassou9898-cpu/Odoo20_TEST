@@ -12,7 +12,7 @@ from markupsafe import Markup
 from odoo import api, models
 from odoo.exceptions import UserError
 
-from .etapes import contient
+from .etapes import contient, nom_etape
 
 # Type de ticket -> type d'intervention creee automatiquement
 # Ticket pris en charge (assigne a quelqu'un) : il quitte « Nouveau » pour l'etape de son type
@@ -66,7 +66,7 @@ class HelpdeskTicket(models.Model):
                 # Ticket ferme (bon signe, glisse dans Resolu...) : l'intervention se termine avec lui
                 auto = planifiees.filtered(lambda i: i.type in TYPES_INTERVENTION_AUTO.values()).with_context(
                     synchro_intervention=True)
-                if contient(ticket.stage_id.name, "annul"):
+                if contient(nom_etape(ticket.stage_id), "annul"):
                     auto.action_annuler()
                 else:
                     auto.action_fait()
@@ -86,7 +86,7 @@ class HelpdeskTicket(models.Model):
         """Ticket encore « Nouveau » et assigne a quelqu'un : etape de son type (s'il y en a une)."""
         for ticket in self:
             mot = ETAPE_PAR_TYPE.get(ticket.type_demande)
-            if not (mot and ticket.user_id) or (ticket.stage_id and not contient(ticket.stage_id.name, "nouveau")):
+            if not (mot and ticket.user_id) or (ticket.stage_id and not ticket.stage_id.etape_nouvelle):
                 continue
             etape = ticket._etape_contenant(mot, ticket.team_id if "team_id" in ticket._fields else None)
             if etape and etape != ticket.stage_id:

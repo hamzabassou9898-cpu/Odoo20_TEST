@@ -6,7 +6,7 @@ from odoo import api, fields, models
 from odoo.fields import Domain
 from odoo.tools.safe_eval import safe_eval
 
-from odoo.addons.suivi_machines_helpdesk.models.etapes import domaine_ferme, domaine_nom
+from odoo.addons.suivi_machines_helpdesk.models.etapes import domaine_nouveau, domaine_ouvert
 
 SECTIONS = [("appels", "Appels de service"), ("entretiens", "Entretiens & réparations"),
             ("livraisons", "Livraisons & ramassages"), ("locations", "Locations"),
@@ -56,7 +56,7 @@ class PilotageIndicateur(models.Model):
         location = [("type_commande", "=", "location"), ("state", "=", "sale")]
         appels = [("est_entretien", "=", False), ("commande_reprise_id", "=", False)]
         # Ouvert = pas dans une etape Resolu / Annule / Cloture (un ticket sans etape compte)
-        ouverts = ["!"] + domaine_ferme()
+        ouverts = domaine_ouvert()
         transfert = [("move_ids.product_id.categ_id.suivi_machine", "=", True)]
         a_faire = [("state", "not in", ("done", "cancel"))]
         livraison = [("location_id.usage", "=", "internal"), ("location_dest_id.usage", "=", "customer")]
@@ -82,8 +82,7 @@ class PilotageIndicateur(models.Model):
                                                            ("statut_entretien", "=", "a_planifier")]),
             # Ticket qui vient d'arriver : etape « Nouveau » (ou pas d'etape), personne ne l'a encore pris en
             # charge (aucun technicien assigne, rien de planifie)
-            "tickets_nouveaux": ("helpdesk.ticket", ["|", ("stage_id", "=", False)]
-                                 + domaine_nom("nouveau", "stage_id.name")
+            "tickets_nouveaux": ("helpdesk.ticket", domaine_nouveau()
                                  + [("user_id", "=", False), ("statut_entretien", "not in", ["planifie", "fait"])]),
             # Planifie = assigne a un technicien (ou intervention planifiee) : dans sa journee
             # Entretiens + reparations + machines a remplacer assignes a un technicien, pas encore valides

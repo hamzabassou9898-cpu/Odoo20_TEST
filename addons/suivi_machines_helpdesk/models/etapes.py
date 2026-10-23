@@ -48,14 +48,22 @@ def nom_etape(etape):
     return etape.name or ""
 
 
-def ou(termes):
-    """Domaine « l'un ou l'autre » a partir d'une liste de termes."""
-    return ["|"] * (len(termes) - 1) + list(termes)
+def etapes_selon(Etape, test):
+    """Etapes (archivees comprises) dont le nom francais passe le test : une seule regle pour toutes les
+    recherches, quelle que soit la langue de l'utilisateur ou de la tache planifiee."""
+    return Etape.with_context(active_test=False).search([]).filtered(lambda etape: test(nom_etape(etape)))
 
 
-def domaine_nom(mot, champ="name"):
-    return ou([(champ, "ilike", m) for m in mots(mot)])
+def etapes_contenant(Etape, mot):
+    """Etapes actives dont le nom francais contient le mot (ou un equivalent), dans l'ordre des etapes."""
+    return Etape.search([]).filtered(lambda etape: contient(nom_etape(etape), mot))
 
 
-def domaine_ferme(champ="stage_id.name"):
-    return ou([(champ, "ilike", m) for m in MOTS_FERME])
+def domaine_ouvert(champ="stage_id"):
+    """Pas d'etape, ou une etape qui ne ferme pas le ticket."""
+    return ["|", (champ, "=", False), "!", (champ + ".etape_fermee", "=", True)]
+
+
+def domaine_nouveau(champ="stage_id"):
+    """Pas encore d'etape, ou l'etape « Nouveau »."""
+    return ["|", (champ, "=", False), (champ + ".etape_nouvelle", "=", True)]

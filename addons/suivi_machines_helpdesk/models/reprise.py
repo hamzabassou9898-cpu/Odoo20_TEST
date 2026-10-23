@@ -5,7 +5,7 @@ from datetime import timedelta
 from odoo import api, fields, models
 from odoo.exceptions import UserError
 
-from .etapes import est_ferme, nom_etape
+from .etapes import contient, nom_etape
 
 PARAM_JOURS = "suivi_machines_helpdesk.jours_avant_reprise"
 PARAM_EQUIPE = "suivi_machines_helpdesk.equipe_reprise_id"
@@ -41,7 +41,10 @@ class HelpdeskTicket(models.Model):
         """Etape « Reprise de machine » : nom exact, sinon une etape contenant « reprise »,
         de preference dans l'equipe du ticket."""
         Etape = self.env["helpdesk.stage"]
-        etapes = Etape.search([("name", "=ilike", nom)]) or Etape.search([("name", "ilike", "reprise")])
+        etapes = Etape.search([])
+        cherche = (nom or "").strip().lower()
+        etapes = etapes.filtered(lambda e: nom_etape(e).strip().lower() == cherche) \
+            or etapes.filtered(lambda e: contient(nom_etape(e), "reprise"))
         if equipe and "team_ids" in Etape._fields:
             etapes = etapes.filtered(lambda e: equipe in e.team_ids) or etapes
         return etapes[:1]
@@ -56,7 +59,7 @@ class HelpdeskTicket(models.Model):
                 ticket.stage_id = etape
 
     def _est_ferme(self):
-        return est_ferme(nom_etape(self.stage_id))
+        return self.stage_id.etape_fermee
 
     def _nommer_reprise(self):
         for ticket in self:

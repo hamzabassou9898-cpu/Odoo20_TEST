@@ -10,7 +10,7 @@ from odoo.exceptions import UserError
 from odoo.tools import SQL
 from odoo.tools.misc import format_datetime
 
-from odoo.addons.suivi_machines_helpdesk.models.etapes import REGEX_ANNULE, REGEX_FERME
+from odoo.addons.suivi_machines_helpdesk.models.etapes import REGEX_ANNULE, REGEX_FERME, nom_etape
 
 TYPES_TACHE = [
     ("livraison", "Livraison"),
@@ -124,7 +124,7 @@ class PortailTache(models.Model):
         """Nom francais de l'etape du ticket (comme a l'ecran), quelle que soit la langue de lecture."""
         if self.env["helpdesk.stage"]._fields["name"].translate:
             return SQL("COALESCE(s.name->>'fr_CA', s.name->>'fr_FR', s.name->>'en_US', '')")
-        return SQL("COALESCE(s.name::text, '')")
+        return SQL("COALESCE(s.name::text, '')")   # nom non traduit : une seule valeur
 
     def _source(self):
         self.ensure_one()
@@ -146,7 +146,7 @@ class PortailTache(models.Model):
             elif src.ticket_id:
                 t = src.ticket_id
                 vals.update(route=", ".join(l.strip() for l in (t.adresse_commerce or "").splitlines() if l.strip()) or False,
-                            statut=t.stage_id.name or self.env._("À faire"))
+                            statut=nom_etape(t.stage_id) or self.env._("À faire"))
             else:
                 i = src.intervention_id
                 vals.update(route=i.route,

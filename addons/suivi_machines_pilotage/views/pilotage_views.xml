@@ -559,7 +559,7 @@
                 <field name="lot_id"/>
                 <field name="tag_ids"/>
                 <filter name="nouveaux" string="Nouveaux (à prendre en charge)"
-                        domain="['|', '|', ('stage_id', '=', False), ('stage_id.name', 'ilike', 'nouveau'), ('stage_id.name', 'ilike', 'new'),
+                        domain="['|', ('stage_id', '=', False), ('stage_id.etape_nouvelle', '=', True),
                                  ('user_id', '=', False), ('statut_entretien', 'not in', ['planifie', 'fait'])]"/>
                 <separator/>
                 <filter name="type_appel" string="Appels de service" domain="[('type_ticket', '=', 'appel')]"/>
@@ -578,7 +578,7 @@
                         domain="[('est_entretien', '=', False), ('statut_entretien', '=', 'planifie')]"/>
                 <separator/>
                 <filter name="ouverts" string="Ouverts"
-                        domain="['!', '|', '|', '|', '|', '|', '|', '|', ('stage_id.name', 'ilike', 'résolu'), ('stage_id.name', 'ilike', 'resolu'), ('stage_id.name', 'ilike', 'solved'), ('stage_id.name', 'ilike', 'clôtur'), ('stage_id.name', 'ilike', 'clotur'), ('stage_id.name', 'ilike', 'closed'), ('stage_id.name', 'ilike', 'annul'), ('stage_id.name', 'ilike', 'cancel')]"/>
+                        domain="['|', ('stage_id', '=', False), '!', ('stage_id.etape_fermee', '=', True)]"/>
                 <filter name="sans_machine" string="Sans machine" domain="[('lot_id', '=', False)]"/>
                 <separator/>
                 <filter name="ce_mois" string="Ce mois" domain="[('create_date', '&gt;=', context_today().strftime('%Y-%m-01'))]"/>

@@ -8,6 +8,8 @@ from markupsafe import Markup
 
 from odoo import api, fields, models
 
+from odoo.addons.suivi_machines_helpdesk.models.etapes import nom_etape
+
 from .ouverture_compte import ETATS
 
 # Etape creee par Monroy dans le CRM (nom avec emoji) : reconnue par son nom
@@ -83,7 +85,7 @@ class CrmLead(models.Model):
     @api.depends("stage_id.name")
     def _compute_est_etape_ouverture(self):
         for lead in self:
-            lead.est_etape_ouverture = bool(ETAPE_OUVERTURE.search(lead.stage_id.name or ""))
+            lead.est_etape_ouverture = bool(ETAPE_OUVERTURE.search(nom_etape(lead.stage_id)))
 
     def _valeurs_ouverture(self):
         """La demande remplie avec ce que l'opportunite (et sa fiche client) connait deja."""
